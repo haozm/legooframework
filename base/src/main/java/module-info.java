@@ -1,0 +1,27 @@
+//module org.legooframewrok.base {
+//    requires com.google.common;
+//    requires commons.lang3;
+//    requires commons.vfs2;
+//    requires commons.collections4;
+//    requires commons.beanutils;
+//    requires log4j.api;
+//    requires spring.core;
+//    requires java.sql;
+//    requires java.se;
+//    requires joda.time;
+//    requires spring.messaging;
+//    requires spring.integration.core;
+//    requires freemarker;
+//    requires commons.digester3;
+//    requires slf4j.api;
+//    requires spring.beans;
+//    requires pinyin4j;
+//    requires commons.logging;
+//    requires jcl.over.slf4j;
+//    requires spring.security.core;
+//    requires spring.security.crypto;
+//    requires jaxen;
+//    requires java.xml;
+//    requires spring.jcl;
+//    requires hamcrest.core;
+//}

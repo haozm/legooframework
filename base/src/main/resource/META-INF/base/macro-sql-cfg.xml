@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="crud_fixed">
+            <![CDATA[
+		        <#macro crud_fixed_select alias>
+	               ${alias}.tenant_id AS 'tenantId',
+	               ${alias}.creator AS 'creator',
+                   ${alias}.createTime AS 'createTime',
+                   ${alias}.editor AS 'editor',
+                   ${alias}.editTime AS 'editTime'
+	            </#macro>
+	            <#macro crud_fixed_deleteById tableName>
+	              UPDATE ${tableName}
+                     SET delete_flag = 1,editor = :editor, editTime = NOW()
+                   WHERE id = :id
+                     AND tenant_id = :TENANT_ID
+	            </#macro>
+	            <#macro record_update tableName>
+	              UPDATE ${tableName}
+                     SET editor = :LOGIN_ID, editTime = NOW()
+                   WHERE id = :id
+                     AND tenant_id = :TENANT_ID
+	            </#macro>
+	         ]]>
+        </macro>
+        <macro id="device_fixed">
+            <![CDATA[
+		      	 <#macro device_4_all alias>
+		      	 	${alias}.id AS "deviceId",
+		      	 	${alias}.imei AS "deviceImei",
+		      	 	${alias}.name AS "deviceName",
+		      	 	${alias}.brand AS "deviceBrand",
+		      	 	${alias}.model AS "deviceModel",
+	          		${alias}.color AS "deviceColor",
+	          		${alias}.cpu AS "deviceCpu",
+	          		${alias}.screen_size AS "deviceScreenSize",
+	          		${alias}.os AS "deviceOs",
+	          		${alias}.xport_os AS "deviceXportOs",
+	          		${alias}.screen_size AS "deviceScreenSize",
+	          		${alias}.os_type AS "deviceOsType",
+	          		${alias}.price AS "devicePrice",
+	          		${alias}.state AS "deviceState",
+	          		${alias}.production_date AS "deviceProductionDate",
+	          		${alias}.reqair_reason AS "deviceReqairReason",
+	          		${alias}.scrap_reason AS "deviceScrapReason",
+	          		${alias}.createTime AS "createTime",
+	          		${alias}.editTime AS "editTime"
+		      	 </#macro>
+		      	 <#macro device_4_dto alias>
+		      	 	${alias}.id AS "deviceId",
+		      	 	${alias}.imei AS "deviceImei",
+		      	 	${alias}.name AS "deviceName",
+	          		${alias}.state AS "deviceState"
+		      	 </#macro>
+	         ]]>
+        </macro>
+        <macro id="wechat_fixed">
+            <![CDATA[
+		      	 <#macro wechat_4_account alias>
+		      	 	${alias}.id AS 'id',
+					${alias}.username AS 'userName',
+					${alias}.encrypt_username AS 'encryptUsername',
+					${alias}.iconUrl AS 'iconUrl',
+					${alias}.nickname AS 'nickName',
+					${alias}.encrypt_nickname AS 'encryptNickName',
+					${alias}.type AS 'type'
+		      	 </#macro>
+		      	 <#macro wechat_4_simple_friend alias>
+		      	 	${alias}.conremark AS 'conRemark',
+					${alias}.encrypt_conremark AS 'encryptConRemark'
+		      	 </#macro>
+		      	 <#macro wechat_4_friend alias>
+		      	 	${alias}.conremark AS 'conRemark',
+					${alias}.encrypt_conremark AS 'encryptConRemark',
+					${alias}.label_ids AS 'labelIds'
+		      	 </#macro>
+		      	  <#macro wechat_4_label alias>
+		      	 	${alias}.id AS 'id',
+					${alias}.name AS 'name',
+					${alias}.pyfull AS 'pyfull',
+					${alias}.pyShort AS 'pyShort',
+					${alias}.isTemporary AS 'isTemporary'
+		      	 </#macro>
+	         ]]>
+        </macro>
+    </macros>
+</sqls>

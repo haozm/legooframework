@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="total_data_detail">
+            <![CDATA[
+		        <#macro total_data_detail>
+	                SUM(sale_amount) AS 'sale_amount',
+	                SUM(sale_persons) AS 'sale_persons',
+	                SUM(sale_orders) AS 'sale_orders',
+	                SUM(sale_goods) AS 'sale_goods'
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="store">
+        <sql id="loadByOrgId" macros="total_data_detail,crud_fixed" desc="获取对应组织所在的下属门店列表">
+            <meta>
+                <col id="storeId" name="唯一标识" desc="唯一标识" type="STRING"/>
+                <col id="name" name="门店名称" desc="门店名称" type="STRING"/>
+                <col id="storeState" name="门店状态" desc="门店状态" type="STRING"/>
+                <col id="orgCode" name="机构代码" desc="机构代码" type="STRING"/>
+                <col id="detailAddress" name="门店地址" desc="门店地址" type="STRING"/>
+            </meta>
+            <params>
+                <p name="date" type="btn"/>
+                <p name="next" type="STRING" required="true" default="false"/>
+                <p name="reportId" type="STRING" required="true" format=""/>
+                <p name="bydate" type="STRING" required="true"/>
+                <p name="storeIds" type="STRING" required="true"/>
+                <p name="rowDate" type="STRING"/>
+                <p name="level" type="STRING" required="true"/>
+            </params>
+            <roles include="roleA,roleB,roleC"/>
+            <body><![CDATA[
+             SELECT og.code AS "orgCode",
+                    <@total_data_detail />
+                    <@crud_fixed_select alias="kv" />
+               FROM acp.acp_store AS st
+          LEFT JOIN acp.acp_organization og ON st.organization_id =og.id
+              WHERE st.organization_id = :orgId
+            ]]></body>
+        </sql>
+    </model>
+    <model id="employee">
+        <sql id="loadByStoreId" desc="获取对应门店下所有系统用户清单">
+            <meta>
+                <col id="emId" name="唯一标识" desc="唯一标识" type="String"/>
+                <col id="userName" name="用户姓名" desc="用户姓名" type="String"/>
+                <col id="phoneNo" name="手机号码" desc="手机号码" type="String"/>
+                <col id="emType" name="雇员状态" desc="雇员状态" type="String"/>
+                <col id="loginId" name="登陆ID" desc="登陆ID" type="String"/>
+                <col id="sex" name="性别" desc="性别" type="String"/>
+                <col id="oldStoreId" name="原系统ID" desc="原系统ID" type="String"/>
+            </meta>
+            <body><![CDATA[
+             SELECT em.id AS "emId", em.phone AS "phoneNo",em.name AS "userName",
+                    em.employeeType AS "emType",em.loginuser_id AS "loginId",
+                    em.sex AS "sex",em.oldEmployeeId AS "oldStoreId"
+               FROM acp.acp_employee AS em
+              WHERE em.store_id = :storeId
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    <bean id="cacheManager" class="com.legooframework.model.cache.CaffeineCacheManager">
+        <property name="caffeineSpecs">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="cahceA" value="initialCapacity=64,maximumSize=1024,expireAfterAccess=5h"/>
+                <entry key="cahceB" value="initialCapacity=64,maximumSize=1024,expireAfterAccess=3000s"/>
+                <entry key="cahceC" value="initialCapacity=64,maximumSize=1024,expireAfterAccess=4000s"/>
+                <entry key="cahceD" value="initialCapacity=64,maximumSize=1024,expireAfterAccess=10s"/>
+            </util:map>
+        </property>
+    </bean>
+</beans>
