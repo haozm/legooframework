@@ -23,8 +23,8 @@ public class JdbcQuerySupport extends NamedParameterJdbcDaoSupport {
 
     private static final Logger logger = LoggerFactory.getLogger(JdbcQuerySupport.class);
 
-    public PagingResult queryForPage(
-            String model, String stmtId, int pageNum, int pageSize, Map<String, Object> params) {
+    public PagingResult queryForPage(String model, String stmtId, int pageNum, int pageSize,
+                                     Map<String, Object> params) {
         int _size = pageSize <= 0 ? 20 : pageSize;
         long offset = pageNum <= 1 ? 0 : (pageNum - 1) * _size;
         checkParams(model, stmtId, params);
@@ -37,7 +37,7 @@ public class JdbcQuerySupport extends NamedParameterJdbcDaoSupport {
                     model, stmtId, params, execSql));
         Stopwatch stopwatch = Stopwatch.createUnstarted();
         stopwatch.start();
-        long count = getNamedParameterJdbcTemplate().queryForObject(execSql, _paramMap, Long.class);
+        long count = getQueryTemplate().queryForObject(execSql, _paramMap, Long.class);
         stopwatch.stop();
         if (logger.isDebugEnabled())
             logger.debug(String.format("queryForPage [%s,%s_count result is %s and elapsed %s ms]",
@@ -130,15 +130,15 @@ public class JdbcQuerySupport extends NamedParameterJdbcDaoSupport {
     public <T> Optional<T> queryForObject(String model, String stmtId, Map<String, Object> params, Class<T> clazz) {
         checkParams(model, stmtId, params);
         String execSql = statementFactory.getExecSql(model, stmtId, params);
-        Stopwatch stopwatch = Stopwatch.createStarted();
         try {
             if (logger.isDebugEnabled())
                 logger.debug(String.format("\nsql-> [%s.%s] \n params-> [%s] \n execsql -> %s",
                         model, stmtId, params, execSql));
+            Stopwatch stopwatch = Stopwatch.createStarted();
             T result = getQueryTemplate().queryForObject(execSql, params, clazz);
             stopwatch.stop();
             if (logger.isDebugEnabled())
-                logger.debug(String.format("queryForEntity [%s,%s result is %s and elapsed %s ms]",
+                logger.debug(String.format("queryForObject [%s,%s result is %s and elapsed %s ms]",
                         model, stmtId, result, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
             return Optional.ofNullable(result);
         } catch (DataAccessException e) {

@@ -7,6 +7,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.Collection;
 import java.util.Map;
@@ -42,6 +43,10 @@ public abstract class BaseService implements ApplicationContextAware {
 
     protected MessageGateWay getEventBus() {
         return getBean(MessageGateWay.class);
+    }
+
+    protected ThreadPoolTaskExecutor getExecutor() {
+        return getBean("legoo-executor", ThreadPoolTaskExecutor.class);
     }
 
     protected MessageGateWay getAsycEventBus() {

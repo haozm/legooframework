@@ -60,21 +60,17 @@ public abstract class EntityDaoSupport extends NamedParameterJdbcDaoSupport {
                                              Map<String, Object> paramMap, Class<T> clazz) {
         Preconditions.checkNotNull(statementFactory);
         Map<String, Object> params = LoginContextHolder.get().toParams();
-        if (MapUtils.isNotEmpty(paramMap))
-            params.putAll(paramMap);
+        if (MapUtils.isNotEmpty(paramMap)) params.putAll(paramMap);
         String execSql = statementFactory.getExecSql(model, stmtId, params);
-
         Stopwatch stopwatch = Stopwatch.createStarted();
         try {
             if (logger.isDebugEnabled())
                 logger.debug(buildLog("queryForObject", model, stmtId, params, execSql));
             T result = getTemplate().queryForObject(execSql, params, clazz);
             stopwatch.stop();
-
             if (logger.isDebugEnabled())
                 logger.debug(String.format("queryForObject [%s,%s result is %s and elapsed %s ms]",
                         model, stmtId, result, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
-
             return Optional.ofNullable(result);
         } catch (DataAccessException e) {
             String err_msg = String.format("%s(%s,%s) whit %s has error", "queryForObject", model, stmtId, params);
@@ -84,12 +80,8 @@ public abstract class EntityDaoSupport extends NamedParameterJdbcDaoSupport {
     }
 
     private String buildLog(String method, String model, String stmtId, Map<String, Object> params, String execSql) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("\n[method=").append(method).append(", model=")
-                .append(model).append(", stmtId=").append(stmtId).append("]\n")
-                .append("[params=").append(params).append("\n")
-                .append("[execSQL=").append(execSql);
-        return sb.toString();
+        return String.format("\n[method=%s, model=%s, stmtId=%s ]\n[params=%s]\n[execSQL=%s]", method,
+                model, stmtId, params, execSql);
     }
 
     protected <T extends BaseEntity> Optional<T> queryForEntity(SQLStatementFactory statementFactory,
