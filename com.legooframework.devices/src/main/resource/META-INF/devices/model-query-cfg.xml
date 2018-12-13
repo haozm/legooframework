@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="device">
+        <sql id="status_bystore">
+            <body><![CDATA[
+        SELECT od.DeviceOnline AS 'deviceOnline', od.WeixinOnline AS 'weixinOnline'
+          FROM yycomm.OnLine_Device od
+         WHERE od.DeviceID IN ( SELECT sd.deviceid
+                                  FROM yycomm.store_device sd
+                                 WHERE sd.devicetype = 1
+                                   AND sd.store_id = :storeId )
+         LIMIT 1
+            ]]></body>
+        </sql>
+        <sql id="amount_manage" dynamic="true">
+            <body><![CDATA[
+        SELECT 'device' AS 'subType', yod.DeviceOnline AS 'status',COUNT(yod.DeviceOnline) AS 'amount'
+          FROM yycomm.OnLine_Device yod
+     LEFT JOIN yycomm.store_device ysd ON ysd.deviceid = yod.DeviceID
+         WHERE ysd.devicetype = 1
+           AND ysd.store_id IN (<#if storeIds??>${storeIds?join(", ")} <#else> ${STORE_IDS?join(", ")} </#if>)
+      GROUP BY yod.DeviceOnline
+     UNION ALL
+        SELECT 'weixin' AS 'subType', yod.WeixinOnline AS 'status',COUNT(yod.WeixinOnline) AS 'amount'
+          FROM yycomm.OnLine_Device yod
+     LEFT JOIN yycomm.store_device ysd ON ysd.deviceid = yod.DeviceID
+         WHERE ysd.devicetype = 1
+           AND ysd.store_id IN (<#if storeIds??>${storeIds?join(", ")} <#else> ${STORE_IDS?join(", ")} </#if>)
+      GROUP BY yod.WeixinOnline
+     UNION ALL
+        SELECT 'subDevice' AS 'subType', yod.DeviceOnline AS 'status',COUNT(yod.DeviceOnline) AS 'amount'
+          FROM yycomm.OnLine_Device yod
+     LEFT JOIN yycomm.store_device ysd ON ysd.deviceid = yod.DeviceID
+         WHERE ysd.devicetype = 2
+           AND ysd.store_id IN (<#if storeIds??>${storeIds?join(", ")} <#else> ${STORE_IDS?join(", ")} </#if>)
+      GROUP BY yod.DeviceOnline
+            ]]></body>
+        </sql>
+        <sql id="mnglist" dynamic="true">
+            <body><![CDATA[
+        SELECT aas.full_name AS 'storeName',
+               ysd.deviceid AS 'deviceId',
+               ysd.store_id AS 'storeId',
+               ysd.devicetype AS 'deviceType',
+               yod.DeviceOnline AS 'deviceOnline',
+               yod.HeartTime AS 'deviceHeartTime',
+               (SELECT COUNT(yssd.devicetype)
+                  FROM yycomm.store_device yssd
+                  WHERE yssd.store_id = ysd.store_id
+                    AND yssd.devicetype = 2) AS 'subDeviceAmount',
+               (SELECT FROM_UNIXTIME(MIN(tml.createtime)/1000,'%Y-%m-%d %H:%i:%s')
+                  FROM yycomm.Trans_MSG_List tml
+                 WHERE tml.tag ='msg'
+                   AND tml.store_id = ysd.store_id
+                   AND FROM_UNIXTIME(tml.createtime/1000) >=  CURDATE()) AS 'deviceFristActiveTime',
+                 ysd.weixin AS 'weixinId' ,
+                 yod.WeixinOnline AS 'weixinOnline'
+           FROM yycomm.store_device ysd
+      LEFT JOIN yycomm.OnLine_Device yod ON ysd.deviceid = yod.DeviceID
+      LEFT JOIN org_base_info aas ON aas.id = ysd.store_id
+          WHERE ysd.devicetype = 1
+            AND ysd.store_id IN (<#if storeIds??>${storeIds?join(", ")} <#else> ${STORE_IDS?join(", ")} </#if>)
+      <#if deviceOnline??>
+            AND yod.DeviceOnline = :deviceOnline
+      </#if>
+      <#if weixinOnline??>
+            AND yod.WeixinOnline = :weixinOnline
+      </#if>
+            ]]></body>
+        </sql>
+        <sql id="sub_mnglist" dynamic="true">
+            <body><![CDATA[
+       SELECT aas.full_name AS 'storeName',
+              ysd.deviceid AS 'deviceId',
+              ysd.store_id AS 'storeId',
+              ysd.devicetype AS 'deviceType',
+              yod.DeviceOnline AS 'deviceOnline',
+              yod.HeartTime AS 'deviceHeartTime'
+         FROM yycomm.store_device ysd
+    LEFT JOIN yycomm.OnLine_Device yod ON ysd.deviceid = yod.DeviceID
+    LEFT JOIN org_base_info aas ON aas.id = ysd.store_id
+        WHERE ysd.devicetype = 2
+          AND ysd.store_id = :storeId
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

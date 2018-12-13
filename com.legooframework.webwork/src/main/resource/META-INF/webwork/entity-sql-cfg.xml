@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="macro_4_token">
+            <![CDATA[
+            <#macro select_4_token>
+                 wlt.id AS 'id', wlt.login_status AS 'status',
+                 wlt.account_id AS 'accountId',
+                 wlt.device_id AS 'deviceId', wlt.login_host AS 'loginHost',
+                 wlt.login_time AS 'loginTime', wlt.last_time AS 'lastTime',
+                 wlt.logout_time AS 'logoutTime', wlt.full_token AS 'fullToken'
+            </#macro>
+           ]]>
+        </macro>
+    </macros>
+    <model id="LoginTokenEntity">
+        <sql id="findById" macros="crud_fixed,macro_4_token" desc="获取指定ID的Token">
+            <body><![CDATA[
+            SELECT <@select_4_token />,
+                   sai.account_no AS 'accountNo',
+                   <@crud_fixed_select alias="wlt" />
+              FROM csosm_chat.web_login_tokens AS wlt
+         LEFT JOIN csosm_chat.sec_account_info sai ON sai.id = wlt.account_id
+             WHERE wlt.delete_flag = 0
+               AND wlt.id = :id
+            ]]></body>
+        </sql>
+        <sql id="findByToken" macros="crud_fixed,macro_4_token" desc="获取指定ID的Token">
+            <body><![CDATA[
+            SELECT <@select_4_token />,
+                   sai.account_no AS 'accountNo',
+                   <@crud_fixed_select alias="wlt" />
+              FROM csosm_chat.web_login_tokens AS wlt
+         LEFT JOIN csosm_chat.sec_account_info sai ON sai.id = wlt.account_id
+             WHERE wlt.delete_flag = 0
+               AND wlt.full_token = :fullToken
+            ]]></body>
+        </sql>
+        <sql id="findLastOnlineTokenByAccount" macros="crud_fixed,macro_4_token" desc="获取指定ID的Token">
+            <body><![CDATA[
+            SELECT <@select_4_token />,
+                   sai.account_no AS 'accountNo',
+                   <@crud_fixed_select alias="wlt" />
+              FROM csosm_chat.web_login_tokens AS wlt
+         LEFT JOIN csosm_chat.sec_account_info sai ON sai.id = wlt.account_id
+             WHERE wlt.delete_flag = 0
+               AND wlt.login_status = 1
+               AND sai.account_no = :accountNo
+          ORDER BY wlt.login_time DESC
+             LIMIT 1
+            ]]></body>
+        </sql>
+        <sql id="findOnlineByToken" macros="crud_fixed,macro_4_token" desc="获取指定在线状态的token">
+            <body><![CDATA[
+            SELECT <@select_4_token />,
+                   sai.account_no AS 'accountNo',
+                   <@crud_fixed_select alias="wlt" />
+              FROM csosm_chat.web_login_tokens AS wlt
+         LEFT JOIN csosm_chat.sec_account_info sai ON sai.id = wlt.account_id
+             WHERE wlt.delete_flag = 0
+               AND wlt.login_status = 1
+               AND sai.account_no = :accountNo
+          ORDER BY wlt.login_time DESC
+             LIMIT 1
+            ]]></body>
+        </sql>
+        <sql id="insert" desc="持久化新的Token">
+            <body><![CDATA[
+            INSERT INTO csosm_chat.web_login_tokens
+                        (id, login_status, account_id, device_id, login_host, login_time, last_time,logout_time,
+                         full_token, tenant_id, creator, createTime)
+                 VALUES (:id, 1,           :accountId, :deviceId, :loginHost, :loginTime, :loginTime, null,
+                         :fullToken, :tenantId, :creator, NOW())
+            ]]></body>
+        </sql>
+        <sql id="logout" desc="更新指定账户的退出操作">
+            <body><![CDATA[
+               UPDATE csosm_chat.web_login_tokens
+                  SET login_status = 0, logout_time = :loginTime, editor = :accountId
+                WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="totalOnlineNum" desc="统计在线人数的数量">
+            <body><![CDATA[
+            SELECT COUNT(wlt.id) AS 'onlineNum'
+              FROM csosm_chat.web_login_tokens AS wlt
+             WHERE wlt.delete_flag = 0
+               AND wlt.login_status = 1
+               AND wlt.tenant_id = :TENANT_ID
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

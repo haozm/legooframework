@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="crm_salerecord_fields">
+            <![CDATA[
+             <#macro salerecord_fields>
+                 acs.id AS 'id',
+                 acs.oldSaleRecordId AS 'oldSaleRecordId',
+                 acs.saleOrderNo AS 'saleOrderNo',
+                 acs.saleTotalAmount AS 'saleTotalAmount',
+                 acs.status AS 'status',
+                 acs.company_id AS 'companyId',
+                 acs.store_id AS 'storeId',
+                 acs.member_id AS 'memberId',
+                 acs.createUser_id AS 'creator',
+                 (  SELECT GROUP_CONCAT(acsm.shoppingguide_id)
+                      FROM acp.crm_shoppingguide_member acsm
+                     WHERE acsm.member_id = acs.member_id
+                  GROUP BY acsm.member_id ) AS 'serviceShoppingguideIds',
+                 (SELECT asgs.shoppingGuide_id
+                    FROM acp.crm_shoppingguidesalerecord asgs
+                   WHERE asgs.saleRecord_id = acs.id LIMIT 1) AS 'saleShoppingguide',
+                 acs.createTime AS 'createTime',
+                 acs.updateTime AS 'editTime',
+                 acs.updateTime AS 'modifyDate',
+             <#if hasDetail>1<#else>0</#if> AS 'sample',
+             <#if hasDetail>
+                ( SELECT GROUP_CONCAT( CONCAT_WS('$', acsr.id ,
+                                        IFNULL(acsr.salePrice,0.0) ,
+                                        IFNULL(acsr.goodsPrice,0.0) ,
+                                        IFNULL(acsr.totalPrice,0.0) ,
+                                        IFNULL(acsr.goodsCount,1) ,
+                                        IFNULL(acsr.status,1),
+                                        acg.id ,
+                                        IFNULL(acg.status, 1),
+                                        IFNULL(acg.`function`, '-'),
+                                        IFNULL(acg.name,'-') ,
+                                        acg.company_id ) SEPARATOR '@' )
+                    FROM acp.crm_salesubrecord AS acsr
+               LEFT JOIN acp.crm_goods acg ON acg.id = acsr.goods_id
+                   WHERE acsr.saleRecord_id = acs.id
+                GROUP BY acsr.saleRecord_id ) AS 'details',
+             </#if>
+                 acs.member_id AS 'tenantId',
+                 0 AS 'editor'
+	         </#macro>
+           ]]>
+        </macro>
+    </macros>
+    <model id="SaleRecordEntity">
+        <sql id="findById" macros="crm_salerecord_fields">
+            <body><![CDATA[
+             SELECT <@salerecord_fields />
+               FROM acp.crm_salerecord AS acs
+              WHERE LENGTH(acs.member_id) > 0
+                AND LENGTH(acs.store_id) > 0
+                AND LENGTH(acs.company_id) > 0
+                AND acs.status = 1
+                AND acs.id = :id
+            ]]></body>
+        </sql>
+        <sql id="loadByDateInterval" macros="crm_salerecord_fields">
+            <body><![CDATA[
+             SELECT <@salerecord_fields />
+               FROM acp.crm_salerecord AS acs
+              WHERE LENGTH(acs.member_id) > 0
+                AND acs.status = 1
+                AND acs.store_id IN (${storeIds?join(",")})
+                AND acs.updateTime BETWEEN :startDay AND :endDay
+           ORDER BY acs.store_id,acs.member_id,acs.createTime
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

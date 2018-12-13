@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="organization" version="1.0.0">
+    <depends>
+        <bundle name="legoocore" version="1.0.0" use="required"/>
+        <bundle name="entities" version="1.0.0" use="required"/>
+        <bundle name="dict" version="1.0.0" use="required"/>
+        <bundle name="devices" version="1.0.0" use="required"/>
+    </depends>
+    <evevts>
+        <listen channel="org-command-channel">
+            <event name="companyMapStoreEvent"/>
+            <event name="loadEmployeeAggEvent"/>
+            <event name="loadStoreByIdEvent"/>
+            <event name="loadWorkWechatByStoreEvent"/>
+            <event name="findEquipmentByIdEvent"/>
+            <event name="loadcompanyByIdEvent"/>
+            <event name="activeDeviceByPinCodeEvent"/>
+        </listen>
+    </evevts>
+</model>

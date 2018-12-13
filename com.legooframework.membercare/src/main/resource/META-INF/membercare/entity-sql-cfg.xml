@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="job_upcomingtask_fields">
+            <![CDATA[
+             <#macro upcomingtask_fields>
+                   trm.id as 'id',
+                   trm.task_type AS 'taskType',
+                   trm.task_status AS 'taskStatus',
+                   trm.automatic AS 'automatic',
+                   trm.cross_store AS 'crossed',
+                   trm.member_id AS 'memberId',
+                   trm.store_id AS 'storeId',
+                   trm.company_id AS 'companyId',
+                   trm.source_id AS 'sourceId',
+                   trm.service_userid AS 'serviceUserId',
+                   trm.merge_info AS 'mergeInfo',
+                   (   SELECT GROUP_CONCAT(CONCAT_WS(',',trmd.id,trmd.task_status,trmd.start_date,trmd.expired_date,IFNULL(trmd.finished_date,'NO'))
+                                   ORDER BY trmd.start_date
+                                  SEPARATOR '$')
+                         FROM acp.TASK_RUN_MONITOR_DETAIL AS trmd
+                        WHERE trm.id = trmd.task_id
+                     GROUP BY trmd.task_id) AS 'details',
+                   (CASE trm.task_type
+                         WHEN 90 THEN (SELECT acsd.createTime
+                                         FROM acp.crm_salerecord AS acsd
+                                        WHERE acsd.id = trm.source_id AND acsd.company_id =trm.company_id AND acsd.store_id = trm.store_id)
+                         ELSE NULL END ) AS 'saleDate',
+                   trm.delete_flag AS 'deleteFlag',
+                   trm.tenant_id AS 'tenantId',
+                   trm.creator AS 'creator',
+                   trm.createTime AS 'createTime',
+                   trm.editor AS 'editor',
+                   trm.editTime AS 'editTime'
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="UpcomingTaskEntity">
+        <sql id="findById" macros="job_upcomingtask_fields">
+            <body><![CDATA[
+            SELECT <@upcomingtask_fields />
+              FROM acp.TASK_RUN_MONITOR AS trm
+             WHERE trm.id = :id
+            ]]></body>
+        </sql>
+        <sql id="loadByStore" macros="job_upcomingtask_fields">
+            <body><![CDATA[
+            SELECT <@upcomingtask_fields />
+              FROM acp.TASK_RUN_MONITOR AS trm
+             WHERE trm.store_id = :storeId
+               AND trm.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="groupByTouch90Last" macros="job_upcomingtask_fields">
+            <body><![CDATA[
+            SELECT <@upcomingtask_fields />
+              FROM acp.TASK_RUN_MONITOR AS trm
+         LEFT JOIN acp.TASK_RUN_MONITOR_DETAIL AS trmd ON trm.id = trmd.task_id
+        INNER JOIN (SELECT _temp.company_id,_temp.store_id, _temp.member_id, max(_temp.start_date) AS 'start_date'
+                      FROM acp.TASK_RUN_MONITOR _temp
+                  GROUP BY _temp.company_id,_temp.store_id, _temp.member_id ) AS other
+                        ON trm.company_id = other.company_id
+                       AND trm.store_id = other.store_id
+                       AND trm.member_id = other.member_id
+                       AND trm.start_date = other.start_date
+            WHERE trm.task_status IN (1,2)
+              AND trm.task_type = 90
+              AND trm.company_id = :companyId
+            <#if storeIds??>
+              AND trm.store_id IN (${storeIds?join(",")})
+            </#if>
+            ]]></body>
+        </sql>
+        <sql id="loadEnabledTouch90" macros="job_upcomingtask_fields">
+            <body><![CDATA[
+            SELECT <@upcomingtask_fields />
+              FROM acp.TASK_RUN_MONITOR AS trm
+            WHERE trm.task_status IN (1,2)
+              AND trm.task_type = 90
+              AND trm.company_id = :companyId
+            <#if storeIds??>
+              AND trm.store_id IN (${storeIds?join(",")})
+            </#if>
+         ORDER BY trm.company_id,trm.store_id,trm.member_id,saleDate DESC
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+            INSERT INTO acp.TASK_RUN_MONITOR
+                        (id, task_type, task_status, automatic, cross_store, member_id,
+                         store_id, company_id, source_id, merge_info, service_userid,tenant_id, creator,createTime)
+                 VALUES ( ?,         ?,           ?,         ?,           ?,         ?,
+                                ?,          ?,          ?,         ?,              ?,        ?,     -1, NOW())
+            ]]></body>
+        </sql>
+        <sql id="batchUpdate">
+            <body><![CDATA[
+                 UPDATE acp.TASK_RUN_MONITOR
+                    SET task_status = ? , editTime = NOW()
+                  WHERE id = ?
+            ]]></body>
+        </sql>
+    </model>
+    <model id="UpcomingTaskDetailEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+        INSERT INTO acp.TASK_RUN_MONITOR_DETAIL
+                    (id, task_id, task_status, start_date, expired_date,  createTime,tenant_id, creator )
+             VALUES ( ?,       ?,           ?,          ?,            ?,           ?,  1000000, -1 )
+            ]]></body>
+        </sql>
+        <sql id="batchUpdate">
+            <body><![CDATA[
+             UPDATE acp.TASK_RUN_MONITOR_DETAIL
+                SET task_status = ? ,finished_date = ? , editTime = NOW()
+              WHERE id = ?
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="job_90log_fields">
+            <![CDATA[
+             <#macro touch90_fields>
+                   attl.company_id AS 'companyId',
+                   attl.store_id AS 'storeId',
+                   attl.log_date AS 'logDate',
+                   attl.add_list AS 'addList',
+                   attl.update_list AS 'updateList',
+                   attl.delete_flag AS 'deleteFlag',
+                   attl.tenant_id AS 'tenantId',
+                   attl.creator AS 'creator',
+                   attl.createTime AS 'createTime',
+                   attl.editor AS 'editor',
+                   attl.editTime AS 'editTime'
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="Touch90CareLogEntity">
+        <sql id="loadByInstances" macros="job_90log_fields">
+            <body><![CDATA[
+            SELECT <@touch90_fields />
+              FROM acp.TASK_TOUCH90_LOG AS attl
+             WHERE (attl.company_id,attl.store_id,attl.log_date)
+                IN (<#list instances as item>(${item[0]},${item[1]},'${item[2]}')<#if item_has_next>,</#if></#list>)
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+         REPLACE INTO acp.TASK_TOUCH90_LOG
+                      (company_id, store_id, log_date, add_list, add_size, update_list, update_size,tenant_id)
+               VALUES (         ?,         ?,       ?,         ?,       ?,           ?,           ?,        ?)
+            ]]></body>
+        </sql>
+    </model>
+    <model id="TaskSwitchEntity">
+        <sql id="findByTask">
+            <body><![CDATA[
+          SELECT tcs.id AS 'id',
+                 tcs.company_id AS 'companyId',
+                 tcs.store_id AS 'storeId',
+                 tcs.taskType AS 'taskType',
+                 tcs.enbaled AS 'enabled',
+                 tcs.delete_flag AS 'deleteFlag',
+                 tcs.tenant_id AS 'tenantId',
+                 tcs.creator AS 'creator',
+                 tcs.createTime AS 'createTime',
+                 tcs.editor AS 'editor',
+                 tcs.editTime AS 'editTime'
+            FROM BATCH_JOB.TASK_CASE_SWITCH tcs
+           WHERE tcs.taskType = :taskId
+             AND tcs.company_id = :companyId
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="job_carerule_fields">
+            <![CDATA[
+             <#macro carerule_fields>
+                   tcr.task_type AS 'taskType',
+                   tcr.store_id AS 'storeId',
+                   tcr.company_id AS 'companyId',
+                   tcr.enbaled AS 'enabled',
+                   tcr.automatic AS 'automatic',
+                   tcr.content AS 'content',
+                   tcr.details AS 'details',
+                   tcr.delete_flag AS 'deleteFlag',
+                   tcr.tenant_id AS 'tenantId',
+                   tcr.creator AS 'creator',
+                   tcr.createTime AS 'createTime',
+                   tcr.editor AS 'editor',
+                   tcr.editTime AS 'editTime'
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="AbstractCareRuleRule">
+        <sql id="loadTouch90Rules" macros="job_carerule_fields">
+            <body><![CDATA[
+            SELECT <@carerule_fields />
+              FROM BATCH_JOB.TASK_CARE_RULE tcr
+             WHERE tcr.task_type = 90
+               AND tcr.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+       REPLACE INTO BATCH_JOB.TASK_CARE_RULE
+                    ( company_id, store_id, task_type, enbaled, automatic, content,  tenant_id, creator, createTime)
+             VALUES (:companyId,  :storeId, :taskType, :enabled,:automatic,:content, :tenantId, :creator,NOW())
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

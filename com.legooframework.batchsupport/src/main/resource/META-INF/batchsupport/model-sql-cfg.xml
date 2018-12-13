@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="JobInstanceEntity">
+        <sql id="getLastJobInstance">
+            <body><![CDATA[
+            SELECT BJE.JOB_INSTANCE_ID
+              FROM BATCH_JOB.BATCH_JOB_EXECUTION AS BJE
+         LEFT JOIN BATCH_JOB.BATCH_JOB_INSTANCE BJI ON BJE.JOB_INSTANCE_ID = BJI.JOB_INSTANCE_ID
+             WHERE BJI.JOB_NAME = :jobName
+          ORDER BY BJE.CREATE_TIME DESC
+             LIMIT 1
+            ]]></body>
+        </sql>
+        <sql id="getLastJobExecution" dynamic="true">
+            <body><![CDATA[
+            SELECT BJE.JOB_EXECUTION_ID
+              FROM BATCH_JOB.BATCH_JOB_EXECUTION AS BJE
+         LEFT JOIN BATCH_JOB.BATCH_JOB_INSTANCE BJI ON BJE.JOB_INSTANCE_ID = BJI.JOB_INSTANCE_ID
+             WHERE BJI.JOB_NAME = :jobName
+             <#if companyId??>
+               AND BJE.JOB_EXECUTION_ID IN ( SELECT DISTINCT BHEP.JOB_EXECUTION_ID
+                                               FROM BATCH_JOB.BATCH_JOB_EXECUTION_PARAMS BHEP
+                                              WHERE BHEP.JOB_EXECUTION_ID = BJE.JOB_EXECUTION_ID
+                                                AND BHEP.KEY_NAME = 'companyId'
+                                                AND BHEP.LONG_VAL = :companyId )
+             </#if>
+          ORDER BY BJE.CREATE_TIME DESC
+             LIMIT 1
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

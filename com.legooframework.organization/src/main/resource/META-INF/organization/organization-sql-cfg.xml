@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="macro_4_comany">
+            <![CDATA[
+		        <#macro company_select_fields alias hasnext>
+	               ${alias}.id AS 'companyId',
+	               ${alias}.org_type AS 'orgType',
+	               ${alias}.org_code AS 'orgCode',
+	               ${alias}.full_name AS 'comFullName',
+	               ${alias}.short_name AS 'comShortName',
+	               ${alias}.business_license AS 'comBusinessLicense',
+	               ${alias}.detail_address AS 'comDetailAddress',
+	               ${alias}.legal_person AS 'comLegalPerson',
+	               ${alias}.contact_number AS 'comContactNumber',
+	               ${alias}.org_remark AS 'comRemark',
+	               ( SELECT GROUP_CONCAT(ocms.store_id)
+	                   FROM org_store_map_company ocms
+	                  WHERE ocms.company_id = ${alias}.id
+	                    AND ocms.enabled = 1 ) AS storeIds <#if hasnext>, </#if>
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="CompanyEntity">
+        <sql id="active_store" desc="激活门店与公司的关系">
+            <body><![CDATA[
+             UPDATE org_store_map_company
+                SET enabled = 1,creator = :LOGIN_ID
+              WHERE company_id = :companyId
+                AND store_id = :storeId
+            ]]></body>
+        </sql>
+        <sql id="add_store_to_company" desc="增加门店到公司">
+            <body><![CDATA[
+        INSERT INTO org_store_map_company
+                    (company_id, store_id, enabled , creator, createTime, join_date)
+             VALUES (:companyId, :storeId, 1, :LOGIN_ID, NOW(), NOW())
+            ]]></body>
+        </sql>
+        <sql id="load_all_store" desc="获取当前绑定该公司的全部门店">
+            <body><![CDATA[
+        SELECT ocms.company_id AS 'companyId', 
+               ocms.store_id AS 'storeId', 
+               ocms.enabled AS 'enabled', ocms.join_date AS 'joinDate'
+          FROM org_store_map_company ocms
+         WHERE ocms.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="findById" macros="crud_fixed,macro_4_comany">
+            <body><![CDATA[
+             SELECT <@company_select_fields alias="com" hasnext=true />
+                    <@crud_fixed_select alias="com" />
+               FROM org_base_info com
+              WHERE com.delete_flag = 0
+                AND com.org_type = 0
+                AND com.id = :id
+            ]]></body>
+        </sql>
+        <sql id="edit">
+            <body><![CDATA[
+             UPDATE org_base_info
+                SET short_name= :shortName, business_license= :businessLicense,
+                    detail_address= :detailAddress, legal_person= :legalPerson,
+                    contact_number= :contactNumber, org_remark= :remark,
+                    editor= :LOGIN_ID, editTime= NOW()
+              WHERE delete_flag = 0
+                AND org_type = 0
+                AND id = :id
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="macro_4_store">
+            <![CDATA[
+		        <#macro store_select_fields alias hasnext>
+	             ${alias}.id AS 'storeId',
+	             ${alias}.org_type AS 'orgType',
+	             ${alias}.org_code AS 'orgCode',
+	             ${alias}.full_name AS 'storeFullName',
+	             ${alias}.short_name AS 'storeShortName',
+	             ${alias}.business_license AS 'storeBusinessLicense',
+	             ${alias}.detail_address AS 'storeDetailAddress',
+	             ${alias}.legal_person AS 'storeLegalPerson',
+	             ${alias}.contact_number AS 'storeContactNumber',
+	             ${alias}.org_remark AS 'storeRemark',
+                 osi.store_status AS 'storeStatus',
+                 ( SELECT st.field_name
+                    FROM dict_kv_data st
+                   WHERE st.field_value = osi.store_status
+                     AND st.dict_type = osi.status_dict ) AS 'storeStatusName',
+                 ( SELECT GROUP_CONCAT(ocms.company_id)
+                    FROM org_store_map_company ocms
+                   WHERE ocms.store_id = ${alias}.id
+                     AND ocms.enabled = 1 ) AS companyIds,
+                 osi.store_type AS 'storeType',
+                 ( SELECT st.field_name
+                    FROM dict_kv_data st
+                   WHERE st.field_value = osi.store_type
+                     AND st.dict_type = osi.type_dict ) AS 'storeTypeName',
+                 ( SELECT GROUP_CONCAT( CONCAT(osmw.wechat_id, ',' , osmw.webchat_use) SEPARATOR '$' )
+                     FROM org_store_map_wechat osmw
+                    WHERE osmw.effective_flag = 1
+                      AND osmw.store_id = ${alias}.id ) AS wechatInfo,
+                 ( SELECT GROUP_CONCAT( CONCAT(osmd.device_id, ',' , osmd.main_flag) SEPARATOR '$' )
+                     FROM org_store_map_device osmd
+                    WHERE osmd.effective_flag = 1
+                      AND osmd.store_id = ${alias}.id ) AS deviceInfo <#if hasnext>, </#if>
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="StoreEntity">
+        <sql id="findById" macros="crud_fixed,macro_4_store">
+            <body><![CDATA[
+             SELECT <@store_select_fields alias="str" hasnext=true />
+                    <@crud_fixed_select alias="str" />
+               FROM org_base_info str
+          LEFT JOIN org_store_info osi ON str.id = osi.id
+              WHERE str.delete_flag = 0
+                AND str.org_type = 1
+                AND str.id = :id
+            ]]></body>
+        </sql>
+        <sql id="findByEquipment" macros="crud_fixed,macro_4_store">
+            <body><![CDATA[
+             SELECT <@store_select_fields alias="str" hasnext=true />
+                    <@crud_fixed_select alias="str" />
+               FROM org_base_info str
+          LEFT JOIN org_store_info osi ON str.id = osi.id
+              WHERE str.delete_flag = 0
+                AND str.org_type = 1
+                AND str.tenant_id = :TENANT_ID
+                AND str.id IN(
+                    SELECT osmd.store_id
+                      FROM org_store_map_device osmd
+                     WHERE osmd.effective_flag =1
+                       AND osmd.delete_flag =0
+                       AND osmd.tenant_id = :TENANT_ID
+                       AND osmd.device_id = :deviceId )
+            ]]></body>
+        </sql>
+        <sql id="loadAllByCompany" macros="crud_fixed,macro_4_store">
+            <body><![CDATA[
+             SELECT <@store_select_fields alias="str" hasnext=true />
+                    <@crud_fixed_select alias="str" />
+               FROM org_base_info str
+          LEFT JOIN org_store_info osi ON str.id = osi.id
+              WHERE str.delete_flag = 0
+                AND str.org_type = 1
+                AND str.tenant_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="exits" macros="crud_fixed,macro_4_store" desc="检查门店合法性">
+            <body><![CDATA[
+             SELECT <@store_select_fields alias="str" hasnext=true />
+                    <@crud_fixed_select alias="str" />
+               FROM org_base_info str
+          LEFT JOIN org_store_info osi ON str.id = osi.id   
+              WHERE str.delete_flag = 0
+                AND str.org_type = 1
+                AND str.tenant_id = :TENANT_ID
+                AND ( str.id = :id OR str.full_name = :fullName )
+            ]]></body>
+        </sql>
+        <sql id="insert" desc="持久化门店基本信息">
+            <body><![CDATA[
+        INSERT INTO org_base_info
+                    (id, org_code, org_type, full_name, short_name, business_license, detail_address,
+                    legal_person, contact_number, org_remark, delete_flag, tenant_id, creator, createTime)
+             VALUES (:id, :orgCode, :type, :fullName, :shortName, :businessLicense, :detailAddress,
+                     :legalPerson, :contactNumber, :remark, 0,  :tenantId, :creator, NOW())
+            ]]></body>
+        </sql>
+        <sql id="insert_store_info" desc="持久化门店附加信息">
+            <body><![CDATA[
+        INSERT INTO org_store_info
+                    (id, store_status, store_type)
+             VALUES (:id, :storeStatus, :storeType)
+            ]]></body>
+        </sql>
+        <sql id="build_to_company" desc="持久化门店附加信息">
+            <body><![CDATA[
+        INSERT INTO org_store_map_company
+                    (company_id, store_id, enabled , creator, createTime, join_date)
+             VALUES (:companyId, :storeId, 1, :creater, NOW(),  NOW())
+            ]]></body>
+        </sql>
+        <sql id="build_device">
+            <body><![CDATA[
+            INSERT INTO org_store_map_device
+                        (store_id, device_id, main_flag, effective_flag, delete_flag, tenant_id, creator, createTime)
+                 VALUES (:storeId, :equipmentId, :mainTag, :effective, 0, :TENANT_ID, :LOGIN_ID, NOW() )
+            ]]></body>
+        </sql>
+        <sql id="unbuild_device">
+            <body><![CDATA[
+           UPDATE org_store_map_device
+              SET effective_flag = 0 ,editTime = NOW() , editor = :LOGIN_ID
+            WHERE store_id = :storeId
+              AND device_id = :deviceId
+              AND effective_flag = 1
+            ]]></body>
+        </sql>
+        <sql id="unlinked_device">
+            <body><![CDATA[
+           UPDATE org_link_device_info
+              SET device_imie = NULL
+            WHERE effective_flag = 1
+              AND store_id = :storeId
+              AND tenant_id = :TENANT_ID
+            ]]></body>
+        </sql>
+        <sql id="findStoreIdByWechatId">
+            <body><![CDATA[
+           SELECT osmw.store_id AS 'storeId'
+             FROM org_store_map_wechat osmw
+            WHERE osmw.effective_flag = 1
+              AND osmw.wechat_id = :wechatId
+              AND osmw.tenant_id = :TENANT_ID
+            ]]></body>
+        </sql>
+        <sql id="build_wechat">
+            <body><![CDATA[
+           INSERT INTO org_store_map_wechat
+                       (store_id, wechat_id, webchat_use, effective_flag, delete_flag, tenant_id, creator, createTime)
+                VALUES (:storeId, :weichatId, :webchatUse, :effective, 0, :TENANT_ID, :LOGIN_ID, NOW() )
+            ]]></body>
+        </sql>
+    </model>
+    <model id="stroreLinked">
+        <sql id="findLinkedBystoreId">
+            <body><![CDATA[
+           SELECT oldi.id
+             FROM org_link_device_info oldi
+            WHERE effective_flag = 1
+              AND oldi.store_id = :storeId
+              AND oldi.tenant_id = :TENANT_ID
+            ]]></body>
+        </sql>
+        <sql id="bildStoreById">
+            <body><![CDATA[
+           UPDATE org_link_device_info
+              SET device_imie = :deviceId , editTime = NOW() , editor = :LOGIN_ID
+            WHERE effective_flag = 1
+              AND id = :id
+              AND tenant_id = :TENANT_ID
+            ]]></body>
+        </sql>
+        <sql id="bildWechatById">
+            <body><![CDATA[
+           UPDATE org_link_device_info
+              SET wechat_id = :wechatId , editTime = NOW() , editor = :LOGIN_ID
+            WHERE effective_flag = 1
+              AND id = :id
+              AND tenant_id = :TENANT_ID
+            ]]></body>
+        </sql>
+        <sql id="insert4device">
+            <body><![CDATA[
+           INSERT INTO org_link_device_info
+                       (device_imie, store_id, effective_flag, delete_flag, tenant_id,   creator,   createTime)
+                VALUES (:deviceId ,  :storeId, 1,              0,           :TENANT_ID,  :LOGIN_ID,  NOW());
+            ]]></body>
+        </sql>
+        <sql id="insert4wechat">
+            <body><![CDATA[
+           INSERT INTO org_link_device_info
+                       (wechat_id, store_id, effective_flag, delete_flag, tenant_id,   creator,   createTime)
+                VALUES (:wechatId ,:storeId, 1,              0,           :TENANT_ID,  :LOGIN_ID,  NOW());
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="macro_4_employee">
+            <![CDATA[
+            <#macro employee_select_fields alias hasnext>
+               ${alias}.id AS 'employeeId',
+               ${alias}.account_id AS 'accountId',
+               ${alias}.user_name AS 'userName',
+               ${alias}.work_no AS 'workNo',
+               ${alias}.birthday AS 'userBirthday',
+               ${alias}.employee_time AS 'employeeTime',
+               ${alias}.com_workstatus AS 'comWorkStatus',
+               ${alias}.user_sex AS 'userSex',
+               ( SELECT st.field_name
+                    FROM dict_kv_data st
+                   WHERE st.field_value = ${alias}.user_sex
+                     AND st.dict_type = ${alias}.sex_dict ) AS 'userSexName',
+               ${alias}.phone_no AS 'phoneNo',
+               ${alias}.remark AS 'userRemark',
+               ( SELECT st.field_name
+                    FROM dict_kv_data st
+                   WHERE st.field_value = ${alias}.com_workstatus
+                     AND st.dict_type = ${alias}.com_workstatus_dict ) AS 'comWorkStatusName',
+               ${alias}.company_id AS 'companyId',
+               ${alias}.org_id AS 'orgId',
+               (SELECT osme.store_id
+                  FROM org_store_map_employee osme
+                 WHERE osme.effective_flag = 1 AND osme.delete_flag = 0
+                   AND osme.employee_id = ${alias}.id ) AS 'storeId' <#if hasnext>, </#if>
+            </#macro>
+           ]]>
+        </macro>
+    </macros>
+    <model id="EmployeeEntity">
+        <sql id="insert" desc="持久化公司职员基本信息">
+            <body><![CDATA[
+       INSERT INTO csosm_chat.org_employee_info
+                   (id, user_name, work_no, birthday, com_workstatus,  user_sex,  phone_no, 
+                    remark, employee_time,company_id,org_id, delete_flag, tenant_id, creator, createTime)
+            VALUES (:id, :userName, :workNo, :userBirthday, :comWorkStatus, :userSex,  :phoneNo,
+                    :userRemark,:employeeTime,:companyId,:orgId,0, :TENANT_ID, :LOGIN_ID, NOW())
+            ]]></body>
+        </sql>
+        <sql id="insert_store_map_employee" desc="持久化门店与职员信息">
+            <body><![CDATA[
+       INSERT INTO csosm_chat.org_store_map_employee
+                   (store_id,employee_id,effective_flag, delete_flag, tenant_id, creator, createTime)
+            VALUES (:storeId,:employeeId,1,0, :TENANT_ID, :LOGIN_ID, NOW())
+            ]]></body>
+        </sql>
+        <sql id="update" desc="更新职员信息">
+            <body><![CDATA[
+            UPDATE csosm_chat.org_employee_info
+	           SET 
+	           com_workstatus = :comWorkStatus, 
+	           user_name =:userName,
+	           birthday =:userBirthday,
+	           phone_no =:phoneNo,
+	           remark =:userRemark,
+	           employee_time = :employeeTime,
+	           editor = :LOGIN_ID, 
+	           editTime = NOW()
+	        WHERE delete_flag = 0
+	           AND tenant_id = :TENANT_ID
+           	   AND id = :id
+            ]]></body>
+        </sql>
+        <sql id="delete_employee" desc="删除职员信息">
+            <body><![CDATA[
+            UPDATE csosm_chat.org_employee_info
+	           SET 
+	           delete_flag = 1,
+	           editor = :LOGIN_ID, 
+	           editTime = NOW()
+	        WHERE delete_flag = 0
+	           AND tenant_id = :TENANT_ID
+           	   AND id = :id
+            ]]></body>
+        </sql>
+        <sql id="delete_store_employee" desc="删除门店职员信息">
+            <body><![CDATA[
+            UPDATE csosm_chat.org_store_map_employee
+	           SET 
+	           delete_flag = 1,
+	           editor = :LOGIN_ID, 
+	           editTime = NOW()
+	        WHERE delete_flag = 0
+	           AND tenant_id = :TENANT_ID
+           	   AND employee_id = :id
+           	   AND store_id = :storeId
+            ]]></body>
+        </sql>
+        <sql id="update_store" desc="更新职员门店信息">
+            <body><![CDATA[
+            UPDATE csosm_chat.org_store_map_employee
+	           SET 
+	           store_id = :storeId,
+	           editor = :LOGIN_ID, 
+	           editTime = NOW()
+	        WHERE delete_flag = 0
+	           AND tenant_id = :TENANT_ID
+           	   AND employee_id = :empId
+            ]]></body>
+        </sql>
+         <sql id="next_seq" desc="员工序列号生成器">
+            <body><![CDATA[
+            SELECT IFNULL(MAX(user_seq),0) + 1 AS 'seq'
+              FROM csosm_chat.org_employee_info
+            ]]></body>
+        </sql>
+        <sql id="exits" macros="crud_fixed,macro_4_employee">
+            <body><![CDATA[
+        SELECT <@employee_select_fields alias="emp" hasnext=true />
+               <@crud_fixed_select alias="emp" />
+          FROM csosm_chat.org_employee_info emp
+         WHERE emp.delete_flag = 0
+           AND emp.tenant_id = :TENANT_ID
+           AND ( emp.work_no = :workNo OR emp.phone_no = :phoneNo )
+            ]]></body>
+        </sql>
+        <sql id="findById" macros="crud_fixed,macro_4_employee">
+            <body><![CDATA[
+        SELECT <@employee_select_fields alias="emp" hasnext=true />
+               <@crud_fixed_select alias="emp" />
+          FROM csosm_chat.org_employee_info emp
+         WHERE emp.delete_flag = 0
+           AND emp.tenant_id = :TENANT_ID
+           AND emp.id = :id
+            ]]></body>
+        </sql>
+        <sql id="findByAccount" macros="crud_fixed,macro_4_employee">
+            <body><![CDATA[
+        SELECT <@employee_select_fields alias="emp" hasnext=true />
+               <@crud_fixed_select alias="emp" />
+          FROM csosm_chat.org_employee_info emp
+         WHERE emp.delete_flag = 0
+           AND emp.tenant_id = :tenantId
+           AND emp.account_id = :accountId
+            ]]></body>
+        </sql>
+        <sql id="loadAllByStore" macros="crud_fixed,macro_4_employee">
+            <body><![CDATA[
+        SELECT <@employee_select_fields alias="emp" hasnext=true />
+               <@crud_fixed_select alias="emp" />
+          FROM org_employee_info emp
+         WHERE emp.delete_flag = 0
+           AND emp.tenant_id = :TENANT_ID
+           AND emp.id IN (
+                SELECT osme.employee_id
+                  FROM csosm_chat.org_store_map_employee osme
+                 WHERE osme.store_id = :storeId
+                   AND osme.tenant_id = emp.tenant_id
+                   AND osme.effective_flag = 1
+                   AND osme.delete_flag = 0
+           )
+            ]]></body>
+        </sql>
+        <sql id="bildAccount">
+            <body><![CDATA[
+        UPDATE csosm_chat.org_employee_info
+           SET account_id = :accountId, editor = :LOGIN_ID, editTime = NOW()
+         WHERE delete_flag = 0
+           AND tenant_id = :TENANT_ID
+           AND id = :id
+            ]]></body>
+        </sql>
+        <sql id="update_workstatus">
+            <body><![CDATA[
+	        UPDATE csosm_chat.org_employee_info
+	           SET com_workstatus = :comWorkStatus, editor = :LOGIN_ID, editTime = NOW()
+	        WHERE delete_flag = 0
+	           AND tenant_id = :TENANT_ID
+           	   AND id = :id
+            ]]></body>
+        </sql>
+        <sql id="update_employee_orgId">
+            <body><![CDATA[
+	        UPDATE csosm_chat.org_employee_info
+	           SET org_id = :orgId, editor = :LOGIN_ID, editTime = NOW()
+	        WHERE delete_flag = 0
+	           AND tenant_id = :TENANT_ID
+           	   AND id = :id
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

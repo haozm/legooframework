@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="macro_4_pincode">
+            <![CDATA[
+            <#macro select_4_pincode>
+                dpc.id AS 'id',
+                dpc.company_id AS 'companyId',
+                dpc.pin_code AS 'pinCode',
+                dpc.pin_enabled AS 'enabled',
+                dpc.device_id AS 'deviceId',
+                dpc.deadline AS 'deadline',
+                dpc.bind_date AS 'bindingDate'
+            </#macro>
+           ]]>
+        </macro>
+    </macros>
+    <model id="DevicePinCodeEntity">
+        <sql id="findByPinCodes" macros="crud_fixed,macro_4_pincode">
+            <body><![CDATA[
+            SELECT
+                <@select_4_pincode />,
+                <@crud_fixed_select alias="dpc" />
+            FROM
+                device_pin_code AS dpc
+            WHERE
+                dpc.pin_code IN (<#list pinCodes as em>'${em}'<#sep>, </#list>)
+            ]]></body>
+        </sql>
+        <sql id="findByCode" macros="crud_fixed,macro_4_pincode">
+            <body><![CDATA[
+            SELECT
+                <@select_4_pincode />,
+                <@crud_fixed_select alias="dpc" />
+            FROM
+                device_pin_code AS dpc
+            WHERE
+                dpc.pin_code = :pinCode
+            ]]></body>
+        </sql>
+        <sql id="findByCodeAndDevice" macros="crud_fixed,macro_4_pincode">
+            <body><![CDATA[
+            SELECT
+                <@select_4_pincode />,
+                <@crud_fixed_select alias="dpc" />
+            FROM
+                device_pin_code AS dpc
+            WHERE
+                dpc.device_id = :deviceId
+               OR
+                dpc.pin_code = :pinCode
+            ]]></body>
+        </sql>
+        <sql id="findByDeviceId" macros="crud_fixed,macro_4_pincode">
+            <body><![CDATA[
+            SELECT
+                <@select_4_pincode />,
+                <@crud_fixed_select alias="dpc" />
+            FROM
+                device_pin_code AS dpc
+            WHERE
+                dpc.device_id = :deviceId
+            ]]></body>
+        </sql>
+        <sql id="activeDeviceId">
+            <body><![CDATA[
+           UPDATE device_pin_code
+              SET device_id = :deviceId, bind_date = :bindingDate
+            WHERE pin_code = :pinCode
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+           INSERT INTO device_pin_code
+                       (company_id, pin_code, deadline, tenant_id, creator, createTime)
+                VALUES (?,          ?,         ?,       ?,         ?,            NOW())
+            ]]></body>
+        </sql>
+    </model>
+    <model id="TenantNetConfigEntity">
+        <sql id="findByCompany" macros="crud_fixed">
+            <body><![CDATA[
+          SELECT tnc.id AS 'id', tnc.company_id AS 'companyId', tnc.web_domain AS 'webDomain',
+                 tnc.web_port AS 'port', obi.full_name AS 'companyName',
+                 <@crud_fixed_select alias="tnc" />
+            FROM csosm_main.tenant_net_config AS tnc
+       LEFT JOIN csosm_main.org_base_info AS obi ON obi.id = tnc.company_id
+           WHERE tnc.company_id= :companyId
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

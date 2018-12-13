@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macro id="device_fixed">
+        <![CDATA[
+		      	 <#macro device_4_all alias>
+		      	 	${alias}.id AS "deviceId",
+		      	 	${alias}.imei AS "deviceImei",
+		      	 	${alias}.name AS "deviceName",
+		      	 	${alias}.brand AS "deviceBrand",
+		      	 	${alias}.model AS "deviceModel",
+	          		${alias}.color AS "deviceColor",
+	          		${alias}.cpu AS "deviceCpu",
+	          		${alias}.screen_size AS "deviceScreenSize",
+	          		${alias}.os AS "deviceOs",
+	          		${alias}.xport_os AS "deviceXportOs",
+	          		${alias}.screen_size AS "deviceScreenSize",
+	          		${alias}.os_type AS "deviceOsType",
+	          		${alias}.price AS "devicePrice",
+	          		${alias}.state AS "deviceState",
+	          		${alias}.production_date AS "deviceProductionDate",
+	          		${alias}.reqair_reason AS "deviceReqairReason",
+	          		${alias}.scrap_reason AS "deviceScrapReason",
+	          		${alias}.createTime AS "createTime",
+	          		${alias}.editTime AS "editTime"
+		      	 </#macro>
+		      	 <#macro device_4_dto alias>
+		      	 	${alias}.id AS "deviceId",
+		      	 	${alias}.imei AS "deviceImei",
+		      	 	${alias}.name AS "deviceName",
+	          		${alias}.state AS "deviceState"
+		      	 </#macro>
+	         ]]>
+    </macro>
+    <model id="DeviceEntity">
+        <sql id="insert">
+            <body><![CDATA[
+          		INSERT INTO device_base_info 
+					(id,imei,name,brand,model,color,cpu,memory_size,os,xport_os,screen_size,os_type,
+					price,state,production_date,reqair_reason,scrap_reason,imei1,imei2,createTime)
+				VALUES
+					(:id,:imei,:name,:brand,:model,:color,:cpu,:memorySize,:os,:xportOs,:screenSize,:osType,
+					:price,:state,:productionDate,:reqairReason,:scrapReason,:imei1,:imei2,NOW())
+            ]]></body>
+        </sql>
+        <sql id="update_base_info">
+            <body><![CDATA[
+          		UPDATE device_base_info SET
+					name =:name,
+					brand = :brand,
+					model = :model,
+					color = :color,
+					cpu = :cpu,
+					memory_size = :memorySize,
+					os = :os,
+					xport_os = :xportOs,
+					screen_size = :screenSize,
+					os_type = :osType,
+					price = :price,
+					state = :state,
+					production_date = :productionDate,
+					reqair_reason = :reqairReason,
+					scrap_reason = :scrapReason,
+					editTime = NOW()
+				WHERE imei = :imei
+            ]]></body>
+        </sql>
+        <sql id="update_state">
+            <body><![CDATA[
+          		UPDATE device_base_info SET
+					state = :state,
+					editTime = NOW()
+				WHERE imei = :imei
+            ]]></body>
+        </sql>
+        <sql id="findByImei" macros="device_fixed">
+            <body><![CDATA[
+          		SELECT <@device_4_all alias="dev"/>
+          		FROM device_base_info dev
+          		WHERE dev.imei = :imei
+            ]]></body>
+        </sql>
+        <sql id="findById" macros="device_fixed">
+            <body><![CDATA[
+          		SELECT <@device_4_all alias="dev"/>
+          		FROM device_base_info dev
+          		WHERE dev.id = :id
+            ]]></body>
+        </sql>
+    </model>
+    <model id="RemoteCmdEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+          INSERT INTO yycomm.Send_Order_Lis
+                 (tag, fromdeviceid, todeviceid, orderMSG, uuid, sendFlag, success, remark, createtime)
+          VALUES (?, ?, ?, ?, ?, 0, 0, ?, CURRENT_TIMESTAMP)
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

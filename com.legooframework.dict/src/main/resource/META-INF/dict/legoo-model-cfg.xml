@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="dict" version="1.0.0">
+    <depends>
+        <bundle name="legoocore" version="1.0.0" use="required"/>
+        <bundle name="entities" version="1.0.0" use="optional"/>
+    </depends>
+    <evevts>
+        <listen channel="dict-command-channel">
+            <event name="loadDictByTypeEvent"/>
+        </listen>
+    </evevts>
+</model>

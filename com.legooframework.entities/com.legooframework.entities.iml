@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../com.legooframework.entities">
+      <sourceFolder url="file://$MODULE_DIR$/../com.legooframework.entities/src/main/java" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../com.legooframework.entities/src/main/resource" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="extlib" level="application" />
+    <orderEntry type="library" name="servlet-api" level="application" />
+    <orderEntry type="library" name="junit" level="application" />
+    <orderEntry type="module" module-name="org.legooframewrok.base" />
+  </component>
+</module>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="regiscenter" version="1.0.0">
+    <depends>
+        <!-- Optional -->
+        <bundle name="base" version="1.0.0" use="required"/>
+        <bundle name="entities" version="1.0.0" use="optional"/>
+    </depends>
+</model>

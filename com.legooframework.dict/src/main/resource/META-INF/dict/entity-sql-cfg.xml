@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="KvDictEntity">
+        <sql id="loadByType" macros="crud_fixed" desc="获取指定类型的全部字典">
+            <meta>
+                <col id="id" name="唯一标识" type="STRING"/>
+                <col id="type" name="字典分类" type="STRING"/>
+                <col id="value" name="值" type="STRING"/>
+                <col id="name" name="名称" type="STRING"/>
+                <col id="desc" name="描述" type="STRING"/>
+                <col id="index" name="排序" type="INT"/>
+            </meta>
+            <params>
+                <p name="type" type="STRING" required="true"/>
+            </params>
+            <body><![CDATA[
+            SELECT kv.id AS 'dictId', kv.dict_type AS 'type', kv.field_value AS 'value',
+                   kv.field_name AS 'name', kv.field_index AS 'index',
+                   kv.field_desc AS 'desc', <@crud_fixed_select alias="kv" />
+              FROM dict_kv_data AS kv
+             WHERE kv.delete_flag = 0
+               AND kv.dict_type = :type
+               AND kv.tenant_id IN (-1,${TENANT_ID})
+          ORDER BY kv.field_index
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+        INSERT INTO dict_kv_data
+                    (id, dict_type, field_value, field_name, field_index, field_desc, tenant_id, creator, createTime)
+             VALUES (:id, :type, :value, :name, :index, :desc, :tenantId, :creator, NOW())
+              ]]></body>
+        </sql>
+        <sql id="edit">
+            <body><![CDATA[
+             UPDATE dict_kv_data
+                SET field_name = :name, field_index = :index, field_desc = :desc, editor = :editor, editTime = NOW()
+              WHERE id = :id
+                AND kv.tenant_id = :TENANT_ID
+              ]]></body>
+        </sql>
+        <sql id="deleteById" macros="crud_fixed">
+            <body><![CDATA[
+             <@crud_fixed_deleteById tableName="dict_kv_data" />
+              ]]></body>
+        </sql>
+    </model>
+</sqls>
