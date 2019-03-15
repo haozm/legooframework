@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="touch90_fields">
+            <![CDATA[
+                <#macro touch90_fields>
+                     armd.id AS 'id',
+                     armd.task_id AS 'taskId',
+                     trm.store_id AS 'storeId',
+                     trm.member_id AS 'memberId',
+                     armd.task_status AS 'taskStatus',
+                     armd.step_index AS 'stepIndex',
+                     (CASE armd.task_status
+                           WHEN 1 THEN '初始化'
+                           WHEN 2 THEN '执行中'
+                           WHEN 3 THEN '完成'
+                           WHEN 4 THEN '中止'
+                           WHEN 5 THEN '取消'
+                           WHEN 6 THEN '过期'
+                           ELSE '异常数据' END ) AS 'taskStatusDesc',
+                     armd.start_date AS 'startDate',
+                     DATE_FORMAT(DATE_ADD(armd.start_date, INTERVAL 14 HOUR), '%Y-%m-%d %H:%i') AS 'startDateDesc' ,
+                     DATEDIFF(armd.expired_date, NOW()) AS 'expiredTag',
+                     DATE_FORMAT(DATE_ADD(armd.expired_date, INTERVAL 14 HOUR), '%Y-%m-%d %H:%i') AS 'expiredDateDesc' ,
+                     armd.expired_date AS 'expiredDate',
+                     armd.finished_date AS 'finishedDate',
+                     trm.task_type AS 'taskType',
+                     trm.merge_info as 'mergeInfo',
+                     trm.automatic AS 'automatic',
+                     trm.cross_store AS 'crossStore',
+                     IFNULL(trm.service_userid,-1) AS 'serviceUserid',
+                     (CASE trm.cross_store
+                           WHEN 1 THEN '跨店会员'
+                           WHEN 0 THEN '本店会员'
+                           ELSE '普通顾客' END ) AS 'crossStoreDesc'
+                </#macro>
+             ]]>
+        </macro>
+    </macros>
+    <model id="MemberCare">
+        <sql id="touch90_list" dynamic="true" macros="touch90_fields">
+            <body><![CDATA[
+      SELECT <@touch90_fields />
+        FROM TASK_RUN_MONITOR_DETAIL armd
+   LEFT JOIN TASK_RUN_MONITOR trm ON trm.id = armd.task_id
+       WHERE trm.task_type = :taskType
+         AND armd.task_status IN (${taskStatus?join(",")})
+         AND trm.company_id = :companyId
+   <#if single>
+         AND trm.store_id = :storeId
+   <#else>
+         AND trm.store_id IN (${storeIds?join(",")})
+   </#if>
+   <#if crossStoreFlag>
+        AND trm.cross_store = :crossStore
+   </#if>
+   <#if jobDays>
+        AND armd.start_date BETWEEN :job_start AND :job_end
+   </#if>
+    ORDER BY trm.store_id ,trm.member_id, armd.start_date
+       LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+        <sql id="touch90_list_count" dynamic="true">
+            <body><![CDATA[
+      SELECT COUNT(armd.id) AS 'total'
+        FROM TASK_RUN_MONITOR_DETAIL armd
+   LEFT JOIN TASK_RUN_MONITOR trm ON trm.id = armd.task_id
+       WHERE trm.task_type = :taskType
+         AND armd.task_status IN (${taskStatus?join(",")})
+         AND trm.company_id = :companyId
+   <#if single>
+         AND trm.store_id = :storeId
+   <#else>
+         AND trm.store_id IN (${storeIds?join(",")})
+   </#if>
+   <#if crossStoreFlag>
+        AND trm.cross_store = :crossStore
+   </#if>
+   <#if jobDays>
+        AND armd.start_date BETWEEN :job_start AND :job_end
+   </#if>
+            ]]></body>
+        </sql>
+        <sql id="touch90_detail">
+            <body><![CDATA[
+          SELECT armd.id AS 'id',
+                 armd.task_status AS 'taskStatus',
+                 armd.step_index AS 'stepIndex',
+                 (CASE armd.task_status
+                        WHEN 1 then '初始化'
+                        WHEN 2 then '执行中'
+                        WHEN 3 then '完成'
+                        WHEN 4 then '中止'
+                        WHEN 5 then '取消'
+                        WHEN 6 then '过期'
+                        ELSE  '异常数据' END ) AS 'taskStatusDesc',
+                armd.start_date AS 'startDate',
+                DATE_FORMAT(DATE_ADD(armd.start_date, INTERVAL 14 HOUR), '%Y-%m-%d %H:%i') AS 'startDateDesc' ,
+                DATEDIFF(armd.expired_date, NOW()) AS 'expiredTag',
+                DATE_FORMAT(DATE_ADD(armd.expired_date, INTERVAL 14 HOUR), '%Y-%m-%d %H:%i') AS 'expiredDateDesc',
+                armd.expired_date AS 'expiredDate',
+                armd.finished_date AS 'finishedDate'
+             FROM TASK_RUN_MONITOR_DETAIL armd
+        LEFT JOIN TASK_RUN_MONITOR trm ON trm.id = armd.task_id
+            WHERE armd.task_id = :taskId
+         ORDER BY armd.start_date
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

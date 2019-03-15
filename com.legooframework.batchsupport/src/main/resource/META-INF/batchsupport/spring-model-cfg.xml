@@ -14,7 +14,7 @@
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]batchsupport[\\,/].*-sql-cfg.xml$</value>
-                <value>.*[\\,/]base[\\,/]macro-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
             </util:list>
         </property>
     </bean>

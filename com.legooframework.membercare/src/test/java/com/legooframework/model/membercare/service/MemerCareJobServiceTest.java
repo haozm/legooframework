@@ -18,7 +18,7 @@ import java.util.Optional;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/base/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/batchsupport/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/salesrecords/spring-model-cfg.xml",
@@ -32,11 +32,26 @@ public class MemerCareJobServiceTest {
     }
 
     @Test
-    public void getTouch90Job() {
-        Optional<CrmOrganizationEntity> com = organizationAction.findCompanyById(1);
+    public void runTouch90JobByCompany() {
+        Optional<CrmOrganizationEntity> com = organizationAction.findCompanyById(67);
         Preconditions.checkState(com.isPresent());
         careJobService.runTouch90JobByCompany(com.get());
     }
+
+    @Test
+    public void automaticStartingTask() {
+        Optional<CrmOrganizationEntity> com = organizationAction.findCompanyById(67);
+        Preconditions.checkState(com.isPresent());
+        careJobService.automaticStartingTask();
+    }
+
+    @Test
+    public void automaticExpiredTask() {
+        Optional<CrmOrganizationEntity> com = organizationAction.findCompanyById(67);
+        Preconditions.checkState(com.isPresent());
+        careJobService.automaticExpiredTask();
+    }
+
 
     @Autowired
     CrmOrganizationEntityAction organizationAction;

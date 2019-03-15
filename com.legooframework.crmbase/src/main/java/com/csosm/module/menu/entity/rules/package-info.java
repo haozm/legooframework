@@ -1,0 +1,1 @@
+package com.csosm.module.menu.entity.rules;

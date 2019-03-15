@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    <bean id="templatemgsBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/templatemgs/legoo-model-cfg.xml"/>
+    </bean>
+    <!-- ========================= Query SQL Factory ========================= -->
+    <bean id="templatemgsStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]templatemgs[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]base[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="templatemgsCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
+        <property name="caffeineSpecs">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="templatemgsCache" value="initialCapacity=8,maximumSize=1024,expireAfterAccess=5m"/>
+            </util:map>
+        </property>
+    </bean>
+    <bean id="templateClassifyEntityAction"
+          class="com.legooframework.model.templatemgs.entity.TemplateClassifyEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="templatemgsStatementFactory"/>
+        <property name="dataSource" ref="tempDataSource"/>
+        <property name="cacheManager" ref="templatemgsCacheManager"/>
+    </bean>
+    <bean id="templateMgnService" class="com.legooframework.model.templatemgs.service.TemplateMgnService"/>
+</beans>

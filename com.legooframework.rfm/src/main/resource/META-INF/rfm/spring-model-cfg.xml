@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <bean id="rfmEntitySqlFactory" class="com.csosm.commons.jdbc.sqlcfg.SqlMetaEntityFactoryBean">
+        <property name="nameMatch" value=".+[\\/]rfm[\\/].+-entity-sql\.xml$"/>
+    </bean>
+    <!-- ============================ Cache End ============================ -->
+    <bean abstract="true" id="rfmBaseAction" class="com.csosm.commons.entity.BaseEntityAction">
+        <property name="dataSource" ref="crmDataSource"/>
+        <property name="sqlMetaEntityFactory" ref="rfmEntitySqlFactory"/>
+        <property name="asyncEventBus" ref="csosmAsyncEventBus"/>
+    </bean>
+    <!-- ============================ 适配原系统Begin ============================ -->
+    <bean id="rfmEntityAction" class="com.legooframework.model.rfm.entity.RFM4OrgEntityAction"
+          parent="rfmBaseAction"/>
+    <bean id="memberRFMEntityAction" class="com.legooframework.model.rfm.entity.MemberRFMEntityAction"
+          parent="rfmBaseAction"/>
+    <bean id="rfm4OrgService" class="com.legooframework.model.rfm.service.RFM4OrgService"/>
+    <!-- ============================ 适配原系统End ============================ -->
+</beans>

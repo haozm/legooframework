@@ -3,11 +3,12 @@ package com.legooframework.model.membercare.entity;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.legooframework.model.core.jdbc.BatchSetter;
-import com.legooframework.model.core.jdbc.CRUD;
+import com.legooframework.model.core.utils.DateTimeUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Objects;
 import java.util.Optional;
@@ -18,13 +19,13 @@ public class UpcomingTaskDetailEntity extends TaskStatusSupportEntity implements
     private final String taskId;
     private final LocalDateTime startDateTime, expiredDateTime;
     private LocalDateTime finishedDateTime;
-    private CRUD crudTag;
+    private String stepIndex;
 
-    UpcomingTaskDetailEntity(UpcomingTaskEntity taskEntity, LocalDateTime startDateTime, LocalDateTime expiredDateTime) {
+    UpcomingTaskDetailEntity(UpcomingTaskEntity taskEntity, LocalDateTime startDateTime, LocalDateTime expiredDateTime,
+                             String stepIndex) {
         super(UUID.randomUUID().toString(), 100000L, -1L);
         this.startDateTime = startDateTime;
         this.expiredDateTime = expiredDateTime;
-        this.crudTag = CRUD.C;
         LocalDateTime now = LocalDateTime.now();
         if (now.isAfter(expiredDateTime)) {
             setTaskStatus(TaskStatus.Expired);
@@ -32,19 +33,60 @@ public class UpcomingTaskDetailEntity extends TaskStatusSupportEntity implements
             setTaskStatus(TaskStatus.Starting);
         }
         this.taskId = taskEntity.getId();
+        this.stepIndex = stepIndex;
         this.finishedDateTime = null;
     }
 
     // for DB
-    UpcomingTaskDetailEntity(String id, UpcomingTaskEntity taskEntity, TaskStatus taskStatus,
-                             LocalDateTime startDateTime, LocalDateTime expiredDateTime, LocalDateTime finishedDateTime) {
+    UpcomingTaskDetailEntity(String id, String taskId, TaskStatus taskStatus,
+                             LocalDateTime startDateTime, LocalDateTime expiredDateTime,
+                             String stepIndex, LocalDateTime finishedDateTime) {
         super(id, 100000L, -1L);
         this.startDateTime = startDateTime;
         this.expiredDateTime = expiredDateTime;
+        this.stepIndex = stepIndex;
         setTaskStatus(taskStatus);
-        this.taskId = taskEntity.getId();
-        this.crudTag = CRUD.R;
+        this.taskId = taskId;
         this.finishedDateTime = finishedDateTime;
+    }
+
+    public Optional<UpcomingTaskDetailEntity> makeStarting() {
+        if (!super.isCreated()) return Optional.empty();
+        LocalDateTime now = LocalDateTime.now();
+        if (startDateTime.isBefore(now) && expiredDateTime.isAfter(now)) {
+            UpcomingTaskDetailEntity clone = (UpcomingTaskDetailEntity) cloneMe();
+            clone.setTaskStatus(TaskStatus.Starting);
+            return Optional.of(clone);
+        }
+        return Optional.empty();
+    }
+
+    public Optional<UpcomingTaskDetailEntity> makeExpired() {
+        if (!super.isStarting()) return Optional.empty();
+        LocalDateTime now = LocalDateTime.now();
+        if (expiredDateTime.isBefore(now)) {
+            UpcomingTaskDetailEntity clone = (UpcomingTaskDetailEntity) cloneMe();
+            clone.setTaskStatus(TaskStatus.Expired);
+            return Optional.of(clone);
+        }
+        return Optional.empty();
+    }
+
+    // for DB
+    UpcomingTaskDetailEntity(String id, ResultSet res) {
+        super(id, 100000L, -1L);
+        try {
+            this.startDateTime = DateTimeUtils.parseDef(res.getString("startDate"));
+            this.expiredDateTime = DateTimeUtils.parseDef(res.getString("expiredDate"));
+            this.stepIndex = res.getString("stepIndex");
+            setTaskStatus(TaskStatus.paras(res.getInt("taskStatus")));
+            this.taskId = res.getString("taskId");
+            String finishedDate = res.getString("finishedDate");
+            this.finishedDateTime = finishedDate == null ? null : DateTimeUtils.parseDef(finishedDate);
+        } catch (SQLException e) {
+            throw new RuntimeException("Restore UpcomingTaskDetailEntity has SQLException", e);
+        }
+
     }
 
     Optional<UpcomingTaskDetailEntity> canceled() {
@@ -52,10 +94,17 @@ public class UpcomingTaskDetailEntity extends TaskStatusSupportEntity implements
         if (super.isCreated() || isStarting()) {
             UpcomingTaskDetailEntity clone = (UpcomingTaskDetailEntity) cloneMe();
             clone.setTaskStatus(TaskStatus.Canceled);
-            if (this.crudTag == CRUD.R) this.crudTag = CRUD.U;
             return Optional.of(clone);
         }
         return Optional.empty();
+    }
+
+    void canceledSelf() {
+        if (isStarting() || isCreated()) setTaskStatus(TaskStatus.Canceled);
+    }
+
+    LocalDateTime getExpiredDateTime() {
+        return expiredDateTime;
     }
 
     Optional<UpcomingTaskDetailEntity> finished() {
@@ -66,7 +115,6 @@ public class UpcomingTaskDetailEntity extends TaskStatusSupportEntity implements
             clone.setTaskStatus(TaskStatus.Finished);
             clone.finishedDateTime = LocalDateTime.now();
             clone.setEditTime(DateTime.now());
-            if (this.crudTag == CRUD.R) this.crudTag = CRUD.U;
             return Optional.of(clone);
         }
         return Optional.empty();
@@ -74,18 +122,6 @@ public class UpcomingTaskDetailEntity extends TaskStatusSupportEntity implements
 
     LocalDateTime getFinishedDateTime() {
         return finishedDateTime;
-    }
-
-    public boolean isCRUD4Insert() {
-        return CRUD.C == crudTag;
-    }
-
-    public boolean isCRUD4Reader() {
-        return CRUD.R == crudTag;
-    }
-
-    public boolean isCRUD4Update() {
-        return CRUD.U == crudTag;
     }
 
     LocalDateTime getStartDateTime() {
@@ -99,7 +135,8 @@ public class UpcomingTaskDetailEntity extends TaskStatusSupportEntity implements
         ps.setObject(3, this.getTaskStatus().getStatus());
         ps.setObject(4, this.startDateTime.toDate());
         ps.setObject(5, this.expiredDateTime.toDate());
-        ps.setObject(6, this.getCreateTime().toDate());
+        ps.setObject(6, this.stepIndex);
+        ps.setObject(7, this.getCreateTime().toDate());
     }
 
     @Override

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="jwt_token_fields">
+            <![CDATA[
+	         <#macro jwt_token_fields>
+                   wti.id AS 'id',
+                   wti.login_name AS 'loginName',
+                   wti.login_channel AS 'loginChannel',
+                   wti.login_host AS 'loginHost',
+                   wti.login_datetime AS 'loginDateTime',
+                   wti.last_visittime AS 'lastVisittime',
+                   wti.logout_datetime AS 'logoutDateTime',
+                   wti.expired_time AS 'expiredTime',
+                   wti.login_token AS 'loginToken',
+                   wti.remark AS 'remark',
+                   wti.delete_flag AS 'deleteFlag',
+                   wti.tenant_id AS 'tenantId',
+                   wti.creator AS 'creator',
+                   wti.createTime AS 'createTime',
+                   wti.editor AS 'editor',
+                   wti.editTime AS 'editTime'
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="JWTokenEntity">
+        <sql id="loadJWToken" macros="jwt_token_fields">
+            <body><![CDATA[
+            SELECT <@jwt_token_fields />
+              FROM WEB_TOKEN_INFO AS wti
+             WHERE wti.login_token = :loginToken
+               AND wti.delete_flag = 0
+            ]]></body>
+        </sql>
+        <sql id="findById" macros="jwt_token_fields">
+            <body><![CDATA[
+            SELECT <@jwt_token_fields />
+              FROM WEB_TOKEN_INFO AS wti
+             WHERE wti.id = :id
+               AND wti.delete_flag = 0
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+           INSERT INTO WEB_TOKEN_INFO
+                       ( id, login_name, login_channel, login_host, login_datetime, last_visittime, expired_time, login_token, tenant_id, creator, createTime)
+                VALUES (:id, :loginName, :loginChannle, :loginHost, :loginDateTime, :lastVisitTime, :expiredTime, :loginToken, -1,        -1,      CURRENT_TIMESTAMP)
+            ]]></body>
+        </sql>
+        <sql id="update">
+            <body><![CDATA[
+                UPDATE WEB_TOKEN_INFO
+                   SET last_visittime = :lastVisitTime, logout_datetime = :logoutDateTime ,remark = :remark
+                 WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="batch_logout">
+            <body><![CDATA[
+                UPDATE WEB_TOKEN_INFO
+                   SET logout_datetime = ?, remark = ?
+                 WHERE id = ?
+            ]]></body>
+        </sql>
+        <sql id="loadEnabledTokenByLoginName" macros="jwt_token_fields">
+            <body><![CDATA[
+            SELECT <@jwt_token_fields />
+              FROM WEB_TOKEN_INFO AS wti
+             WHERE wti.delete_flag = 0
+               AND wti.logout_datetime IS NOT NULL
+               AND wti.login_name = :loginName
+               AND wti.login_channel = :loginChannel
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

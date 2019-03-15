@@ -48,17 +48,11 @@ public class Touch90JobEntity extends BaseEntity<Long> {
                 .toJobParameters();
     }
 
-    public Optional<Touch90JobEntity> nextJob() {
-        LocalDateTime _next_time = LocalDateTime.now().plusMinutes(30);
-        if (_next_time.isBefore(this.endTime)) return Optional.empty();
-        Date _start = this.endTime.plusSeconds(1).toDate();
-        Date _end = LocalDateTime.now().toDate();
-        return Optional.of(new Touch90JobEntity(null, company, LocalDateTime.fromDateFields(_start),
-                LocalDateTime.fromDateFields(_end)));
-    }
-
-    public String getJobName() {
-        return JOB_NAME;
+    public Optional<Touch90JobEntity> nextJobParameters() {
+        LocalDateTime _next_time = this.endTime.plusMinutes(35);
+        LocalDateTime _now = LocalDateTime.now();
+        if (_now.isBefore(_next_time)) return Optional.empty();
+        return Optional.of(new Touch90JobEntity(null, company, this.endTime.plusSeconds(1), _now));
     }
 
     @Override

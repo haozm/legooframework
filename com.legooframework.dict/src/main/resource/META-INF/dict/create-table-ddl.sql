@@ -14,6 +14,8 @@ CREATE TABLE dict_kv_data (
 	editor BIGINT(20) NULL DEFAULT NULL,
 	editTime DATETIME NULL DEFAULT NULL,
 	PRIMARY KEY (id)
-)
-COLLATE='utf8mb3'
-ENGINE=InnoDB;
+) DEFAULT CHARSET = utf8mb4
+  COLLATE = 'utf8mb4_general_ci'
+  ENGINE = InnoDB;
+
+RENAME TABLE dict_kv_data TO DICT_KV_DATA;

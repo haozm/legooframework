@@ -7,4 +7,5 @@ public class JobInstanceEntity extends BaseEntity<Long> {
     public JobInstanceEntity(Long id) {
         super(id);
     }
+
 }

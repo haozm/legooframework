@@ -25,7 +25,7 @@ public class JobInstanceEntityAction extends BaseEntityAction<JobInstanceEntity>
     public List<String> loadAllJobInstance() {
         List<String> jobNames = jobExplorer.getJobNames();
         if (logger.isTraceEnabled())
-            logger.trace(String.format("loadAllJob is %s", jobNames));
+            logger.trace(String.format("loadAllJobInstance is %s", jobNames));
         return jobNames;
     }
 

@@ -1,75 +1,74 @@
 package com.legooframework.model.crmadapter.entity;
 
+import com.google.common.base.Function;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Ordering;
 import com.legooframework.model.core.base.entity.BaseEntity;
-import com.legooframework.model.core.jdbc.ResultSetUtil;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
 public class CrmEmployeeEntity extends BaseEntity<Integer> {
 
-    private final Integer loginId;
-    // 1  启用  2 停用
-    private Integer companyId, organizationId, storeId, employeeState;
-    private String userName;
-    private Collection<Integer> roleIds;
+    private Integer companyId, orgId, storeId;
+    private String userName, password;
+    private List<CrmRole> roles;
+    private static Ordering<CrmRole> ORDERING = Ordering.natural()
+            .onResultOf((Function<CrmRole, Integer>) crmRole -> crmRole != null ? crmRole.getPower() : 0);
 
-    CrmEmployeeEntity(Integer id, ResultSet res) {
-        super(id, res);
-        try {
-            String role_ids = res.getString("roleIds");
-            if (!Strings.isNullOrEmpty(role_ids)) {
-                this.roleIds = Sets.newHashSet();
-                Stream.of(StringUtils.split(role_ids, ',')).forEach(x -> roleIds.add(Integer.valueOf(x)));
-            } else {
-                this.roleIds = null;
-            }
-            this.organizationId = ResultSetUtil.getOptObject(res, "organizationId", Integer.class).orElse(null);
-            this.storeId = ResultSetUtil.getOptObject(res, "storeId", Integer.class).orElse(null);
-            this.companyId = ResultSetUtil.getObject(res, "companyId", Integer.class);
-            this.loginId = ResultSetUtil.getObject(res, "loginId", Integer.class);
-            this.employeeState = ResultSetUtil.getObject(res, "employeeState", Integer.class);
-            this.userName = ResultSetUtil.getOptString(res, "userName", null);
-        } catch (SQLException e) {
-            throw new RuntimeException("Restore CrmEmployeeEntity has SQLException", e);
+    CrmEmployeeEntity(Integer id, Integer companyId, Integer orgId, Integer storeId,
+                      String userName, String roleIds, String password) {
+        super(id);
+        this.companyId = companyId;
+        this.orgId = orgId;
+        this.storeId = storeId;
+        this.password = password;
+        this.userName = userName;
+        if (!Strings.isNullOrEmpty(roleIds)) {
+            List<CrmRole> _roles = Lists.newArrayList();
+            Stream.of(StringUtils.split(roleIds, ',')).forEach(x -> {
+                _roles.add(CrmRole.parse(Integer.valueOf(x)));
+            });
+            this.roles = ImmutableList.copyOf(ORDERING.sortedCopy(_roles));
+        } else {
+            this.roles = null;
         }
     }
 
-    public boolean isDianzhang() {
-        return getRoleIds().isPresent() && getRoleIds().get().contains(5);
+    public boolean isOnlyStore() {
+        if (CollectionUtils.isEmpty(roles)) return false;
+        return roles.get(roles.size() - 1).equals(CrmRole.ShoppingGuideRole) ||
+                roles.get(roles.size() - 1).equals(CrmRole.StoreManagerRole);
     }
 
-    public boolean isDaogou() {
-        return getRoleIds().isPresent() && getRoleIds().get().contains(7);
+    public boolean hasStoreManager() {
+        return CollectionUtils.isNotEmpty(roles) && roles.contains(CrmRole.StoreManagerRole);
     }
 
-    public Optional<Collection<Integer>> getRoleIds() {
-        return Optional.ofNullable(roleIds);
+    public boolean hasDaogou() {
+        return CollectionUtils.isNotEmpty(roles) && roles.contains(CrmRole.ShoppingGuideRole);
     }
 
-    private void setEmployeeState(Integer employeeState) {
-        this.employeeState = employeeState;
+
+    public Integer getComId() {
+        return companyId;
     }
 
-    public Optional<Integer> getOrganizationId() {
-        return Optional.ofNullable(organizationId);
+    public Optional<Integer> getOrgId() {
+        return Optional.ofNullable(orgId);
     }
 
     public Integer getCompanyId() {
         return companyId;
     }
 
-    public boolean isEnabled() {
-        return 1 == this.employeeState;
-    }
 
     public Optional<Integer> getStoreId() {
         return Optional.ofNullable(storeId);
@@ -78,14 +77,15 @@ public class CrmEmployeeEntity extends BaseEntity<Integer> {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
-                .add("loginId", loginId)
                 .add("companyId", companyId)
-                .add("organizationId", organizationId)
                 .add("storeId", storeId)
-                .add("employeeState", employeeState)
                 .add("userName", userName)
-                .add("roleIds", roleIds)
+                .add("roleIds", roles)
                 .toString();
+    }
+
+    public String getUserName() {
+        return userName;
     }
 
     @Override
@@ -94,17 +94,19 @@ public class CrmEmployeeEntity extends BaseEntity<Integer> {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         CrmEmployeeEntity that = (CrmEmployeeEntity) o;
-        return Objects.equals(loginId, that.loginId) &&
-                Objects.equals(companyId, that.companyId) &&
-                Objects.equals(organizationId, that.organizationId) &&
+        return Objects.equals(companyId, that.companyId) &&
+                Objects.equals(orgId, that.orgId) &&
                 Objects.equals(storeId, that.storeId) &&
-                Objects.equals(employeeState, that.employeeState) &&
                 Objects.equals(userName, that.userName) &&
-                Objects.equals(roleIds, that.roleIds);
+                Objects.equals(roles, that.roles);
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), loginId, companyId, organizationId, storeId, employeeState, userName, roleIds);
+        return Objects.hash(super.hashCode(), companyId, orgId, storeId, userName, roles);
     }
 }

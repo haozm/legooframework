@@ -6,21 +6,20 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
        					   http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
                            http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd">
-    <bean id="devicesBundle" class="com.legooframework.model.osgi.LegooBundleFactoryBean">
+    <bean id="devicesBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/devices/legoo-model-cfg.xml"/>
     </bean>
 
-    <bean id="devicesStatementFactory" class="com.legooframework.model.jdbc.sqlengine.SQLStatementFactoryBean">
+    <bean id="devicesStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]devices[\\,/]entity-sql-cfg.xml$</value>
-                <value>.*[\\,/]base[\\,/]macro-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
             </util:list>
         </property>
     </bean>
-
     <!-- ========================= Query SQL Factory ========================= -->
-    <bean id="devQueryStatementFactory" class="com.legooframework.model.jdbc.sqlengine.SQLStatementFactoryBean">
+    <bean id="devQueryStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]devices[\\,/].*-query-cfg.xml$</value>
@@ -28,23 +27,23 @@
             </util:list>
         </property>
     </bean>
-    <bean id="deviceJdbcQuerySupport" class="com.legooframework.model.jdbc.JdbcQuerySupport">
+    <bean id="deviceJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
         <qualifier value="query"/>
         <property name="statementFactory" ref="devQueryStatementFactory"/>
-        <property name="dataSource" ref="dataSource"/>
+        <property name="dataSource" ref="deviceDataSource"/>
     </bean>
-
     <bean id="deviceEntityAction" class="com.legooframework.model.devices.entity.DeviceEntityAction"
           parent="baseEntityAction">
         <property name="statementFactory" ref="devicesStatementFactory"/>
+        <property name="dataSource" ref="deviceDataSource"/>
     </bean>
-    <bean id="remoteCmdAction" class="com.legooframework.model.devices.entity.RemoteCmdAction"
+    <!--<bean id="remoteCmdAction" class="com.legooframework.model.devices.entity.RemoteCmdAction"
           parent="baseEntityAction">
         <property name="statementFactory" ref="devicesStatementFactory"/>
-    </bean>
+        <property name="dataSource" ref="deviceDataSource"/>
+    </bean>-->
 
     <bean id="devicesEventListenerService" class="com.legooframework.model.devices.service.EventListenerService"/>
-    <bean id="devicesRemoteCmdService" class="com.legooframework.model.devices.service.RemoteCmdService"/>
 
     <int:chain id="device-chain" input-channel="syncEventBus" output-channel="nullChannel">
         <int:filter ref="devicesBundle"/>

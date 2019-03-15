@@ -34,7 +34,7 @@
     <model id="DeviceEntity">
         <sql id="insert">
             <body><![CDATA[
-          		INSERT INTO device_base_info 
+          		INSERT INTO DEVICE_BASE_INFO
 					(id,imei,name,brand,model,color,cpu,memory_size,os,xport_os,screen_size,os_type,
 					price,state,production_date,reqair_reason,scrap_reason,imei1,imei2,createTime)
 				VALUES
@@ -44,7 +44,7 @@
         </sql>
         <sql id="update_base_info">
             <body><![CDATA[
-          		UPDATE device_base_info SET
+          		UPDATE DEVICE_BASE_INFO SET
 					name =:name,
 					brand = :brand,
 					model = :model,
@@ -66,7 +66,7 @@
         </sql>
         <sql id="update_state">
             <body><![CDATA[
-          		UPDATE device_base_info SET
+          		UPDATE DEVICE_BASE_INFO SET
 					state = :state,
 					editTime = NOW()
 				WHERE imei = :imei
@@ -74,15 +74,15 @@
         </sql>
         <sql id="findByImei" macros="device_fixed">
             <body><![CDATA[
-          		SELECT <@device_4_all alias="dev"/>
-          		FROM device_base_info dev
-          		WHERE dev.imei = :imei
+          	SELECT <@device_4_all alias="dev"/>
+          	  FROM DEVICE_BASE_INFO dev
+          	 WHERE dev.imei = :imei
             ]]></body>
         </sql>
         <sql id="findById" macros="device_fixed">
             <body><![CDATA[
           		SELECT <@device_4_all alias="dev"/>
-          		FROM device_base_info dev
+          		FROM DEVICE_BASE_INFO dev
           		WHERE dev.id = :id
             ]]></body>
         </sql>
@@ -90,7 +90,7 @@
     <model id="RemoteCmdEntity">
         <sql id="batchInsert">
             <body><![CDATA[
-          INSERT INTO yycomm.Send_Order_Lis
+          INSERT INTO yycomm.SEND_ORDER_LIS
                  (tag, fromdeviceid, todeviceid, orderMSG, uuid, sendFlag, success, remark, createtime)
           VALUES (?, ?, ?, ?, ?, 0, 0, ?, CURRENT_TIMESTAMP)
             ]]></body>

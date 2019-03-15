@@ -12,7 +12,10 @@
         <Logger name="com.legooframework" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="com.legooframework.model.core.jdbc" level="INFO" additivity="false">
+        <Logger name="com.csosm" level="DEBUG" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="com.legooframework.model.core.jdbc" level="debug" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Logger name="org.springframework" level="INFO" additivity="false">

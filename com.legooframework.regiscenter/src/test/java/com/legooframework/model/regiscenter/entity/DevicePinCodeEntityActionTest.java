@@ -1,12 +1,17 @@
 package com.legooframework.model.regiscenter.entity;
 
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.organization.entity.CompanyEntity;
-import com.legooframework.model.organization.entity.CompanyEntityAction;
+import com.legooframework.model.core.jdbc.JdbcQuerySupport;
+import com.legooframework.model.core.jdbc.PagingResult;
+import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
+import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
+import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.crmadapter.entity.CrmStoreEntityAction;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
@@ -17,9 +22,8 @@ import java.util.Optional;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/base/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/integration/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/organization/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/regiscenter/spring-model-cfg.xml"}
 )
 public class DevicePinCodeEntityActionTest {
@@ -28,23 +32,25 @@ public class DevicePinCodeEntityActionTest {
     @Test
     public void activeDeviceId() {
         LoginContextHolder.setCtx(new LoginContextTest());
-        boolean fa = devicePinCodeEntityAction.activeDeviceId("162008", "VIP_092823123");
-        System.out.println(fa);
+        //boolean fa = devicePinCodeEntityAction.activeDeviceId("162008", "VIP_092823123");
+        //  System.out.println(fa);
     }
 
     @Test
-    public void batchCreatePinCodes() {
+    public void activeDevice() {
         LoginContextHolder.setCtx(new LoginContextTest());
-        Optional<CompanyEntity> com = companyEntityAction.findById(100000000L);
-        Assert.assertTrue(com.isPresent());
-        devicePinCodeEntityAction.batchCreatePinCodes(com.get(), null, 20);
+        Optional<CrmOrganizationEntity> com = companyEntityAction.findCompanyById(1);
+        // 34
+        Optional<CrmStoreEntity> store = storeAction.findById(com.get(), 34);
+        devicePinCodeEntityAction.activeDevice("842143", "090-90909379487324", store.get());
     }
 
     @Test
     public void findByCode() {
         LoginContextHolder.setCtx(new LoginContextTest());
-        Optional<DevicePinCodeEntity> asd = devicePinCodeEntityAction.findByCode("216012");
+        Optional<DevicePinCodeEntity> asd = devicePinCodeEntityAction.findByCode("344107");
         Assert.assertTrue(asd.isPresent());
+        System.out.println(asd.get().getStauts());
     }
 
     @Test
@@ -55,11 +61,29 @@ public class DevicePinCodeEntityActionTest {
     }
 
     @Test
-    public void findByDeviceId() {
+    public void batchCreatePinCodes() {
+        LoginContextHolder.setCtx(new LoginContextTest());
+        Optional<CrmOrganizationEntity> com = companyEntityAction.findCompanyById(1);
+        devicePinCodeEntityAction.batchCreatePinCodes(com.get(), 4);
+    }
+
+    @Test
+    public void page() {
+        LoginContextHolder.setCtx(new LoginContextTest());
+        PagingResult pagingResult = jdbcQuerySupport.queryForPage("DevicePinCodeEntity", "loadPincode", 1, 20,
+                null);
+        System.out.println(pagingResult.toData());
     }
 
     @Autowired
-    CompanyEntityAction companyEntityAction;
+    @Qualifier(value = "regiscenterJdbcQuery")
+    private JdbcQuerySupport jdbcQuerySupport;
+
+    @Autowired
+    CrmStoreEntityAction storeAction;
+    @Autowired
+    CrmOrganizationEntityAction companyEntityAction;
     @Autowired
     DevicePinCodeEntityAction devicePinCodeEntityAction;
+
 }

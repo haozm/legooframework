@@ -8,23 +8,37 @@
                 dpc.company_id AS 'companyId',
                 dpc.pin_code AS 'pinCode',
                 dpc.pin_enabled AS 'enabled',
+                dpc.batch_no AS 'batchNo',
                 dpc.device_id AS 'deviceId',
-                dpc.deadline AS 'deadline',
-                dpc.bind_date AS 'bindingDate'
+                dpc.store_id AS 'storeId',
+                dpc.pincode_status AS 'pinCodeStatus',
+                DATE_ADD(dpc.bind_date, INTERVAL 1 DAY) AS 'bindingDate'
             </#macro>
            ]]>
         </macro>
     </macros>
     <model id="DevicePinCodeEntity">
-        <sql id="findByPinCodes" macros="crud_fixed,macro_4_pincode">
+        <sql id="findByPinCodes" dynamic="true">
+            <body><![CDATA[
+           SELECT
+                dpc.pin_code AS 'pinCode'
+            FROM
+                DEVICE_PIN_CODE AS dpc
+            WHERE
+                dpc.pin_code IN (<#list pinCodes as em>'${em}'<#sep>, </#list>)
+            ]]></body>
+        </sql>
+        <sql id="findByBatchNo" macros="crud_fixed,macro_4_pincode">
             <body><![CDATA[
             SELECT
                 <@select_4_pincode />,
                 <@crud_fixed_select alias="dpc" />
             FROM
-                device_pin_code AS dpc
+                DEVICE_PIN_CODE AS dpc
             WHERE
-                dpc.pin_code IN (<#list pinCodes as em>'${em}'<#sep>, </#list>)
+                dpc.batch_no = :batchNo
+              AND dpc.pin_enabled = 1
+              AND dpc.company_id = :companyId
             ]]></body>
         </sql>
         <sql id="findByCode" macros="crud_fixed,macro_4_pincode">
@@ -33,9 +47,10 @@
                 <@select_4_pincode />,
                 <@crud_fixed_select alias="dpc" />
             FROM
-                device_pin_code AS dpc
+                DEVICE_PIN_CODE AS dpc
             WHERE
                 dpc.pin_code = :pinCode
+              AND dpc.pin_enabled = 1
             ]]></body>
         </sql>
         <sql id="findByCodeAndDevice" macros="crud_fixed,macro_4_pincode">
@@ -44,11 +59,10 @@
                 <@select_4_pincode />,
                 <@crud_fixed_select alias="dpc" />
             FROM
-                device_pin_code AS dpc
+                DEVICE_PIN_CODE AS dpc
             WHERE
-                dpc.device_id = :deviceId
-               OR
-                dpc.pin_code = :pinCode
+                  dpc.pin_enabled = 1
+              AND (dpc.device_id = :deviceId OR dpc.pin_code = :pinCode )
             ]]></body>
         </sql>
         <sql id="findByDeviceId" macros="crud_fixed,macro_4_pincode">
@@ -57,35 +71,98 @@
                 <@select_4_pincode />,
                 <@crud_fixed_select alias="dpc" />
             FROM
-                device_pin_code AS dpc
+                DEVICE_PIN_CODE AS dpc
             WHERE
-                dpc.device_id = :deviceId
+                dpc.pin_enabled = 1
+            AND dpc.device_id = :deviceId
             ]]></body>
         </sql>
         <sql id="activeDeviceId">
             <body><![CDATA[
-           UPDATE device_pin_code
-              SET device_id = :deviceId, bind_date = :bindingDate
+           UPDATE DEVICE_PIN_CODE
+              SET device_id = :deviceId, bind_date = :bindingDate, pincode_status = :pinCodeStatus
             WHERE pin_code = :pinCode
+              AND pin_enabled = 1
+            ]]></body>
+        </sql>
+        <sql id="disabledByDevice">
+            <body><![CDATA[
+           UPDATE DEVICE_PIN_CODE
+              SET pin_enabled = 0
+            WHERE device_id = :deviceId
+              AND pin_enabled = 1
+            ]]></body>
+        </sql>
+        <sql id="changeDevice">
+            <body><![CDATA[
+          INSERT INTO DEVICE_PIN_CODE
+                      (company_id,  pin_code, pin_enabled, device_id,  bind_date,    store_id,  pincode_status,tenant_id, creator, createTime)
+               VALUES (:companyId,  :pinCode, :enabled ,   :deviceId , :bindingDate, :storeId, :pinCodeStatus ,100000000, -1,    NOW() )
             ]]></body>
         </sql>
         <sql id="batchInsert">
             <body><![CDATA[
-           INSERT INTO device_pin_code
-                       (company_id, pin_code, deadline, tenant_id, creator, createTime)
-                VALUES (?,          ?,         ?,       ?,         ?,            NOW())
+           INSERT INTO DEVICE_PIN_CODE
+                       (company_id, pin_code, pincode_status, batch_no,tenant_id, creator, createTime)
+                VALUES (?,          ?,        ?,              ?,        ?,         ?,            NOW())
             ]]></body>
         </sql>
     </model>
     <model id="TenantNetConfigEntity">
         <sql id="findByCompany" macros="crud_fixed">
             <body><![CDATA[
-          SELECT tnc.id AS 'id', tnc.company_id AS 'companyId', tnc.web_domain AS 'webDomain',
-                 tnc.web_port AS 'port', obi.full_name AS 'companyName',
+          SELECT tnc.id AS 'id',
+                 tnc.company_id AS 'companyId',
+                 tnc.web_domain AS 'webDomain',
+                 tnc.web_port AS 'port',
                  <@crud_fixed_select alias="tnc" />
-            FROM csosm_main.tenant_net_config AS tnc
-       LEFT JOIN csosm_main.org_base_info AS obi ON obi.id = tnc.company_id
+            FROM TENANT_NET_CONFIG AS tnc
            WHERE tnc.company_id= :companyId
+            ]]></body>
+        </sql>
+    </model>
+    <model id="StoreActiveInfoEntity">
+        <sql id="findByDeviceId" macros="crud_fixed">
+            <body><![CDATA[
+          SELECT sai.id AS 'id',
+                 sai.company_id AS 'companyId',
+                 sai.store_id AS 'storeId',
+                 sai.device_id AS 'deviceId',
+                 sai.deadline AS 'deadline',
+                 sai.active_date AS 'activeDate',
+                 <@crud_fixed_select alias="sai" />
+            FROM STORE_ACTIVED_INFO AS sai
+           WHERE sai.device_id= :deviceId
+             AND sai.delete_flag = 0
+            ]]></body>
+        </sql>
+        <sql id="findByStore" macros="crud_fixed">
+            <body><![CDATA[
+          SELECT sai.id AS 'id',
+                 sai.company_id AS 'companyId',
+                 sai.store_id AS 'storeId',
+                 sai.device_id AS 'deviceId',
+                 sai.deadline AS 'deadline',
+                 sai.active_date AS 'activeDate',
+                 <@crud_fixed_select alias="sai" />
+            FROM STORE_ACTIVED_INFO AS sai
+           WHERE sai.store_id= :storeId
+             AND sai.company_id = :companyId
+             AND sai.delete_flag = 0
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+          INSERT INTO STORE_ACTIVED_INFO
+                      (company_id, store_id, device_id, active_date, deadline, tenant_id, creator, createTime)
+               VALUES (:companyId, :storeId, :deviceId, :activeDate, :deadline,:tenantId, 1,       NOW());
+            ]]></body>
+        </sql>
+        <sql id="changeDevice">
+            <body><![CDATA[
+               UPDATE STORE_ACTIVED_INFO
+                  SET device_id = :deviceId ,editTime = NOW()
+                WHERE id = :id
             ]]></body>
         </sql>
     </model>

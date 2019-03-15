@@ -1,1 +1,0 @@
-package com.legooframework.model.regiscenter.entity;

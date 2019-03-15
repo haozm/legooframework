@@ -10,9 +10,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="org.legooframewrok.base" />
     <orderEntry type="library" name="extlib" level="application" />
     <orderEntry type="library" name="junit" level="application" />
     <orderEntry type="library" name="servlet-api" level="application" />
+    <orderEntry type="module" module-name="com.legooframework.core" />
   </component>
 </module>

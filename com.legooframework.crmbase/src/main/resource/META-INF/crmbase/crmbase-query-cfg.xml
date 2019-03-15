@@ -1,0 +1,507 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="member_fileds_list">
+            <![CDATA[
+		        <#macro member_fileds_list prefix goo>
+	               ${prefix}.id AS 'mmId',
+	               ${prefix}.birthday AS 'birthday_date',
+	               DATE_FORMAT(${prefix}.birthday,'%Y-%m-%d') AS 'birthday',
+	               ${prefix}.calendarType AS 'calendarType',
+                   ${prefix}.memberType AS 'memberType',
+                   ${prefix}.name AS 'userName',
+                   ${prefix}.oldMemberCode AS 'oldMemberCode',
+                   ${prefix}.phone AS 'phone',
+                   ${prefix}.memberCardNum AS 'memberCardNum',
+                   ${prefix}.sex AS 'sex',
+                   ${prefix}.totalConsumeAmount AS 'totalConsumeAmount',
+                   ${prefix}.consumeTotalCount AS 'consumeTotalCount',
+                   ${prefix}.memberCardType_id AS 'memberCardTypeId',
+                   ${prefix}.serviceLevel AS 'serviceLevel',
+                   DATE_FORMAT(${prefix}.lastVisitTime,'%Y-%m-%d %H:%i:%s') AS 'lastVisit',
+                   ${prefix}.consumeTotalCountCurYear AS 'consumeTotalCountCurYear',
+                   ${prefix}.totalConsumeAmountCurYear AS 'totalConsumeAmountCurYear',
+                   ${prefix}.status AS 'status'<#if goo>,</#if>
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="member">
+        <sql id="findById" dynamic="true" macros="member_fileds_list">
+            <params>
+                <p name="memberId" type="int" use="required"/>
+            </params>
+            <body><![CDATA[
+            SELECT DISTINCT <@member_fileds_list prefix="mm" goo=true />
+                   cmt.name AS 'memberCardTypeName',
+                   st.id AS 'storeId',
+                   st.name AS 'storeName',
+                   CONCAT(rfm.rLevel, ',' ,rfm.fLevel, ',' , rfm.mLevel) AS 'rfmValue'
+              FROM crm_member mm
+         LEFT JOIN crm_store_member rt ON mm.id = rt.member_id
+         LEFT JOIN acp_store st ON st.id = rt.store_id
+         LEFT JOIN crm_membercardtype cmt ON mm.memberCardType_id = cmt.id
+         LEFT JOIN crm_memberrfm rfm ON rfm.member_id = mm.id AND rfm.store_id = rt.store_id
+             WHERE mm.id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="loadPurchasingBehavior">
+            <body><![CDATA[
+            SELECT   DATE_FORMAT(cmpb.compute_time,'%Y-%m-%d %H:%i:%s') AS 'compute_time',
+                     DATE_FORMAT(cmpb.c_recent_buy_time,'%Y-%m-%d %H:%i:%s') AS 'c_recent_buy_time',
+                     DATE_FORMAT(cmpb.c_first_buy_time,'%Y-%m-%d %H:%i:%s') AS 'c_first_buy_time',
+                     cmpb.member_id,
+                     cmpb.company_id,
+                     cmpb.c_first_buy_goods_count,
+                     cmpb.c_first_buy_amount01,
+                     cmpb.c_first_buy_amount02,
+                     cmpb.c_first_buy_avg_p_g_p01,
+                     cmpb.c_first_buy_avg_p_g_p02,
+                     cmpb.c_first_buy_discount,
+                     cmpb.c_recent_buy_time_interval,
+                     cmpb.c_total_buy_avg_interval,
+                     cmpb.c_total_buy_goods_count,
+                     cmpb.c_total_buy_amount01,
+                     cmpb.c_total_buy_amount02,
+                     cmpb.c_total_buy_freq,
+                     cmpb.c_total_buy_avg_p_o_p01,
+                     cmpb.c_total_buy_avg_p_o_p02,
+                     cmpb.c_total_buy_avg_p_g_p01,
+                     cmpb.c_total_buy_avg_p_g_p02,
+                     cmpb.c_total_buy_avg_j_r,
+                     cmpb.c_total_buy_avg_discount,
+                     cmpb.c_ty_buy_avg_interval,
+                     cmpb.c_ty_buy_goods_count,
+                     cmpb.c_ty_buy_amount01,
+                     cmpb.c_ty_buy_amount02,
+                     cmpb.c_ty_buy_freq,
+                     cmpb.c_ty_buy_avg_p_o_p01,
+                     cmpb.c_ty_buy_avg_p_o_p02,
+                     cmpb.c_ty_buy_avg_p_g_p01,
+                     cmpb.c_ty_buy_avg_p_g_p02,
+                     cmpb.c_ty_buy_avg_j_r,
+                     cmpb.c_ty_buy_avg_discount,
+                     cmpb.c_py_buy_avg_interval,
+                     cmpb.c_py_buy_goods_count,
+                     cmpb.c_py_buy_amount01,
+                     cmpb.c_py_buy_amount02,
+                     cmpb.c_py_buy_freq,
+                     cmpb.c_py_buy_avg_p_o_p01,
+                     cmpb.c_py_buy_avg_p_o_p02,
+                     cmpb.c_py_buy_avg_p_g_p01,
+                     cmpb.c_py_buy_avg_p_g_p02,
+                     cmpb.c_py_buy_avg_j_r,
+                     cmpb.c_py_buy_avg_discount,
+                     DATE_FORMAT(cmpb.s_recent_buy_time,'%Y-%m-%d %H:%i:%s') AS 's_recent_buy_time',
+                     DATE_FORMAT(cmpb.s_first_buy_time,'%Y-%m-%d %H:%i:%s') AS 's_first_buy_time',
+                     cmpb.s_first_buy_goods_count,
+                     cmpb.s_first_buy_amount01,
+                     cmpb.s_first_buy_amount02,
+                     cmpb.s_first_buy_avg_p_g_p01,
+                     cmpb.s_first_buy_avg_p_g_p02,
+                     cmpb.s_first_buy_discount,
+                     cmpb.s_recent_buy_time_interval,
+                     cmpb.s_total_buy_avg_interval,
+                     cmpb.s_total_buy_goods_count,
+                     cmpb.s_total_buy_amount01,
+                     cmpb.s_total_buy_amount02,
+                     cmpb.s_total_buy_freq,
+                     cmpb.s_total_buy_avg_p_o_p01,
+                     cmpb.s_total_buy_avg_p_o_p02,
+                     cmpb.s_total_buy_avg_p_g_p01,
+                     cmpb.s_total_buy_avg_p_g_p02,
+                     cmpb.s_total_buy_avg_j_r,
+                     cmpb.s_total_buy_avg_discount,
+                     cmpb.s_ty_buy_avg_interval,
+                     cmpb.s_ty_buy_goods_count,
+                     cmpb.s_ty_buy_amount01,
+                     cmpb.s_ty_buy_amount02,
+                     cmpb.s_ty_buy_freq,
+                     cmpb.s_ty_buy_avg_p_o_p01,
+                     cmpb.s_ty_buy_avg_p_o_p02,
+                     cmpb.s_ty_buy_avg_p_g_p01,
+                     cmpb.s_ty_buy_avg_p_g_p02,
+                     cmpb.s_ty_buy_avg_j_r,
+                     cmpb.s_ty_buy_avg_discount,
+                     cmpb.s_py_buy_avg_interval,
+                     cmpb.s_py_buy_goods_count,
+                     cmpb.s_py_buy_amount01,
+                     cmpb.s_py_buy_amount02,
+                     cmpb.s_py_buy_freq,
+                     cmpb.s_py_buy_avg_p_o_p01,
+                     cmpb.s_py_buy_avg_p_o_p02,
+                     cmpb.s_py_buy_avg_p_g_p01,
+                     cmpb.s_py_buy_avg_p_g_p02,
+                     cmpb.s_py_buy_avg_j_r,
+                     cmpb.s_py_buy_avg_discount,
+					 cmpb.c_recent_buy_amount02,
+					 cmpb.c_recent_buy_goods_count,
+					 cmpb.c_recent_buy_store_name
+              FROM crm_member_purchasing_behavior cmpb
+             WHERE cmpb.member_id = :memberId
+               AND cmpb.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="query_by_stores_count" dynamic="true">
+            <body><![CDATA[
+            SELECT COUNT(DISTINCT mm.id)
+              FROM crm_member mm
+         LEFT JOIN crm_store_member rt ON mm.id = rt.member_id
+         LEFT JOIN acp_weixin_member AS awm ON awm.store_id = rt.store_id AND awm.member_id = mm.id
+         <#if rfm??>
+         LEFT JOIN crm_memberrfm rfm ON rfm.member_id = mm.id AND rfm.store_id = rt.store_id
+         </#if>
+         <#if guideId??>
+         LEFT JOIN crm_shoppingguide_member gmm ON gmm.member_id = mm.id
+         </#if>
+             WHERE mm.company_id = :USER_COMPANY_ID
+               AND IFNULL(mm.effectiveFlag, 0) <> 2
+         <#if guideId??>
+               AND gmm.shoppingguide_id  = :guideId
+         </#if>
+         <#if mixedValue??>
+               AND ( mm.name = :mixedValue OR mm.phone = :mixedValue OR mm.memberCardNum = :mixedValue )
+         </#if>
+         <#if memberCardType??>
+               AND mm.memberCardType_id = :memberCardType
+         </#if>
+         <#if excludes??>
+              AND mm.id NOT IN (${excludes?join(",")})
+         </#if>
+         <#if lastVisitTime_start??>
+               AND DATE_FORMAT(mm.lastVisitTime,'%Y-%m-%d %H:%m:%s') BETWEEN '${lastVisitTime_start} 00:00:00' AND '${lastVisitTime_end} 23:59:59'
+         </#if>
+         <#if assignState??>
+               AND IFNULL(mm.assignState,2) = ${assignState}
+         </#if>
+         <#if (totalConsumeAmount?? && totalConsumeAmount?size>0)>
+              AND mm.totalConsumeAmount BETWEEN ${totalConsumeAmount[0]} AND ${totalConsumeAmount[1]}
+         </#if>
+         <#if liveness??>
+               <#if liveness == "week">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 7
+               <#elseif liveness == "month">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 30
+               <#elseif liveness == "jidu">
+                AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 120
+               <#elseif liveness == "half">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 185
+               <#elseif liveness == "year">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 365
+               <#elseif liveness == "sleep">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) > 365
+               <#else>
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) > 9999999
+               </#if>
+         </#if>
+         <#if rfm??>
+              <#if (rfm?size == 3) >
+                AND ( rfm.rLevel = ${rfm[0]} AND rfm.fLevel = ${rfm[1]} AND rfm.mLevel = ${rfm[2]} )
+              <#elseif (rfm?size == 6) >
+                AND ( rfm.rLevel BETWEEN ${rfm[0]} AND ${rfm[1]}
+                     AND rfm.fLevel BETWEEN ${rfm[2]} AND ${rfm[3]}
+                     AND rfm.mLevel BETWEEN ${rfm[4]} AND ${rfm[5]} )
+              </#if>
+         </#if>
+               AND rt.store_id IN (${storeIds?join(",")})
+            ]]></body>
+        </sql>
+        <sql id="query_by_stores" dynamic="true" macros="member_fileds_list">
+            <body><![CDATA[
+            SELECT DISTINCT <@member_fileds_list prefix="mm" goo=true />
+                   cmt.name AS 'memberCardTypeName',
+                   st.id AS 'storeId',
+                   st.name AS 'storeName',
+                   awm.weixin_id AS 'weixinId',
+                   ( SELECT CONCAT(hc.nickName,',',hc.iconUrl)
+                       FROM yycomm.His_Contact hc
+                      WHERE hc.userName = 'wxid_dlhbun0c5f8y22'
+                        AND hc.company_id = mm.company_id
+                        AND hc.store_id = rt.store_id
+                        AND hc.type = 1 ) AS 'weixinInfo',
+                   CONCAT( rfm.rLevel, ',' ,rfm.fLevel, ',' , rfm.mLevel ) AS 'rfmValue'
+              FROM crm_member mm
+         LEFT JOIN crm_store_member rt ON mm.id = rt.member_id
+         LEFT JOIN acp_weixin_member AS awm ON awm.store_id = rt.store_id AND awm.member_id = mm.id
+         LEFT JOIN acp_store st ON st.id = rt.store_id
+         LEFT JOIN crm_membercardtype cmt ON mm.memberCardType_id = cmt.id
+         LEFT JOIN crm_memberrfm rfm ON rfm.member_id = mm.id AND rfm.store_id = rt.store_id
+         LEFT JOIN crm_shoppingguide_member gmm ON gmm.member_id = mm.id
+             WHERE mm.company_id = :USER_COMPANY_ID
+               AND IFNULL(mm.effectiveFlag, 0) <> 2
+         <#if guideId??>
+               AND gmm.shoppingguide_id  = :guideId
+         </#if>
+         <#if excludes??>
+              AND mm.id NOT IN (${excludes?join(",")})
+         </#if>
+         <#if (totalConsumeAmount?? && totalConsumeAmount?size>0)>
+              AND mm.totalConsumeAmount BETWEEN ${totalConsumeAmount[0]} AND ${totalConsumeAmount[1]}
+         </#if>
+         <#if lastVisitTime_start??>
+               AND DATE_FORMAT(mm.lastVisitTime,'%Y-%m-%d %H:%m:%s') BETWEEN '${lastVisitTime_start} 00:00:00' AND '${lastVisitTime_end} 23:59:59'
+         </#if>
+         <#if assignState??>
+               AND IFNULL(mm.assignState,2) = ${assignState}
+         </#if>
+         <#if mixedValue??>
+               AND ( mm.name = :mixedValue OR mm.phone = :mixedValue OR mm.memberCardNum = :mixedValue )
+         </#if>
+         <#if memberCardType??>
+               AND mm.memberCardType_id = :memberCardType
+         </#if>
+         <#if liveness??>
+               <#if liveness == "week">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 7
+               <#elseif liveness == "month">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 30
+               <#elseif liveness == "jidu">
+                AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 120
+               <#elseif liveness == "half">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 185
+               <#elseif liveness == "year">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 365
+               <#elseif liveness == "sleep">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) > 365
+               <#else>
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) > 9999999
+               </#if>
+         </#if>
+         <#if rfm??>
+                <#if (rfm?size == 3)>
+                    AND (rfm.rLevel = ${rfm[0]} AND rfm.fLevel = ${rfm[1]} AND rfm.mLevel = ${rfm[2]} )
+                <#elseif (rfm?size == 6)>
+                    AND ( rfm.rLevel BETWEEN ${rfm[0]} AND ${rfm[1]}
+                         AND rfm.fLevel BETWEEN ${rfm[2]} AND ${rfm[3]}
+                         AND rfm.mLevel BETWEEN ${rfm[4]} AND ${rfm[5]} )
+                </#if>
+         </#if>
+               AND rt.store_id IN (${storeIds?join(",")})
+         <#if offset??>
+            LIMIT :offset,:rows
+         </#if>
+            ]]></body>
+        </sql>
+        <sql id="loadAllCardTypes">
+            <body><![CDATA[
+            SELECT id AS 'id',cardNum AS 'cardNum',  name AS 'name', status AS 'status'
+              FROM crm_membercardtype
+             WHERE organization_id = :USER_COMPANY_ID
+          ORDER BY id DESC
+            ]]></body>
+        </sql>
+        <sql id="unbildwx" dynamic="true">
+            <params>
+                <p name="searchVal" type="str" use="required" fmt="like"/>
+            </params>
+            <body><![CDATA[
+            SELECT
+            	   mm.id AS 'mmId',
+	               mm.birthday AS 'birthday_date',
+	               DATE_FORMAT(mm.birthday,'%Y-%m-%d') AS 'birthday',
+	               mm.calendarType AS 'calendarType',
+                   mm.memberType AS 'memberType',
+                   mm.name AS 'userName',
+                   mm.oldMemberCode AS 'oldMemberCode',
+                   mm.phone AS 'phone',
+                   mm.memberCardNum AS 'memberCardNum',
+                   mm.sex AS 'sex',
+                   mm.memberCardType_id AS 'memberCardTypeId',
+                   mm.serviceLevel AS 'serviceLevel',
+                   DATE_FORMAT(mm.lastVisitTime,'%Y-%m-%d %H:%i:%s') AS 'lastVisit',
+                   mm.consumeTotalCountCurYear AS 'consumeTotalCountCurYear',
+                   mm.totalConsumeAmountCurYear AS 'totalConsumeAmountCurYear',
+                   mm.status AS 'status',
+                   mm.totalConsumeAmount AS 'totalConsumeAmount',
+				   mm.consumeTotalCount AS 'consumeTotalCount',
+				   CONCAT(rfm.rLevel,rfm.fLevel,rfm.mLevel) AS 'srfm',
+				   CONCAT(rfm.rLevelCompany,rfm.fLevelCompany,rfm.mLevelCompany) AS 'crfm',
+				   mm.iconUrl AS 'iconUrl'
+              FROM crm_member mm
+          LEFT JOIN crm_store_member rt ON mm.id = rt.member_id
+          LEFT JOIN crm_memberrfm AS rfm ON rfm.member_id = mm.id AND rfm.store_id = rt.store_id
+             WHERE (mm.effectiveFlag IS NULL OR mm.effectiveFlag != 2)
+               AND mm.id IN (
+                    SELECT csm.member_id
+                      FROM crm_store_member csm
+                     WHERE csm.store_id = :storeId )
+               AND mm.id NOT IN (
+                    SELECT swm.member_id
+                      FROM acp_weixin_member swm
+                     WHERE swm.store_id = :storeId )
+               <#if searchVal??>
+               AND ( mm.name LIKE :searchVal OR mm.phone LIKE :searchVal )
+               </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="report">
+        <sql id="loadReportAllOrgs">
+            <body><![CDATA[
+            SELECT DISTINCT(firstorg_code) AS CODE01
+              FROM count_list_org_info
+             WHERE count_date BETWEEN :start and :end
+	           AND company_id= :companyId
+            ]]></body>
+        </sql>
+    </model>
+    <model id="organization">
+        <sql id="load_company_count">
+            <body><![CDATA[
+              SELECT COUNT(og.id )
+                FROM acp_organization AS og
+		       WHERE og.orgType = 1
+            ]]></body>
+        </sql>
+        <sql id="load_company">
+            <body><![CDATA[
+              SELECT og.id AS 'id',
+                     og.code AS 'comCode',
+                     og.orgType AS 'comType',
+                     og.name AS 'comName',
+                     og.shortName AS 'shortName',
+                     og.industryType AS 'industryType',
+                     (SELECT dict.field_name
+                        FROM dict_kv_data dict
+                       WHERE dict.dict_type = 'INDUSTRYTYPE'
+                         AND dict.field_value = og.industryType) AS 'industryTypeName',
+                     og.linkman_contact AS 'linkMan',
+                     og.linkman_phone AS 'linkPhone',
+                     (SELECT emp.name
+                        FROM acp_employee emp
+                       WHERE emp.company_id = og.id
+                         AND emp.role_ids = 1
+                         AND emp.status =1 LIMIT 1) AS 'zhuCeRen'
+				FROM acp_organization AS og
+		       WHERE og.orgType = 1
+		       LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
+    <model id="store">
+        <sql id="loadByOrgId" desc="获取对应组织所在的下属门店列表">
+            <meta>
+                <col id="storeId" name="唯一标识" desc="唯一标识" type="str"/>
+                <col id="name" name="门店名称" desc="门店名称" type="str"/>
+                <col id="storeState" name="门店状态" desc="门店状态" type="str"/>
+                <col id="orgCode" name="机构代码" desc="机构代码" type="str"/>
+                <col id="detailAddress" name="门店地址" desc="门店地址" type="str"/>
+            </meta>
+            <body><![CDATA[
+             SELECT st.id AS "storeId", st.storeState AS "state",
+                    st.detailAddress AS "address",st.storeType AS "type",
+                    st.status AS "status",st.organization_id AS "orgId",
+                    st.name AS "name",st.company_id AS "companyId",
+                    og.code AS "orgCode"
+               FROM acp_store AS st
+          LEFT JOIN acp_organization og ON st.organization_id =og.id
+              WHERE st.organization_id = :orgId
+            ]]></body>
+        </sql>
+    </model>
+    <model id="employee">
+        <sql id="loadByStoreId" desc="获取对应门店下所有系统用户清单">
+            <meta>
+                <col id="emId" name="唯一标识" desc="唯一标识" type="str"/>
+                <col id="userName" name="用户姓名" desc="用户姓名" type="str"/>
+                <col id="phoneNo" name="手机号码" desc="手机号码" type="str"/>
+                <col id="emType" name="雇员状态" desc="雇员状态" type="str"/>
+                <col id="loginId" name="登陆ID" desc="登陆ID" type="str"/>
+                <col id="sex" name="性别" desc="性别" type="str"/>
+                <col id="oldStoreId" name="原系统ID" desc="原系统ID" type="str"/>
+            </meta>
+            <body><![CDATA[
+             SELECT em.id AS "emId", em.phone AS "phoneNo",em.name AS "userName",
+                    em.employeeType AS "emType",em.loginuser_id AS "loginId",
+                    em.sex AS "sex",em.oldEmployeeId AS "oldStoreId",em.store_id AS 'storeId'
+               FROM acp_employee AS em
+              WHERE em.store_id = :storeId
+              AND em.status = 1
+            ]]></body>
+        </sql>
+        <sql id="loadBildedMemberShoping">
+            <body><![CDATA[
+             SELECT aae.name AS 'label',aae.id AS 'value'
+               FROM acp_employee AS aae
+              WHERE aae.store_id = :USER_STORE_ID
+                AND aae.employeeState = 1
+                AND aae.status = 1
+            UNION
+             SELECT aae.name AS 'label',aae.id AS 'value'
+               FROM acp_employee AS aae
+              WHERE aae.store_id = :USER_STORE_ID
+                AND aae.id IN ( SELECT csm.shoppingguide_id
+                                  FROM crm_shoppingguide_member csm
+                                 WHERE csm.member_id IN ( SELECT ccm.member_id
+                                                            FROM crm_store_member ccm
+                                                           WHERE ccm.store_id = :USER_STORE_ID
+                                                          )
+                               )
+            ]]></body>
+        </sql>
+        <sql id="load_emps" dynamic="true">
+            <body><![CDATA[
+             SELECT 
+				em.id AS 'empId',
+				em.login_name AS 'loginName',
+				CASE IFNULL(em.employeeState,1)
+				WHEN 1 THEN '启用'
+				WHEN 2 THEN '禁用'
+				END
+				AS 'state',
+				IFNULL(em.employeeState,1) AS 'enable',
+				em.name AS 'userName',
+				IFNULL(em.phone,'') AS 'phoneNo',
+				GROUP_CONCAT(IF(ar.id IS NULL,'【未知】',CONCAT('【',ar.role_desc,'】'))) AS 'roleNames'
+				FROM acp_employee AS em 
+				LEFT JOIN acp_role ar
+				ON FIND_IN_SET(ar.id,em.role_ids)
+				WHERE em.status = 1 
+				AND em.company_id =:companyId
+				<#if orgId??>
+					AND em.organization_id = :orgId
+				</#if>
+				<#if storeId??>
+					AND em.store_id = :storeId
+				</#if>
+				<#if search?? && search != "">
+					AND (em.login_name LIKE '%${search}%' OR em.name LIKE '%${search}%' OR em.phone LIKE '%${search}%')
+				</#if>
+				GROUP BY em.id,em.employeeState,em.name,em.phone
+				ORDER BY em.employeeState
+            ]]></body>
+        </sql>
+        <sql id="load_emp" dynamic="true">
+            <body><![CDATA[
+             SELECT 
+				em.id AS 'empId',
+				em.login_name AS 'loginName',
+				em.name AS 'userName',
+				IFNULL(em.phone,'') AS 'phoneNo',
+				em.role_ids AS 'roleIds',
+				em.sex AS 'sex'
+				FROM acp_employee AS em 
+				WHERE em.status = 1 
+				AND em.company_id = :USER_COMPANY_ID
+				AND em.id = :empId
+            ]]></body>
+        </sql>
+        <sql id="load_managers" dynamic="true">
+            <body><![CDATA[
+             SELECT
+				ae.id AS 'empId',
+				ae.name AS 'empName',
+				IF( asv.owner_id IS NULL,0,1 ) AS 'hasTree'
+			FROM
+				acp_employee ae
+			LEFT JOIN acp_store_view asv ON
+				ae.id = asv.owner_id
+			WHERE
+				ae.organization_id		
+				IN (SELECT id FROM acp_organization	WHERE parentId = :orgId
+				AND FIND_IN_SET( '4', ae.role_ids ))
+				GROUP BY ae.id
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

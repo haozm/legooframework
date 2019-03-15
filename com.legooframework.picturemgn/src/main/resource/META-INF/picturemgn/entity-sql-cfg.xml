@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="DevicePinCodeEntity">
+        <sql id="findByPinCodes">
+            <body><![CDATA[
+           SELECT
+                dpc.pin_code AS 'pinCode'
+            FROM
+                DEVICE_PIN_CODE AS dpc
+            WHERE
+                dpc.pin_code IN (<#list pinCodes as em>'${em}'<#sep>, </#list>)
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

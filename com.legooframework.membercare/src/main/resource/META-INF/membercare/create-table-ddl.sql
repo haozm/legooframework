@@ -46,7 +46,6 @@ CREATE TABLE TASK_RUN_MONITOR
 (
   id             VARCHAR(36)      NOT NULL,
   task_type      INT(2)           NOT NULL,
-  task_status    INT(2)           NOT NULL DEFAULT 1,
   automatic      INT(1)           NOT NULL DEFAULT 0,
   cross_store    INT(1)           NOT NULL DEFAULT 0,
   member_id      INT(11)          NOT NULL,
@@ -75,6 +74,7 @@ CREATE TABLE TASK_RUN_MONITOR_DETAIL
   id            VARCHAR(36)      NOT NULL,
   task_id       VARCHAR(36)      NOT NULL,
   task_status   INT(2)           NOT NULL DEFAULT 1,
+  step_index    VARCHAR(36)      NOT NULL,
   start_date    DATETIME         NOT NULL,
   expired_date  DATETIME         NOT NULL,
   finished_date DATETIME         NULL,

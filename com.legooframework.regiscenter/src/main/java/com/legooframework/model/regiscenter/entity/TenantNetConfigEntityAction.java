@@ -3,7 +3,7 @@ package com.legooframework.model.regiscenter.entity;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
-import com.legooframework.model.organization.entity.CompanyEntity;
+import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -26,16 +26,21 @@ public class TenantNetConfigEntityAction extends BaseEntityAction<TenantNetConfi
         throw new UnsupportedOperationException("不支持该方法调用...");
     }
 
-    public Optional<TenantNetConfigEntity> findByCompany(CompanyEntity company) {
+    public Optional<TenantNetConfigEntity> findByCompany(CrmOrganizationEntity company) {
         Preconditions.checkNotNull(company, "company 入参非法,不允许为null...");
-        String cache_key = String.format("%s_netcfg_%s", getModelName(), company.getId());
+        String cache_key = String.format("%s_com_%s", getModelName(), company.getId());
         if (getCache().isPresent()) {
             TenantNetConfigEntity exits = getCache().get().get(cache_key, TenantNetConfigEntity.class);
             if (exits != null) return Optional.of(exits);
         }
         Map<String, Object> params = Maps.newHashMap();
         params.put("companyId", company.getId());
-        return queryForEntity("findByCompany", params, getRowMapper());
+        Optional<TenantNetConfigEntity> configEntity = queryForEntity("findByCompany", params, getRowMapper());
+        configEntity.ifPresent(y -> getCache().ifPresent(x -> x.put(cache_key, y)));
+        configEntity.ifPresent(x -> x.setCompanyName(company.getName()));
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("findByCompany(%s) res is %s", company.getId(), configEntity.orElse(null)));
+        return configEntity;
     }
 
     @Override

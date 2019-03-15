@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="ChargeDetailEntity">
+        <sql id="batch_list_count" dynamic="true">
+            <body><![CDATA[
+          SELECT COUNT(scs.id)
+            FROM SMS_CHARGE_SUMMARY scs
+           WHERE scs.delete_flag = 0
+             AND scs.company_id = :companyId
+          <#if storeId??>
+             AND scs.store_id = :storeId
+          <#elseif storeIds??>
+             AND scs.store_id IN (${storeIds?join(",")})
+          </#if>
+          <#if smsContext??>
+             AND scs.sms_context LIKE :smsContext
+          </#if>
+          <#if shoppingGuideId??>
+             AND scs.creator = :shoppingGuideId
+          </#if>
+          <#if sendMode??>
+             AND scs.send_mode = :sendMode
+          </#if>
+          <#if createTime_start??>
+             AND DATE_FORMAT(scs.createTime,'%Y-%m-%d %H:%i:%s') BETWEEN :createTime_start AND :createTime_end
+          </#if>
+            ]]></body>
+        </sql>
+        <sql id="batch_list" dynamic="true">
+            <params>
+                <p name="companyId" type="INT" required="true"/>
+                <p name="storeId" type="INT"/>
+                <p name="storeIds" type="INTS"/>
+                <p name="sendMode" type="INT"/>
+                <p name="shoppingGuideId" type="INT"/>
+                <p name="smsContext" type="STRING"/>
+                <p name="createTime" type="DATERANGE"/>
+            </params>
+            <body><![CDATA[
+          SELECT scs.id AS 'id',
+                 scs.company_id AS 'companyId',
+                 ( SELECT org.name
+                     FROM acp.acp_organization org
+                    WHERE org.orgType = 1
+                      AND org.id = scs.company_id ) AS 'companyName',
+                 scs.store_id AS 'storeId',
+                 ( SELECT sto.name
+                     FROM acp.acp_store sto
+                    WHERE sto.id =  scs.store_id
+                      AND sto.company_id = scs.company_id ) AS 'storeName',
+                 scs.sms_batchno AS 'smsBatchNo',
+                 scs.business_ruleid AS 'businessRuleId',
+                 scs.sms_quantity AS 'smsQuantity',
+                 scs.creator AS 'creator',
+                 scs.sms_context AS 'smsContext',
+                 ( SELECT emp.name
+                     FROM acp.acp_employee emp
+                    WHERE emp.id = scs.creator
+                      AND emp.company_id = scs.company_id ) AS 'creatorName',
+                 DATE_FORMAT(scs.createTime,'%Y-%m-%d %H:%i:%s') AS 'createTime',
+                 scs.business_type AS 'businessType',
+                 ( SELECT dict.field_name
+                     FROM SMS_DICT_INFO dict
+                    WHERE dict.dict_type = 'SMS_BUS_TYPE'
+                      AND dict.field_value = scs.business_type) AS 'businessTypeName',
+                 scs.send_mode AS 'sendMode',
+                 (  CASE scs.send_mode
+                    WHEN 0 THEN '自动任务'
+                    WHEN 1 THEN '手动单发'
+                    WHEN 2 THEN '手动群发'
+                    ELSE '异常数据' END ) AS 'sendModeName',
+                 scs.finish_send AS 'finishSend',
+                 ( SELECT GROUP_CONCAT(DISTINCT stl.send_status ORDER BY stl.send_status SEPARATOR  ',' )
+                     FROM SMS_TRANSPORT_LOG stl
+                    WHERE stl.sms_batchno = scs.sms_batchno ) AS 'detailStatus',
+                   0 AS 'successQuantity',
+                   0 AS 'failureQuantity'
+            FROM SMS_CHARGE_SUMMARY scs
+           WHERE scs.delete_flag = 0
+             AND scs.company_id = :companyId
+          <#if storeId??>
+             AND scs.store_id = :storeId
+          <#elseif storeIds??>
+             AND scs.store_id IN (${storeIds?join(",")})
+          </#if>
+          <#if sendMode??>
+             AND scs.send_mode = :sendMode
+          </#if>
+          <#if shoppingGuideId??>
+             AND scs.creator = :shoppingGuideId
+          </#if>
+          <#if smsContext??>
+             AND scs.sms_context LIKE :smsContext
+          </#if>
+          <#if createTime_start??>
+             AND DATE_FORMAT(scs.createTime,'%Y-%m-%d %H:%i:%s') BETWEEN :createTime_start AND :createTime_end
+          </#if>
+       ORDER BY scs.createTime DESC
+          LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+        <sql id="detail_list_count" dynamic="true">
+            <body><![CDATA[
+          SELECT COUNT(stl.id)
+            FROM SMS_TRANSPORT_LOG stl
+           WHERE stl.delete_flag = 0
+             AND stl.sms_batchno = :smsBatchNo
+        <#if phoneNo??>
+             AND stl.phone_no = :phoneNo
+        </#if>
+        <#if memberName??>
+             AND stl.member_name LIKE :memberName
+        </#if>
+            ]]></body>
+        </sql>
+        <sql id="detail_list" dynamic="true">
+            <params>
+                <p name="smsBatchNo" type="STRING" required="true"/>
+                <p name="phoneNo" type="STRING"/>
+                <p name="sendStatus" type="INT"/>
+            </params>
+            <body><![CDATA[
+          SELECT stl.id AS 'id',
+                 stl.company_id AS 'companyId',
+                 stl.store_id AS 'storeId',
+                 stl.member_id AS 'memberId',
+                 stl.member_name AS 'memberName',
+                 stl.free_send AS 'freeSend',
+                 stl.sms_channel AS 'smsChannel',
+                 ( CASE stl.sms_channel
+                   WHEN 1 THEN '行业通道'
+                   WHEN 2 THEN '营销通道'
+                   ELSE '异常数据' END ) AS 'smsChannelName',
+                 stl.businsess_type AS 'businsessType',
+                 stl.sms_batchno AS 'smsBatchNo',
+                 stl.send_status AS 'sendStatus',
+                  ( CASE stl.send_status
+                    WHEN 0 THEN '入库提交中'
+                    WHEN 1 THEN '等待发送'
+                    WHEN 2 THEN '短信网关发送中'
+                    WHEN 9 THEN '取消发送'
+                    ELSE '异常数据' END ) AS 'sendStatusName',
+                 stl.phone_no AS 'phoneNo',
+                 stl.sms_count AS 'smsCount',
+                 stl.word_count AS 'wordCount',
+                 stl.sms_context AS 'smsContext',
+                 stl.remarks AS 'remarks',
+                 DATE_FORMAT(stl.createTime,'%Y-%m-%d %H:%i:%s') AS 'createTime',
+                 DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s') AS 'sendTime'
+            FROM SMS_TRANSPORT_LOG stl
+           WHERE stl.delete_flag = 0
+             AND stl.sms_batchno = :smsBatchNo
+        <#if phoneNo??>
+             AND stl.phone_no = :phoneNo
+        </#if>
+        <#if memberName??>
+             AND stl.member_name LIKE :memberName
+        </#if>
+        ORDER BY stl.createTime
+           LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
+    <model id="RechargeDetailEntity">
+        <sql id="list_count" dynamic="true">
+            <body><![CDATA[
+          SELECT COUNT(srd.id)
+            FROM SMS_RECHARGE_DETAIL srd
+           WHERE srd.delete_flag = 0
+      <#if companyId??>
+             AND srd.company_id = :companyId
+      </#if>
+      <#if storeId??>
+             AND srd.store_id = :storeId
+      </#if>
+      <#if storeGroupId??>
+            AND srd.store_group_id = :storeGroupId
+      </#if>
+      <#if rechargeDate??>
+            AND DATE_FORMAT(srd.createTime,'%Y-%m-%d') BETWEEN :rechargeDate_start AND :rechargeDate_end
+      </#if>
+            ]]></body>
+        </sql>
+        <sql id="list" dynamic="true">
+            <params>
+                <p name="companyId" type="INT"/>
+                <p name="storeId" type="INT"/>
+                <p name="storeGroupId" type="STRING"/>
+                <p name="rechargeDate" type="DATERANGE"/>
+            </params>
+            <body><![CDATA[
+         SELECT srd.id AS 'id',
+                srd.company_id AS 'companyId',
+                org.name AS 'companyName',
+                srd.store_id AS 'storeId',
+                srd.store_group_id AS 'storeGroupId',
+                srd.recharge_type AS 'rechargeType',
+                CASE srd.recharge_type
+                    WHEN 1 THEN '充值'
+                    WHEN 2 THEN '预充值'
+                    WHEN 3 THEN '免费'
+                    WHEN 4 THEN '抵扣'
+                    ELSE '异常' END AS 'rechargeTypeName',
+                srd.recharge_scope AS 'rechargeScope',
+                CASE srd.recharge_scope
+                    WHEN 1 THEN '公司充值'
+                    WHEN 2 THEN '门店集合'
+                    WHEN 3 THEN '门店充值'
+                    ELSE '非法渠道' END AS 'rechargeRangeName',
+                CASE srd.recharge_scope
+                    WHEN 1 THEN ( SELECT org.name FROM csosm_crm.acp_organization org WHERE org.id =srd.company_id AND org.orgType =1 )
+                    WHEN 2 THEN ( SELECT asv.nodeName FROM csosm_crm.acp_store_view asv WHERE asv.company_id = srd.company_id  AND asv.id = srd.store_group_id and asv.tree_type = 2 )
+                    WHEN 3 THEN ( SELECT str.name FROM csosm_crm.acp_store str WHERE str.id =srd.store_id AND str.company_id = srd.company_id )
+                    ELSE '错误来源' END AS 'targetName',
+                srd.rule_id,
+                CASE srd.rule_id
+                    WHEN 'free' THEN '-'
+                    ELSE (SELECT rule.unit_price FROM SMS_RECHARGE_RULES rule where rule.id = srd.rule_id) END AS 'unitPrice',
+                srd.recharge_amount AS 'rechargeAmount', srd.total_quantity AS 'totalQuantity', srd.creator, emp.name AS 'empName',
+                DATE_FORMAT(srd.createTime,'%Y-%m-%d') AS 'rechargeDate'
+           FROM SMS_RECHARGE_DETAIL srd
+      LEFT JOIN csosm_crm.acp_organization org ON srd.company_id = org.id AND org.orgType = 1
+      LEFT JOIN csosm_crm.acp_employee emp ON emp.id = srd.creator
+          WHERE srd.delete_flag = 0
+      <#if companyId??>
+            AND srd.company_id = :companyId
+      </#if>
+      <#if storeId??>
+            AND srd.store_id = :storeId
+      </#if>
+      <#if storeGroupId??>
+            AND srd.store_group_id = :storeGroupId
+      </#if>
+      <#if rechargeDate??>
+            AND DATE_FORMAT(srd.createTime,'%Y-%m-%d') BETWEEN :rechargeDate_start AND :rechargeDate_end
+      </#if>
+       ORDER BY srd.createTime DESC
+          LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+        <sql id="loadBalanceByInstance" dynamic="true">
+            <body><![CDATA[
+          SELECT srb.sms_balance
+            FROM SMS_RECHARGE_BALANCE srb
+           WHERE srb.company_id = :companyId
+             AND srb.store_id = :storeId
+             AND srb.store_group_id = :storeGroupId
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

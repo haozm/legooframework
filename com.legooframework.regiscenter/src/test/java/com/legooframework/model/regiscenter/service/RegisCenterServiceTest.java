@@ -12,20 +12,24 @@ import org.springframework.util.ResourceUtils;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/base/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/integration/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/organization/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/devices/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/regiscenter/spring-model-cfg.xml"}
 )
 public class RegisCenterServiceTest {
 
-    @Test
-    public void activedDeviceByPinCode() throws Exception {
-        LoginContextHolder.setCtx(new LoginContextTest());
-        regisCenterService.activedDeviceByPinCode("VIP1100000008", "840709", "", "");
-    }
 
     @Autowired
     RegisCenterService regisCenterService;
+
+    @Test
+    public void activedDevice() {
+        LoginContextHolder.setCtx(new LoginContextTest());
+    }
+
+    @Test
+    public void changeDevice() {
+        LoginContextHolder.setCtx(new LoginContextTest());
+        regisCenterService.changeDevice("123", "456", 11);
+    }
 }

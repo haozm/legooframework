@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    <context:property-placeholder location="classpath:jdbc-chat.properties"/>
+    <bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource">
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="jdbcUrl" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.password}"/>
+        <property name="readOnly" value="false"/>
+        <property name="connectionTimeout" value="30000"/>
+        <property name="idleTimeout" value="600000"/>
+        <property name="maxLifetime" value="1800000"/>
+        <property name="maximumPoolSize" value="12"/>
+        <property name="minimumIdle" value="10"/>
+    </bean>
+    <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/integration/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/entities/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/security/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/dictionary/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/organization/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/usergroups/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/webocx/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/msgtemplate/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/tags/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/jobs/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/mobile/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/query/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/devices/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/customer/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/webchat/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/imchat/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/webwork/spring-model-cfg.xml"/>
+    <import resource="spring-security-cfg.xml"/>
+</beans>

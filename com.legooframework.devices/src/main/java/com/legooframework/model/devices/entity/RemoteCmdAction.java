@@ -6,14 +6,12 @@ import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.base.runtime.LoginContext;
-import com.legooframework.model.organization.entity.StoreEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -40,21 +38,6 @@ public class RemoteCmdAction extends BaseEntityAction<RemoteCmdEntity> {
         batchSave(buildCmd("clear_contact", loginUser, deviceIds));
     }
 
-    public void initStoreCmd(LoginContext loginUser, Collection<StoreEntity> stores) {
-        Preconditions.checkNotNull(loginUser, "入参 LoginContext loginUser 不可以为空值...");
-        if (CollectionUtils.isEmpty(stores)) return;
-        List<RemoteCmdEntity> cmds = Lists.newArrayListWithCapacity(stores.size());
-        String fromDeviceId = String.format("EMP_%s", loginUser.getLoginId());
-        String toDeviceId = "00000001";
-        String uuid = String.valueOf(System.currentTimeMillis());
-        Map<String, Object> command = Maps.newHashMap();
-        command.put("tag", "T_FFFFFFFFFFF");
-        for (StoreEntity $it : stores) {
-            command.put("ids", String.format("%s%s", loginUser.getTenantId(), $it.getId()));
-            cmds.add(new RemoteCmdEntity("init_store", fromDeviceId, toDeviceId, gson.toJson(command), uuid, null));
-        }
-        batchSave(cmds);
-    }
 
     public void clearUnclaimCmd(LoginContext loginUser, String... deviceIds) {
         Preconditions.checkNotNull(loginUser, "入参 LoginUserContext loginUser 不可以为空值...");

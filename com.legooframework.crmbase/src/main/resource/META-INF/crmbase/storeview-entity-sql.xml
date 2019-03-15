@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="storeviewenity_field">
+            <![CDATA[
+		        <#macro storeviewenity_field>
+                    asv.id AS 'id',
+                    asv.parentId AS 'pId',
+                    asv.nodeName AS 'nodeName',
+                    asv.tree_type AS 'treeType',
+                    asv.owner_id AS 'ownerId',
+                    asv.storeIds AS 'storeIds',
+                    asv.storeInfo AS 'storeInfo',
+                    asv.node_desc AS 'nodeDesc',
+                    asv.company_id AS 'companyId',
+                    asv.createUserId AS 'createUserId'
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="StoreViewEnity">
+        <sql id="insert">
+            <body><![CDATA[
+        INSERT INTO acp_store_view
+                    (id,  nodeName, parentId, tree_type, owner_id,company_id,node_desc, createUserId, createTime)
+             VALUES (:id,:nodeName,:parentId, :treeType, :ownerId,:companyId, :nodeDesc,:createUserId, NOW())
+            ]]></body>
+        </sql>
+        <sql id="findTreeRoot" dynamic="true" macros="storeviewenity_field">
+            <body><![CDATA[
+            SELECT <@storeviewenity_field />
+              FROM acp_store_view AS asv
+             WHERE asv.id = asv.parentId
+               AND asv.company_id = :companyId
+            <#if (treeType == 1)>
+               AND asv.owner_id = :ownerId
+               AND asv.tree_type = 1
+            <#elseif (treeType == 2)>
+               AND asv.tree_type = 2
+               AND asv.owner_id = -1
+            </#if>
+            ]]></body>
+        </sql>
+        <sql id="findById" macros="storeviewenity_field">
+            <body><![CDATA[
+            SELECT <@storeviewenity_field />
+              FROM acp_store_view AS asv
+             WHERE asv.id = :id
+            ]]></body>
+        </sql>
+        <!--
+        <sql id="findGroupRootWithUser" macros="storeviewenity_field">
+            <body><![CDATA[
+            SELECT <@storeviewenity_field />
+              FROM acp_store_view AS asv
+             WHERE asv.parentId = :parentId
+               AND asv.tree_type = 1
+            ]]></body>
+        </sql>-->
+        <sql id="updateStores">
+            <body><![CDATA[
+            UPDATE acp_store_view
+               SET storeIds = :storeIds,storeInfo = :storeInfo, modifyUserId = :modifyUserId, modifyTime = NOW()
+             WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="batchUpdateStores">
+            <body><![CDATA[
+            UPDATE acp_store_view
+               SET storeIds =?
+             WHERE id = ?
+            ]]></body>
+        </sql>
+        <sql id="editGroupNodeName">
+            <body><![CDATA[
+            UPDATE acp_store_view
+               SET nodeName = :nodeName, node_desc = :nodeDesc, modifyUserId = :modifyUserId, modifyTime = NOW()
+             WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="exitSubNodes">
+            <body><![CDATA[
+            SELECT COUNT(sv.id)
+              FROM acp_store_view AS sv
+             WHERE sv.parentId = :id
+            ]]></body>
+        </sql>
+        <sql id="removeSubGroupNodeById">
+            <body><![CDATA[
+            DELETE FROM acp_store_view
+                  WHERE id = :id
+            ]]></body>
+        </sql>
+        <!--
+        <sql id="loadRootByUser">
+            <body><![CDATA[
+            SELECT sv.id AS 'id',sv.nodeName AS 'name',sv.parentId AS 'parentId',
+                   sv.treeType AS 'ownerId',sv.storeIds AS 'storeIds',sv.company_id AS 'companyId',
+                   sv.createUserId AS 'createUserId',sv.node_desc AS 'nodeDesc'
+              FROM acp_store_view AS sv
+             WHERE sv.parentId IS NULL
+               AND sv.createUserId = :userId
+               AND sv.tree_type = 1
+            ]]></body>
+        </sql> -->
+        <sql id="loadAllTreeNodes" dynamic="true" macros="storeviewenity_field">
+            <body><![CDATA[
+            SELECT <@storeviewenity_field />
+              FROM acp_store_view AS asv
+             WHERE asv.tree_type = :treeType
+               AND asv.company_id = :companyId
+          <#if (treeType == 1)>
+               AND asv.owner_id = :ownerId
+          </#if>
+            ]]></body>
+        </sql>
+        <sql id="count_emp_view" macros="storeviewenity_field">
+            <body><![CDATA[
+            SELECT COUNT(*)
+			  FROM acp_store_view AS asv
+			 WHERE asv.owner_id = :empId
+			   AND asv.parentId <> id
+			   AND asv.tree_type = 1
+            ]]></body>
+        </sql>
+        <sql id="findTreePathByOwner">
+            <body><![CDATA[
+             SELECT asvs.node_path AS 'nodePath'
+               FROM acp_store_view_structure AS asvs
+              WHERE asvs.company_id = :companyId
+                AND asvs.owner_id = :ownerId
+                AND asv.tree_type = 1
+            ]]></body>
+        </sql>
+        <sql id="insertTreeStructure">
+            <body><![CDATA[
+             INSERT INTO acp_store_view_structure
+                         (node_id, owner_id, company_id, node_path, createUserId, createTime)
+                  VALUES (:nodeId, :ownerId, :companyId, :nodePath, :createUserId, CURRENT_TIMESTAMP)
+            ]]></body>
+        </sql>
+        <sql id="findStoreViewsByOwners" macros="storeviewenity_field">
+            <body><![CDATA[
+            SELECT <@storeviewenity_field />
+              FROM acp_store_view AS asv
+             WHERE asv.company_id = :companyId
+               AND asv.tree_type = 1
+               AND asv.owner_id IN ( SELECT a.owner_id
+                                       FROM acp_store_view_structure a
+                                      WHERE a.node_path LIKE (SELECT CONCAT(node_path,'$%')
+                                                                FROM acp_store_view_structure b
+                                                               WHERE b.company_id = :companyId
+                                                                 AND b.owner_id= :ownerId )
+                                        AND a.company_id = :companyId )
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="devicenetcfg_fields">
+            <![CDATA[
+		        <#macro select_devicenetcfg>
+		    SELECT dnc.id AS 'id', dnc.company_id AS 'companyId', dnc.store_id AS 'storeId', dnc.center_devid AS 'centerId',
+                   dnc.udp_domain AS 'udpDomain', dnc.udp_port AS 'udpPort',
+                   dnc.upload_domain AS 'uploadDomian', dnc.upload_port AS 'uploadPort',
+                   dnc.upd_page_size AS 'updPageSize', dnc.msg_delay_time AS 'msgDelayTime',
+                   dnc.keeplive_delay_time AS 'keepliveDelayTime',org.name AS 'company',store.name AS 'storeName'
+              FROM yycomm.device_net_config AS dnc
+         LEFT JOIN acp.acp_organization AS org ON org.id = dnc.company_id AND org.orgType = 1
+         LEFT JOIN acp.acp_store AS store ON store.id = dnc.store_id AND store.company_id = dnc.company_id
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="DeviceNetCfgEntity">
+        <sql id="findById" macros="devicenetcfg_fields">
+            <body><![CDATA[
+             <@select_devicenetcfg />
+             WHERE dnc.id = :id
+            ]]></body>
+        </sql>
+        <sql id="findByCompanyId" dynamic="true" macros="devicenetcfg_fields">
+            <body><![CDATA[
+            <@select_devicenetcfg />
+             WHERE dnc.company_id = :companyId
+       <#if companyOnly>
+               AND dnc.store_id = -1
+       </#if>
+            ]]></body>
+        </sql>
+        <sql id="loadDeviceNetCfg" macros="devicenetcfg_fields">
+            <body><![CDATA[
+           <@select_devicenetcfg />
+           WHERE dnc.company_id = :companyId
+             AND dnc.store_id IN (-1,:storeId)
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+          INSERT INTO yycomm.device_net_config
+                     (company_id, store_id, center_devid, udp_domain, udp_port, upload_domain, upload_port, upd_page_size, msg_delay_time, keeplive_delay_time)
+              VALUES (:companyId, :storeId, :centerId,     :udpDomain, :udpPort, :uploadDomain, :uploadPort, :updPageSize, :msgDelayTime, :keepliveDelayTime)
+            ]]></body>
+        </sql>
+        <sql id="update">
+            <body><![CDATA[
+          UPDATE yycomm.device_net_config
+             SET upd_page_size = :updPageSize, msg_delay_time  = :msgDelayTime, keeplive_delay_time = :keepliveDelayTime
+           WHERE id = :id
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

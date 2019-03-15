@@ -1,9 +1,11 @@
 package com.legooframework.model.salesrecords.entity;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.Objects;
 
 public class SaleRecordDetailEntity extends BaseEntity<Integer> {
@@ -11,13 +13,13 @@ public class SaleRecordDetailEntity extends BaseEntity<Integer> {
     private final BigDecimal goodsPrice, salePrice, totalPrice;
     private final GoodsBaseEntity goodsBase;
 
-    SaleRecordDetailEntity(Integer id, double salePrice, double goodsPrice, double totalPrice,
+    SaleRecordDetailEntity(Integer id, double salePrice, double goodsPrice,
                            int detailsStatus, int googsCount,
                            Integer goodsId, int goodsStatus, String funDesc, String goodsName, Integer companyId) {
         super(id);
         this.goodsPrice = new BigDecimal(goodsPrice);
         this.salePrice = new BigDecimal(salePrice);
-        this.totalPrice = new BigDecimal(totalPrice);
+        this.totalPrice = new BigDecimal(salePrice * googsCount);
         this.status = detailsStatus;
         this.googsCount = googsCount;
         this.goodsBase = new GoodsBaseEntity(goodsId, goodsStatus, funDesc, goodsName, companyId);
@@ -31,8 +33,18 @@ public class SaleRecordDetailEntity extends BaseEntity<Integer> {
         return status;
     }
 
-    public GoodsBaseEntity getGoodsBase() {
-        return goodsBase;
+    BigDecimal getTotalPrice() {
+        return totalPrice;
+    }
+
+    Map<String, Object> toViewMap() {
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("id", getId());
+        params.put("goodsCount", googsCount);
+        params.put("salePrice", salePrice.doubleValue());
+        params.put("totalPrice", totalPrice.doubleValue());
+        params.put("goodsName", goodsBase.getName());
+        return params;
     }
 
     @Override

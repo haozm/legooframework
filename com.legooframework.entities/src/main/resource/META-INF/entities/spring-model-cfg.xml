@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-    <bean id="entitiesBundle" class="com.legooframework.model.osgi.LegooBundleFactoryBean">
+    <bean id="entitiesBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/entities/legoo-model-cfg.xml"/>
     </bean>
 </beans>

@@ -16,7 +16,7 @@ public class EventListenerServiceTest {
         ApplicationContext applicationContext =
                 new ClassPathXmlApplicationContext(
                         ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/juniit/spring-db-cfg.xml",
-                        ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/base/spring-model-cfg.xml",
+                        ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
                         ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/integration/spring-model-cfg.xml",
                         ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/dict/spring-model-cfg.xml");
         LoginContext context = LoginContextHolder.getAnonymousCtx(100000000L);

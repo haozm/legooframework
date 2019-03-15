@@ -12,15 +12,15 @@
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]salesrecords[\\,/]entity-sql-cfg.xml$</value>
-                <value>.*[\\,/]base[\\,/]macro-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
             </util:list>
         </property>
     </bean>
     <bean id="saleRecordEntityAction" class="com.legooframework.model.salesrecords.entity.SaleRecordEntityAction"
-          parent="baseEntityAction">
+          parent="multipleBaseEntityAction">
         <property name="statementFactory" ref="salesRecordsStatementFactory"/>
         <property name="executorService" ref="legoo-executor"/>
-        <property name="dataSource" ref="crmDataSource"/>
+        <property name="multipleDataSource" ref="multipleDataSource"/>
     </bean>
     <bean id="saleRecordService" class="com.legooframework.model.salesrecords.service.SaleRecordService"/>
 </beans>

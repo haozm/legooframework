@@ -15,6 +15,6 @@
     <orderEntry type="library" name="junit" level="application" />
     <orderEntry type="module" module-name="com.legooframework.entities" />
     <orderEntry type="module" module-name="com.legooframework.crmadapter" />
-    <orderEntry type="module" module-name="org.legooframewrok.base" />
+    <orderEntry type="module" module-name="com.legooframework.core" />
   </component>
 </module>

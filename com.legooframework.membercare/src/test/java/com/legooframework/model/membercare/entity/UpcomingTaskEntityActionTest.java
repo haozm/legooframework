@@ -13,13 +13,12 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
 
-import java.util.List;
 import java.util.Optional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/base/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/batchsupport/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/membercare/spring-model-cfg.xml"}
@@ -40,11 +39,16 @@ public class UpcomingTaskEntityActionTest {
     }
 
     @Test
+    public void loadDetailById() {
+        upcomingTaskAction.loadTouch90DetailByStauts(TaskStatus.Create);
+//        Optional<List<UpcomingTaskEntity>> as = upcomingTaskAction.groupByMemberTouchFrist(com.get(), null);
+//        System.out.println(as.isPresent());
+    }
+
+    @Test
     public void findById() {
         Optional<CrmOrganizationEntity> com = organizationAction.findCompanyById(1);
         Preconditions.checkState(com.isPresent());
-        Optional<UpcomingTaskEntity> as = upcomingTaskAction.findById("00051953-7193-49de-b210-ff5d7d62917c");
-        System.out.println(as.isPresent());
     }
 
     @Autowired

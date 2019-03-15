@@ -11,7 +11,7 @@
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]crmadapter[\\,/]entity-sql-cfg.xml$</value>
-                <value>.*[\\,/]base[\\,/]macro-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
             </util:list>
         </property>
     </bean>
@@ -22,32 +22,29 @@
             </util:map>
         </property>
     </bean>
+    <bean id="tenantsRouteFactory" class="com.legooframework.model.crmadapter.entity.TenantsRouteFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]crmadapter[\\,/]tenants-route-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="crmAdapterBaseEntityAction" class="com.legooframework.model.crmadapter.entity.BaseEntityAction"
+          abstract="true">
+        <property name="tenantsRouteFactory" ref="tenantsRouteFactory"/>
+        <property name="cacheManager" ref="crmCacheManager"/>
+    </bean>
     <bean id="crmOrganizationEntityAction"
           class="com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="crmAdapterStatementFactory"/>
-        <property name="cacheManager" ref="crmCacheManager"/>
-        <property name="dataSource" ref="crmDataSource"/>
-    </bean>
+          parent="crmAdapterBaseEntityAction"/>
     <bean id="crmStoreEntityAction"
           class="com.legooframework.model.crmadapter.entity.CrmStoreEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="crmAdapterStatementFactory"/>
-        <property name="cacheManager" ref="crmCacheManager"/>
-        <property name="dataSource" ref="crmDataSource"/>
-    </bean>
+          parent="crmAdapterBaseEntityAction"/>
     <bean id="crmEmployeeEntityAction"
           class="com.legooframework.model.crmadapter.entity.CrmEmployeeEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="crmAdapterStatementFactory"/>
-        <property name="cacheManager" ref="crmCacheManager"/>
-        <property name="dataSource" ref="crmDataSource"/>
-    </bean>
+          parent="crmAdapterBaseEntityAction"/>
     <bean id="crmMemberEntityAction"
           class="com.legooframework.model.crmadapter.entity.CrmMemberEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="crmAdapterStatementFactory"/>
-        <property name="cacheManager" ref="crmCacheManager"/>
-        <property name="dataSource" ref="crmDataSource"/>
-    </bean>
+          parent="crmAdapterBaseEntityAction"/>
+    <bean id="crmReadService" class="com.legooframework.model.crmadapter.service.CrmReadService"/>
 </beans>

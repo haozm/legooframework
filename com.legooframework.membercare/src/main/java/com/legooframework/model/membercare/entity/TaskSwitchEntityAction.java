@@ -22,32 +22,49 @@ public class TaskSwitchEntityAction extends BaseEntityAction<TaskSwitchEntity> {
         super("CrmJobsCache");
     }
 
-    public Optional<TaskSwitchEntity> getTouch90Task(CrmOrganizationEntity company) {
-        Preconditions.checkNotNull(company, "公司不可以为空...");
-        final String cache_key = String.format("%s_%s_%s", getModelName(), TaskType.Touche90.getValue(), company.getId());
+    @SuppressWarnings("unchecked")
+    public Optional<List<TaskSwitchEntity>> queryAllTouch90Switch() {
+        final String cache_key = String.format("%s_%s_all", getModelName(), TaskType.Touche90.getValue());
         if (getCache().isPresent()) {
-            TaskSwitchEntity cache = getCache().get().get(cache_key, TaskSwitchEntity.class);
+            List<TaskSwitchEntity> cache = getCache().get().get(cache_key, List.class);
             if (cache != null) return Optional.of(cache);
         }
-        Optional<List<TaskSwitchEntity>> list = queryForTask(company.getId(), -1, TaskType.Touche90.getValue());
-        if (!list.isPresent()) return Optional.empty();
-        TaskSwitchEntity entit = list.get().get(0);
-        getCache().ifPresent(c -> c.put(cache_key, entit));
-        return Optional.of(entit);
+        Optional<List<TaskSwitchEntity>> optlist = queryTaskSwitch(TaskType.Touche90.getValue());
+        if (getCache().isPresent() && optlist.isPresent()) {
+            getCache().get().put(cache_key, optlist.get());
+        }
+        return optlist;
     }
 
-    private Optional<List<TaskSwitchEntity>> queryForTask(Integer companyId, Integer storeId, Integer taskName) {
+    public void updateTouch90Switch(CrmOrganizationEntity companyn, boolean switched) {
+        Preconditions.checkNotNull(companyn, "入参 CrmOrganizationEntity company 公司不可以为空...");
+        Optional<TaskSwitchEntity> taskSwitch = queryTouch90Switch(companyn);
+        final String cache_key = String.format("%s_%s_all", getModelName(), TaskType.Touche90.getValue());
+        if (taskSwitch.isPresent()) {
+            Optional<TaskSwitchEntity> clone = switched ? taskSwitch.get().open() : taskSwitch.get().close();
+            clone.ifPresent(x -> super.updateAction(x, "updateTouch90Switch"));
+        } else {
+            TaskSwitchEntity un_saved = TaskSwitchEntity.touc90Switch(companyn, switched);
+            super.updateAction(un_saved, "insertTouch90Switch");
+        }
+        getCache().ifPresent(c -> c.evict(cache_key));
+    }
+
+    public Optional<TaskSwitchEntity> queryTouch90Switch(CrmOrganizationEntity company) {
+        Preconditions.checkNotNull(company, "入参 CrmOrganizationEntity company 公司不可以为空...");
+        Optional<List<TaskSwitchEntity>> all_opts = queryAllTouch90Switch();
+        return all_opts.flatMap(swt -> swt.stream().filter(x -> x.isBelongCompany(company)).findFirst());
+    }
+
+    private Optional<List<TaskSwitchEntity>> queryTaskSwitch(Integer taskType) {
         Map<String, Object> params = Maps.newHashMap();
-        params.put("taskId", taskName);
-        params.put("companyId", companyId);
-        params.put("storeId", storeId);
-        Optional<List<TaskSwitchEntity>> list = super.queryForEntities("findByTask", params, getRowMapper());
+        params.put("taskType", taskType);
+        Optional<List<TaskSwitchEntity>> list = super.queryForEntities("queryTaskSwitch", params, getRowMapper());
         if (logger.isDebugEnabled())
-            logger.debug(String.format("queryForTask(%s, %s, %s) res size is %s", companyId, storeId, taskName,
+            logger.debug(String.format("queryTaskSwitch( %s ) res size is %s", taskType,
                     list.map(List::size).orElse(0)));
         return list;
     }
-
 
     @Override
     protected RowMapper<TaskSwitchEntity> getRowMapper() {

@@ -8,12 +8,12 @@ import com.legooframework.model.dict.dto.KvDictDto;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 public class KvDictEntity extends BaseDictEnity implements Sorting {
 
-    private String value, name, desc;
+    private String value, name, desc, tableName;
     private int index;
-
 
     KvDictEntity(int id, ResultSet res) {
         super(id, res);
@@ -28,12 +28,13 @@ public class KvDictEntity extends BaseDictEnity implements Sorting {
     }
 
     KvDictEntity(String type, LoginContext loginContext, String value,
-                 String name, String desc, int index) {
+                 String name, String desc, int index, String tableName) {
         super(type, loginContext.getTenantId(), loginContext.getLoginId());
         this.value = value;
         this.name = name;
         this.desc = desc;
         this.index = index;
+        this.tableName = tableName;
     }
 
     public KvDictEntity edit(String name, String desc, int index) {
@@ -44,15 +45,25 @@ public class KvDictEntity extends BaseDictEnity implements Sorting {
         return clone;
     }
 
-
     public KvDictDto createDto() {
         return new KvDictDto(value, name, index, getType());
     }
 
     @Override
+    public Map<String, Object> toParamMap(String... excludes) {
+        Map<String, Object> map = super.toParamMap("value", "name", "desc", "index", "tableName");
+        map.put("value", value);
+        map.put("name", name);
+        map.put("desc", desc);
+        map.put("index", index);
+        map.put("tableName", tableName);
+        return map;
+    }
+
+    @Override
     public boolean equalsEntity(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         KvDictEntity that = (KvDictEntity) o;
         return Objects.equal(getValue(), that.getType()) &&
                 Objects.equal(value, that.value) &&
@@ -61,9 +72,9 @@ public class KvDictEntity extends BaseDictEnity implements Sorting {
 
     @Override
     public boolean equals(Object o) {
-        if(this == o) return true;
-        if(o == null || getClass() != o.getClass()) return false;
-        if(!super.equals(o)) return false;
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
         KvDictEntity that = (KvDictEntity) o;
         return index == that.index &&
                 Objects.equal(value, that.value) &&

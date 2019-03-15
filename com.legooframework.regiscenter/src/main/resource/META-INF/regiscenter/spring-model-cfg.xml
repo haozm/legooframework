@@ -4,25 +4,47 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
-    <bean id="regiscenterBundle" class="com.legooframework.model.osgi.LegooBundleFactoryBean">
+    <bean id="regiscenterBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/regiscenter/legoo-model-cfg.xml"/>
     </bean>
-    <bean id="regiscenterStatementFactory" class="com.legooframework.model.jdbc.sqlengine.SQLStatementFactoryBean">
+    <bean id="regiscenterStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]regiscenter[\\,/]entity-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="regiscenterQueryStatementFactory"
+          class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]regiscenter[\\,/].*-query-cfg.xml$</value>
                 <value>.*[\\,/]base[\\,/]macro-sql-cfg.xml$</value>
             </util:list>
         </property>
     </bean>
+    <bean id="regiscenterJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
+        <qualifier value="regiscenterJdbcQuery"/>
+        <property name="statementFactory" ref="regiscenterQueryStatementFactory"/>
+        <property name="dataSource" ref="regeDataSource"/>
+    </bean>
     <bean id="devicePinCodeEntityAction" class="com.legooframework.model.regiscenter.entity.DevicePinCodeEntityAction"
           parent="baseEntityAction">
         <property name="statementFactory" ref="regiscenterStatementFactory"/>
+        <property name="dataSource" ref="regeDataSource"/>
+    </bean>
+    <bean id="storeActiveInfoEntityAction"
+          class="com.legooframework.model.regiscenter.entity.StoreActiveInfoEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="regiscenterStatementFactory"/>
+        <property name="dataSource" ref="regeDataSource"/>
     </bean>
     <bean id="tenantNetConfigEntityAction"
           class="com.legooframework.model.regiscenter.entity.TenantNetConfigEntityAction"
           parent="baseEntityAction">
         <property name="statementFactory" ref="regiscenterStatementFactory"/>
+        <property name="dataSource" ref="regeDataSource"/>
     </bean>
     <bean id="regisCenterService" class="com.legooframework.model.regiscenter.service.RegisCenterService"/>
 </beans>

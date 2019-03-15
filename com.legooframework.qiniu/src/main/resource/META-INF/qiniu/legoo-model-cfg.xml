@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="qiuNiu" version="1.0.0">
+    <depends>
+        <!-- Optional -->
+        <bundle name="legooCore" version="1.0.0" use="required"/>
+    </depends>
+</model>

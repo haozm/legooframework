@@ -16,9 +16,22 @@
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]membercare[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="careQueryStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]membercare[\\,/].*-query-cfg.xml$</value>
                 <value>.*[\\,/]base[\\,/]macro-sql-cfg.xml$</value>
             </util:list>
         </property>
+    </bean>
+    <bean id="careJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
+        <qualifier value="query"/>
+        <property name="statementFactory" ref="careQueryStatementFactory"/>
+        <property name="dataSource" ref="jobDataSource"/>
     </bean>
     <bean id="careCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
         <property name="caffeineSpecs">
@@ -43,21 +56,15 @@
           parent="baseEntityAction">
         <property name="statementFactory" ref="memberCareStatementFactory"/>
         <property name="cacheManager" ref="careCacheManager"/>
-        <property name="dataSource" ref="crmDataSource"/>
-    </bean>
-    <bean id="upcomingTaskDetailEntityAction"
-          class="com.legooframework.model.membercare.entity.UpcomingTaskDetailEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="memberCareStatementFactory"/>
-        <property name="cacheManager" ref="careCacheManager"/>
-        <property name="dataSource" ref="crmDataSource"/>
+        <property name="executorService" ref="legoo-executor"/>
+        <property name="dataSource" ref="jobDataSource"/>
     </bean>
     <bean id="touch90CareLogEntityAction" class="com.legooframework.model.membercare.entity.Touch90CareLogEntityAction"
           parent="baseEntityAction">
         <property name="statementFactory" ref="memberCareStatementFactory"/>
         <property name="cacheManager" ref="careCacheManager"/>
         <property name="executorService" ref="legoo-executor"/>
-        <property name="dataSource" ref="crmDataSource"/>
+        <property name="dataSource" ref="jobDataSource"/>
     </bean>
     <bean id="touch90ItemReader"
           class="com.legooframework.model.membercare.jobs.Touch90ItemReader" scope="step">
@@ -71,7 +78,6 @@
     </bean>
     <bean id="touch90ItemWriter" class="com.legooframework.model.membercare.jobs.Touch90ItemWriter">
         <property name="upcomingTaskAction" ref="upcomingTaskEntityAction"/>
-        <property name="upcomingTaskDetailAction" ref="upcomingTaskDetailEntityAction"/>
     </bean>
     <bean id="touch90ItemProcessor" class="com.legooframework.model.membercare.jobs.Touch90ItemProcessor">
         <property name="careRuleEntityAction" ref="careRuleEntityAction"/>
@@ -83,7 +89,7 @@
 
     <batch:job id="touch90Job">
         <batch:step id="step4touch90">
-            <batch:tasklet transaction-manager="crmTransactionManager" start-limit="1">
+            <batch:tasklet transaction-manager="jobTransactionManager" start-limit="1">
                 <batch:chunk reader="touch90ItemReader"
                              processor="touch90ItemProcessor"
                              writer="touch90ItemWriter"
@@ -95,19 +101,10 @@
             </batch:listeners>
         </batch:step>
     </batch:job>
-
     <bean id="memerCareJobService" class="com.legooframework.model.membercare.service.MemerCareJobService"/>
     <task:scheduled-tasks scheduler="legoo-scheduler">
-        <task:scheduled ref="memerCareJobService" method="runTouchJob" cron="0 0/5 * * * ?"/>
+        <task:scheduled ref="memerCareJobService" method="runTouchJob" cron="0 0/2 * * * ?"/>
+        <task:scheduled ref="memerCareJobService" method="automaticStartingTask" cron="0 0/5 * * * ?"/>
+        <task:scheduled ref="memerCareJobService" method="automaticExpiredTask" cron="0 0/30 * * * ?"/>
     </task:scheduled-tasks>
-
-    <!--<int:channel id="touch90Care-logs-channel">
-        <int:queue/>
-    </int:channel>
-    <int:outbound-channel-adapter channel="touch90Care-logs-channel"
-                                  ref="memerCareCreateService"
-                                  method="handleTouch90Log">
-        <int:poller fixed-delay="1000" time-unit="MILLISECONDS" receive-timeout="50000"
-                    max-messages-per-poll="1"/>
-    </int:outbound-channel-adapter>-->
 </beans>

@@ -20,5 +20,8 @@ CREATE TABLE device_base_info (
 	createTime DATETIME NOT NULL,
 	editTime DATETIME NULL DEFAULT NULL,
 	PRIMARY KEY (id)
-)
-ENGINE=InnoDB;
+) DEFAULT CHARSET = utf8mb4
+  COLLATE = 'utf8mb4_general_ci'
+  ENGINE = InnoDB;
+
+RENAME TABLE device_base_info TO DEVICE_BASE_INFO;

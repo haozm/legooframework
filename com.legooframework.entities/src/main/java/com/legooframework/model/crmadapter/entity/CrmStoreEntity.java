@@ -3,57 +3,33 @@ package com.legooframework.model.crmadapter.entity;
 
 import com.google.common.base.MoreObjects;
 import com.legooframework.model.core.base.entity.BaseEntity;
-import com.legooframework.model.core.jdbc.ResultSetUtil;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Objects;
-import java.util.Optional;
 
 public class CrmStoreEntity extends BaseEntity<Integer> {
 
-    private String name, address, oldStoreId, deviceId;
-    private Integer status;
-    private Integer organizationId;
-    private Integer companyId;
+    private String name;
+    private String orgCode;
+    private Integer companyId, orgId;
 
-    CrmStoreEntity(Integer id, ResultSet res) {
-        super(id, res);
-        try {
-            this.organizationId = ResultSetUtil.getOptObject(res, "organizationId", Integer.class).orElse(null);
-            this.companyId = ResultSetUtil.getObject(res, "companyId", Integer.class);
-            this.name = ResultSetUtil.getOptString(res, "name", null);
-            this.address = ResultSetUtil.getOptString(res, "address", null);
-            this.oldStoreId = ResultSetUtil.getOptString(res, "oldStoreId", null);
-            this.deviceId = ResultSetUtil.getOptString(res, "deviceId", null);
-            this.status = ResultSetUtil.getObject(res, "status", Integer.class);
-        } catch (SQLException e) {
-            throw new RuntimeException("Restore CrmStoreEntity has SQLException", e);
-        }
-    }
-
-    public boolean isEnabled() {
-        return null != status && 1 == this.status;
-    }
-
-    public Optional<String> getDeviceId() {
-        return Optional.ofNullable(deviceId);
+    CrmStoreEntity(Integer id, String name, String orgCode, Integer orgId, Integer companyId) {
+        super(id);
+        this.name = name;
+        this.orgCode = orgCode;
+        this.orgId = orgId;
+        this.companyId = companyId;
     }
 
     public String getName() {
         return name;
     }
 
-    public Optional<String> getOldStoreId() {
-        return Optional.ofNullable(oldStoreId);
+    String getOrgCode() {
+        return orgCode;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public Optional<Integer> getOrganizationId() {
-        return Optional.ofNullable(organizationId);
+    public boolean isOwnerOrg(CrmOrganizationEntity organization) {
+        return Objects.equals(this.orgId, organization.getId());
     }
 
     public Integer getCompanyId() {
@@ -67,33 +43,27 @@ public class CrmStoreEntity extends BaseEntity<Integer> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof CrmStoreEntity)) return false;
         if (!super.equals(o)) return false;
         CrmStoreEntity that = (CrmStoreEntity) o;
-        return Objects.equals(name, that.name) &&
-                Objects.equals(address, that.address) &&
-                Objects.equals(oldStoreId, that.oldStoreId) &&
-                Objects.equals(deviceId, that.deviceId) &&
-                Objects.equals(status, that.status) &&
-                Objects.equals(organizationId, that.organizationId) &&
-                Objects.equals(companyId, that.companyId);
+        return com.google.common.base.Objects.equal(name, that.name) &&
+                com.google.common.base.Objects.equal(orgCode, that.orgCode) &&
+                com.google.common.base.Objects.equal(orgId, that.orgId) &&
+                com.google.common.base.Objects.equal(companyId, that.companyId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), name, address, oldStoreId, deviceId, status, organizationId,
-                companyId);
+        return com.google.common.base.Objects.hashCode(super.hashCode(), name, orgCode, orgId, companyId);
     }
 
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
+                .add("id", getId())
                 .add("name", name)
-                .add("address", address)
-                .add("oldStoreId", oldStoreId)
-                .add("deviceId", deviceId)
-                .add("status", status)
-                .add("organizationId", organizationId)
+                .add("orgCode", orgCode)
+                .add("orgId", orgId)
                 .add("companyId", companyId)
                 .toString();
     }

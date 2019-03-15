@@ -1,6 +1,6 @@
 -- 设备激活码
-DROP TABLE IF EXISTS device_pin_code;
-CREATE TABLE device_pin_code (
+DROP TABLE IF EXISTS DEVICE_PIN_CODE;
+CREATE TABLE DEVICE_PIN_CODE (
   id BIGINT(20) NOT NULL AUTO_INCREMENT,
   company_id BIGINT(20) NOT NULL DEFAULT 0,
   pin_code VARCHAR(32) NOT NULL,
@@ -15,11 +15,12 @@ CREATE TABLE device_pin_code (
 	editor BIGINT(20) NULL DEFAULT NULL,
 	editTime DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (id)
-) COLLATE='utf8mb4_general_ci'
-ENGINE=InnoDB;
+) DEFAULT CHARSET = utf8mb4
+  COLLATE = 'utf8mb4_general_ci'
+  ENGINE = InnoDB;
 
-DROP TABLE IF EXISTS tenant_net_config;
-CREATE TABLE tenant_net_config (
+DROP TABLE IF EXISTS TENANT_NET_CONFIG;
+CREATE TABLE TENANT_NET_CONFIG (
   id BIGINT(20) NOT NULL AUTO_INCREMENT,
   company_id BIGINT(20) NOT NULL,
   web_domain VARCHAR(128) NOT NULL,
@@ -31,8 +32,43 @@ CREATE TABLE tenant_net_config (
 	editor BIGINT(20) NULL DEFAULT NULL,
 	editTime DATETIME NULL DEFAULT NULL,
   PRIMARY KEY (id)
-) COLLATE='utf8_general_ci'
-ENGINE=InnoDB;
+) DEFAULT CHARSET = utf8mb4
+  COLLATE = 'utf8mb4_general_ci'
+  ENGINE = InnoDB;
 
-INSERT INTO tenant_net_config (company_id, web_domain, web_port,  tenant_id, creator,createTime)
+INSERT INTO TENANT_NET_CONFIG (company_id, web_domain, web_port,  tenant_id, creator,createTime)
 VALUES(100000000, '113.106.222.250', 9001, 100000000, -1,NOW());
+
+RENAME TABLE tenant_net_config TO TENANT_NET_CONFIG;
+RENAME TABLE device_pin_code TO DEVICE_PIN_CODE;
+ALTER TABLE DEVICE_PIN_CODE DROP COLUMN deadline;
+ALTER TABLE DEVICE_PIN_CODE ADD store_id INT(11) NULL;
+
+-- 设备激活状态
+DROP TABLE IF EXISTS STORE_ACTIVED_INFO;
+CREATE TABLE STORE_ACTIVED_INFO (
+  id BIGINT(20) NOT NULL AUTO_INCREMENT,
+  company_id INT(11) NOT NULL DEFAULT 0,
+  store_id INT(11) NOT NULL,
+  device_id VARCHAR(128) DEFAULT NULL,
+  active_date DATETIME DEFAULT NULL,
+  deadline DATETIME DEFAULT NULL,
+  delete_flag INT(1) NOT NULL DEFAULT 0,
+	tenant_id BIGINT(20) NULL DEFAULT NULL,
+  creator BIGINT(20) NOT NULL,
+	createTime DATETIME NOT NULL,
+	editor BIGINT(20) NULL DEFAULT NULL,
+	editTime DATETIME NULL DEFAULT NULL,
+  PRIMARY KEY (id)
+) DEFAULT CHARSET = utf8mb4
+  COLLATE = 'utf8mb4_general_ci'
+  ENGINE = InnoDB;
+
+ALTER TABLE DEVICE_PIN_CODE ADD pincode_status INT(2) NULL;
+ALTER TABLE DEVICE_PIN_CODE ADD batch_no varchar(65) NULL;
+UPDATE DEVICE_PIN_CODE SET pincode_status = 2 WHERE device_id IS NOT NULL OR device_id  <> '';
+UPDATE DEVICE_PIN_CODE SET pincode_status = 1 WHERE device_id = '' OR device_id IS NULL;
+
+
+
+

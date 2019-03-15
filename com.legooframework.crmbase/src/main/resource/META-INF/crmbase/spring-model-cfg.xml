@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+                           http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
+    <task:executor id="csosm-executor" pool-size="16-128" queue-capacity="2048" rejection-policy="CALLER_RUNS"/>
+    <task:scheduler id="csosm-scheduler" pool-size="16"/>
+    <bean id="listeningExecutorService" class="com.csosm.commons.server.CsosmExecutorServiceFactory"
+          destroy-method="shutdown"/>
+    <!-- ============================ 事件总线 Begin ============================ -->
+    <bean id="csosmAsyncEventBus" class="com.google.common.eventbus.AsyncEventBus">
+        <constructor-arg name="identifier" value="csosm-AsyncEventBus"/>
+        <constructor-arg name="executor" ref="csosm-executor"/>
+    </bean>
+    <bean id="csosmEventbus" class="com.google.common.eventbus.EventBus">
+        <constructor-arg name="identifier" value="csosmEventbus"/>
+    </bean>
+    <bean id="eventRegisterServer" class="com.csosm.commons.server.EventRegisterServer"/>
+    <bean id="monitorFileSystem" class="com.csosm.commons.vfs.MonitorFileSystemFactory" destroy-method="shutdown">
+        <property name="delay" value="5000"/>
+        <property name="foldPath" value="${config.dir}"/>
+    </bean>
+    <bean id="restFulTemplate" class="com.csosm.commons.mvc.RestTemplateFactoryBean"/>
+    <!-- ============================ 事件总线 Begin ============================ -->
+    <bean id="fileObjectMonitorServer" class="com.csosm.commons.server.FileObjectMonitorServer"/>
+    <bean id="crmbaseEntitySqlFactory" class="com.csosm.commons.jdbc.sqlcfg.SqlMetaEntityFactoryBean">
+        <property name="nameMatch" value=".+[\\/]crmbase[\\/].+-entity-sql\.xml$"/>
+    </bean>
+    <!-- ============================ 查询引擎 Begin ============================ -->
+    <bean id="sqlMetaEntityFactory" class="com.csosm.commons.jdbc.sqlcfg.SqlMetaEntityFactoryBean">
+        <property name="nameMatch" value=".+[\\/]crmbase[\\/].+-query-cfg\.xml$"/>
+    </bean>
+    <bean id="queryEngineService" class="com.csosm.module.query.QueryEngineService">
+        <property name="dataSource" ref="crmDataSource"/>
+        <property name="executor" ref="csosm-executor"/>
+        <property name="sqlMetaEntityFactory" ref="sqlMetaEntityFactory"/>
+    </bean>
+    <!-- ============================ 查询引擎 End ============================ -->
+    <!-- ============================ Cache Begin ============================ -->
+    <bean id="guavaCacheManager" class="com.csosm.module.base.cache.GuavaCacheManagerFactoryBean">
+        <property name="cacheCfg">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="adapterCache"
+                       value="initialCapacity=64,maximumSize=512,expireAfterAccess=30m"/>
+                <entry key="urlCache"
+                       value="initialCapacity=256,maximumSize=512,expireAfterAccess=1h"/>
+                <entry key="defCache"
+                       value="initialCapacity=64,maximumSize=1024,expireAfterAccess=1h"/>
+                <entry key="couponsCache"
+                       value="initialCapacity=64,maximumSize=1024,expireAfterAccess=1h"/>
+                <entry key="tempCache"
+                       value="initialCapacity=64,maximumSize=256,expireAfterWrite=5m"/>
+                <entry key="authorCache"
+                       value="initialCapacity=64,maximumSize=256,expireAfterWrite=1h"/>
+            </util:map>
+        </property>
+        <property name="defaultName" value="defCache"/>
+    </bean>
+    <!-- ============================ Cache End ============================ -->
+    <bean abstract="true" id="baseEntityAction" class="com.csosm.commons.entity.BaseEntityAction">
+        <property name="dataSource" ref="crmDataSource"/>
+        <property name="sqlMetaEntityFactory" ref="crmbaseEntitySqlFactory"/>
+        <property name="guavaCacheManager" ref="guavaCacheManager"/>
+        <property name="asyncEventBus" ref="csosmAsyncEventBus"/>
+    </bean>
+    <!-- ============================ 适配原系统Begin ============================ -->
+    <bean id="employeeEntityAction" class="com.csosm.module.base.entity.EmployeeEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="storeEntityAction" class="com.csosm.module.base.entity.StoreEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="organizationEntityAction" class="com.csosm.module.base.entity.OrganizationEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="roleEntityAction" class="com.csosm.module.base.entity.RoleEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="memberEntityAction" class="com.csosm.module.base.entity.MemberEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="memberExtraEntityAction" class="com.csosm.module.base.entity.MemberExtraEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="systemlogEntityAction" class="com.csosm.module.base.entity.SystemlogEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="deviceActiveDetailAction" class="com.csosm.module.base.entity.DeviceActiveDetailAction"
+          parent="baseEntityAction"/>
+    <bean id="deviceNetCfgEntityAction" class="com.csosm.module.base.entity.DeviceNetCfgEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="dictEntityAction" class="com.csosm.module.base.entity.KvDictEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="baseAdapterServer" class="com.csosm.module.base.BaseModelServer">
+        <qualifier value="baseAdapterServer"/>
+    </bean>
+    <bean id="baseEventBusSubscribeService" class="com.csosm.module.base.EventBusSubscribeService"/>
+    <bean id="employeeServer" class="com.csosm.module.base.EmployeeServer"/>
+    <bean id="memberServer" class="com.csosm.module.base.MemberServer"/>
+    <!-- ============================ 适配原系统End ============================ -->
+    <!-- ============================ 门店透视图Begin ============================ -->
+    <bean id="treeNodeEntityAction"
+          class="com.csosm.module.storeview.entity.StoreViewEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="treeNodeViewService" class="com.csosm.module.storeview.StoreViewService"/>
+    <!-- ============================ 门店透视图End ============================ -->
+    <bean id="resourcesFactory" class="com.csosm.module.menu.entity.ResourcesFactoryBean">
+        <property name="pattern" value=".*[\\,/]crmbase[\\,/]resource-menu-cfg\.xml$"/>
+    </bean>
+    <bean id="secAccessService" class="com.csosm.module.menu.SecAccessService"/>
+    <bean id="organizationServer" class="com.csosm.module.base.OrganizationServer"/>
+    <bean id="storeServer" class="com.csosm.module.base.StoreServer"/>
+    <!-- ======================================== spring sec ================================================= -->
+    <bean id="userDetailsServiceImpl" class="com.csosm.module.sso.UserDetailsServiceImpl">
+        <property name="baseModelServer" ref="baseAdapterServer"/>
+    </bean>
+    <bean id="securityContextRepositoryImpl" class="com.csosm.module.sso.SecurityContextRepositoryImpl">
+        <property name="baseModelServer" ref="baseAdapterServer"/>
+        <property name="tokenClient" ref="jwTokenAction"/>
+    </bean>
+    <bean id="passwordEncoderImpl" class="com.csosm.module.sso.PasswordEncoderImpl"/>
+    <bean id="daoAuthenticationProvider"
+          class="org.springframework.security.authentication.dao.DaoAuthenticationProvider">
+        <property name="userDetailsService" ref="userDetailsServiceImpl"/>
+        <property name="hideUserNotFoundExceptions" value="false"/>
+        <property name="passwordEncoder" ref="passwordEncoderImpl"/>
+    </bean>
+    <bean id="logoutSuccessHandler" class="com.csosm.module.sso.LogoutSuccessHandler">
+        <property name="securityContextRepository" ref="securityContextRepositoryImpl"/>
+        <property name="defaultTargetUrl" value="/login.html?logout"/>
+    </bean>
+    <bean id="authenticationService" class="com.csosm.module.sso.AuthenticationService">
+        <property name="tokenClient" ref="jwTokenAction"/>
+    </bean>
+    <bean id="tokenHeaderWrite" class="com.csosm.module.sso.TokenHeaderWrite"/>
+    <bean id="crmProviderManager" class="org.springframework.security.authentication.ProviderManager">
+        <constructor-arg name="providers" ref="authenticationProviders"/>
+    </bean>
+    <util:list id="authenticationProviders"
+               value-type="org.springframework.security.authentication.AuthenticationProvider">
+        <ref bean="daoAuthenticationProvider"/>
+    </util:list>
+</beans>

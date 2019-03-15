@@ -17,7 +17,7 @@
             SELECT kv.id AS 'dictId', kv.dict_type AS 'type', kv.field_value AS 'value',
                    kv.field_name AS 'name', kv.field_index AS 'index',
                    kv.field_desc AS 'desc', <@crud_fixed_select alias="kv" />
-              FROM dict_kv_data AS kv
+              FROM ${tableName} AS kv
              WHERE kv.delete_flag = 0
                AND kv.dict_type = :type
                AND kv.tenant_id IN (-1,${TENANT_ID})
@@ -26,14 +26,14 @@
         </sql>
         <sql id="insert">
             <body><![CDATA[
-        INSERT INTO dict_kv_data
+        INSERT INTO DICT_KV_DATA
                     (id, dict_type, field_value, field_name, field_index, field_desc, tenant_id, creator, createTime)
              VALUES (:id, :type, :value, :name, :index, :desc, :tenantId, :creator, NOW())
               ]]></body>
         </sql>
         <sql id="edit">
             <body><![CDATA[
-             UPDATE dict_kv_data
+             UPDATE DICT_KV_DATA
                 SET field_name = :name, field_index = :index, field_desc = :desc, editor = :editor, editTime = NOW()
               WHERE id = :id
                 AND kv.tenant_id = :TENANT_ID
@@ -41,7 +41,7 @@
         </sql>
         <sql id="deleteById" macros="crud_fixed">
             <body><![CDATA[
-             <@crud_fixed_deleteById tableName="dict_kv_data" />
+             <@crud_fixed_deleteById tableName="DICT_KV_DATA" />
               ]]></body>
         </sql>
     </model>

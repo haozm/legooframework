@@ -7,7 +7,6 @@
                  acs.id AS 'id',
                  acs.oldSaleRecordId AS 'oldSaleRecordId',
                  acs.saleOrderNo AS 'saleOrderNo',
-                 acs.saleTotalAmount AS 'saleTotalAmount',
                  acs.status AS 'status',
                  acs.company_id AS 'companyId',
                  acs.store_id AS 'storeId',
@@ -28,8 +27,7 @@
                 ( SELECT GROUP_CONCAT( CONCAT_WS('$', acsr.id ,
                                         IFNULL(acsr.salePrice,0.0) ,
                                         IFNULL(acsr.goodsPrice,0.0) ,
-                                        IFNULL(acsr.totalPrice,0.0) ,
-                                        IFNULL(acsr.goodsCount,1) ,
+                                        IFNULL(acsr.goodsCount,0) ,
                                         IFNULL(acsr.status,1),
                                         acg.id ,
                                         IFNULL(acg.status, 1),
@@ -39,6 +37,7 @@
                     FROM acp.crm_salesubrecord AS acsr
                LEFT JOIN acp.crm_goods acg ON acg.id = acsr.goods_id
                    WHERE acsr.saleRecord_id = acs.id
+                     AND acsr.status = 1
                 GROUP BY acsr.saleRecord_id ) AS 'details',
              </#if>
                  acs.member_id AS 'tenantId',
@@ -48,26 +47,33 @@
         </macro>
     </macros>
     <model id="SaleRecordEntity">
-        <sql id="findById" macros="crm_salerecord_fields">
+        <sql id="loadByDateInterval" macros="crm_salerecord_fields">
             <body><![CDATA[
              SELECT <@salerecord_fields />
                FROM acp.crm_salerecord AS acs
               WHERE LENGTH(acs.member_id) > 0
                 AND LENGTH(acs.store_id) > 0
                 AND LENGTH(acs.company_id) > 0
+                AND acs.updateTime IS NOT NULL
                 AND acs.status = 1
-                AND acs.id = :id
-            ]]></body>
-        </sql>
-        <sql id="loadByDateInterval" macros="crm_salerecord_fields">
-            <body><![CDATA[
-             SELECT <@salerecord_fields />
-               FROM acp.crm_salerecord AS acs
-              WHERE LENGTH(acs.member_id) > 0
-                AND acs.status = 1
+                AND acs.company_id = :companyId
                 AND acs.store_id IN (${storeIds?join(",")})
                 AND acs.updateTime BETWEEN :startDay AND :endDay
            ORDER BY acs.store_id,acs.member_id,acs.createTime
+            ]]></body>
+        </sql>
+        <sql id="loadMemberBy90Days" dynamic="true" macros="crm_salerecord_fields">
+            <body><![CDATA[
+          SELECT <@sale_recorde_fields />
+            FROM acp.crm_salerecord acs
+           WHERE LENGTH(acs.member_id) > 0
+             AND LENGTH(acs.store_id) > 0
+             AND LENGTH(acs.company_id) > 0
+             AND acs.status = 1
+             AND acs.member_id = :memberId
+             AND acs.store_id = :storeId
+             AND acs.createTime BETWEEN DATE_ADD(NOW(), INTERVAL -90 DAY) AND NOW()
+        ORDER BY acs.id
             ]]></body>
         </sql>
     </model>

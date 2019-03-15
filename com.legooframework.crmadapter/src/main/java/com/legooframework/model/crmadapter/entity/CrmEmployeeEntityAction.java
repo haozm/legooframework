@@ -1,19 +1,18 @@
 package com.legooframework.model.crmadapter.entity;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.legooframework.model.core.base.entity.BaseEntityAction;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.RowMapper;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class CrmEmployeeEntityAction extends BaseEntityAction<CrmEmployeeEntity> {
 
@@ -35,31 +34,47 @@ public class CrmEmployeeEntityAction extends BaseEntityAction<CrmEmployeeEntity>
                 return Optional.of(employees);
             }
         }
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("storeId", store.getId());
-        params.put("companyId", store.getCompanyId());
-        Optional<List<CrmEmployeeEntity>> employees = queryForEntities("loadAllByStore", params, getRowMapper());
-        if (getCache().isPresent() && employees.isPresent())
-            getCache().get().put(cache_key, employees.get());
-        return employees;
-    }
 
-    public Optional<List<CrmEmployeeEntity>> loadEnableByStore(CrmStoreEntity store) {
-        Optional<List<CrmEmployeeEntity>> employees = loadAllByStore(store);
-        return employees.map(crmEmployeeEntities -> crmEmployeeEntities.stream().
-                filter(CrmEmployeeEntity::isEnabled).collect(Collectors.toList()));
-    }
+        Optional<JsonElement> payload = super.post(getTenantsRouteFactory().getUrl(store.getCompanyId(), "loadEmpsByStore"),
+                null, store.getCompanyId(), store.getId());
 
-    @Override
-    protected RowMapper<CrmEmployeeEntity> getRowMapper() {
-        return new RowMapperImpl();
-    }
-
-    class RowMapperImpl implements RowMapper<CrmEmployeeEntity> {
-        @Override
-        public CrmEmployeeEntity mapRow(ResultSet resultSet, int i) throws SQLException {
-            return new CrmEmployeeEntity(resultSet.getInt("id"), resultSet);
+        Preconditions.checkState(payload.isPresent(), "门店 %s 无职员信息...", store.getName());
+        List<CrmEmployeeEntity> emps = Lists.newArrayList();
+        JsonArray jsonArray = payload.get().getAsJsonArray();
+        for (JsonElement jsonElement : jsonArray) {
+            // Integer id, Integer companyId, Integer orgId, Integer storeId,
+            //        String userName, String roleIds
+            emps.add(buildEmp(jsonElement.getAsJsonObject()));
         }
+        if (getCache().isPresent() && CollectionUtils.isNotEmpty(emps))
+            getCache().get().put(cache_key, emps);
+        return Optional.ofNullable(CollectionUtils.isEmpty(emps) ? null : emps);
+    }
+
+    public Optional<CrmEmployeeEntity> findById(CrmOrganizationEntity company, Integer employeeId) {
+        Preconditions.checkNotNull(company, "所属公司不可以为空值...");
+        Preconditions.checkNotNull(employeeId, "employeeId 不可以为空值...");
+        Optional<JsonElement> payload = post(getTenantsRouteFactory().getUrl(company.getId(), "loadEmpsById"),
+                null, company.getId(), employeeId);
+        Preconditions.checkState(payload.isPresent(), "职员id= %s 不存在...", employeeId);
+        return Optional.of(buildEmp(payload.get().getAsJsonObject()));
+    }
+
+    public Optional<CrmEmployeeEntity> findByLoginName(CrmOrganizationEntity company, String loginName) {
+        Preconditions.checkNotNull(company, "所属公司不可以为空值...");
+        Preconditions.checkNotNull(loginName, "loginName 不可以为空值...");
+        Optional<JsonElement> payload = post(getTenantsRouteFactory().getUrl(company.getId(), "loadEmpsByLoginName"),
+                null, company.getId(), loginName);
+        Preconditions.checkState(payload.isPresent(), "职员 %s 不存在...", loginName);
+        return Optional.of(buildEmp(payload.get().getAsJsonObject()));
+    }
+
+    private CrmEmployeeEntity buildEmp(JsonObject _json) {
+        return new CrmEmployeeEntity(_json.get("id").getAsInt(),
+                _json.get("companyId").getAsInt(), _json.get("orgId").getAsInt(), _json.get("storeId").getAsInt(),
+                _json.get("name").getAsString(),
+                _json.get("roleIds").isJsonNull() ? null : _json.get("roleIds").getAsString(),
+                _json.get("pwd").getAsString());
     }
 
 }

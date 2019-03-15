@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tenants>
+    <tenant ids="-1,1,3,4,5,6,41,43,49,50,54,57,59,61,62,63,65,67,71,79,81" domain="http://localhost:5050/crmbase/">
+        <url name="loadAllCompany" value="api/inner/company/{companyId}/all.json?loginId=-1"/>
+        <url name="loadAllOrg" value="api/inner/org/{companyId}/all.json?loginId=-1"/>
+        <url name="loadAllStores" value="api/inner/store/{companyId}/all.json?loginId=-1"/>
+        <url name="loadEmpsByStore" value="api/inner/employee/{companyId}/{storeId}/bystore.json?loginId=-1"/>
+        <url name="loadEmpsById" value="api/inner/employee/{companyId}/byUserId/{userId}/employee.json?loginId=-1"/>
+        <url name="loadEmpsByLoginName"
+             value="api/inner/employee/{companyId}/byLoginName/{userInfo}/employee.json?loginId=-1"/>
+        <url name="loadLoginInfo" value="api/inner/employee/{companyId}/{loginName}/loginuser.json?loginId=-1"/>
+        <url name="loadMembersByIds" value="inner/{type}/{companyId}/{storeId}/bystore.json?loginId=-1"/>
+        <url name="loadMembersByStore" value="inner/{type}/{companyId}/{storeId}/bystore.json?loginId=-1"/>
+    </tenant>
+    <tenant ids="2" domain="http://localhost:5050/crmbase/">
+        <url name="loadAllCompany" value="api/inner/company/{companyId}/all.json?loginId=-1"/>
+        <url name="loadAllOrg" value="api/inner/org/{companyId}/all.json?loginId=-1"/>
+        <url name="loadAllStores" value="api/inner/store/{companyId}/all.json?loginId=-1"/>
+        <url name="loadEmpsByStore" value="api/inner/employee/{companyId}/{storeId}/bystore.json?loginId=-1"/>
+        <url name="loadEmpsById" value="api/inner/employee/{companyId}/byUserId/{userId}/employee.json?loginId=-1"/>
+        <url name="loadEmpsByLoginName"
+             value="api/inner/employee/{companyId}/byLoginName/{userInfo}/employee.json?loginId=-1"/>
+        <url name="loadLoginInfo" value="api/inner/employee/{companyId}/{loginName}/loginuser.json?loginId=-1"/>
+        <url name="loadMembersByIds" value="inner/{type}/{companyId}/{storeId}/bystore.json?loginId=-1"/>
+        <url name="loadMembersByStore" value="inner/{type}/{companyId}/{storeId}/bystore.json?loginId=-1"/>
+    </tenant>
+</tenants>

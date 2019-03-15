@@ -1,6 +1,8 @@
 package com.legooframework.model.membercare.entity;
 
+import com.google.common.base.Optional;
 import com.legooframework.model.core.base.entity.BaseEntity;
+import org.joda.time.LocalDateTime;
 
 import java.sql.ResultSet;
 import java.util.Objects;

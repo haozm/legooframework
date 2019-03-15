@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="DevicePinCodeEntity">
+        <sql id="loadPincode_count" dynamic="true">
+            <body><![CDATA[
+        SELECT COUNT(dpc.pin_code) AS 'count'
+          FROM DEVICE_PIN_CODE AS dpc
+         WHERE dpc.pin_enabled = 1
+         <#if companyId??>
+           AND dpc.company_id = :companyId
+         </#if>
+         <#if status??>
+           AND dpc.pincode_status IN (${status})
+         </#if>
+            ]]></body>
+        </sql>
+        <sql id="loadPincode" dynamic="true">
+            <body><![CDATA[
+        SELECT dpc.id AS 'id',
+               dpc.company_id AS 'companyId',
+               dpc.pin_code AS 'pinCode',
+               dpc.pin_enabled AS 'enabled',
+               dpc.device_id AS 'deviceId',
+               dpc.store_id AS 'storeId',
+               IFNULL(dpc.batch_no,'-') AS 'batchNo',
+               (CASE dpc.pincode_status
+                 WHEN 0 THEN '初始化'
+                 WHEN 1 THEN '邮寄中'
+                 ELSE '已使用' END ) AS 'pinCodeStatusDesc',
+               dpc.pincode_status AS 'pinCodeStatus',
+               DATE_FORMAT(DATE_ADD(dpc.bind_date, INTERVAL 14 HOUR), '%Y-%m-%d %H:%i') AS 'bindingDate',
+               DATE_FORMAT(dpc.createTime,'%Y-%m-%d') AS 'createDate'
+          FROM DEVICE_PIN_CODE AS dpc
+         WHERE dpc.pin_enabled = 1
+         <#if companyId??>
+           AND dpc.company_id = :companyId
+         </#if>
+         <#if status??>
+           AND dpc.pincode_status IN (${status})
+         </#if>
+      ORDER BY dpc.createTime DESC
+         LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

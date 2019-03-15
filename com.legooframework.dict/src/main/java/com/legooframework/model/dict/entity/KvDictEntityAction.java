@@ -22,8 +22,17 @@ public class KvDictEntityAction extends BaseEntityAction<KvDictEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(KvDictEntityAction.class);
 
+    private String tableName;
+
     public KvDictEntityAction() {
         super("ForeverCache");
+        this.tableName = "DICT_KV_DATA";
+    }
+
+    public KvDictEntityAction(String cacheName, String tableName) {
+        super(cacheName);
+        this.tableName = tableName;
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(tableName), "字典表名称不可以为空值...");
     }
 
     public void insert(String type, String value, String name, String desc, int index) {
@@ -35,7 +44,7 @@ public class KvDictEntityAction extends BaseEntityAction<KvDictEntity> {
         Optional<KvDictEntity> exits = findByValue(type, value);
         Preconditions.checkState(!exits.isPresent(), "存在Type=%s,Value=%s 对应的参数值，请检查输入.",
                 type, value);
-        KvDictEntity entity = new KvDictEntity(type, loginContext, value, name, desc, index);
+        KvDictEntity entity = new KvDictEntity(type, loginContext, value, name, desc, index, tableName);
         int result = super.update(getStatementFactory(), getModelName(), "insert", entity);
         Preconditions.checkState(1 == result);
         getCache().ifPresent(c -> c.evict(cacheByIdKey(entity.getType())));
@@ -58,15 +67,24 @@ public class KvDictEntityAction extends BaseEntityAction<KvDictEntity> {
     public Optional<KvDictEntity> findById(String type, Object id) {
         Preconditions.checkNotNull(id);
         Optional<List<KvDictEntity>> entities = loadByType(type);
-        if (!entities.isPresent()) return Optional.empty();
-        return entities.get().stream().filter(x -> Objects.equal(x.getId(), id)).findFirst();
+        return entities.flatMap(kvDictEntities -> kvDictEntities.stream()
+                .filter(x -> Objects.equal(x.getId(), id)).findFirst());
     }
 
     public Optional<KvDictEntity> findByValue(String type, String value) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
         Optional<List<KvDictEntity>> entities = loadByType(type);
-        if (!entities.isPresent()) return Optional.empty();
-        return entities.get().stream().filter(x -> Objects.equal(x.getValue(), value)).findFirst();
+        return entities.flatMap(kvDictEntities -> kvDictEntities.stream()
+                .filter(x -> Objects.equal(x.getValue(), value)).findFirst());
+    }
+
+    public KvDictEntity loadByValue(String type, String value) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(value));
+        Optional<List<KvDictEntity>> entities = loadByType(type);
+        Optional<KvDictEntity> optional = entities.flatMap(kvDictEntities -> kvDictEntities.stream()
+                .filter(x -> Objects.equal(x.getValue(), value)).findFirst());
+        Preconditions.checkState(optional.isPresent(), "不存在Type=%s,Key=%s 对应的数据字典值.", type, value);
+        return optional.get();
     }
 
     @Override
@@ -77,6 +95,11 @@ public class KvDictEntityAction extends BaseEntityAction<KvDictEntity> {
     public Optional<List<KvDictEntity>> findByType(String type) {
         if (Strings.isNullOrEmpty(type)) return Optional.empty();
         return loadByType(type);
+    }
+
+    @Override
+    protected String cacheByIdKey(Object id) {
+        return String.format("%s_id_%s_%s", getModelName(), tableName, id);
     }
 
     @SuppressWarnings("unchecked")
@@ -91,12 +114,11 @@ public class KvDictEntityAction extends BaseEntityAction<KvDictEntity> {
                 return Optional.of(cacheValue);
             }
         }
-
         Map<String, Object> params = Maps.newHashMap();
         params.put("type", type);
+        params.put("tableName", tableName);
         Optional<List<KvDictEntity>> entities = queryForEntities(getStatementFactory(), getModelName(),
                 "loadByType", params, getRowMapper());
-
         entities.ifPresent(e -> getCache().ifPresent(c -> c.put(cache_key, e)));
         return entities;
     }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="picturemgn" version="1.0.0">
+    <depends>
+        <!-- Optional -->
+        <bundle name="legooCore" version="1.0.0" use="required"/>
+        <bundle name="crmadapter" version="1.0.0" use="required"/>
+        <bundle name="entities" version="1.0.0" use="required"/>
+    </depends>
+</model>

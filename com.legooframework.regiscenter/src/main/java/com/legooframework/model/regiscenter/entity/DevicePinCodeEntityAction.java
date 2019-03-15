@@ -7,9 +7,11 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.organization.entity.CompanyEntity;
+import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
+import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.RandomUtils;
-import org.apache.commons.lang3.StringUtils;
+import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -27,42 +29,63 @@ public class DevicePinCodeEntityAction extends BaseEntityAction<DevicePinCodeEnt
         super(null);
     }
 
-    public boolean activeDeviceId(String pinCode, String deviceId) {
-        Optional<List<DevicePinCodeEntity>> exits = findByCodeOrDeviceId(pinCode, deviceId);
-        Preconditions.checkState(exits.isPresent(), "非法的 pinCode = %s", pinCode);
-        if (exits.get().size() != 1)
-            throw new IllegalArgumentException(String.format("pinCode=%s 或者 deviceId=%s 已经被注册 ...",
-                    pinCode, deviceId));
-        DevicePinCodeEntity em = exits.get().get(0);
-        Preconditions.checkState(StringUtils.equals(em.getPinCode(), pinCode), "非法的 pinCode = %s", pinCode);
-        Optional<DevicePinCodeEntity> clone = em.activeDeviceId(deviceId);
-        clone.ifPresent(devicePinCodeEntity -> super.updateAction(devicePinCodeEntity, "activeDeviceId"));
-        return clone.isPresent();
+    public void activeDevice(String pinCode, String deviceId, CrmStoreEntity store) {
+        Optional<DevicePinCodeEntity> exits = findByCode(pinCode);
+        Preconditions.checkState(exits.isPresent(), "pinCode=%s 非法...", pinCode);
+        Optional<DevicePinCodeEntity> clone = exits.get().activeDeviceId(deviceId, store);
+        clone.ifPresent(p -> super.updateAction(p, "activeDeviceId"));
     }
 
-    public Collection<String> batchCreatePinCodes(CompanyEntity company, Date deadline, int size) {
+    /**
+     * 批量增加 pincode 指定公司
+     *
+     * @param company
+     * @param size
+     * @return
+     */
+    public Collection<Integer> batchCreatePinCodes(CrmOrganizationEntity company, int size) {
         Preconditions.checkNotNull(company);
         Preconditions.checkArgument(size > 0);
-        Set<String> pin_codes = Sets.newHashSet();
-        for (int i = 0; i < size * 2; i++) pin_codes.add(String.valueOf(RandomUtils.nextInt(100000, 999999)));
+        String batchNo = String.format("%s-%s", LocalDateTime.now().toString("yyMMddHHmmss"), company.getId());
+        Set<Integer> pin_codes = Sets.newHashSet();
+        for (int i = 0; i < size * 3; i++) pin_codes.add(RandomUtils.nextInt(100000, 999999));
         Map<String, Object> params = Maps.newHashMap();
         params.put("pinCodes", pin_codes);
-        Optional<List<DevicePinCodeEntity>> exits = queryForEntities("findByPinCodes", params, getRowMapper());
+        Optional<List<Map<String, Object>>> exits = queryForMapList("findByPinCodes", params);
         if (exits.isPresent()) {
-            Set<String> _temp = exits.get().stream().map(DevicePinCodeEntity::getPinCode).collect(Collectors.toSet());
+            Set<Integer> _temp = exits.get().stream().map(x -> MapUtils.getInteger(x, "pinCode")).collect(Collectors.toSet());
             pin_codes.removeAll(_temp);
         }
-        Preconditions.checkElementIndex(size, pin_codes.size(), "数据异常，有效序列号有重复，请重新生成...");
         int index = 1;
-        List<String> res = Lists.newArrayListWithCapacity(size);
+        List<Integer> res = Lists.newArrayListWithCapacity(size);
         List<DevicePinCodeEntity> entities = Lists.newArrayListWithCapacity(size);
-        for (String $it : pin_codes) {
-            entities.add(new DevicePinCodeEntity(company, $it, deadline, LoginContextHolder.get()));
-            index++;
+        for (Integer $it : pin_codes) {
+            entities.add(new DevicePinCodeEntity(company, String.valueOf($it), batchNo, LoginContextHolder.get()));
             res.add($it);
-            if (index == size) break;
+            index++;
+            if (index == size + 1) break;
         }
         super.batchInsert("batchInsert", entities);
+        return res;
+    }
+
+    /**
+     * 获取指定批次号的 pincode
+     *
+     * @param batchNo
+     * @param company
+     * @return
+     */
+    public Optional<List<DevicePinCodeEntity>> loadByBatchNo(String batchNo, CrmOrganizationEntity company) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(batchNo), "批次号 batchNo 不可以为空值...");
+        Preconditions.checkNotNull(company, "所属公司 company 不可以为空值...");
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("batchNo", batchNo);
+        params.put("companyId", company.getId());
+        Optional<List<DevicePinCodeEntity>> res = super.queryForEntities("findByBatchNo", params, new RowMapperImpl());
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("loadByBatchNo(%s,%s) size is %s", batchNo, company.getId(),
+                    res.isPresent() ? res.get().size() : 0));
         return res;
     }
 
@@ -87,6 +110,16 @@ public class DevicePinCodeEntityAction extends BaseEntityAction<DevicePinCodeEnt
         Map<String, Object> params = Maps.newHashMap();
         params.put("deviceId", deviceId);
         return queryForEntity("findByDeviceId", params, getRowMapper());
+    }
+
+    public void changeDevice(DevicePinCodeEntity pinCode, String newDeviceId, CrmStoreEntity store) {
+        Preconditions.checkNotNull(pinCode, "参数 DevicePinCodeEntity 不可以为空值...");
+        Optional<DevicePinCodeEntity> disabled = pinCode.disabled();
+        disabled.ifPresent(c -> super.updateAction(c, "disabledByDevice"));
+        Optional<DevicePinCodeEntity> newDevices = pinCode.changeDivece(newDeviceId, store);
+        newDevices.ifPresent(o -> super.updateAction(o, "changeDevice"));
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("新设备 %s 注册，注销设备使用 %s", newDeviceId, pinCode.getDeviceId()));
     }
 
     @Override

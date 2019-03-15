@@ -1,27 +1,28 @@
 package com.legooframework.model.crmadapter.entity;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.legooframework.model.core.base.entity.BaseEntityAction;
+import com.google.common.collect.Sets;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.RowMapper;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class CrmMemberEntityAction extends BaseEntityAction<CrmMemberEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(CrmMemberEntityAction.class);
 
     public CrmMemberEntityAction() {
-        super("CrmAdapterCache");
+        super(null);
     }
 
     /**
@@ -30,55 +31,50 @@ public class CrmMemberEntityAction extends BaseEntityAction<CrmMemberEntity> {
      */
     public Optional<List<CrmMemberEntity>> loadAllByStore(CrmStoreEntity store) {
         Preconditions.checkNotNull(store, "会员所属门店不可以为空...");
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("storeId", store.getId());
-        params.put("companyId", store.getCompanyId());
-        Optional<List<CrmMemberEntity>> members = super.queryForEntities("loadAllByStore", params, getRowMapper());
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("loadAllByStore(%s) size is %s", store.getId(), members.map(List::size).orElse(0)));
-        return members;
+        Optional<JsonElement> payload = super.post(getTenantsRouteFactory().getUrl(store.getCompanyId(),
+                "loadMembersByStore"), null, "bystore", store.getCompanyId(), store.getId());
+        if (!payload.isPresent()) return Optional.empty();
+        List<CrmMemberEntity> members = Lists.newArrayList();
+        JsonArray jsonArray = payload.get().getAsJsonArray();
+        for (JsonElement jsonElement : jsonArray) {
+            members.add(build(jsonElement.getAsJsonObject()));
+        }
+        return Optional.of(members);
     }
 
-    public Optional<List<CrmMemberEntity>> loadAllEnbaledByStore(CrmStoreEntity store) {
-        Optional<List<CrmMemberEntity>> list = loadAllByStore(store);
-        return list.map(crmMembers -> crmMembers.stream().
-                filter(CrmMemberEntity::isEffectiveFlag).collect(Collectors.toList()));
+    private CrmMemberEntity build(JsonObject _json) {
+        return new CrmMemberEntity(_json.get("id").getAsInt(), _json.get("nm").getAsString(),
+                _json.get("pNo").getAsString(), _json.get("bdy").getAsInt(),
+                _json.get("bdyVal").isJsonNull() ? null : _json.get("bdyVal").getAsString(),
+                _json.get("efg").getAsInt(),
+                _json.get("sgIds").isJsonNull() ? null : _json.get("sgIds").getAsString(),
+                _json.get("cId").getAsInt(),
+                _json.get("sId").getAsInt());
     }
 
     public Optional<List<CrmMemberEntity>> loadByCompany(CrmOrganizationEntity company, Collection<Integer> memberIds) {
         Preconditions.checkNotNull(company);
-        if (CollectionUtils.isEmpty(memberIds)) return Optional.empty();
+        Preconditions.checkArgument(CollectionUtils.isNotEmpty(memberIds), "入参 memberIds 不可以为空值...");
         Map<String, Object> params = Maps.newHashMap();
-        params.put("memberIds", memberIds);
-        params.put("companyId", company.getId());
-        Optional<List<CrmMemberEntity>> members = super.queryForEntities("loadByCompany", params, getRowMapper());
+        params.put("memberIds", Joiner.on(',').join(memberIds));
+        Optional<JsonElement> payload = super.post(getTenantsRouteFactory().getUrl(company.getId(),
+                "loadMembersByIds"), params, "byMemberIds", company.getId(), -1);
+        if (!payload.isPresent()) return Optional.empty();
+        List<CrmMemberEntity> members = Lists.newArrayList();
+        JsonArray jsonArray = payload.get().getAsJsonArray();
+        for (JsonElement jsonElement : jsonArray) {
+            members.add(build(jsonElement.getAsJsonObject()));
+        }
         if (logger.isDebugEnabled())
-            logger.debug(String.format("loadByCompany(%s) size is %s", company.getId(), members.map(List::size).orElse(0)));
-        return members;
+            logger.debug(String.format("loadByCompany(%s) size is %s", company.getId(), members.size()));
+        return Optional.of(members);
     }
 
     public Optional<CrmMemberEntity> loadMemberByCompany(CrmOrganizationEntity company, Integer memberId) {
         if (memberId == null || memberId <= 0) return Optional.empty();
         Preconditions.checkNotNull(company);
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("memberId", memberId);
-        params.put("companyId", company.getId());
-        Optional<CrmMemberEntity> member = super.queryForEntity("loadMemberByCompany", params, getRowMapper());
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("loadMemberByCompany(%s,%s) return is %s", company.getId(), memberId, member.orElse(null)));
-        return member;
+        Optional<List<CrmMemberEntity>> members = loadByCompany(company, Sets.newHashSet(memberId));
+        return members.map(crmMemberEntities -> crmMemberEntities.get(0));
     }
 
-
-    @Override
-    protected RowMapper<CrmMemberEntity> getRowMapper() {
-        return new RowMapperImpl();
-    }
-
-    class RowMapperImpl implements RowMapper<CrmMemberEntity> {
-        @Override
-        public CrmMemberEntity mapRow(ResultSet resultSet, int i) throws SQLException {
-            return new CrmMemberEntity(resultSet.getInt("id"), resultSet);
-        }
-    }
 }

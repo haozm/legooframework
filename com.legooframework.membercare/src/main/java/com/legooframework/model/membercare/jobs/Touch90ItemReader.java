@@ -23,8 +23,7 @@ public class Touch90ItemReader implements ItemReader<List<SaleRecordByStore>>, A
     private static final Logger logger = LoggerFactory.getLogger(Touch90ItemReader.class);
 
     @Override
-    public List<SaleRecordByStore> read() throws Exception, UnexpectedInputException, ParseException,
-            NonTransientResourceException {
+    public List<SaleRecordByStore> read() throws Exception {
         if (steps == null) doRead();
         // start read data
         if (index == this.steps.size()) return null;

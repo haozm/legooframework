@@ -14,10 +14,9 @@
     <orderEntry type="library" name="extlib" level="application" />
     <orderEntry type="library" name="junit" level="application" />
     <orderEntry type="module" module-name="com.legooframework.devices" />
-    <orderEntry type="module" module-name="com.legooframework.dict" />
     <orderEntry type="module" module-name="com.legooframework.entities" />
     <orderEntry type="module" module-name="com.legooframework.junit" />
-    <orderEntry type="module" module-name="com.legooframework.organization" />
-    <orderEntry type="module" module-name="org.legooframewrok.base" />
+    <orderEntry type="module" module-name="com.legooframework.crmadapter" />
+    <orderEntry type="module" module-name="com.legooframework.core" />
   </component>
 </module>

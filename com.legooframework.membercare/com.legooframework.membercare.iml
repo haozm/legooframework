@@ -16,7 +16,7 @@
     <orderEntry type="library" name="junit" level="application" />
     <orderEntry type="library" name="servlet-api" level="application" />
     <orderEntry type="module" module-name="com.legooframework.salesrecords" />
-    <orderEntry type="module" module-name="org.legooframewrok.base" />
     <orderEntry type="module" module-name="com.legooframework.batchsupport" />
+    <orderEntry type="module" module-name="com.legooframework.core" />
   </component>
 </module>

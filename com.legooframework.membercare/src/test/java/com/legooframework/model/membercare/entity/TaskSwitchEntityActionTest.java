@@ -18,7 +18,7 @@ import java.util.Optional;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/base/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/batchsupport/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/membercare/spring-model-cfg.xml"}
@@ -34,8 +34,7 @@ public class TaskSwitchEntityActionTest {
     public void getTouch90Task() {
         Optional<CrmOrganizationEntity> com = organizationAction.findCompanyById(4);
         Preconditions.checkState(com.isPresent());
-        Optional<TaskSwitchEntity> asd = taskSwitchAction.getTouch90Task(com.get());
-        asd.ifPresent(System.out::println);
+
     }
 
     @Autowired

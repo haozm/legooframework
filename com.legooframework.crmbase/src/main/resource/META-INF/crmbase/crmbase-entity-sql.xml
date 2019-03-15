@@ -1,0 +1,995 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="member_fields">
+            <![CDATA[
+		        <#macro member_fields>
+	               mm.id AS 'id',
+	               mm.name AS 'name',
+	               mm.sex AS 'sex',
+	               mm.phone AS 'phone',
+                   mm.birthday AS 'birthday',
+				   mm.lunarBirthday AS 'lunarBirthDay',
+				   mm.calendarType AS 'calendarType',
+				   mm.createTime AS 'createCardTime',
+                   mm.telephone AS 'telephone',
+                   mm.certificateType AS 'certificateType',
+                   mm.certificate AS 'certificate',
+                   mm.oldMemberCode AS 'oldMemberCode',
+                   mm.effectiveFlag AS 'effectiveFlag',
+                   mm.serviceLevel AS 'serviceLevel',
+                   mm.memberType AS 'memberType',
+                   mm.company_id AS 'companyId',
+                   mm.status AS 'status',
+                   mm.lastVisitTime AS 'lastVisitTime',
+                   mm.company_id AS 'companyId',
+                   mm.assignState AS 'assignState',
+                   mm.hasWeixinAccount AS 'hasWeixinAccount',
+                   mp.store_id AS 'storeIds',
+                   ( SELECT GROUP_CONCAT(acsg.shoppingguide_id)
+                      FROM crm_shoppingguide_member acsg
+                     WHERE acsg.member_id = mm.id
+                  GROUP BY acsg.member_id ) AS shoppingguideIds,
+                   CONCAT(rfm.rLevel,rfm.fLevel,rfm.mLevel) AS 'srfm',
+                   CONCAT(rfm.rLevelCompany,rfm.fLevelCompany,rfm.mLevelCompany) AS 'crfm',
+                   jifen.totalScore AS 'totalScore',
+                   awm.weixin_id AS 'weixinId',
+                   mm.memberCardNum AS 'memberCardNum',
+                   ( SELECT CONCAT(IF((hc.nickName='' or hc.nickName is null),'-',hc.nickName),'$$',IF((hc.iconUrl='' or hc.iconUrl is null),'-',hc.iconUrl),'$$', IF((hc.conRemark='' or hc.conRemark is null),'-',hc.conRemark))
+                       FROM yycomm.${tableName} hc
+                      WHERE hc.work = 1 AND hc.userName = awm.weixin_id LIMIT 1) AS 'weixinInfo',
+				   (SELECT CONCAT(acs.id,'$$',acs.`name`)
+					   FROM acp_store acs
+					   WHERE acs.id = mp.store_id) AS 'storeInfo',
+					mm.memberCardType_id AS 'memberCardType',
+					mm.qqNum AS 'qqNum',
+					mm.weiboNum AS 'weiboNum',
+					mm.email AS 'email',
+					mm.marryStatus AS 'marryStatus',
+					mm.detailAddress AS 'detailAddress',
+					mm.idols AS 'idols',
+					mm.carePeople AS 'carePeople',
+					mm.zodiac AS 'zodiac',
+					mm.characterType AS 'characterType',
+					mm.jobType AS 'jobType',
+					mm.faithType AS 'faithType',
+					mm.likeContact AS 'likeContact',
+					mm.iconUrl AS 'iconUrl'
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="MemberEntity">
+        <sql id="updateBuildFlag">
+            <body><![CDATA[
+          UPDATE crm_member
+             SET assignState = ?
+		   WHERE id = ?
+            ]]></body>
+        </sql>
+        <sql id="makeMembersUneffective" dynamic="true">
+            <body><![CDATA[
+          UPDATE crm_member
+             SET effectiveFlag = 2
+		   WHERE id IN (${memberIds?join(",")})
+            ]]></body>
+        </sql>
+        <sql id="findById" macros="member_fields">
+            <body><![CDATA[
+            SELECT DISTINCT <@member_fields />
+              FROM crm_member AS mm
+         LEFT JOIN crm_store_member AS mp ON mp.member_id = mm.id
+         LEFT JOIN acp_weixin_member AS awm ON awm.store_id = mp.store_id AND awm.member_id = mm.id
+         LEFT JOIN crm_memberrfm AS rfm ON rfm.member_id = mm.id AND rfm.store_id = mp.store_id
+         LEFT JOIN crm_memberstat AS jifen ON jifen.member_id = mm.id
+             WHERE mm.id = :id
+            ]]></body>
+        </sql>
+        <sql id="findMemberExtraById">
+            <body><![CDATA[
+          SELECT
+				id,afterFork,beforeFork,bottomsSize,braSize,briefsSize,chest,clothingLong,footLength,
+				hipline,jacketSize,kneeCircumference,onChest,outseam,shoeSize,shoulder,sleeveLength,
+				status,thighCircumference,trouserLeg,underChest,waistline,member_id AS 'memberId'
+			FROM
+				crm_memberextrainfo
+             WHERE member_id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="insertMemberExtra">
+            <body><![CDATA[
+	       INSERT INTO crm_memberextrainfo
+				(afterFork, beforeFork, bottomsSize, braSize, briefsSize, chest, clothingLong, footLength, hipline,
+				jacketSize, kneeCircumference, onChest, outseam, shoeSize, shoulder, sleeveLength,  thighCircumference,
+				 trouserLeg, underChest, waistline, member_id)
+			VALUES(:afterFork, :beforeFork, :bottomsSize, :braSize, :briefsSize, :chest, :clothingLong, :footLength, :hipline,
+					:jacketSize, :kneeCircumference, :onChest, :outseam, :shoeSize, :shoulder, :sleeveLength, :thighCircumference,
+					:trouserLeg, :underChest, :waistline, :memberId);
+            ]]></body>
+        </sql>
+        <sql id="updateMemberExtra">
+            <body><![CDATA[
+	         UPDATE
+				crm_memberextrainfo SET
+					afterFork = :afterFork,
+					beforeFork = :beforeFork,
+					bottomsSize = :bottomsSize,
+					braSize = :braSize,
+					briefsSize = :briefsSize,
+					chest = :chest,
+					clothingLong = :clothingLong,
+					footLength = :footLength,
+					hipline = :hipline,
+					jacketSize = :jacketSize,
+					kneeCircumference = :kneeCircumference,
+					onChest = :onChest,
+					outseam = :outseam,
+					shoeSize = :shoeSize,
+					shoulder = :shoulder,
+					sleeveLength = :sleeveLength,
+					thighCircumference = :thighCircumference,
+					trouserLeg = :trouserLeg,
+					underChest = :underChest,
+					waistline = :waistline
+				WHERE
+					member_id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="findByMemberId" macros="member_fields">
+            <body><![CDATA[
+         SELECT
+				id,
+				afterFork,
+				beforeFork,
+				IF(TRIM(bottomsSize) = '',NULL,bottomsSize) AS 'bottomsSize',
+				IF(TRIM(braSize) = '',NULL,braSize) AS 'braSize',
+				IF(TRIM(briefsSize) = '',NULL,briefsSize) AS 'briefsSize',
+				chest,
+				clothingLong,
+				footLength,
+				hipline,
+				IF(TRIM(jacketSize) = '',NULL,jacketSize) AS 'jacketSize',
+				kneeCircumference,
+				onChest,
+				outseam,
+				IF(TRIM(shoeSize) = '',NULL,shoeSize) AS 'shoeSize',
+				shoulder,
+				sleeveLength,
+				status,
+				thighCircumference,
+				trouserLeg,
+				underChest,
+				waistline,
+				member_id AS 'memberId'
+			FROM
+				crm_memberextrainfo
+             WHERE member_id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="saveMember">
+            <body><![CDATA[
+         		INSERT
+					INTO
+						crm_member( name,
+						sex,
+						birthday,
+						lunarBirthday,
+						phone,
+						memberType,
+						serviceLevel,
+						memberCardType_id,
+						memberCardNum,
+						createCardTime,
+						qqNum,
+						wechatNum,
+						weixinUser_wx_user_id,
+						weiboNum,
+						email,
+						marryStatus,
+						detailAddress,
+						idols,
+						carePeople,
+						zodiac,
+						characterType,
+						jobType,
+						faithType,
+						likeContact,
+						iconUrl,
+						calendarType,
+						createStoreId,
+						company_id,
+						createTime)
+					VALUES(:name,
+						:sex,
+						:gregorianBirthday,
+						:lunarBirthday,
+						:phone,
+						:memberType,
+						:serviceLevel,
+						:memberCardType,
+						:memberCardNum,
+						:createCardTime,
+						:qqNum,
+						:weixinId,
+						:weixinId,
+						:weiboNum,
+						:email,
+						:marryStatus,
+						:detailAddress,
+						:idols,
+						:carePeople,
+						:zodiac,
+						:characterType,
+						:jobclearRelateShipType,
+						:faithType,
+						:likeContact,
+						:iconUrl,
+						:calendarType,
+						:createStoreId,
+						:companyId,
+						NOW())
+            ]]></body>
+        </sql>
+        <sql id="updateMember">
+            <body><![CDATA[
+         		UPDATE crm_member SET
+						name =:name,
+						sex =:sex,
+						birthday =:gregorianBirthday,
+						lunarBirthday =:lunarBirthday,
+						phone =:phone,
+						memberType =:memberType,
+						serviceLevel =:serviceLevel,
+						memberCardType_id =:memberCardType,
+						memberCardNum =:memberCardNum,
+						createCardTime =:createCardTime,
+						qqNum =:qqNum,
+						wechatNum =:weixinId,
+						weiboNum =:weiboNum,
+						email =:email,
+						marryStatus =:marryStatus,
+						detailAddress =:detailAddress,
+						idols =:idols,
+						carePeople =:carePeople,
+						zodiac =:zodiac,
+						characterType =:characterType,
+						jobType =:jobType,
+						faithType =:faithType,
+						likeContact =:likeContact,
+						iconUrl =:iconUrl,
+						calendarType=:calendarType
+				WHERE id =:memberId
+            ]]></body>
+        </sql>
+        <sql id="findMemberByIds" macros="member_fields" dynamic="true">
+            <body><![CDATA[
+            SELECT DISTINCT <@member_fields />
+              FROM crm_member AS mm
+         LEFT JOIN crm_store_member AS mp ON mp.member_id = mm.id
+         LEFT JOIN acp_weixin_member AS awm ON awm.store_id = mp.store_id AND awm.member_id = mm.id
+         LEFT JOIN crm_memberrfm AS rfm ON rfm.member_id = mm.id AND rfm.store_id = mp.store_id
+         LEFT JOIN crm_memberstat AS jifen ON jifen.member_id = mm.id
+             WHERE mm.id IN ( ${memberIds?join(", ")} )
+             <#if storeId??>
+               AND mp.store_id  = :storeId
+             </#if>
+             <#if needPhone>
+                AND IFNULL(LENGTH(mm.phone),0) = 11
+             </#if>
+             <#if effective>
+                AND IFNULL(mm.effectiveFlag, 0 ) <> 2
+             </#if>
+            ]]></body>
+        </sql>
+        <sql id="findMemberByStore" macros="member_fields">
+            <body><![CDATA[
+            SELECT DISTINCT <@member_fields />
+              FROM crm_member AS mm
+         LEFT JOIN crm_store_member AS mp ON mp.member_id = mm.id
+         LEFT JOIN acp_weixin_member AS awm ON awm.store_id = mp.store_id AND awm.member_id = mm.id
+         LEFT JOIN crm_memberrfm AS rfm ON rfm.member_id = mm.id AND rfm.store_id = mp.store_id
+         LEFT JOIN crm_memberstat AS jifen ON jifen.member_id = mm.id
+             WHERE mp.store_id = :storeId
+             <#if needPhone>
+                AND IFNULL(LENGTH(mm.phone),0) = 11
+             </#if>
+             <#if effective>
+                AND ( mm.effectiveFlag IS NULL OR mm.effectiveFlag <> 2)
+             </#if>
+           ORDER BY mm.id
+            ]]></body>
+        </sql>
+        <sql id="find_bystore_withmobilenum" macros="member_fields">
+            <body><![CDATA[
+            SELECT DISTINCT <@member_fields />
+              FROM crm_member AS mm
+         LEFT JOIN crm_store_member AS mp ON mp.member_id = mm.id
+         LEFT JOIN acp_weixin_member AS awm ON awm.store_id = mp.store_id AND awm.member_id = mm.id
+         LEFT JOIN crm_memberrfm AS rfm ON rfm.member_id = mm.id AND rfm.store_id = mp.store_id
+         LEFT JOIN crm_memberstat AS jifen ON jifen.member_id = mm.id
+             WHERE mp.store_id = :storeId
+               AND mm.phone = :mobileNum
+          ORDER BY mm.id
+            ]]></body>
+        </sql>
+        <sql id="find_matchwebchat_bystore" dynamic="true">
+            <body><![CDATA[
+               SELECT  mm.id AS 'id',
+                       mm.name AS 'name',
+                       mm.phone AS 'phone',
+                       mm.sex AS 'sex',
+                       mm.memberCardNum AS 'memberCardNum',
+                       mm.lastVisitTime AS 'lastVisitTime',
+                       mm.totalConsumeAmount AS 'totalConsumeAmount',
+                       mm.consumeTotalCount AS 'consumeTotalCount',
+                       CONCAT(rfm.rLevel,rfm.fLevel,rfm.mLevel) AS 'srfm',
+                       CONCAT(rfm.rLevelCompany,rfm.fLevelCompany,rfm.mLevelCompany) AS 'crfm'
+                FROM crm_member AS mm
+           LEFT JOIN crm_memberrfm AS rfm ON rfm.member_id = mm.id
+           LEFT JOIN crm_store_member tt ON tt.member_id = mm.id
+               WHERE tt.store_id = :storeId
+                 AND mm.id NOT IN ( SELECT awm.member_id
+                                      FROM acp_weixin_member awm
+                                     WHERE awm.store_id = :storeId )
+              ORDER BY mm.id
+            ]]></body>
+        </sql>
+        <sql id="findmember_by_shoppingguide" macros="member_fields">
+            <body><![CDATA[
+            SELECT DISTINCT <@member_fields />
+              FROM crm_member AS mm
+         LEFT JOIN crm_store_member AS mp ON mp.member_id = mm.id
+         LEFT JOIN acp_weixin_member AS awm ON awm.store_id = mp.store_id AND awm.member_id = mm.id
+         LEFT JOIN crm_memberrfm AS rfm ON rfm.member_id = mm.id AND rfm.store_id = mp.store_id
+         LEFT JOIN crm_memberstat AS jifen ON jifen.member_id = mm.id
+             WHERE mm.id IN (SELECT tt.member_id
+                               FROM FROM crm_shoppingguide_member tt
+                              WHERE tt.shoppingguide_id = :employeeId)
+          ORDER BY mm.id
+            ]]></body>
+        </sql>
+        <sql id="findByPhone" macros="member_fields">
+            <body><![CDATA[
+            SELECT DISTINCT <@member_fields />
+              FROM crm_member AS mm
+         LEFT JOIN crm_store_member AS mp ON mp.member_id = mm.id
+         LEFT JOIN acp_weixin_member AS awm ON awm.store_id = mp.store_id AND awm.member_id = mm.id
+         LEFT JOIN crm_memberrfm AS rfm ON rfm.member_id = mm.id AND rfm.store_id = mp.store_id
+         LEFT JOIN crm_memberstat AS jifen ON jifen.member_id = mm.id
+             WHERE mm.phone =:phoneNo
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="store_fields">
+            <![CDATA[
+            <#macro store_fields>
+                 st.id AS 'id',
+                 st.detailAddress AS 'address',
+                 st.storeType AS 'type',
+                 st.status AS 'status',
+                 st.storeState AS 'state',
+                 st.organization_id AS 'orgId',
+                 st.name AS 'name',
+                 st.company_id AS 'companyId',
+                 st.oldStoreId AS 'oldStoreId',
+                 stx.qr_code AS 'qrCode',
+                 st.phone AS 'phone',
+                 st.hiddenMemberPhoneFlag AS 'hiddenMemberPhoneFlag',
+                 IFNULL(stx.before_days,2) AS 'beforeDays',
+                 IFNULL(stx.birthday_before,0) AS 'birthdayBefore',
+                 (
+                    SELECT GROUP_CONCAT(sd.deviceid)
+                      FROM yycomm.store_device sd
+                     WHERE sd.store_id = st.id
+                       AND sd.company_id = st.company_id
+                       AND sd.status = 1
+                       AND sd.devicetype = 1) AS 'deviceIds'
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="StoreEntity">
+        <sql id="add_store">
+            <body><![CDATA[
+            INSERT INTO acp_store
+            (name,phone,storeType,storeState,detailAddress,company_id,organization_id,createUserId,createTime)
+			VALUES 
+			(:name,:phone,:type,:state,:address,:companyId,:organizationId,:createUserId,NOW())
+            ]]></body>
+        </sql>
+        <sql id="update_store">
+            <body><![CDATA[
+            UPDATE acp_store SET 
+				name = :name,
+				phone = :phone,
+				storeType = :type,
+				storeState = :state,
+				detailAddress = :address,
+				hiddenMemberPhoneFlag = :hiddenMemberPhoneFlag,
+				updateUserId = :modifyUserId,
+				updateTime = NOW()
+			WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="update_parent">
+            <body><![CDATA[
+            UPDATE acp_store SET 
+				organization_id = :organizationId		
+			WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="exitsStoreExt">
+            <body><![CDATA[
+             SELECT ase.id
+               FROM acp_store_ext ase
+              WHERE ase.id = :storeId
+                AND ase.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="insertBeforeDays">
+            <body><![CDATA[
+             INSERT INTO acp_store_ext
+                         (id, company_id, before_days, delete_flag, creator, createTime)
+                  VALUES (:id,:companyId, :beforeDays, 0 , -1, NOW() )
+            ]]></body>
+        </sql>
+        <sql id="updateBeforeDays">
+            <body><![CDATA[
+            UPDATE acp_store_ext
+                SET before_days = :beforeDays
+              WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="insertStoreQrCode">
+            <body><![CDATA[
+             INSERT INTO acp_store_ext
+                         (id, company_id, qr_code, delete_flag, creator, createTime)
+                  VALUES (:id,:companyId, :qrCode, 0 , -1, NOW() )
+            ]]></body>
+        </sql>
+        <sql id="updateStoreQrCode">
+            <body><![CDATA[
+             UPDATE acp_store_ext
+                SET qr_code = :qrCode
+              WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="insertBirthdayBefore">
+            <body><![CDATA[
+             INSERT INTO acp_store_ext
+                         (id, company_id, birthday_before, delete_flag, creator, createTime)
+                  VALUES (:id,:companyId, :birthdayBefore, 0 , -1, NOW() )
+            ]]></body>
+        </sql>
+        <sql id="updateBirthdayBefore">
+            <body><![CDATA[
+             UPDATE acp_store_ext
+                SET birthday_before = :birthdayBefore
+              WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="findById" dynamic="true" macros="store_fields">
+            <body><![CDATA[
+             SELECT DISTINCT <@store_fields />
+               FROM acp_store AS st
+          LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+              WHERE st.id = :id
+            ]]></body>
+        </sql>
+        <sql id="loadByHasDevice" dynamic="true" macros="store_fields">
+            <body><![CDATA[
+             SELECT DISTINCT <@store_fields />
+               FROM acp_store AS st
+          LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+              WHERE st.id IN (
+                SELECT ysd.store_id
+                  FROM yycomm.store_device ysd
+                 WHERE ysd.status = 1
+                   AND ysd.devicetype = 1 )
+            ]]></body>
+        </sql>
+        <sql id="loadStoreByDeviceId" macros="store_fields">
+            <body><![CDATA[
+             SELECT DISTINCT <@store_fields />
+               FROM acp_store AS st
+          LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+              WHERE st.id IN (
+                  SELECT ysd.store_id
+                    FROM yycomm.store_device AS ysd
+                   WHERE ysd.deviceid = :deviceId
+                     AND ysd.status = 1
+                     AND ysd.devicetype = 1 )
+            ]]></body>
+        </sql>
+        <sql id="load_tree_stores" macros="store_fields">
+            <body><![CDATA[
+             SELECT DISTINCT <@store_fields />
+               FROM acp_store AS st
+          LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+              WHERE FIND_IN_SET(st.id,
+              (SELECT  GROUP_CONCAT(storeIds)  FROM  csosm_crm.acp_store_view 
+              WHERE owner_id = :empId GROUP BY owner_id))
+           ORDER BY st.id
+            ]]></body>
+        </sql>
+        <sql id="loadAllStoreByCompany" macros="store_fields">
+            <body><![CDATA[
+             SELECT DISTINCT <@store_fields />
+               FROM acp_store AS st
+          LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+              WHERE st.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="findStoreFromCompany" macros="store_fields">
+            <body><![CDATA[
+             SELECT DISTINCT <@store_fields />
+               FROM acp_store AS st
+          LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+              WHERE st.company_id = :companyId
+                AND st.id = :id
+            ]]></body>
+        </sql>
+        <sql id="loadAllSubStoreByOrg" macros="store_fields">
+            <body><![CDATA[
+             SELECT DISTINCT <@store_fields />
+               FROM acp_store AS st
+          LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+              WHERE st.organization_id IN (
+                    SELECT og.id
+                      FROM acp_organization AS og
+                     WHERE og.code LIKE :orgCode )
+           ORDER BY st.id
+            ]]></body>
+        </sql>
+        <sql id="loadDirectSubStoreByOrg" macros="store_fields">
+            <body><![CDATA[
+             SELECT DISTINCT <@store_fields />
+               FROM acp_store AS st
+          LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+              WHERE st.organization_id = :orgId
+           ORDER BY st.id
+            ]]></body>
+        </sql>
+        <sql id="findByIds" dynamic="true" macros="store_fields">
+            <body><![CDATA[
+             SELECT DISTINCT <@store_fields />
+               FROM acp_store AS st
+          LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+              WHERE st.id IN (${ids?join(", ")})
+           ORDER BY st.id
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="organization_fields">
+            <![CDATA[
+		        <#macro organization_fields>
+                     og.id AS 'id',
+                     og.code AS 'code',
+                     og.parentId AS 'parentId',
+                     og.orgType AS 'type',
+                     og.name AS 'name',
+                     og.shortName AS 'shortName',
+                     og.status AS 'status',
+                     og.depth AS 'depth',
+                     og.rootNode AS 'rootNode',
+                     og.industryType AS 'industryType',
+                     og.orgShowFlag AS 'orgShowFlag',
+                     og.hiddenMemberPhoneFlag AS 'hiddenMemberPhoneFlag',
+                     og.linkman_contact AS 'linkMan',
+                     og.linkman_phone AS 'linkPhone'
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="OrganizationEntity">
+        <sql id="add_organization">
+            <body><![CDATA[
+            	INSERT INTO 
+            	acp_organization(id,code,name,shortName,orgType,parentId,status,createTime,createUser_id) 
+            	VALUES(:id,:code,:name,:shortName,:type,:parentId,:status,NOW(),:createUserId)
+            ]]></body>
+        </sql>
+        <sql id="exits_company" macros="organization_fields">
+            <body><![CDATA[
+             SELECT <@organization_fields />
+               FROM acp_organization AS og
+              WHERE og.orgType = 1
+                AND (og.id = :id OR og.shortName = :shortName)
+            ]]></body>
+        </sql>
+        <sql id="add_company">
+            <body><![CDATA[
+     INSERT INTO acp_organization(id,code,name,shortName,orgType,parentId,status,createTime,createUser_id,
+            	                   linkman_contact,linkman_phone ,industryType)
+            	VALUES(:id,:code,:name,:shortName,1,-1,1,NOW(),:createUserId,:linkMan,:linkPhone,:industryType)
+            ]]></body>
+        </sql>
+        <sql id="remove_organization">
+            <body><![CDATA[
+            	UPDATE acp_organization SET status = 0 WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="update_organization">
+            <body><![CDATA[
+            	UPDATE acp_organization SET 
+				name = :name,
+				shortName = :shortName,
+				orgType = :type,
+				hiddenMemberPhoneFlag = :hiddenMemberPhoneFlag,
+				updateTime = NOW(),
+				updateUser_id =:modifyUserId
+				WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="update_company">
+            <body><![CDATA[
+            	UPDATE acp_organization SET 
+				name = :name,
+				shortName = :shortName,
+				orgType = :type,
+				hiddenMemberPhoneFlag = :hiddenMemberPhoneFlag,
+				orgShowFlag = :orgShowFlag,
+				industryType = :industryType,
+				updateTime = NOW(),
+				updateUser_id =:modifyUserId
+				WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="switch_orgization" dynamic="true">
+            <body><![CDATA[
+            	UPDATE acp_organization SET 
+            	code = REPLACE(code,:oldCode,:newCode)
+            	WHERE code LIKE '${oldCode}%'
+            ]]></body>
+        </sql>
+        <sql id="update_parent">
+            <body><![CDATA[
+            	UPDATE acp_organization SET 
+            	code = :newCode,
+            	parentId = :parentId
+            	WHERE code = :oldCode
+            ]]></body>
+        </sql>
+        <sql id="select_maxId">
+            <body><![CDATA[
+           	SELECT max(id) AS 'max' FROM acp_organization
+            ]]></body>
+        </sql>
+        <sql id="loadReportAllOrgs">
+            <body><![CDATA[
+            SELECT DISTINCT(firstorg_code) AS CODE01
+              FROM count_list_org_info
+             WHERE count_date BETWEEN :start and :end
+	           AND company_id= :companyId
+            ]]></body>
+        </sql>
+        <sql id="findById" macros="organization_fields">
+            <body><![CDATA[
+             SELECT <@organization_fields />
+               FROM acp_organization AS og
+              WHERE (og.id = :id
+                 OR og.parentId = :id)
+                 AND og.status = 1
+            ]]></body>
+        </sql>
+        <sql id="findCompanyById" macros="organization_fields">
+            <body><![CDATA[
+             SELECT <@organization_fields />
+               FROM acp_organization AS og
+              WHERE og.id = :id
+                AND og.status = 1 AND og.orgType = 1
+            ]]></body>
+        </sql>
+        <sql id="loadAllCompanyies" macros="organization_fields">
+            <body><![CDATA[
+             SELECT <@organization_fields />
+               FROM acp_organization AS og
+              WHERE og.status = 1 AND og.orgType = 1
+           ORDER BY og.id
+            ]]></body>
+        </sql>
+        <sql id="findByCode" macros="organization_fields">
+            <body><![CDATA[
+             SELECT <@organization_fields />
+               FROM acp_organization AS og
+              WHERE og.status = 1 AND og.code LIKE :code
+           ORDER BY og.code
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="employee_fields">
+            <![CDATA[
+		        <#macro employee_fields>
+                 em.id AS 'id',
+                 em.loginuser_id AS 'loginuserId',
+                 em.employeeState AS 'employeeState',
+                 em.company_id AS 'companyId',
+                 em.employeeType AS  'employeeType',
+                 em.name AS 'userName',
+                 em.phone AS 'phoneNo',
+                 em.birthday AS 'birthday',
+                 IFNULL(em.sex,2) AS 'sex',
+                 em.store_id AS 'storeId',
+                 em.login_name AS 'loginName',
+                 em.remark AS 'remark',
+                 em.pass_word AS 'password',
+                 em.status AS 'state',
+                 em.organization_id AS 'organizationId',
+                 em.role_ids AS roleIds
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="EmployeeEntity">
+        <sql id="clearRelateShip" dynamic="true">
+            <body><![CDATA[
+        <#if employee>
+        DELETE FROM crm_shoppingguide_member
+              WHERE (member_id,shoppingguide_id) IN (<#list items as val>(${val.memberId},${val.employeeId})<#if val_has_next>,</#if></#list>)
+        <#else>
+         DELETE FROM crm_shoppingguide_member
+              WHERE member_id IN (${items?join(",")})
+        </#if>
+            ]]></body>
+        </sql>
+        <sql id="insertRelateShip">
+            <body><![CDATA[
+        INSERT INTO crm_shoppingguide_member (member_id,shoppingguide_id)
+             VALUES (?,?)
+            ]]></body>
+        </sql>
+        <sql id="exitMemberWithDaogou">
+            <body><![CDATA[
+        SELECT COUNT(member_id)
+          FROM crm_shoppingguide_member
+         WHERE member_id = :memberId
+           AND shoppingguide_id = :employeeId
+            ]]></body>
+        </sql>
+        <sql id="loadAllByCompany" macros="employee_fields">
+            <body><![CDATA[
+             SELECT <@employee_fields />
+               FROM acp_employee AS em
+              WHERE em.company_id = :companyId
+                AND em.status = 1
+           ORDER BY em.id,em.employeeState
+            ]]></body>
+        </sql>
+        <sql id="insertEmp">
+            <body><![CDATA[
+             INSERT INTO acp_employee
+                         ( employeeType, loginuser_id, password, birthday,status, remark,sex,createTime, organization_id, phone,     createUser_id, name,       store_id, employeeState, company_id,login_name, pass_word,role_ids )
+                  VALUES (:employeeType, :loginUserId, :password,:birthday,     1, :remark,:sex, NOW(), :organizationId, :phoneNo, :createUserId,  :userName, :storeId,  :employeeState,:companyId,:loginName, :password,:roleIds )
+            ]]></body>
+        </sql>
+        <sql id="exitAccount">
+            <body><![CDATA[
+            SELECT COUNT(id)
+              FROM acp_employee
+             WHERE login_name = :loginName
+               AND company_id = :companyId
+               AND status = 1
+            ]]></body>
+        </sql>
+        <sql id="changeEmpState">
+            <body><![CDATA[
+            UPDATE acp_employee
+               SET employeeState = :employeeState
+             WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="update_enable_state" dynamic="true">
+            <body><![CDATA[
+            UPDATE acp_employee
+               SET employeeState = 1
+             WHERE id IN (${empIds?join(",")})
+               AND company_id =  :companyId
+            ]]></body>
+        </sql>
+        <sql id="update_disable_state" dynamic="true">
+            <body><![CDATA[
+            UPDATE acp_employee
+               SET employeeState = 2
+             WHERE id IN (${empIds?join(",")})
+               AND company_id =  :companyId
+            ]]></body>
+        </sql>
+        <sql id="reset_password" dynamic="true">
+            <body><![CDATA[
+            UPDATE acp_employee
+               SET pass_word = :password
+             WHERE id IN (${empIds?join(",")})
+            ]]></body>
+        </sql>
+        <sql id="update_password">
+            <body><![CDATA[
+            UPDATE acp_employee
+               SET pass_word = :password
+             WHERE id =:id
+            ]]></body>
+        </sql>
+        <sql id="update_employee">
+            <body><![CDATA[
+            UPDATE acp_employee
+               SET name = :userName,sex = :sex,phone = :phoneNo,updateUser_id = :modifyUserId, role_ids = :roleIds
+             WHERE id =:id
+            ]]></body>
+        </sql>
+    </model>
+    <model id="RoleEntity">
+        <sql id="loadByCompany">
+            <body><![CDATA[
+             SELECT role.id AS 'id',
+                    role.role_name AS 'roleName',
+                    role.role_desc AS 'roleDesc',
+                    role.enbaled,
+                    role.priority AS 'priority',
+                    role.resources AS 'resources',
+                    role.delete_flag AS 'deleteFlag',
+                    role.tenant_id AS 'tenantId',
+                    role.creator AS 'creator',
+                    role.createTime AS 'createTime',
+                    role.editor AS 'editor',
+                    role.editTime AS 'editTime'
+               FROM acp_role AS role
+              WHERE role.tenant_id = :companyId
+                AND role.delete_flag = 0
+            ]]></body>
+        </sql>
+        <sql id="clearResources">
+            <body><![CDATA[
+            UPDATE acp_role
+               SET resources = NULL
+             WHERE id = :id
+               AND tenant_id = :companyId
+               AND delete_flag = 0
+            ]]></body>
+        </sql>
+        <sql id="authorizedResources">
+            <body><![CDATA[
+            UPDATE acp_role
+               SET resources = :resources
+             WHERE id = :id
+               AND tenant_id = :companyId
+               AND delete_flag = 0
+            ]]></body>
+        </sql>
+    </model>
+    <model id="StoreViewEnity">
+        <sql id="insert">
+            <body><![CDATA[
+        INSERT INTO acp_store_view
+                    (id,nodeName,parentId,treeType,company_id,node_desc,createUserId,createTime)
+             VALUES (:id,:name,:parentId,:ownerId,:companyId,:nodeDesc,:createUserId,NOW())
+            ]]></body>
+        </sql>
+        <sql id="findById">
+            <body><![CDATA[
+            SELECT sv.id AS 'id',sv.nodeName AS 'name',sv.parentId AS 'parentId',
+                   sv.treeType AS 'ownerId',sv.storeIds AS 'storeIds',sv.company_id AS 'companyId',
+                   sv.createUserId AS 'createUserId',sv.node_desc AS 'nodeDesc'
+              FROM acp_store_view AS sv
+             WHERE sv.id = :id
+            ]]></body>
+        </sql>
+        <sql id="findGroupRootWithUser">
+            <body><![CDATA[
+            SELECT sv.id AS 'id',sv.nodeName AS 'name',sv.parentId AS 'parentId',
+                   sv.treeType AS 'ownerId',sv.storeIds AS 'storeIds',sv.company_id AS 'companyId',
+                   sv.createUserId AS 'createUserId',sv.node_desc AS 'nodeDesc'
+              FROM acp_store_view AS sv
+             WHERE sv.createUserId = :userId
+               AND sv.parentId IS NULL
+            ]]></body>
+        </sql>
+        <sql id="updateStores">
+            <body><![CDATA[
+            UPDATE acp_store_view
+               SET storeIds = :storeIds, modifyUserId = :modifyUserId, modifyTime = NOW()
+             WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="editGroupNodeName">
+            <body><![CDATA[
+            UPDATE acp_store_view
+               SET nodeName = :name, node_desc = :nodeDesc, modifyUserId = :modifyUserId, modifyTime = NOW()
+             WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="exitSubNodes">
+            <body><![CDATA[
+            SELECT COUNT(sv.id)
+              FROM acp_store_view AS sv
+             WHERE sv.parentId = :id
+            ]]></body>
+        </sql>
+        <sql id="removeSubGroupNodeById">
+            <body><![CDATA[
+            DELETE FROM acp_store_view
+                  WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="loadRootByUser">
+            <body><![CDATA[
+            SELECT sv.id AS 'id',sv.nodeName AS 'name',sv.parentId AS 'parentId',
+                   sv.treeType AS 'ownerId',sv.storeIds AS 'storeIds',sv.company_id AS 'companyId',
+                   sv.createUserId AS 'createUserId',sv.node_desc AS 'nodeDesc'
+              FROM acp_store_view AS sv
+             WHERE sv.parentId IS NULL
+               AND sv.createUserId = :userId
+            ]]></body>
+        </sql>
+        <sql id="loadAllByType">
+            <body><![CDATA[
+            SELECT sv.id AS 'id',sv.nodeName AS 'name',sv.parentId AS 'parentId',
+                   sv.treeType AS 'ownerId',sv.storeIds AS 'storeIds',sv.company_id AS 'companyId',
+                   sv.createUserId AS 'createUserId',sv.node_desc AS 'nodeDesc'
+              FROM acp_store_view AS sv
+             WHERE sv.treeType = :type
+            ]]></body>
+        </sql>
+    </model>
+    <model id="DeviceActiveDetailEntity">
+        <sql id="select_by_pincode">
+            <body><![CDATA[
+           SELECT id AS 'id', company_id AS 'companyId', pin_code AS 'pinCode', pin_enabled AS 'enabled',
+                  store_id AS 'storeId', device_id AS 'deviceId', bind_date AS 'bindDate',
+                  createUserId AS 'createUserId',  createTime AS 'createTime'
+             FROM device_active_detail
+            WHERE pin_code = :pinCode
+            ]]></body>
+        </sql>
+        <sql id="bild_store">
+            <body><![CDATA[
+            INSERT INTO device_active_detail
+                   (company_id, pin_code, store_id, bind_date,device_id, pin_enabled,  createUserId, createTime)
+            VALUES (:companyId, :pinCode, :storeId , :bindDate, :deviceId,  1,   -1,    NOW())
+            ]]></body>
+        </sql>
+        <sql id="loadDeviceNetCfg">
+            <body><![CDATA[
+          SELECT id AS 'id',
+                 company_id AS 'companyId',
+                 store_id AS 'storeId',
+                 center_devid AS 'centerId',
+                 udp_domain AS 'udpDomain',
+                 udp_port AS 'updPort',
+                 upload_domain AS 'uploadDomain',
+                 upload_port AS 'uploadPort',
+                 upd_page_size AS 'udpPageSize',
+                 msg_delay_time AS 'msgDelayTime',
+                 keeplive_delay_time AS 'keepliveDelayTime'
+            FROM yycomm.device_net_config
+           WHERE company_id = :companyId
+             AND store_id IN (-1,:storeId)
+            ]]></body>
+        </sql>
+    </model>
+    <model id="KvDictEntity">
+        <sql id="load_all_bycompany">
+            <body><![CDATA[
+         SELECT dict.id AS 'id',
+                dict.dict_type AS 'dictType',
+                dict.field_value AS 'value',
+                dict.field_name AS 'name',
+                dict.field_index AS 'dictIndex',
+                dict.field_desc AS 'desc'
+           FROM dict_kv_data dict
+          WHERE (dict.tenant_id = :companyId OR dict.tenant_id = -1 )
+       ORDER BY dict.dict_type,dict.field_index
+            ]]></body>
+        </sql>
+    </model>
+    <model id="SystemlogEntity">
+        <sql id="insert">
+            <body><![CDATA[
+        INSERT INTO acp_systemlog
+                    (crud,  operation, sub_type, message, creator,      createTime)
+              VALUES(:crud,:operation,:subType, :message,:createUserId, CURRENT_TIMESTAMP)
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

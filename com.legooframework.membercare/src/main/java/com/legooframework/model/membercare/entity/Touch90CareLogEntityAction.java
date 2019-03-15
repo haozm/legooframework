@@ -42,12 +42,24 @@ public class Touch90CareLogEntityAction extends BaseEntityAction<Touch90CareLogE
 
     public void savaOrUpdate(List<Touch90CareLogEntity> list) {
         LoginContext loginContext = LoginContextHolder.get();
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("当前日志共计 %s 条需要批量写入....", list.size()));
+        if (list.size() > 1024) {
+            List<List<Touch90CareLogEntity>> sub_list = Lists.partition(list, 1024);
+            sub_list.forEach(x -> runAsync(loginContext, x));
+        } else {
+            runAsync(loginContext, list);
+        }
+    }
+
+    private void runAsync(LoginContext loginContext, List<Touch90CareLogEntity> list) {
         CompletableFuture.runAsync(() -> {
             LoginContextHolder.setCtx(loginContext);
             Optional<List<Touch90CareLogEntity>> exits = loadByInstances(list);
             exits.ifPresent(logs -> logs.forEach($cur -> {
-                Optional<Touch90CareLogEntity> _exits = list.stream().filter($it -> $it.equalsInstance($cur)).findFirst();
-                _exits.ifPresent(x -> x.merge($cur));
+                Optional<Touch90CareLogEntity> _exits = list.stream()
+                        .filter($it -> $it.equalsInstance($cur)).findFirst();
+                _exits.ifPresent(c -> c.merge($cur));
             }));
             super.batchInsert("batchInsert", list);
         }, getExecutorService());
@@ -64,6 +76,5 @@ public class Touch90CareLogEntityAction extends BaseEntityAction<Touch90CareLogE
             return new Touch90CareLogEntity("", res);
         }
     }
-
 
 }

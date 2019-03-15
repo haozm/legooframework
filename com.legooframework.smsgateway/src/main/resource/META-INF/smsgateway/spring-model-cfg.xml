@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd">
+    <bean id="smsGateWayBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/smsgateway/legoo-model-cfg.xml"/>
+    </bean>
+    <!-- ========================= Query SQL Factory ========================= -->
+    <bean id="smsGateWayStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]smsgateway[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]dict[\\,/]entity-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="smsGateWayQueryFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]smsgateway[\\,/].*-query-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="smsJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
+        <qualifier value="query"/>
+        <property name="statementFactory" ref="smsGateWayQueryFactory"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+    <bean id="smsGateWayCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
+        <property name="caffeineSpecs">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="smsGateWayCache" value="initialCapacity=64,maximumSize=1024,expireAfterAccess=5m"/>
+            </util:map>
+        </property>
+    </bean>
+    <bean id="rechargeRuleEntityAction" class="com.legooframework.model.smsgateway.entity.RechargeRuleEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="smsGateWayStatementFactory"/>
+        <property name="cacheManager" ref="smsGateWayCacheManager"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+    <bean id="rechargeDetailEntityAction" class="com.legooframework.model.smsgateway.entity.RechargeDetailEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="smsGateWayStatementFactory"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+    <bean id="rechargeBalanceEntityAction"
+          class="com.legooframework.model.smsgateway.entity.RechargeBalanceEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="smsGateWayStatementFactory"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+    <bean id="billingDetailEntityAction" class="com.legooframework.model.smsgateway.entity.ChargeDetailEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="smsGateWayStatementFactory"/>
+        <property name="cacheManager" ref="smsGateWayCacheManager"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+    <bean id="billingSummaryEntityAction" class="com.legooframework.model.smsgateway.entity.ChargeSummaryEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="smsGateWayStatementFactory"/>
+        <property name="cacheManager" ref="smsGateWayCacheManager"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+    <bean id="smsBusinessRuleEntityAction" class="com.legooframework.model.smsgateway.entity.SMSSendRuleEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="smsGateWayStatementFactory"/>
+        <property name="cacheManager" ref="smsGateWayCacheManager"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+    <bean id="smsTransportLogEntityAction"
+          class="com.legooframework.model.smsgateway.entity.SMSTransportLogEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="smsGateWayStatementFactory"/>
+        <property name="cacheManager" ref="smsGateWayCacheManager"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+    <bean id="smsConfigSettingEntityAction" class="com.legooframework.model.smsgateway.entity.SMSSettingEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="smsGateWayStatementFactory"/>
+        <property name="cacheManager" ref="smsGateWayCacheManager"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+    <bean id="smsBlackListEntityAction" class="com.legooframework.model.smsgateway.entity.SMSBlackListEntityAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="smsGateWayStatementFactory"/>
+        <property name="cacheManager" ref="smsGateWayCacheManager"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+    <bean id="smsKvDictEntityAction"
+          class="com.legooframework.model.dict.entity.KvDictEntityAction"
+          parent="baseEntityAction">
+        <constructor-arg name="tableName" value="SMS_DICT_INFO"/>
+        <constructor-arg name="cacheName" value="smsGateWayCache"/>
+        <property name="statementFactory" ref="smsGateWayStatementFactory"/>
+        <property name="cacheManager" ref="smsGateWayCacheManager"/>
+        <property name="dataSource" ref="smsGateWayDataSource"/>
+    </bean>
+
+    <bean id="mobileNumberCheckInterceptor"
+          class="com.legooframework.model.smsgateway.filter.MobileNumberCheckInterceptor">
+        <constructor-arg name="kvDictEntityAction" ref="smsKvDictEntityAction"/>
+    </bean>
+    <bean id="mobileNumberBlackListInterceptor"
+          class="com.legooframework.model.smsgateway.filter.MobileNumberBlackListInterceptor">
+        <constructor-arg name="blackListEntityAction" ref="smsBlackListEntityAction"/>
+    </bean>
+    <util:list id="smsSendInterceptor" value-type="com.legooframework.model.smsgateway.filter.SmsSendInterceptor">
+        <ref bean="mobileNumberCheckInterceptor"/>
+        <ref bean="mobileNumberBlackListInterceptor"/>
+    </util:list>
+    <bean id="smsBeforeSendInterceptor" class="com.legooframework.model.smsgateway.filter.SMSBeforeSendInterceptor">
+        <constructor-arg name="interceptors" ref="smsSendInterceptor"/>
+    </bean>
+
+    <bean id="smsRechargeService" class="com.legooframework.model.smsgateway.service.SMSRechargeService"/>
+    <bean id="smsDeductionService" class="com.legooframework.model.smsgateway.service.SmsDeductionService"/>
+    <bean id="smsIntegrationService" class="com.legooframework.model.smsgateway.service.SmsIntegrationService"/>
+    <bean id="smsSendingService" class="com.legooframework.model.smsgateway.service.SmsSendingService"/>
+
+    <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
+    <int:channel id="channel_sms_balance">
+        <int:queue capacity="128"/>
+    </int:channel>
+    <int:service-activator ref="smsIntegrationService" method="charging"
+                           input-channel="channel_sms_balance"
+                           output-channel="nullChannel">
+        <int:poller max-messages-per-poll="1" fixed-delay="1000"/>
+    </int:service-activator>
+    <int:publish-subscribe-channel id="channel_event_bus"/>
+    <int:outbound-channel-adapter ref="smsIntegrationService" method="subscribeSMSEvent" channel="channel_event_bus"/>
+    <int:publish-subscribe-channel id="channel_checking_bus"/>
+    <int:outbound-channel-adapter ref="smsIntegrationService" method="beforeSendInterceptor"
+                                  channel="channel_checking_bus"/>
+    <int:channel id="sms_error_channel">
+        <int:queue/>
+    </int:channel>
+    <int:outbound-channel-adapter channel="sms_error_channel" ref="smsIntegrationService" method="handleError"
+                                  auto-startup="true">
+        <int:poller max-messages-per-poll="50" receive-timeout="1000" time-unit="MILLISECONDS" fixed-rate="3000"/>
+    </int:outbound-channel-adapter>
+    <int:channel id="sms_sending_channel">
+        <int:queue/>
+    </int:channel>
+</beans>

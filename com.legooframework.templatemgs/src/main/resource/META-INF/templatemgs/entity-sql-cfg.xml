@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="TemplateClassifyEntity">
+        <sql id="loadByCompany">
+            <body><![CDATA[
+           SELECT tmp.id AS 'id',
+                  tmp.pid AS 'pId',
+                  tmp.classify AS 'classify',
+                  tmp.deep_path AS 'deepPath',
+                  tmp.company_id AS 'companyId',
+                  tmp.tenant_id AS 'tenantId',
+                  tmp.creator AS 'creator',
+                  tmp.createTime AS 'createTime',
+                  tmp.editor AS 'editor',
+                  tmp.editTime AS 'editTime'
+             FROM MSG_TEMPLATE_CLASSIFY AS tmp
+            WHERE tmp.delete_flag = 0
+              AND tmp.company_id = :companyId
+         ORDER BY tmp.id ,tmp.pid
+            ]]></body>
+        </sql>
+    </model>
+</sqls>
