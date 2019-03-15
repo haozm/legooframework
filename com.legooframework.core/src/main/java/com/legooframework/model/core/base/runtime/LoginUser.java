@@ -18,7 +18,7 @@ import java.util.Set;
 public class LoginUser implements LoginContext {
 
     private Long loginId, tenantId;
-    private String userName, password, loginName, token;
+    private String userName, password, loginName, token, companyName, storeName;
     private Set<GrantedAuthority> authorities;
     private final DateTime loginTime;
     private Integer storeId, orgId;
@@ -38,11 +38,14 @@ public class LoginUser implements LoginContext {
     }
 
     public LoginUser(Long loginId, Long tenantId, String userName, String password,
-                     Collection<String> roles, Integer storeId, Integer orgId, List<Integer> storeIds) {
+                     Collection<String> roles, Integer storeId, Integer orgId, List<Integer> storeIds,
+                     String companyName, String storeName) {
         this.loginId = loginId;
         this.tenantId = tenantId;
         this.userName = userName;
         this.password = password;
+        this.companyName = companyName;
+        this.storeName = storeName;
         this.authorities = Sets.newHashSet();
         this.authorities.add(new SimpleGrantedAuthority("ROLE_LOGINER"));
         if (CollectionUtils.isNotEmpty(roles)) {
@@ -68,6 +71,11 @@ public class LoginUser implements LoginContext {
 
     public void setToken(String token) {
         this.token = token;
+    }
+
+    @Override
+    public String getLoginName() {
+        return userName;
     }
 
     @Override

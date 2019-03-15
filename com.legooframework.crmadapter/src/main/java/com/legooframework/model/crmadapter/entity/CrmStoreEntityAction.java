@@ -77,7 +77,8 @@ public class CrmStoreEntityAction extends BaseEntityAction<CrmStoreEntity> {
             JsonObject _json = jsonElement.getAsJsonObject();
             stores.add(new CrmStoreEntity(_json.get("id").getAsInt(),
                     _json.get("name").getAsString(), _json.get("orgCode").getAsString(),
-                    _json.get("orgId").getAsInt(), _json.get("companyId").getAsInt()));
+                    _json.get("orgId").getAsInt(), _json.get("companyId").getAsInt(),
+                    _json.get("companyName").getAsString()));
         }
         if (getCache().isPresent() && CollectionUtils.isNotEmpty(stores))
             getCache().get().put(cache_key, stores);

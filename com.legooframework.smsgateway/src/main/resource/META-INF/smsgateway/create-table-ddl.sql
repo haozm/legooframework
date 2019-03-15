@@ -30,7 +30,9 @@ VALUES ('SMS_BUS_TYPE', 'BIRTHDAYTOUCH', '生日感动', 0, '生日感动', -1, 
 
 INSERT INTO SMS_DICT_INFO
 (dict_type, field_value, field_name, field_index, field_desc, tenant_id, creator, createTime)
-VALUES ('SMS_PREFIX', 'WHITELIST', '白名单', 0, '^((13[0-9])|(14[5,7,9])|(15([0-3]|[5-9]))|(166)|(17[0,1,3,5,6,7,8])|(18[0-9])|(19[8|9]))\\d{8}$', -1, -1, NOW());
+VALUES ('SMS_PREFIX', 'WHITELIST', '白名单', 0,
+        '^((13[0-9])|(14[5,7,9])|(15([0-3]|[5-9]))|(166)|(17[0,1,3,5,6,7,8])|(18[0-9])|(19[8|9]))\\d{8}$', -1, -1,
+        NOW());
 
 -- 门店短信设定
 DROP TABLE IF EXISTS SMS_CONFIG_SETTING;
@@ -188,7 +190,10 @@ CREATE TABLE SMS_CHARGE_SUMMARY
   business_ruleid CHAR(16)         NOT NULL,
   business_type   VARCHAR(32)      NOT NULL,
   sms_quantity    BIGINT(20)       NOT NULL DEFAULT 0,
+  operator_name   VARCHAR(255)     NULL,
   sms_context     VARCHAR(255)     NULL,
+  store_name      VARCHAR(255)     NULL,
+  company_name    VARCHAR(255)     NULL,
   delete_flag     TINYINT UNSIGNED NOT NULL DEFAULT 0,
   tenant_id       BIGINT(20)       NULL     DEFAULT NULL,
   creator         BIGINT(20)       NOT NULL DEFAULT -1,

@@ -21,6 +21,8 @@ public interface LoginContext extends UserDetails {
 
     boolean isStoreManager();
 
+    String getLoginName();
+
     Integer getStoreId();
 
 }

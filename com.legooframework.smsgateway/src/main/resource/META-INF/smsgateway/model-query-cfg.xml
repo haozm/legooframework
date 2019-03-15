@@ -39,24 +39,15 @@
             <body><![CDATA[
           SELECT scs.id AS 'id',
                  scs.company_id AS 'companyId',
-                 ( SELECT org.name
-                     FROM acp.acp_organization org
-                    WHERE org.orgType = 1
-                      AND org.id = scs.company_id ) AS 'companyName',
+                 scs.company_name AS 'companyName',
                  scs.store_id AS 'storeId',
-                 ( SELECT sto.name
-                     FROM acp.acp_store sto
-                    WHERE sto.id =  scs.store_id
-                      AND sto.company_id = scs.company_id ) AS 'storeName',
+                 scs.store_name AS 'storeName',
                  scs.sms_batchno AS 'smsBatchNo',
                  scs.business_ruleid AS 'businessRuleId',
                  scs.sms_quantity AS 'smsQuantity',
                  scs.creator AS 'creator',
                  scs.sms_context AS 'smsContext',
-                 ( SELECT emp.name
-                     FROM acp.acp_employee emp
-                    WHERE emp.id = scs.creator
-                      AND emp.company_id = scs.company_id ) AS 'creatorName',
+                 scs.operator_name AS 'creatorName',
                  DATE_FORMAT(scs.createTime,'%Y-%m-%d %H:%i:%s') AS 'createTime',
                  scs.business_type AS 'businessType',
                  ( SELECT dict.field_name

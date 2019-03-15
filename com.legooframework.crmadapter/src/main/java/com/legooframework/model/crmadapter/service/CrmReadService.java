@@ -88,7 +88,8 @@ public class CrmReadService extends CrmAdapterService {
             String name = (json.get("name") == null || json.get("name").isJsonNull()) ? "登陆者" : json.get("name").getAsString();
             LoginUser user = new LoginUser(json.get("id").getAsLong(), json.get("cId").getAsLong(),
                     name, json.get("pwd").getAsString(),
-                    role_list, json.get("sId").getAsInt(), json.get("oId").getAsInt(), storeIds);
+                    role_list, json.get("sId").getAsInt(), json.get("oId").getAsInt(), storeIds,
+                    json.get("cName").getAsString(), json.get("sName").getAsString());
             if (logger.isDebugEnabled())
                 logger.debug(String.format("loadByLoginName(%s,%s) res %s", companyId, loingName, user));
             return user;

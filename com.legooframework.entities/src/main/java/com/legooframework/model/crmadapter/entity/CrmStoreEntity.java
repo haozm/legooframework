@@ -8,15 +8,15 @@ import java.util.Objects;
 
 public class CrmStoreEntity extends BaseEntity<Integer> {
 
-    private String name;
-    private String orgCode;
+    private String name, orgCode, companyName;
     private Integer companyId, orgId;
 
-    CrmStoreEntity(Integer id, String name, String orgCode, Integer orgId, Integer companyId) {
+    CrmStoreEntity(Integer id, String name, String orgCode, Integer orgId, Integer companyId, String companyName) {
         super(id);
         this.name = name;
         this.orgCode = orgCode;
         this.orgId = orgId;
+        this.companyName = companyName;
         this.companyId = companyId;
     }
 
@@ -50,6 +50,10 @@ public class CrmStoreEntity extends BaseEntity<Integer> {
                 com.google.common.base.Objects.equal(orgCode, that.orgCode) &&
                 com.google.common.base.Objects.equal(orgId, that.orgId) &&
                 com.google.common.base.Objects.equal(companyId, that.companyId);
+    }
+
+    public String getCompanyName() {
+        return companyName;
     }
 
     @Override

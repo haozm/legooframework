@@ -30,7 +30,7 @@ public class ChargeSummaryEntityAction extends BaseEntityAction<ChargeSummaryEnt
                              long smsQuantity, String smsContext) {
         LoginContext user = LoginContextHolder.get();
         ChargeSummaryEntity billingSummary = ChargeSummaryEntity.autoJob(store, businessRule, smsBatchNo,
-                smsQuantity, user.getLoginId(), smsContext);
+                smsQuantity, smsContext);
         super.updateAction(billingSummary, "insert");
         if (logger.isDebugEnabled())
             logger.debug(String.format("insert(%s,%s,%s)", store.getId(), businessRule, smsQuantity));
@@ -46,9 +46,8 @@ public class ChargeSummaryEntityAction extends BaseEntityAction<ChargeSummaryEnt
      */
     public String insertManual(CrmStoreEntity store, SMSSendRuleEntity businessRule, String smsBatchNo,
                                long smsQuantity, String smsContext) {
-        LoginContext user = LoginContextHolder.get();
         ChargeSummaryEntity billingSummary = ChargeSummaryEntity.manual(store, businessRule, smsBatchNo,
-                smsQuantity, user.getLoginId(), smsContext);
+                smsQuantity, smsContext, LoginContextHolder.get());
         super.updateAction(billingSummary, "insert");
         if (logger.isDebugEnabled())
             logger.debug(String.format("insert(%s,%s,%s)", store.getId(), businessRule, smsQuantity));

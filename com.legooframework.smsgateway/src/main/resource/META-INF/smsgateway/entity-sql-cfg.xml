@@ -346,12 +346,15 @@
                 scs.company_id AS 'companyId',
                 scs.store_id AS 'storeId',
                 scs.sms_batchno AS 'smsBatchNo',
+                scs.operator_name AS 'operatorName',
                 scs.business_ruleid AS 'businessRuleId',
                 scs.business_type AS 'businessType',
                 scs.send_mode AS 'sendMode',
                 scs.finish_send AS 'finishSend',
                 scs.sms_quantity AS 'smsQuantity',
                 scs.sms_context AS 'smsContext',
+                scs.store_name AS 'storeName',
+                scs.company_name AS 'companyName',
                 ( SELECT GROUP_CONCAT(DISTINCT stl.send_status ORDER BY stl.send_status SEPARATOR  ',' )
                     FROM SMS_TRANSPORT_LOG stl
                    WHERE stl.sms_batchno = scs.sms_batchno ) AS 'detailStatus',
@@ -372,8 +375,8 @@
         <sql id="insert">
             <body><![CDATA[
           INSERT INTO SMS_CHARGE_SUMMARY
-                      ( id, company_id, store_id, sms_batchno, business_type, business_ruleid, sms_quantity, send_mode, sms_context, finish_send, tenant_id, createTime )
-               VALUES (:id, :companyId, :storeId, :smsBatchNo, :businessType, :businessRuleId, :smsQuantity, :sendMode, :smsContext, :finishSend, :tenantId, CURRENT_TIMESTAMP )
+                      ( id, company_id, store_id, sms_batchno, business_type, business_ruleid, company_name, sms_quantity, store_name, send_mode, sms_context, operator_name, finish_send, tenant_id, createTime )
+               VALUES (:id, :companyId, :storeId, :smsBatchNo, :businessType, :businessRuleId, :companyName, :smsQuantity, :storeName, :sendMode, :smsContext, :operatorName, :finishSend, :tenantId, CURRENT_TIMESTAMP )
             ]]></body>
         </sql>
         <sql id="findById" macros="charge_info_fields,crud_fixed">

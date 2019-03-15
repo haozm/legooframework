@@ -88,6 +88,7 @@ public class CrmAdapterController extends BaseController {
                 Map<String, Object> data = Maps.newHashMap();
                 data.put("id", $it.getId());
                 data.put("companyId", companyId);
+                data.put("companyName", company.get().getName());
                 data.put("name", $it.getName());
                 data.put("orgId", $it.getOrganizationId().or(-1));
                 data.put("orgCode", "-1");
@@ -204,8 +205,10 @@ public class CrmAdapterController extends BaseController {
         params.put("name", user.getUsername() == null ? "登陆者" : user.getUsername());
         params.put("pwd", user.getEmployee().getPassowrd());
         params.put("cId", companyId);
+        params.put("cName", company.get().getName());
         params.put("oId", user.getStore().isPresent() ? -1 : user.getOrganization().get().getId());
         params.put("sId", user.getStore().isPresent() ? user.getStore().get().getId() : -1);
+        params.put("sName", user.getStore().isPresent() ? user.getStore().get().getName() : "NULL");
         Set<Integer> storeIds = Sets.newHashSet();
         if (user.getStore().isPresent()) {
             storeIds.add(user.getStore().get().getId());
