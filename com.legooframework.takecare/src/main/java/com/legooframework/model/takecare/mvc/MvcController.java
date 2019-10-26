@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -61,6 +62,7 @@ public class MvcController extends BaseController {
         if (logger.isDebugEnabled())
             logger.debug(String.format("executeBirthdayCare(requestBody=%s,url=%s) start", requestBody, request.getRequestURL().toString()));
         LoginContextHolder.setAnonymousCtx();
+        TransactionStatus ts = null;
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
             String mIds = MapUtils.getString(requestBody, "memberIds", null);
@@ -75,9 +77,12 @@ public class MvcController extends BaseController {
             List<SendChannel> channels = Stream.of(StringUtils.split(followUpWays, ','))
                     .map(x -> SendChannel.paras(Integer.parseInt(x)))
                     .collect(Collectors.toList());
+            ts = startTx(request, null);
             getBean(TakeCareService.class, request).batchBirthdayCare(memberIds, channels, followUpContent, arg_imgs, user);
+            commitTx(request, ts);
         } finally {
             LoginContextHolder.clear();
+            if (ts != null) rollbackTx(request, ts);
         }
         return JsonMessageBuilder.OK().toMessage();
     }
@@ -165,6 +170,7 @@ public class MvcController extends BaseController {
             logger.debug(String.format("executeNinetyCare(requestBody=%s,url=%s) start", requestBody, request.getRequestURL().toString()));
         LoginContextHolder.setAnonymousCtx();
         String cache_key = null;
+
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
             String taskIds_str = MapUtils.getString(requestBody, "taskIds", null);
@@ -213,6 +219,6 @@ public class MvcController extends BaseController {
 
     @Override
     protected PlatformTransactionManager getTransactionManager(HttpServletRequest request) {
-        return super.getTransactionManager(request);
+        return getBean("transactionManager", PlatformTransactionManager.class, request);
     }
 }

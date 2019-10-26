@@ -13,6 +13,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="com.legooframework.core" />
     <orderEntry type="module" module-name="com.legooframework.covariant" />
-    <orderEntry type="library" name="extlib" level="project" />
+    <orderEntry type="library" name="extlib" level="application" />
   </component>
 </module>
