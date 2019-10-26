@@ -12,15 +12,15 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class SaleRecordByStore {
+public class SaleRecordByStoreAgg {
 
     private final LocalDateTime startDay, endDay;
     private final StoEntity store;
     private final String categories;
     private final ArrayListMultimap<MemberEntity, SaleRecordEntity> multimap;
 
-    SaleRecordByStore(StoEntity store, String categories, LocalDateTime startDay,
-                      LocalDateTime endDay, Map<MemberEntity, Collection<SaleRecordEntity>> datas) {
+    SaleRecordByStoreAgg(StoEntity store, String categories, LocalDateTime startDay,
+                         LocalDateTime endDay, Map<MemberEntity, Collection<SaleRecordEntity>> datas) {
         this.startDay = startDay;
         this.endDay = endDay;
         this.store = store;

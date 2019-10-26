@@ -31,3 +31,5 @@ ALTER TABLE crm_salerecord ADD change_flag varchar(100) NULL;
 UPDATE crm_salerecord
    SET change_flag= CONCAT(company_id,store_id,IFNULL(member_id,0),oldSaleRecordId,IFNULL(saleTotalAmount,0), DATE_FORMAT(createTime,'%Y-%m-%d %H:%i:%s'),status);
 
+-- ADD BY HXJ 2019-10-17
+

@@ -16,10 +16,6 @@ public abstract class BundleService extends BaseService {
         return getBean(OrgEntityAction.class);
     }
 
-    EmpEntityAction getEmpoyeeAct() {
-        return getBean(EmpEntityAction.class);
-    }
-
     MemberEntityAction getMemberAct() {
         return getBean(MemberEntityAction.class);
     }

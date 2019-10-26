@@ -26,8 +26,8 @@ public class SaleRecordService extends BundleService {
      * @param sample    行人
      * @return 归途
      */
-    public Optional<SaleRecordByStore> loadSaleRecordByStore(Integer companyId, Integer storeId, String categories,
-                                                             Date startDay, Date endDay, boolean sample) {
+    public Optional<SaleRecordByStoreAgg> loadSaleRecordByStore(Integer companyId, Integer storeId, String categories,
+                                                                Date startDay, Date endDay, boolean sample) {
         Preconditions.checkNotNull(companyId);
         LocalDateTime start = LocalDateTime.fromDateFields(startDay);
         LocalDateTime end = LocalDateTime.fromDateFields(endDay);
@@ -50,7 +50,7 @@ public class SaleRecordService extends BundleService {
             _member = members.get().stream().filter(x -> x.getId().equals($it.getMemberId())).findFirst();
             _member.ifPresent(m -> arrayListMultimap.put(m, $it));
         }
-        SaleRecordByStore saleRecordByStore = new SaleRecordByStore(store.get(), categories, start, end,
+        SaleRecordByStoreAgg saleRecordByStore = new SaleRecordByStoreAgg(store.get(), categories, start, end,
                 arrayListMultimap.asMap());
         return Optional.of(saleRecordByStore);
     }
