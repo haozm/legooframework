@@ -2,28 +2,24 @@ package com.legooframework.model.salesrecords.entity;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.core.utils.ExceptionUtil;
-import com.legooframework.model.crmadapter.entity.CrmMemberEntity;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.covariant.entity.MemberEntity;
+import com.legooframework.model.covariant.entity.OrgEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+
 
 public class SaleRecordEntityAction extends BaseEntityAction<SaleRecordEntity> {
 
@@ -43,15 +39,12 @@ public class SaleRecordEntityAction extends BaseEntityAction<SaleRecordEntity> {
      * @param sample     是否简要信息
      * @return Optional&lt;List&lt;SaleRecordEntity&gt;&gt;
      */
-    public Optional<List<SaleRecordEntity>> loadByDateInterval(CrmStoreEntity store, String categories,
-                                                               LocalDateTime start, LocalDateTime end,
+    public Optional<List<SaleRecordEntity>> loadByDateInterval(StoEntity store, String categories, LocalDateTime start, LocalDateTime end,
                                                                boolean sample) {
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("storeId", store.getId());
+        Map<String, Object> params = store.toParamMap();
         params.put("sample", !sample);
         if (!Strings.isNullOrEmpty(categories) && !StringUtils.equals("0", categories))
             params.put("categories", categories);
-        params.put("companyId", store.getCompanyId());
         params.put("startDay", DateTimeUtils.format(start));
         params.put("endDay", DateTimeUtils.format(end));
         params.put("sql", "loadByDateInterval");
@@ -115,13 +108,9 @@ public class SaleRecordEntityAction extends BaseEntityAction<SaleRecordEntity> {
         }
     }*/
 
-    public Optional<List<SaleRecordEntity>> loadMemberBy90Days(CrmMemberEntity member, CrmStoreEntity store) {
+    public Optional<List<SaleRecordEntity>> loadMemberBy90Days(MemberEntity member) {
         Preconditions.checkNotNull(member);
-        Preconditions.checkNotNull(store);
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("memberId", member.getId());
-        params.put("companyId", store.getCompanyId());
-        params.put("storeId", store.getId());
+        Map<String, Object> params = member.toParamMap();
         params.put("hasDetail", true);
         Optional<List<SaleRecordEntity>> detrails = super.queryForEntities("loadMemberBy90Days", params, getRowMapper());
         if (logger.isDebugEnabled())
@@ -146,7 +135,7 @@ public class SaleRecordEntityAction extends BaseEntityAction<SaleRecordEntity> {
 //                .orElseGet(() -> new MergeSaleRecords(companyId, start, end, null));
 //    }
 
-    public Optional<SaleRecordEntity> findSampleById(Object id, CrmOrganizationEntity company) {
+    public Optional<SaleRecordEntity> findSampleById(Object id, OrgEntity company) {
         Preconditions.checkNotNull(id, "findSampleById(Object id) id is not null");
         try {
             Map<String, Object> params = Maps.newHashMap();
@@ -166,7 +155,7 @@ public class SaleRecordEntityAction extends BaseEntityAction<SaleRecordEntity> {
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<SaleRecordEntity> {
+    private static class RowMapperImpl implements RowMapper<SaleRecordEntity> {
         @Override
         public SaleRecordEntity mapRow(ResultSet resultSet, int i) throws SQLException {
             Integer creator = resultSet.getInt("creator");

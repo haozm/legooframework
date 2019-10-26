@@ -1,15 +1,17 @@
 package com.legooframework.model.salesrecords.service;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.*;
-import com.legooframework.model.crmadapter.entity.CrmMemberEntity;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.google.common.collect.ArrayListMultimap;
+import com.legooframework.model.covariant.entity.MemberEntity;
+import com.legooframework.model.covariant.entity.OrgEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.salesrecords.entity.SaleRecordEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.LocalDateTime;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SaleRecordService extends BundleService {
@@ -29,10 +31,9 @@ public class SaleRecordService extends BundleService {
         Preconditions.checkNotNull(companyId);
         LocalDateTime start = LocalDateTime.fromDateFields(startDay);
         LocalDateTime end = LocalDateTime.fromDateFields(endDay);
-        final Optional<CrmOrganizationEntity> company = getCompanyAct().findCompanyById(companyId);
+        final Optional<OrgEntity> company = getCompanyAct().findById(companyId);
         if (!company.isPresent()) return Optional.empty();
-
-        Optional<CrmStoreEntity> store = getStoreAct().findById(company.get(), storeId);
+        Optional<StoEntity> store = getStoreAct().findById(storeId);
         if (!store.isPresent()) return Optional.empty();
 
         Optional<List<SaleRecordEntity>> saleRecords = getSaleRecordAction()
@@ -40,13 +41,13 @@ public class SaleRecordService extends BundleService {
         if (!saleRecords.isPresent()) return Optional.empty();
         List<Integer> memberIds = saleRecords.get().stream().map(SaleRecordEntity::getMemberId).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(memberIds)) return Optional.empty();
-        List<CrmMemberEntity> members = getMemberAct().loadByCompany(company.get(), memberIds).orElse(null);
-        if (CollectionUtils.isEmpty(members)) return Optional.empty();
+        Optional<List<MemberEntity>> members = getMemberAct().findByIds(memberIds);
+        if (!members.isPresent()) return Optional.empty();
 
-        ArrayListMultimap<CrmMemberEntity, SaleRecordEntity> arrayListMultimap = ArrayListMultimap.create();
-        Optional<CrmMemberEntity> _member;
+        ArrayListMultimap<MemberEntity, SaleRecordEntity> arrayListMultimap = ArrayListMultimap.create();
+        Optional<MemberEntity> _member;
         for (SaleRecordEntity $it : saleRecords.get()) {
-            _member = members.stream().filter(x -> x.getId().equals($it.getMemberId())).findFirst();
+            _member = members.get().stream().filter(x -> x.getId().equals($it.getMemberId())).findFirst();
             _member.ifPresent(m -> arrayListMultimap.put(m, $it));
         }
         SaleRecordByStore saleRecordByStore = new SaleRecordByStore(store.get(), categories, start, end,

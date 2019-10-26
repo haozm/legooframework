@@ -17,7 +17,7 @@ public class SaleGoodsEntityAction extends BaseEntityAction<SaleGoodsEntity> {
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<SaleGoodsEntity> {
+    private static class RowMapperImpl implements RowMapper<SaleGoodsEntity> {
         @Override
         public SaleGoodsEntity mapRow(ResultSet resultSet, int i) throws SQLException {
             return new SaleGoodsEntity(resultSet.getString("oldGoodsId"), resultSet.getInt("companyId"), resultSet);

@@ -5,6 +5,8 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.legooframework.model.core.base.entity.BaseEntity;
+import com.legooframework.model.core.base.runtime.LoginContext;
+import com.legooframework.model.core.base.runtime.LoginUser;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +53,11 @@ public class UserAuthorEntity extends BaseEntity<Integer> implements ToReplace {
         } catch (SQLException e) {
             throw new RuntimeException("Restore UserAuthorEntity has SQLException", e);
         }
+    }
+
+    public LoginContext toLoginContext() {
+        return new LoginUser(this.getId().longValue(), this.getCompanyId().longValue(), this.name, "password",
+                null, roleIds, storeId, orgId, subStoreIds, null, null);
     }
 
     public int getMaxRoleId() {

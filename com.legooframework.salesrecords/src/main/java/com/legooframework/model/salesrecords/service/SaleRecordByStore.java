@@ -2,15 +2,11 @@ package com.legooframework.model.salesrecords.service;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ArrayListMultimap;
-import com.legooframework.model.crmadapter.entity.CrmMemberEntity;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
-import com.legooframework.model.salesrecords.dto.SaleRecordByMember;
+import com.legooframework.model.covariant.entity.MemberEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.salesrecords.entity.SaleRecordEntity;
 import org.apache.commons.collections4.MapUtils;
 import org.joda.time.LocalDateTime;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,12 +15,12 @@ import java.util.Map;
 public class SaleRecordByStore {
 
     private final LocalDateTime startDay, endDay;
-    private final CrmStoreEntity store;
+    private final StoEntity store;
     private final String categories;
-    private final ArrayListMultimap<CrmMemberEntity, SaleRecordEntity> multimap;
+    private final ArrayListMultimap<MemberEntity, SaleRecordEntity> multimap;
 
-    SaleRecordByStore(CrmStoreEntity store, String categories, LocalDateTime startDay,
-                      LocalDateTime endDay, Map<CrmMemberEntity, Collection<SaleRecordEntity>> datas) {
+    SaleRecordByStore(StoEntity store, String categories, LocalDateTime startDay,
+                      LocalDateTime endDay, Map<MemberEntity, Collection<SaleRecordEntity>> datas) {
         this.startDay = startDay;
         this.endDay = endDay;
         this.store = store;
@@ -34,7 +30,7 @@ public class SaleRecordByStore {
             datas.forEach(this.multimap::putAll);
     }
 
-    public CrmStoreEntity getStore() {
+    public StoEntity getStore() {
         return store;
     }
 
@@ -42,11 +38,11 @@ public class SaleRecordByStore {
         return multimap.size();
     }
 
-    public Collection<CrmMemberEntity> getMember() {
+    public Collection<MemberEntity> getMember() {
         return multimap.keySet();
     }
 
-    public List<SaleRecordEntity> getSaleRecords(CrmMemberEntity crmMember) {
+    public List<SaleRecordEntity> getSaleRecords(MemberEntity crmMember) {
         return multimap.get(crmMember);
     }
 
