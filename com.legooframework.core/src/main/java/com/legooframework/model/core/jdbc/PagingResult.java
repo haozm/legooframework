@@ -52,6 +52,15 @@ public class PagingResult {
         return map;
     }
 
+    public static PagingResult empty() {
+        PagingResult pg = new PagingResult("", "", 0L, 0, 0, null);
+        return pg;
+    }
+
+    public boolean isEmpty() {
+        return CollectionUtils.isEmpty(resultSet);
+    }
+
     public Optional<List<Map<String, Object>>> getResultSet() {
         return CollectionUtils.isEmpty(resultSet) ? Optional.empty() : Optional.of(resultSet);
     }

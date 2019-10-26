@@ -41,6 +41,7 @@ public class LoginUserContext implements Replaceable, UserDetails {
     private final Set<Integer> subStoreIds;
     private final Set<Integer> subOrgs;
     private final boolean hasStoreView;
+
     public String getToken() {
         return token;
     }
@@ -56,6 +57,10 @@ public class LoginUserContext implements Replaceable, UserDetails {
 
     public Object getUserId() {
         return this.employee.getId();
+    }
+
+    public String getCompanyName() {
+        return this.company.getName();
     }
 
     public EmployeeEntity getEmployee() {
@@ -122,7 +127,7 @@ public class LoginUserContext implements Replaceable, UserDetails {
 
     public LoginUserContext(EmployeeEntity employee, OrganizationEntity organization, Optional<StoreEntity> store,
                             OrganizationEntity company, RoleSet roleSet, String loginDomain,
-                            String ip, List<Integer> subStoreIds, Set<Integer> subOrgs, String token,boolean hasStoreView) {
+                            String ip, List<Integer> subStoreIds, Set<Integer> subOrgs, String token, boolean hasStoreView) {
         this.employee = employee;
         this.organization = organization;
         this.company = company;
@@ -150,7 +155,7 @@ public class LoginUserContext implements Replaceable, UserDetails {
         this.token = token;
         this.store = store.orNull();
         this.hasStoreView = hasStoreView;
-        
+
     }
 
     public Optional<String> getLoginDomain() {
@@ -167,7 +172,7 @@ public class LoginUserContext implements Replaceable, UserDetails {
 
     public static LoginUserContext anonymous() {
         return new LoginUserContext(EmployeeEntity.anonymous(), null, Optional.<StoreEntity>absent(),
-                null, null, null, "127.0.0.1", null, null, "token",false);
+                null, null, null, "127.0.0.1", null, null, "token", false);
     }
 
     @Override
@@ -199,7 +204,9 @@ public class LoginUserContext implements Replaceable, UserDetails {
         map.put("USER_ORG_LEVEL", organization == null ? -1 : organization.getLevel());
         map.put("USER_ORG_NAME", organization == null ? "NO_ORG_NAME" : organization.getName());
         map.put("STORE_DEVICEID", store == null ? "NO_STORE_DEVICEID" : store.getContactTableName());
-        map.put("USER_ORG_ST_NAME", organization == null ? null : organization.getShortName());
+        map.put("STORE_RFM_SETTING", null == store ? null : store.getRfmSetting());
+        map.put("COMPANY_RFM_SETTING", null == company ? null : company.getRfmSetting());
+        map.put("USER_ORG_ST_NAME", company == null ? null : company.getShortName());
         map.put("MSG_COM_STORE", String.format("MSG_%s_%s", company == null ? 0 : company.getId(), store == null ? 0 : store.getId()));
         map.put("USER_IP", ip);
         map.put("USER_DOMAIN", loginDomain);
@@ -212,11 +219,11 @@ public class LoginUserContext implements Replaceable, UserDetails {
         map.put("ALL_STORES", all_stores);
         return map;
     }
-    
+
     public boolean hasStoreView() {
-    	return this.hasStoreView;
+        return this.hasStoreView;
     }
-    
+
     @Override
     public Map<String, String> toSmsMap(StoreEntity store) {
         if (store == null) store = this.store;

@@ -2,9 +2,6 @@ package com.csosm.module.webocx.entity;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.google.common.base.Optional;
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
@@ -19,7 +16,7 @@ public class CdnItem {
         this.value = StringUtils.removeStart(value, ":");
     }
 
-    void holdParam(Map<String, Object> params) {
+    public void holdParam(Map<String, Object> params) {
         if (expression) {
             Object _val = params.get(value);
             params.put(name, _val);
@@ -34,10 +31,6 @@ public class CdnItem {
 
     public String getValue() {
         return value;
-    }
-
-    public boolean isExpression() {
-        return expression;
     }
 
     @Override

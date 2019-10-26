@@ -1,6 +1,7 @@
 package com.csosm.module.webocx.service;
 
 import com.csosm.commons.adapter.LoginUserContext;
+
 import com.csosm.commons.jdbc.sqlcfg.ColumnMeta;
 import com.csosm.commons.jdbc.sqlcfg.SqlMetaEntity;
 import com.csosm.commons.jdbc.sqlcfg.SqlMetaEntityFactory;
@@ -38,11 +39,7 @@ public class LegooWebOcxService extends AbstractBaseServer {
     private final static Logger logger = LoggerFactory.getLogger(LegooWebOcxService.class);
 
     private static Ordering<MemberGroupInfo> ordering = Ordering.natural()
-            .onResultOf(new Function<MemberGroupInfo, Integer>() {
-                public Integer apply(MemberGroupInfo o) {
-                    return o.getIndex();
-                }
-            });
+            .onResultOf((Function<MemberGroupInfo, Integer>) MemberGroupInfo::getIndex);
 
     public Optional<List<MemberGroupInfo>> statisticalByGroup(String groupName, OrganizationEntity company,
                                                               StoreEntity store, LoginUserContext loginUser) {
@@ -102,9 +99,9 @@ public class LegooWebOcxService extends AbstractBaseServer {
         public MemberGroupInfo call() throws Exception {
             MemberGroupInfo res = null;
             if (pd.isShowCount()) {
-                Map<String, Object> param = u.toMap();
-                pd.getPageDefined().holdParam(param);
-                long count = getJdbcQuery().queryForCount(pd.getSqlModel(), pd.getSqlStmtId(), param);
+                Map<String, Object> source = u.toMap();
+                pd.getPageDefined().holdParam(source);
+                long count = getJdbcQuery().queryForCount(pd.getSqlModel(), pd.getSqlStmtId(), source);
                 res = new MemberGroupInfo(pd.getFullName(), pd.getIndex(), pd.getTitle(), count, pd.getQueryParams().orNull());
                 if (logger.isDebugEnabled())
                     logger.debug(String.format("MemberGroupInfo[%s]:%s", pd.getTitle(), res));
@@ -115,15 +112,31 @@ public class LegooWebOcxService extends AbstractBaseServer {
         }
     }
 
-    public Optional<Map<String, Object>> loadOcxById(String ocxId, LoginUserContext user) {
+    public Optional<Map<String, Object>> loadOcxById(String ocxId, String subPage, LoginUserContext user) {
         Preconditions.checkState(user.getCompany().isPresent(), "当前登陆用户所属公司不可以空...");
-        Preconditions.checkState(user.getStore().isPresent(), "当前登陆用户所属门店不可以空...");
+//        Preconditions.checkState(user.getStore().isPresent(), "当前登陆用户所属门店不可以空...");
         Optional<WebOcx> webOcx = getBean(LegooWebOcxRepository.class).findById(ocxId);
         if (!webOcx.isPresent()) return Optional.absent();
-        Optional<List<PageDefinedDto>> pds = webOcx.get().loadStorePages(user.getCompany().get(), user.getStore().get());
+        Optional<List<PageDefinedDto>> pds = Optional.absent();
+        if(user.getStore().isPresent()) {
+        	pds = webOcx.get().loadStorePages(user.getCompany().get(), user.getStore().get());
+        }else {
+        	pds = webOcx.get().loadCompanyPages(user.getCompany().get());
+        }
         Preconditions.checkState(pds.isPresent());
         Preconditions.checkState(pds.get().size() == 1);
-        PageDefined pageDefined = pds.get().get(0).getPageDefined();
+        PageDefined pageDefined = null;
+        if (Strings.isNullOrEmpty(subPage)) {
+            pageDefined = pds.get().get(0).getPageDefined();
+        } else {
+            String fullName = String.format("%s.%s", ocxId, subPage);
+            for (PageDefinedDto $it : pds.get()) {
+                if ($it.getFullName().equals(fullName)) {
+                    pageDefined = $it.getPageDefined();
+                    break;
+                }
+            }
+        }
         Map<String, Object> config = Maps.newHashMap();
         Map<String, Object> tableConfig = webOcx.get().toViewMap();
 
@@ -134,20 +147,23 @@ public class LegooWebOcxService extends AbstractBaseServer {
                 tableConfig.put("meta", buildMetas(webOcx.get().getSqlModel(), webOcx.get().getSqlStmtId()));
             }
         }
+
         if (pageDefined.getOperates().isPresent()) {
             List<Map<String, Object>> list = Lists.newArrayList();
             for (Operate $it : pageDefined.getOperates().get()) {
-                list.add($it.toMap());
+            	if($it.hasRole(user)) list.add($it.toMap());
             }
             tableConfig.put("operate", list);
         }
+
         if (pageDefined.getButtons().isPresent()) {
             List<Map<String, Object>> list = Lists.newArrayList();
             for (Operate $it : pageDefined.getButtons().get()) {
-                list.add($it.toMap());
+            	if($it.hasRole(user)) list.add($it.toMap());
             }
             tableConfig.put("batchOperate", list);
         }
+
         if (pageDefined.getSubPageDefineds().isPresent()) {
             tableConfig.put("childrenActive", pageDefined.getActive());
             List<Map<String, Object>> children = Lists.newArrayList();
@@ -161,11 +177,26 @@ public class LegooWebOcxService extends AbstractBaseServer {
 
         config.put("tableConfig", tableConfig);
 
+        Map<String, Object> user_params = user.toMap();
+        if (pageDefined.getCdnItems().isPresent()) {
+            for (CdnItem $it : pageDefined.getCdnItems().get()) {
+                $it.holdParam(user_params);
+            }
+        }
+        config.put("fixeCdn", user_params);
+
         List<Map<String, Object>> searchConfig = Lists.newArrayList();
         for (OcxItem $it : pageDefined.getOcxItems()) {
             Map<String, Object> item = $it.toViewMap();
             if ($it.getDataSource().isPresent()) {
-                item.put("data", buildByDs($it.getDataSource().get(), $it.isAll(), user));
+            	Map<String, Object> buildByDs = buildByDs($it.getDataSource().get(), $it.isAll(), user);
+            	if(null != item.get("data")) {
+            		Map<String,Object> value = (Map<String, Object>) item.get("data");
+            		value.putAll(buildByDs);
+            		item.put("data", value);
+            	}else {
+            		item.put("data", buildByDs);
+            	}
             }
             searchConfig.add(item);
         }
@@ -212,11 +243,16 @@ public class LegooWebOcxService extends AbstractBaseServer {
     }
 
     private List<Map<String, Object>> buildMetas(String model, String stmtId) {
-        SqlMetaEntity sqlStatement = getSQLStatementFactory().getSqlMetaEntity(model, stmtId);
+    	SqlMetaEntity sqlStatement = getSQLStatementFactory().getSqlMetaEntity(model, getQueryStmtId(stmtId));
         Preconditions.checkState(sqlStatement.getColumnMetas().isPresent(), "modle=  %s ,stmtid=%s 没有配置查询结果Meta",
                 model, stmtId);
         List<Map<String, Object>> list = Lists.newArrayList();
         for (ColumnMeta $it : sqlStatement.getColumnMetas().get()) {
+        	Optional<String> stmtIdOpt = getQueryType(stmtId);
+//        	if(getQueryType(stmtId).isPresent()) {
+        		$it = $it.get(stmtIdOpt.isPresent()?stmtIdOpt.get():null);
+        		if(null == $it) continue;
+//        	}
             Map<String, Object> meta = Maps.newHashMap();
             meta.put("id", $it.getId());
             meta.put("name", $it.getName());
@@ -225,6 +261,16 @@ public class LegooWebOcxService extends AbstractBaseServer {
             list.add(meta);
         }
         return list;
+    }
+    
+    private Optional<String> getQueryType(String stmtId){
+    	if(Strings.isNullOrEmpty(stmtId) || stmtId.indexOf(":") == -1) return Optional.absent();
+    	return Optional.fromNullable(stmtId.split(":")[1]);
+    }
+    
+    private String getQueryStmtId(String stmtId) {
+    	if(stmtId.indexOf(":") != -1) return stmtId.split(":")[0];
+    	return stmtId;
     }
 
     private List<Map<String, Object>> buildMetas(PageDefined pageDefined) {
@@ -257,4 +303,5 @@ public class LegooWebOcxService extends AbstractBaseServer {
     private SqlMetaEntityFactory getSQLStatementFactory() {
         return getBean("sqlMetaEntityFactory", SqlMetaEntityFactory.class);
     }
+    
 }

@@ -1,8 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sqls>
-    <model id="TemplateClassifyEntity">
-        <sql id="loadByCompany">
-            <body><![CDATA[
+	<model id="MsgReplaceHoldEntity">
+		<sql id="loadAll" macros="crud_fixed">
+			<body><![CDATA[
+          SELECT mtt.id AS 'id',
+                 mtt.field_tag AS 'fieldTag',
+                 mtt.replace_token AS 'replaceToken',
+                 mtt.token_type AS 'tokenType',
+                 mtt.default_value AS 'defaultValue',
+                 mtt.enbaled AS 'enabled',
+                 <@crud_fixed_select "mtt" />
+            FROM MSG_TEMPLATE_REPLACE mtt
+           WHERE mtt.delete_flag = 0
+             AND mtt.enbaled = 1
+            ]]></body>
+		</sql>
+		<sql id="addReplaceHold">
+			<body><![CDATA[
+         INSERT INTO MSG_TEMPLATE_REPLACE
+                     (field_tag, replace_token, default_value, token_type, enbaled, delete_flag, tenant_id, creator)
+              VALUES (:fieldTag, :replaceToken, :defaultValue, :tokenType, 1, 0, :tenantId, :creator)
+            ]]></body>
+		</sql>
+	</model>
+	<model id="TemplateClassifyEntity">
+		<sql id="loadByCompany">
+			<body><![CDATA[
            SELECT tmp.id AS 'id',
                   tmp.pid AS 'pId',
                   tmp.classify AS 'classify',
@@ -18,6 +41,237 @@
               AND tmp.company_id = :companyId
          ORDER BY tmp.id ,tmp.pid
             ]]></body>
-        </sql>
-    </model>
+		</sql>
+		<sql id="insert">
+			<body><![CDATA[
+           INSERT INTO MSG_TEMPLATE_CLASSIFY
+			(id, pid, classify, deep_path, company_id, tenant_id, creator, createTime)
+			VALUES(:id, :pId, :classify, :deepPath, :companyId, :companyId, -1, NOW())
+            ]]></body>
+		</sql>
+	</model>
+	<macros>
+		<macro id="smg_template_fields">
+            <![CDATA[
+             <#macro smg_template_general_fields tempType>
+                 mtc.id AS 'id',
+                 mtc.company_id AS 'companyId',
+                 mtc.org_id AS 'orgId',
+                 mtc.store_id AS 'storeId',
+                 mtc.temp_title AS 'title',
+                 mtc.temp_context AS 'template',
+                 mtc.classifies AS 'classifies',
+                 mtc.use_scopes AS 'useScopes',
+                 mtc.is_default AS 'isDefault',
+                 mtc.expire_date AS 'expireDate',
+                 '${tempType}' AS 'tempType',
+	         </#macro>
+	         <#macro smg_template_4_company>
+                 mtc.blacked AS 'blacked',
+                 ( SELECT mtb.black_list
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = -1 ) AS 'blackList'
+	         </#macro>
+	          ]]>
+		</macro>
+	</macros>
+	<model id="MsgTemplateEntity">
+		<sql id="loadBlackList">
+			<body><![CDATA[
+           SELECT company_id AS 'companyId', org_id, store_id AS 'storeId', black_list AS 'blackList', createTime, editTime
+             FROM MSG_TEMPLATE_BLACKLIST
+            WHERE company_id = :companyId
+              AND store_id = :storeId
+            ]]></body>
+		</sql>
+		<sql id="loadDefaultByClassifies" macros="smg_template_fields">
+			<body><![CDATA[
+           SELECT <@smg_template_general_fields "STORE"/>
+                   mtc.blacked AS 'blacked',
+                  '' AS 'blackList'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.is_default = 1
+              AND mtc.company_id <> -1
+              AND mtc.classifies IN (${classifies?join(",")})
+            ]]></body>
+		</sql>
+		<sql id="loadByGeneral" macros="smg_template_fields">
+			<body><![CDATA[
+           SELECT <@smg_template_general_fields "GENERAL"/>
+                   mtc.blacked AS 'blacked',
+                  '' AS 'blackList'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = -1
+            ]]></body>
+		</sql>
+		<sql id="loadByCompany" macros="smg_template_fields">
+			<body><![CDATA[
+           SELECT <@smg_template_general_fields "COMPANY"/>
+                  <@smg_template_4_company />
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = :companyId
+              AND mtc.store_id = -1
+            UNION
+           SELECT <@smg_template_general_fields "GENERAL"/>
+                  (SELECT POSITION(mtc.id IN IFNULL(mtb.black_list,'EMPTY_LIST'))
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = -1 ) AS 'blacked',
+                  (SELECT mtb.black_list
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = -1 ) AS 'blackList'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = -1
+              AND mtc.blacked <> 1
+            ]]></body>
+		</sql>
+		<sql id="loadByStore" macros="smg_template_fields,crud_fixed">
+			<body><![CDATA[
+           SELECT <@smg_template_general_fields "STORE"/>
+                  mtc.blacked AS 'blacked',
+                  (SELECT mtb.black_list
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = :storeId ) AS 'blackList'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = :companyId
+              AND mtc.store_id = :storeId
+            UNION
+           SELECT <@smg_template_general_fields "COMPANY"/>
+                  (SELECT POSITION(mtc.id IN IFNULL(mtb.black_list,'EMPTY_LIST'))
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = :storeId ) AS 'blacked',
+                  (SELECT mtb.black_list
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = :storeId ) AS 'blackList'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = :companyId
+              AND mtc.store_id = -1
+              AND mtc.blacked <> 1
+            UNION
+           SELECT <@smg_template_general_fields "GENERAL"/>
+                  (SELECT POSITION(mtc.id IN IFNULL(mtb.black_list,'EMPTY_LIST'))
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = :storeId ) AS 'blacked',
+                  (SELECT mtb.black_list
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = :storeId ) AS 'blackList'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = -1
+              AND mtc.blacked <> 1
+            ]]></body>
+		</sql>
+	</model>
+	<model id="HolidayEntity">
+		<sql id="findById">
+			<body><![CDATA[
+	        	SELECT
+					id,
+					name,
+					remark,
+					cron,
+					cronContext,
+					cronType,
+					DATE_FORMAT(cronDate,'%Y-%m-%d') AS 'cronDate',
+					calendarType,
+					duration,
+					type,
+					enable,
+					company_blackList AS 'companyBlackList',
+					store_blackList AS 'storeBlackList',
+					company_id AS 'companyId',
+					store_id AS 'storeId',
+					createUserId,
+					createTime,
+					modifyUserId,
+					modifyTime
+				FROM
+					holiday_info
+				WHERE id = :id
+            ]]></body>
+		</sql>
+		<sql id="find_holidays" dynamic="true">
+			<body><![CDATA[
+	        	SELECT
+					id,
+					name,
+					remark,
+					cron,
+					cronContext,
+					cronType,
+					DATE_FORMAT(cronDate,'%Y-%m-%d') AS 'cronDate',
+					calendarType,
+					duration,
+					type,
+					enable,
+					company_blackList AS 'companyBlackList',
+					store_blackList AS 'storeBlackList',
+					company_id AS 'companyId',
+					store_id AS 'storeId',
+					createUserId,
+					createTime,
+					modifyUserId,
+					modifyTime
+				FROM
+					holiday_info
+				WHERE enable = 1
+				<#if company??>
+					AND !FIND_IN_SET(:companyId,company_blackList)
+				</#if>
+				<#if store??>
+					AND !FIND_IN_SET(:companyId,company_blackList) AND !FIND_IN_SET(:storeId,store_blackList)
+				</#if>
+            ]]></body>
+		</sql>
+		<sql id="insert_holiday">
+			<body><![CDATA[
+	        INSERT INTO holiday_info
+				(id,name, remark, cron,cronContext, cronType,cronDate,calendarType,duration, `type`,enable,company_blackList,store_blackList, company_id, store_id, createUserId, createTime)
+				VALUES(:id,:name, :remark, :cron,:cronContext,:cronType,:cronDate,:calendarType,:duration, :type, :enable,:companyBlackList,:storeBlackList,:companyId, :storeId, :createUserId, NOW())
+            ]]></body>
+		</sql>
+		<sql id="update_holiday">
+			<body><![CDATA[
+	        UPDATE holiday_info
+				SET name=:name, remark=:remark, cron=:cron,cronContext =:cronContext, duration=:duration,cronType=:cronType,cronDate=:cronDate,calendarType=:calendarType
+			WHERE id=:id
+            ]]></body>
+		</sql>
+		<sql id="update_enable">
+			<body><![CDATA[
+	        	UPDATE holiday_info SET enable = :enable WHERE id = :id
+            ]]></body>
+		</sql>
+		<sql id="update_store_blackList">
+			<body><![CDATA[
+	        	UPDATE holiday_info SET store_blackList = :storeBlackList WHERE id = :id
+            ]]></body>
+		</sql>
+		<sql id="update_company_blackList">
+			<body><![CDATA[
+	        	UPDATE holiday_info SET company_blackList = :companyBlackList WHERE id = :id
+            ]]></body>
+		</sql>
+	</model>
 </sqls>

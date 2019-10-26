@@ -5,8 +5,8 @@ import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntityAction;
-import com.legooframework.model.dict.entity.KvDictEntity;
 import com.legooframework.model.dict.entity.KvDictEntityAction;
+import com.legooframework.model.membercare.entity.BusinessType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,13 +30,13 @@ public class ChargeSummaryEntityActionTest {
     @Test
     public void insert() {
         LoginContextHolder.setAnonymousCtx();
-        Optional<KvDictEntity> buty = kvDictEntityAction.findByValue("SMS_BUS_TYPE", "90TOUCHED");
-        SMSSendRuleEntity rule = businessRuleEntityAction.findByType(buty.get());
+        //Optional<KvDictEntity> buty = kvDictEntityAction.findByValue("SMS_BUS_TYPE", "90TOUCHED");
+        SMSSendRuleEntity rule = businessRuleEntityAction.loadByType(BusinessType.TOUCHED90);
         CrmOrganizationEntity com = organizationEntityAction.findCompanyById(1).get();
         CrmStoreEntity store = storeEntityAction.findById(com, 5).get();
-        billingSummaryEntityAction.insertManual(store, rule,
-                String.format("%s_%s_201981212771212", store.getCompanyId(), store.getId()),
-                9966, "asdasdasdasdasd");
+//        billingSummaryEntityAction.insertManual(store, rule,
+//                String.format("%s_%s_201981212771212", store.getCompanyId(), store.getId()),
+//                9966, "asdasdasdasdasd");
     }
 
     @Test

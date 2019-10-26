@@ -10,19 +10,23 @@ import org.joda.time.DateTime;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class LoginUser implements LoginContext {
 
     private Long loginId, tenantId;
     private String userName, password, loginName, token, companyName, storeName;
     private Set<GrantedAuthority> authorities;
+    private Collection<Integer> roleIds;
     private final DateTime loginTime;
     private Integer storeId, orgId;
     private List<Integer> storeIds;
+
+    @Override
+    public Optional<Collection<Integer>> getStoreIds() {
+        return Optional.ofNullable(CollectionUtils.isEmpty(storeIds) ? null : storeIds);
+    }
+
 
     protected LoginUser(Long loginId, String userName, String password, Long companyId, Set<String> roles) {
         this.loginId = loginId;
@@ -38,7 +42,7 @@ public class LoginUser implements LoginContext {
     }
 
     public LoginUser(Long loginId, Long tenantId, String userName, String password,
-                     Collection<String> roles, Integer storeId, Integer orgId, List<Integer> storeIds,
+                     Collection<String> roles, Collection<Integer> roleIds, Integer storeId, Integer orgId, List<Integer> storeIds,
                      String companyName, String storeName) {
         this.loginId = loginId;
         this.tenantId = tenantId;
@@ -54,6 +58,7 @@ public class LoginUser implements LoginContext {
         this.loginTime = DateTime.now();
         this.storeId = storeId;
         this.orgId = orgId;
+        this.roleIds = roleIds;
         if (this.tenantId.intValue() == this.orgId)
             this.orgId = -1;
         if (CollectionUtils.isNotEmpty(storeIds)) this.storeIds = storeIds;
@@ -93,6 +98,42 @@ public class LoginUser implements LoginContext {
     }
 
     @Override
+    public boolean isManager() {
+        Optional<?> opt = this.authorities.stream().filter(x -> x.getAuthority().equals("ROLE_ManagerRole")).findFirst();
+        return opt.isPresent();
+    }
+
+    @Override
+    public boolean isShoppingGuide() {
+        Optional<?> opt = this.authorities.stream().filter(x -> x.getAuthority().equals("ROLE_ShoppingGuideRole")).findFirst();
+        return opt.isPresent();
+    }
+
+    @Override
+    public boolean isStoreManager() {
+        Optional<?> opt = this.authorities.stream().filter(x -> x.getAuthority().equals("ROLE_StoreManagerRole")).findFirst();
+        return opt.isPresent();
+    }
+
+    @Override
+    public boolean isRegediter() {
+        Optional<?> opt = this.authorities.stream().filter(x -> x.getAuthority().equals("ROLE_AdminRole")).findFirst();
+        return opt.isPresent();
+    }
+
+    @Override
+    public boolean isAreaManagerRole() {
+        Optional<?> opt = this.authorities.stream().filter(x -> x.getAuthority().equals("ROLE_AreaManagerRole")).findFirst();
+        return opt.isPresent();
+    }
+
+    @Override
+    public boolean isBoss() {
+        Optional<?> opt = this.authorities.stream().filter(x -> x.getAuthority().equals("ROLE_BossRole")).findFirst();
+        return opt.isPresent();
+    }
+
+    @Override
     public String getUsername() {
         return loginName;
     }
@@ -100,11 +141,6 @@ public class LoginUser implements LoginContext {
     public void setLoginName(String loginName) {
         if (Strings.isNullOrEmpty(this.loginName))
             this.loginName = loginName;
-    }
-
-    @Override
-    public boolean isStoreManager() {
-        return this.authorities.stream().allMatch(x -> x.getAuthority().equals("ROLE_StoreManagerRole"));
     }
 
     @Override
@@ -171,6 +207,9 @@ public class LoginUser implements LoginContext {
         Map<String, Object> params = Maps.newHashMap();
         params.put("LOGIN_ID", getLoginId());
         params.put("TENANT_ID", getTenantId());
+        params.put("STORE_IDS", CollectionUtils.isEmpty(storeIds) ? new Integer[0] : storeIds);
+        params.put("STORE_ID", this.storeId == null ? -1 : storeId);
+        params.put("ROLE_IDS", CollectionUtils.isEmpty(roleIds) ? new Integer[]{-1} : roleIds);
         return params;
     }
 
@@ -178,9 +217,10 @@ public class LoginUser implements LoginContext {
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("loginId", loginId)
-                .add("tenantId", tenantId)
                 .add("userName", userName)
-                .add("password", password)
+                .add("companyId", tenantId)
+                .add("storeId", storeId)
+                .add("storeIds", storeIds)
                 .add("authorities", authorities)
                 .toString();
     }

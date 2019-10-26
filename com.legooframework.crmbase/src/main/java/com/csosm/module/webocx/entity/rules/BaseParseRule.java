@@ -21,7 +21,8 @@ abstract class BaseParseRule extends Rule {
         String type = AttributesUtil.getValue(name, attributes, "type");
         Optional<String> keys = AttributesUtil.getIfPresent(attributes, "keys");
         Optional<String> url = AttributesUtil.getIfPresent(attributes, "url");
-        return WebOcxBuilder.buildOperate(_name, title, type, url.orNull(), keys.orNull());
+        Optional<String> roles = AttributesUtil.getIfPresent(attributes, "roles");
+        return WebOcxBuilder.buildOperate(_name, title, type, url.orNull(), keys.orNull(),roles.orNull());
     }
 
 }

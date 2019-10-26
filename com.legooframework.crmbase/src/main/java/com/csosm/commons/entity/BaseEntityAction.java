@@ -1,6 +1,9 @@
 package com.csosm.commons.entity;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.util.Map;
+import java.util.Objects;
 
 import com.csosm.commons.adapter.LoginUserContext;
 import com.csosm.commons.event.BusEvent;
@@ -18,6 +21,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcDaoSupport;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 public abstract class BaseEntityAction<T extends BaseEntity> extends NamedParameterJdbcDaoSupport {
@@ -26,6 +31,8 @@ public abstract class BaseEntityAction<T extends BaseEntity> extends NamedParame
 
     private final String model;
     private final String cacheName;
+    private final static int GENERATEDKEY_INT = 1;
+    private final static int GENERATEDKEY_LONG = 2;
 
     /**
      * 将对象放入缓存
@@ -131,6 +138,10 @@ public abstract class BaseEntityAction<T extends BaseEntity> extends NamedParame
         return sqlMetaEntityFactory.getExecSql(getModel(), stmtId, params);
     }
 
+    protected String getExecSql(String stmtId) {
+        return sqlMetaEntityFactory.getExecSql(getModel(), stmtId, null);
+    }
+
     protected Optional<GuavaCache> getCache() {
         if (Strings.isNullOrEmpty(cacheName)) return Optional.absent();
         return guavaCacheManager.getCache(cacheName);
@@ -158,6 +169,26 @@ public abstract class BaseEntityAction<T extends BaseEntity> extends NamedParame
 
     public void setGuavaCacheManager(GuavaCacheManager guavaCacheManager) {
         this.guavaCacheManager = guavaCacheManager;
+    }
+
+    protected Object insertSingleWithGeneratedKey(String stmtId, Map<String, Object> params, final BatchSetter setter,
+                                                  int generatedkeyType) {
+        final String exec_sql = getExecSql(stmtId, params);
+        KeyHolder generatedKey = new GeneratedKeyHolder();
+        Objects.requireNonNull(getJdbcTemplate()).update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(exec_sql, Statement.RETURN_GENERATED_KEYS);
+            setter.setValues(ps);
+            return ps;
+        }, generatedKey);
+        if (generatedKey.getKey() == null)
+            throw new NullPointerException("系统无自增长健,返回为空值...");
+        if (GENERATEDKEY_INT == generatedkeyType) {
+            return generatedKey.getKey().intValue();
+        } else if (GENERATEDKEY_LONG == generatedkeyType) {
+            return generatedKey.getKey().longValue();
+        } else {
+            throw new IllegalArgumentException(String.format("非法的参数 generatedkeyType = %s,取值范围是:[1,2]", generatedkeyType));
+        }
     }
 
     protected void logProxy(BusEvent event) {

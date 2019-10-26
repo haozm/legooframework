@@ -4,44 +4,43 @@
         <macro id="crm_salerecord_fields">
             <![CDATA[
              <#macro salerecord_fields>
-                 acs.id AS 'id',
-                 acs.oldSaleRecordId AS 'oldSaleRecordId',
-                 acs.saleOrderNo AS 'saleOrderNo',
-                 acs.status AS 'status',
-                 acs.company_id AS 'companyId',
-                 acs.store_id AS 'storeId',
-                 acs.member_id AS 'memberId',
-                 acs.createUser_id AS 'creator',
-                 (  SELECT GROUP_CONCAT(acsm.shoppingguide_id)
-                      FROM acp.crm_shoppingguide_member acsm
-                     WHERE acsm.member_id = acs.member_id
-                  GROUP BY acsm.member_id ) AS 'serviceShoppingguideIds',
-                 (SELECT asgs.shoppingGuide_id
-                    FROM acp.crm_shoppingguidesalerecord asgs
-                   WHERE asgs.saleRecord_id = acs.id LIMIT 1) AS 'saleShoppingguide',
-                 acs.createTime AS 'createTime',
-                 acs.updateTime AS 'editTime',
-                 acs.updateTime AS 'modifyDate',
-             <#if hasDetail>1<#else>0</#if> AS 'sample',
-             <#if hasDetail>
-                ( SELECT GROUP_CONCAT( CONCAT_WS('$', acsr.id ,
-                                        IFNULL(acsr.salePrice,0.0) ,
-                                        IFNULL(acsr.goodsPrice,0.0) ,
-                                        IFNULL(acsr.goodsCount,0) ,
-                                        IFNULL(acsr.status,1),
-                                        acg.id ,
-                                        IFNULL(acg.status, 1),
-                                        IFNULL(acg.`function`, '-'),
-                                        IFNULL(acg.name,'-') ,
-                                        acg.company_id ) SEPARATOR '@' )
-                    FROM acp.crm_salesubrecord AS acsr
-               LEFT JOIN acp.crm_goods acg ON acg.id = acsr.goods_id
-                   WHERE acsr.saleRecord_id = acs.id
-                     AND acsr.status = 1
-                GROUP BY acsr.saleRecord_id ) AS 'details',
-             </#if>
-                 acs.member_id AS 'tenantId',
-                 0 AS 'editor'
+                     acs.id AS 'id',
+                     acs.oldSaleRecordId AS 'oldSaleRecordId',
+                     acs.saleOrderNo AS 'saleOrderNo',
+                     acs.status AS 'status',
+                     acs.company_id AS 'companyId',
+                     acs.store_id AS 'storeId',
+                     acs.member_id AS 'memberId',
+                     acs.change_flag AS 'changeFlag',
+                     acs.createUser_id AS 'creator',
+                     acs.saleTotalAmount AS 'saleTotalAmount',
+                     acs.saleCount AS 'goodsCount',
+                     (  SELECT mm.guide_id
+                          FROM crm_member mm
+                         WHERE acs.member_id = mm.id ) AS 'shoppingguideId',
+                 <#if hasDetail>1<#else>0</#if> AS 'sample',
+                 <#if hasDetail>
+                    ( SELECT GROUP_CONCAT( CONCAT_WS('$', acsr.id ,
+                                            IFNULL(acsr.salePrice,0.0) ,
+                                            IFNULL(acsr.goodsPrice,0.0) ,
+                                            IFNULL(acsr.goodsCount,0) ,
+                                            IFNULL(acsr.status,1),
+                                            acg.id ,
+                                            IFNULL(acg.status, 1),
+                                            IFNULL(acg.`function`, '-'),
+                                            IFNULL(acg.name,'-') ,
+                                            acg.company_id ) SEPARATOR '@' )
+                        FROM crm_salesubrecord AS acsr
+                   LEFT JOIN crm_goods acg ON acg.id = acsr.goods_id
+                       WHERE acsr.saleRecord_id = acs.id
+                         AND acsr.status = 1
+                    GROUP BY acsr.oldSaleRecordId ) AS 'details',
+                 </#if>
+                    acs.createTime AS 'createTime',
+                    acs.updateTime AS 'editTime',
+                    acs.updateTime AS 'modifyDate',
+                    acs.company_id AS 'tenantId',
+                    0 AS 'editor'
 	         </#macro>
            ]]>
         </macro>
@@ -50,30 +49,41 @@
         <sql id="loadByDateInterval" macros="crm_salerecord_fields">
             <body><![CDATA[
              SELECT <@salerecord_fields />
-               FROM acp.crm_salerecord AS acs
+               FROM crm_salerecord AS acs
               WHERE LENGTH(acs.member_id) > 0
                 AND LENGTH(acs.store_id) > 0
                 AND LENGTH(acs.company_id) > 0
-                AND acs.updateTime IS NOT NULL
+                AND acs.createTime IS NOT NULL
+             <#if categories??>
+                AND acs.categories = :categories
+             </#if>
                 AND acs.status = 1
                 AND acs.company_id = :companyId
-                AND acs.store_id IN (${storeIds?join(",")})
-                AND acs.updateTime BETWEEN :startDay AND :endDay
-           ORDER BY acs.store_id,acs.member_id,acs.createTime
+                AND acs.store_id = :storeId
+                AND acs.createTime BETWEEN :startDay AND :endDay
+           ORDER BY acs.store_id, acs.member_id, acs.createTime
             ]]></body>
         </sql>
         <sql id="loadMemberBy90Days" dynamic="true" macros="crm_salerecord_fields">
             <body><![CDATA[
-          SELECT <@sale_recorde_fields />
-            FROM acp.crm_salerecord acs
+          SELECT <@salerecord_fields />
+            FROM crm_salerecord acs
            WHERE LENGTH(acs.member_id) > 0
              AND LENGTH(acs.store_id) > 0
              AND LENGTH(acs.company_id) > 0
              AND acs.status = 1
+             AND acs.company_id = :companyId
              AND acs.member_id = :memberId
              AND acs.store_id = :storeId
              AND acs.createTime BETWEEN DATE_ADD(NOW(), INTERVAL -90 DAY) AND NOW()
         ORDER BY acs.id
+            ]]></body>
+        </sql>
+        <sql id="updateChangeFlag">
+            <body><![CDATA[
+        UPDATE crm_salerecord
+           SET change_flag = ?
+         WHERE id = ?
             ]]></body>
         </sql>
     </model>

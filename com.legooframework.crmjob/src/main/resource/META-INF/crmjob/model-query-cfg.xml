@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="WechatCircleAutoSync">
+        <sql id="loadAllDeviceWithWechat" dynamic="true">
+            <body><![CDATA[
+
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

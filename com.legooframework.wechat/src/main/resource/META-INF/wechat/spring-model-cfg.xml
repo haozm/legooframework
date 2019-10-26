@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       						http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
+    <bean id="weixinGroupService" class="com.csosm.module.webchat.WeixinGroupService">
+        <property name="executor" ref="csosm-executor"/>
+    </bean>
+    <bean id="wechatRestTemplate" class="org.springframework.web.client.RestTemplate"/>
+    <bean id="weixinGroupAction" class="com.csosm.module.webchat.group.WeixinGroupAction"
+          parent="baseEntityAction">
+        <property name="executor" ref="csosm-executor"/>
+    </bean>
+    <bean id="devicesEntityAction" class="com.csosm.module.webchat.entity.DevicesEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="webChatUserAction" class="com.csosm.module.webchat.entity.WebChatUserAction"
+          parent="baseEntityAction"/>
+    <bean id="sendMsgEntityAction" class="com.csosm.module.webchat.entity.SendMsgEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="remoteCmdAction" class="com.csosm.module.webchat.entity.RemoteCmdAction"
+          parent="baseEntityAction"/>
+    <bean id="wxMsgWhiteListAction" class="com.csosm.module.webchat.entity.WxMsgWhiteListAction"
+          parent="baseEntityAction"/>
+    <bean id="chatRoomContactEntityAction"
+          class="com.csosm.module.webchat.entity.ChatRoomContactEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="wechatAddFriendListAction"
+          class="com.csosm.module.webchat.entity.WechatAddFriendListAction"
+          parent="baseEntityAction"/>
+    <bean id="wechatAddFriendConfigEntityAction"
+          class="com.csosm.module.webchat.entity.WechatAddFriendConfigEntityAction"
+          parent="baseEntityAction"/>
+    <bean id="wechatAddFriendPushListAction"
+          class="com.csosm.module.webchat.entity.WechatAddFriendPushListAction"
+          parent="baseEntityAction"/>
+    <bean id="wechatSignAction"
+          class="com.csosm.module.webchat.entity.WechatSignAction"
+          parent="baseEntityAction"/>
+    <bean id="webChatBindMemberServer" class="com.csosm.module.webchat.WebChatBindMemberServer"/>
+    <bean id="webChatSendLogServer" class="com.csosm.module.webchat.WebChatSendLogServer"/>
+    <bean id="wxChatGroupServer" class="com.csosm.module.webchat.ChatGroupServer"/>
+    <bean id="wechatFriendService" class="com.csosm.module.webchat.WechatFriendService"/>
+    <bean id="deviceService" class="com.csosm.module.webchat.DeviceService">
+        <property name="centerUrl" value="${center.url}"/>
+    </bean>
+    <task:scheduled-tasks>
+        <task:scheduled ref="wxChatGroupServer" method="totalGroupActivity"
+                        initial-delay="300000" fixed-delay="300000"/>
+        <!-- <task:scheduled ref="wechatFriendService" method="createNewPushList"
+                        cron="0 0 07 * * ?"/>
+        <task:scheduled ref="wechatFriendService" method="sendAndUpdateStatus"
+                        cron="0 0/30 10-22 * * ?"/>
+        <task:scheduled ref="wechatFriendService" method="updateAddMemberSuccess"
+                        cron="0 0 11-23/1 * * ? "/>
+                         -->
+        <!-- <task:scheduled ref="wechatFriendService" method="createPushList"
+            initial-delay="200000" fixed-delay="200000"/>
+            <task:scheduled ref="wechatFriendService"
+            method="updatePushedStatus" initial-delay="200000" fixed-delay="250000"/> -->
+    </task:scheduled-tasks>
+</beans>

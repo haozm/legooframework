@@ -29,16 +29,16 @@ public class TemplateClassifyEntityActionTest {
     public void loadByCompany() {
         LoginContextHolder.setAnonymousCtx();
         CrmOrganizationEntity com = organizationAction.findCompanyById(1).get();
-        Optional<List<TemplateClassifyEntity>> res = classifyEntityAction.loadByCompany(com);
-        res.ifPresent(System.out::println);
+//        Optional<List<TemplateClassifyEntity>> res = classifyEntityAction.loadByCompany();
+//        res.ifPresent(System.out::println);
     }
 
     @Test
     public void loadTreeNodeByCompany() {
         LoginContextHolder.setAnonymousCtx();
         CrmOrganizationEntity com = organizationAction.findCompanyById(1).get();
-        Optional<List<TreeNode>> res = classifyEntityAction.loadTreeNodeByCompany(com);
-        res.ifPresent(System.out::println);
+//        Optional<List<TreeNode>> res = classifyEntityAction.loadTreeNodeByCompany();
+//        res.ifPresent(System.out::println);
     }
 
     @Autowired

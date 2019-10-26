@@ -8,21 +8,13 @@
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/resource" type="java-test-resource" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="extlib" level="application" />
     <orderEntry type="module" module-name="com.legooframework.entities" />
     <orderEntry type="module" module-name="com.legooframework.crmadapter" />
     <orderEntry type="module" module-name="com.legooframework.core" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../service/apache-tomcat-9.0.13/lib/servlet-api.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="com.legooframework.smsprovider" />
     <orderEntry type="module" module-name="com.legooframework.dict" />
+    <orderEntry type="library" name="extlib" level="project" />
   </component>
 </module>

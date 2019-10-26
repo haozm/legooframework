@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:int-http="http://www.springframework.org/schema/integration/http"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+                           http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http.xsd">
+    <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
+    <int:channel id="sms_sending_market_channel">
+        <int:queue/>
+        <int:interceptors>
+            <int:wire-tap channel="logger_channel"/>
+        </int:interceptors>
+    </int:channel>
+    <int:logging-channel-adapter id="logger_channel" level="DEBUG" log-full-message="true"
+                                 logger-name="org.springframework.integration.logger"/>
+    <bean id="myTest" class="com.legooframework.model.smsgateway.service.MyTest"/>
+    <int:publish-subscribe-channel id="spilter-channle"/>
+    <bean id="MyHodSplie" class="com.legooframework.model.smsgateway.service.MyHodSplie"/>
+    <int:splitter ref="MyHodSplie" input-channel="spilter-channle" output-channel="sms_sending_market_channel"/>
+    <int:outbound-channel-adapter channel="sms_sending_market_channel" ref="myTest" method="holdPayload"
+                                  auto-startup="true">
+        <int:poller max-messages-per-poll="2000" receive-timeout="2000" time-unit="MILLISECONDS" fixed-delay="3000"/>
+    </int:outbound-channel-adapter>
+    <!--<int:service-activator input-channel="sms_sending_market_channel"-->
+    <!--ref="myTest" method="holdPayload">-->
+    <!--<int:poller max-messages-per-poll="2000" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="3000"/>-->
+    <!--</int:service-activator>-->
+    <!--
+    <int-http:outbound-gateway request-channel="sms_sending_market_channel"
+                               auto-startup="true"
+                               http-method="GET"
+                               encode-uri="false"
+                               reply-channel="errorChannel"
+                               error-handler="defaultResponseErrorHandler"
+                               expected-response-type="java.lang.String"
+                               url="http://m.5c.com.cn/api/send/?apikey=daa971e7d9de49354f0d008c00ef9d66&amp;username=anlinksvr02&amp;password=sw9nrsen&amp;encode=UTF-8&amp;mobile={mobile}&amp;content={content}">
+        <int-http:uri-variable name="mobile" expression="payload.getPhoneNo()"/>
+        <int-http:uri-variable name="content" expression="payload.getEncodeCtx()"/>
+        <int:poller max-messages-per-poll="2" fixed-rate="500" time-unit="MILLISECONDS" receive-timeout="5000"/>
+    </int-http:outbound-gateway>
+    <bean id="defaultResponseErrorHandler" class="org.springframework.web.client.ExtractingResponseErrorHandler"/>
+    -->
+    <!--
+    <int:channel id="sms_sended_channel">
+        <int:queue/>
+    </int:channel>
+    <bean id="okHttp3ClientHttpRequestFactory" class="org.springframework.http.client.OkHttp3ClientHttpRequestFactory"/>
+    <bean id="smsRestTemplate" class="org.springframework.web.client.RestTemplate">
+        <constructor-arg name="requestFactory" ref="okHttp3ClientHttpRequestFactory"/>
+    </bean>
+    -->
+</beans>

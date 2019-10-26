@@ -28,10 +28,15 @@ public class OrgTreeViewDto extends TreeNodeDto {
         attachData.put("type", 1);
         attachData.put("level", org.getLevel());
         attachData.put("code", Splitter.on("_").splitToList(org.getCode()));
+        if (org.getType() == 1) {
+            attachData.put("org", "com");
+        } else {
+            attachData.put("org", "org");
+        }
         setAttachData(attachData);
     }
-    
-    
+
+
     public int orgLevel() {
         Preconditions.checkState(isOrg());
         return MapUtils.getIntValue(getAttachData(), "level");
@@ -75,11 +80,11 @@ public class OrgTreeViewDto extends TreeNodeDto {
     public boolean isStore() {
         return 2 == MapUtils.getIntValue(getAttachData(), "type", -1);
     }
-    
+
     public boolean isEmployee() {
-    	return 3 == MapUtils.getIntValue(getAttachData(), "type", -1);
+        return 3 == MapUtils.getIntValue(getAttachData(), "type", -1);
     }
-    
+
     OrgTreeViewDto(StoreEntity store) {
         super(String.format("str_%s", store.getId()),
                 String.format("org_%s", store.getOrganizationId().orNull()), store.getName());
@@ -90,25 +95,25 @@ public class OrgTreeViewDto extends TreeNodeDto {
         attachData.put("oldStoreId", store.getOldStoreId().orNull());
         setAttachData(attachData);
     }
-    
-    OrgTreeViewDto(EmployeeEntity employee){
-    	super(String.format("emp_%s", employee.getId()),
-    			String.format("org_%s", employee.getStoreId().isPresent()?employee.getStoreId().get():
-    				employee.getOrganizationId().isPresent()?employee.getOrganizationId().get():
-    					employee.getCompanyId().isPresent()?employee.getCompanyId().get():""),employee.getUserName());
-    	Map<String,Object> attachData = Maps.newHashMap();
-    	 attachData.put("rawId", employee.getId());
-         attachData.put("rawPid", employee.getStoreId().isPresent()?employee.getStoreId().get():
-				employee.getOrganizationId().isPresent()?employee.getOrganizationId().get():
-					employee.getCompanyId().isPresent()?employee.getCompanyId().get():"");
-         attachData.put("type", 3);
-         attachData.put("empId", employee.getId());
-         attachData.put("empName", employee.getUserName());
-         attachData.put("companyId", employee.getCompanyId().isPresent()?employee.getCompanyId().get():"");
-         attachData.put("orgId", employee.getOrganizationId().isPresent()?employee.getOrganizationId().get():"");
-         attachData.put("storeId", employee.getStoreId().isPresent()?employee.getStoreId().get():"");
-         attachData.put("roleIds", employee.getRoleIds().isPresent()?Joiner.on(",").join(employee.getRoleIds().get()):"");
-         setAttachData(attachData);
+
+    OrgTreeViewDto(EmployeeEntity employee) {
+        super(String.format("emp_%s", employee.getId()),
+                String.format("org_%s", employee.getStoreId().isPresent() ? employee.getStoreId().get() :
+                        employee.getOrganizationId().isPresent() ? employee.getOrganizationId().get() :
+                                employee.getCompanyId().isPresent() ? employee.getCompanyId().get() : ""), employee.getUserName());
+        Map<String, Object> attachData = Maps.newHashMap();
+        attachData.put("rawId", employee.getId());
+        attachData.put("rawPid", employee.getStoreId().isPresent() ? employee.getStoreId().get() :
+                employee.getOrganizationId().isPresent() ? employee.getOrganizationId().get() :
+                        employee.getCompanyId().isPresent() ? employee.getCompanyId().get() : "");
+        attachData.put("type", 3);
+        attachData.put("empId", employee.getId());
+        attachData.put("empName", employee.getUserName());
+        attachData.put("companyId", employee.getCompanyId().isPresent() ? employee.getCompanyId().get() : "");
+        attachData.put("orgId", employee.getOrganizationId().isPresent() ? employee.getOrganizationId().get() : "");
+        attachData.put("storeId", employee.getStoreId().isPresent() ? employee.getStoreId().get() : "");
+        attachData.put("roleIds", employee.getRoleIds().isPresent() ? Joiner.on(",").join(employee.getRoleIds().get()) : "");
+        setAttachData(attachData);
     }
-    
+
 }

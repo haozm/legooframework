@@ -19,21 +19,21 @@
         <constructor-arg name="identifier" value="csosmEventbus"/>
     </bean>
     <bean id="eventRegisterServer" class="com.csosm.commons.server.EventRegisterServer"/>
-    <bean id="monitorFileSystem" class="com.csosm.commons.vfs.MonitorFileSystemFactory" destroy-method="shutdown">
+    <bean id="crmMonitorFileSystem" class="com.csosm.commons.vfs.MonitorFileSystemFactory" destroy-method="shutdown">
         <property name="delay" value="5000"/>
         <property name="foldPath" value="${config.dir}"/>
     </bean>
-    <bean id="restFulTemplate" class="com.csosm.commons.mvc.RestTemplateFactoryBean"/>
     <!-- ============================ 事件总线 Begin ============================ -->
     <bean id="fileObjectMonitorServer" class="com.csosm.commons.server.FileObjectMonitorServer"/>
     <bean id="crmbaseEntitySqlFactory" class="com.csosm.commons.jdbc.sqlcfg.SqlMetaEntityFactoryBean">
-        <property name="nameMatch" value=".+[\\/]crmbase[\\/].+-entity-sql\.xml$"/>
+        <property name="nameMatch" value=".+[\\/](crmbase|wechat|group|labels|chatgroup|material|rfm|families)[\\/].+-entity-sql\.xml$"/>
     </bean>
     <!-- ============================ 查询引擎 Begin ============================ -->
     <bean id="sqlMetaEntityFactory" class="com.csosm.commons.jdbc.sqlcfg.SqlMetaEntityFactoryBean">
-        <property name="nameMatch" value=".+[\\/]crmbase[\\/].+-query-cfg\.xml$"/>
+        <property name="nameMatch" value=".+[\\/](crmbase|wechat|group|labels|chatgroup|material|rfm|families)[\\/].+-query-cfg\.xml$"/>
     </bean>
-    <bean id="queryEngineService" class="com.csosm.module.query.QueryEngineService">
+    <bean id="queryEngineService" name="queryEngineService,webOcxQueryEngineService"
+          class="com.csosm.module.query.QueryEngineService">
         <property name="dataSource" ref="crmDataSource"/>
         <property name="executor" ref="csosm-executor"/>
         <property name="sqlMetaEntityFactory" ref="sqlMetaEntityFactory"/>
@@ -75,11 +75,9 @@
           parent="baseEntityAction"/>
     <bean id="roleEntityAction" class="com.csosm.module.base.entity.RoleEntityAction"
           parent="baseEntityAction"/>
-    <bean id="memberEntityAction" class="com.csosm.module.base.entity.MemberEntityAction"
+    <bean id="memberEntityAction" class="com.csosm.module.member.entity.MemberEntityAction"
           parent="baseEntityAction"/>
-    <bean id="memberExtraEntityAction" class="com.csosm.module.base.entity.MemberExtraEntityAction"
-          parent="baseEntityAction"/>
-    <bean id="systemlogEntityAction" class="com.csosm.module.base.entity.SystemlogEntityAction"
+    <bean id="memberExtraEntityAction" class="com.csosm.module.member.entity.MemberExtraEntityAction"
           parent="baseEntityAction"/>
     <bean id="deviceActiveDetailAction" class="com.csosm.module.base.entity.DeviceActiveDetailAction"
           parent="baseEntityAction"/>
@@ -87,12 +85,16 @@
           parent="baseEntityAction"/>
     <bean id="dictEntityAction" class="com.csosm.module.base.entity.KvDictEntityAction"
           parent="baseEntityAction"/>
+    <bean id="initCompanySqlEntityAction" class="com.csosm.module.base.entity.InitCompanySqlEntityAction"
+          parent="baseEntityAction">
+        <property name="resource" value="classpath:META-INF/crmbase/init-company-sql.sql"/>
+    </bean>
     <bean id="baseAdapterServer" class="com.csosm.module.base.BaseModelServer">
         <qualifier value="baseAdapterServer"/>
     </bean>
     <bean id="baseEventBusSubscribeService" class="com.csosm.module.base.EventBusSubscribeService"/>
     <bean id="employeeServer" class="com.csosm.module.base.EmployeeServer"/>
-    <bean id="memberServer" class="com.csosm.module.base.MemberServer"/>
+    <bean id="memberServer" class="com.csosm.module.member.MemberServer"/>
     <!-- ============================ 适配原系统End ============================ -->
     <!-- ============================ 门店透视图Begin ============================ -->
     <bean id="treeNodeEntityAction"
@@ -107,12 +109,15 @@
     <bean id="organizationServer" class="com.csosm.module.base.OrganizationServer"/>
     <bean id="storeServer" class="com.csosm.module.base.StoreServer"/>
     <!-- ======================================== spring sec ================================================= -->
+    <bean id="jwTokenClient" class="com.legooframework.model.jwtoken.entity.JWTokenAction">
+        <property name="tokenUrl" value="http://dev.csosm.com/jwtservice"/>
+    </bean>
     <bean id="userDetailsServiceImpl" class="com.csosm.module.sso.UserDetailsServiceImpl">
         <property name="baseModelServer" ref="baseAdapterServer"/>
     </bean>
     <bean id="securityContextRepositoryImpl" class="com.csosm.module.sso.SecurityContextRepositoryImpl">
         <property name="baseModelServer" ref="baseAdapterServer"/>
-        <property name="tokenClient" ref="jwTokenAction"/>
+        <property name="tokenClient" ref="jwTokenClient"/>
     </bean>
     <bean id="passwordEncoderImpl" class="com.csosm.module.sso.PasswordEncoderImpl"/>
     <bean id="daoAuthenticationProvider"
@@ -126,12 +131,16 @@
         <property name="defaultTargetUrl" value="/login.html?logout"/>
     </bean>
     <bean id="authenticationService" class="com.csosm.module.sso.AuthenticationService">
-        <property name="tokenClient" ref="jwTokenAction"/>
+        <property name="tokenClient" ref="jwTokenClient"/>
     </bean>
     <bean id="tokenHeaderWrite" class="com.csosm.module.sso.TokenHeaderWrite"/>
     <bean id="crmProviderManager" class="org.springframework.security.authentication.ProviderManager">
         <constructor-arg name="providers" ref="authenticationProviders"/>
     </bean>
+    <bean id="legooWebOcxRepository" class="com.csosm.module.webocx.entity.LegooWebOcxRepositoryFactory">
+        <property name="patterns" value=".+[\\/]crmbase[\\/].+-webocx-cfg\.xml$"/>
+    </bean>
+    <bean id="legooWebOcxService" class="com.csosm.module.webocx.service.LegooWebOcxService"/>
     <util:list id="authenticationProviders"
                value-type="org.springframework.security.authentication.AuthenticationProvider">
         <ref bean="daoAuthenticationProvider"/>

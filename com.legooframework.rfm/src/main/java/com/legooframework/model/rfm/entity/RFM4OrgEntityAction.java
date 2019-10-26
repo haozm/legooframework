@@ -17,10 +17,7 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RFM4OrgEntityAction extends BaseEntityAction<RFM4OrgEntity> {
@@ -54,8 +51,8 @@ public class RFM4OrgEntityAction extends BaseEntityAction<RFM4OrgEntity> {
 //        f_v1, f_v2, f_v3, f_v4,
 //        m_v1, m_v2, m_v3, m_v4,
 //        val_type, tenant_id, creator,      createTime,         editor
-        getJdbcTemplate().batchUpdate(getExecSql("batchRewriteStoreRFM", null), stores, 512, (ps, st) -> {
-            ps.setObject(1, st.getCompanyId().or(-1));
+        Objects.requireNonNull(getJdbcTemplate()).batchUpdate(getExecSql("batchRewriteStoreRFM", null), stores, 512, (ps, st) -> {
+            ps.setObject(1, st.getExistCompanyId());
             ps.setObject(2, st.getId());
 
             ps.setObject(3, r1);

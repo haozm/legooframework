@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="WxChatGroup">
+        <sql id="amount_member_nums" dynamic="true">
+            <body><![CDATA[
+            SELECT
+                'days' AS 'ranges',
+                IFNULL(SUM(caa.add_number),0) AS 'addSize',
+                IFNULL(SUM(caa.remove_number),0) AS 'removeSize',
+                ( (SUM(caa.add_number)-SUM(caa.remove_number))/(SUM(caa.total_number)- SUM(caa.add_number))*100*0.15 +
+                  (SUM(caa.talk_number) / SUM(caa.total_number)) *100 * 0.25 +
+                  IFNULL((SUM(caa.msg_number) /SUM(caa.talk_number)) *100 * 0.3 ,0) +
+                  IFNULL((SUM(caa.msg_number) /SUM(caa.total_number)) *100 * 0.3 ,0))AS 'activeSize'
+            FROM
+                yycomm.chatroom_activity_amount caa
+            WHERE
+                caa.amount_date = DATE_FORMAT( NOW() , '%Y-%m-%d' )
+                AND caa.chatroomname IN (<#list roomNames as em>'${em}'<#if em_has_next>, </#if></#list>)
+            UNION ALL SELECT
+                'weeks' AS 'ranges' ,
+                IFNULL(SUM(caa.add_number),0) AS 'addSize',
+                IFNULL(SUM(caa.remove_number),0) AS 'removeSize',
+                ( (SUM(caa.add_number)-SUM(caa.remove_number))/(SUM(caa.total_number)- SUM(caa.add_number))*100*0.15 +
+                  (SUM(caa.talk_number) / SUM(caa.total_number)) *100 * 0.25 +
+                  IFNULL((SUM(caa.msg_number) /SUM(caa.talk_number)) *100 * 0.3 ,0) +
+                  IFNULL((SUM(caa.msg_number) /SUM(caa.total_number)) *100 * 0.3 ,0))  AS 'activeSize'
+            FROM
+                yycomm.chatroom_activity_amount caa
+            WHERE
+                WEEK( STR_TO_DATE(caa.amount_date,'%Y-%m-%d') , 1 ) = WEEK( NOW() , 1 )
+                AND caa.chatroomname IN (<#list roomNames as em>'${em}'<#if em_has_next>, </#if></#list>)
+            UNION ALL SELECT
+                'months' AS 'ranges' ,
+                IFNULL(SUM(caa.add_number),0) AS 'addSize',
+                IFNULL(SUM(caa.remove_number),0) AS 'removeSize',
+                ( (SUM(caa.add_number)-SUM(caa.remove_number))/(SUM(caa.total_number)- SUM(caa.add_number))*100*0.15 +
+                  (SUM(caa.talk_number) / SUM(caa.total_number)) *100 * 0.25 +
+                  IFNULL((SUM(caa.msg_number) /SUM(caa.talk_number)) *100 * 0.3 ,0) +
+                  IFNULL((SUM(caa.msg_number) /SUM(caa.total_number)) *100 * 0.3 ,0)) AS 'activeSize'
+            FROM
+                yycomm.chatroom_activity_amount caa
+            WHERE
+                LEFT(caa.amount_date, 7)  = DATE_FORMAT( NOW() , '%Y-%m' )
+                AND caa.chatroomname IN (<#list roomNames as em>'${em}'<#if em_has_next>, </#if></#list>)
+            ]]></body>
+        </sql>
+        <sql id="amount_list" dynamic="true">
+            <body><![CDATA[
+                SELECT caa.chatroomname AS 'chatRoomName',
+                      (SELECT cc.chatroomnick
+                         FROM yycomm.ChatRoom_Contact AS cc
+                        WHERE caa.chatroomname = cc.chatroomname LIMIT 1 ) AS 'chatRoomNick',
+                       MAX(caa.total_number) AS 'totalSize',
+                       SUM(caa.add_number) AS 'addNum',
+                       SUM(caa.remove_number) AS 'delNum',
+                       SUM(caa.talk_number) AS 'talkSize',
+                       SUM(caa.msg_number) AS 'mssageSize',
+                       SUM(caa.amount_date) AS 'createDay',
+                       ( (SUM(caa.add_number)-SUM(caa.remove_number))/(SUM(caa.total_number)- SUM(caa.add_number))*100*0.15 +
+                          (SUM(caa.talk_number) / SUM(caa.total_number)) *100 * 0.25 +
+                          IFNULL((SUM(caa.msg_number) /SUM(caa.talk_number)) *100 * 0.3 ,0) +
+                          IFNULL((SUM(caa.msg_number) /SUM(caa.total_number)) *100 * 0.3 ,0) ) AS 'activeNum'
+                 FROM yycomm.chatroom_activity_amount caa
+                WHERE caa.chatroomname IN ( <#list chatRoomNames as em>'${em}'<#if em_has_next>, </#if></#list> )
+                  AND caa.amount_date BETWEEN :date_start AND :date_end
+             GROUP BY caa.chatroomname
+             ORDER BY totalSize DESC
+            ]]></body>
+        </sql>
+        <sql id="amount_detail">
+            <body><![CDATA[
+            SELECT caa.total_number AS 'totalSize',
+                   caa.add_number AS 'addNum',
+                   caa.remove_number AS 'delNum',
+                   caa.talk_number AS 'talkSize',
+                   caa.msg_number AS 'mssageSize',
+                   caa.amount_date AS 'createDay',
+                   ( ((caa.add_number)-(caa.remove_number))/((caa.total_number)- (caa.add_number))*100*0.15 +
+                     ((caa.talk_number) / (caa.total_number)) *100 * 0.25 +
+                      IFNULL(((caa.msg_number) /(caa.talk_number)) *100 * 0.3 ,0) +
+                      IFNULL(((caa.msg_number) /(caa.total_number)) *100 * 0.3 ,0) ) AS 'activeNum'
+              FROM yycomm.chatroom_activity_amount caa
+             WHERE caa.chatroomname = :chatroomname
+               AND caa.amount_date BETWEEN :date_start AND :date_end
+          ORDER BY caa.amount_date DESC
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

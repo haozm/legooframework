@@ -116,10 +116,13 @@ public class RoleSet {
 
     public Set<String> getAllResources() {
         Set<String> set = Sets.newHashSet();
-        for (RoleEntity cur : roleSet) set.addAll(cur.getResources());
+        if (CollectionUtils.isEmpty(roleSet)) return set;
+        for (RoleEntity cur : roleSet) {
+            cur.getResources().ifPresent(set::addAll);
+        }
         return set;
     }
-
+    
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)

@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+	<model id="FamilyEntity">
+		<sql id="add_family">
+            <body><![CDATA[
+         		INSERT
+					INTO
+						crm_family 
+						( id,
+						name,
+						phone,
+						sex,
+						calendarType,
+						birthday,
+						height,
+						weight,
+						career,
+						career_dict_type,
+						contactable,
+						employee_id,
+						store_id,
+						tenant_id,
+						creator )
+					VALUES
+					(:id,
+					:name,
+					:phone,
+					:sex,
+					calendarType,
+					:birthday,
+					:height,
+					:weight,
+					:career,
+					'CAREER',
+					:contactable,
+					:employeeId,
+					:storeId,
+					:companyId,
+					:createUserId )
+            ]]></body>
+        </sql>
+        <sql id="add_member_family">
+            <body><![CDATA[
+         		INSERT
+					INTO
+						crm_member_family ( member_id,
+						family_id,
+						membership,
+						membership_dict_type,
+						membershipName,
+						appellation,
+						store_id,
+						tenant_id,
+						creator )
+					VALUES(:memberId,
+					:id,
+					:membership,
+					'MEMBERSHIP',
+					(SELECT dkd.field_name FROM dict_kv_data dkd WHERE dkd.field_value =:membership  AND dkd.dict_type = 'MEMBERSHIP'),					
+					:appellation,
+					:storeId,
+					:companyId,
+					:createUserId )
+            ]]></body>
+        </sql>
+        <sql id="delete_family">
+            <body><![CDATA[
+         		DELETE cf.*
+         		FROM crm_family cf
+         		WHERE          		
+         		cf.id = :familyId
+            ]]></body>
+        </sql>
+        <sql id="delete_member_family">
+            <body><![CDATA[
+         		DELETE FROM crm_member_family          		
+         		WHERE family_id = :familyId
+            ]]></body>
+        </sql>
+        <sql id="remove_member_family">
+            <body><![CDATA[
+         		DELETE FROM crm_member_family 
+         		WHERE id = :memberFamilyId
+            ]]></body>
+        </sql>
+        <sql id="update_member_family">
+            <body><![CDATA[
+         		UPDATE
+					crm_member_family SET
+						member_id = :memberId,
+						membership = :membership,
+						membershipName = (SELECT dkd.field_name FROM dict_kv_data dkd WHERE dkd.field_value =:membership  AND dkd.dict_type = 'MEMBERSHIP'),
+						appellation = :appellation		
+					WHERE
+						id = :memberFamilyId
+            ]]></body>
+        </sql>
+        <sql id="update_family">
+            <body><![CDATA[
+         		UPDATE
+					crm_family SET
+						name = :name,
+						phone = :phone,
+						sex = :sex,
+						calendarType = :calendarType,
+						birthday = :birthday,
+						height = :height,
+						weight = :weight,
+						career = :career,
+						contactable = :contactable,
+						employee_id = :employeeId
+					WHERE
+						id = :id
+            ]]></body>
+        </sql>
+         <sql id="findMemberFamily" dynamic="true">
+            <body><![CDATA[
+         		SELECT
+					cm.id,
+					cm.name,
+					cm.phone,
+					cm.sex,
+					cm.calendarType,
+					cm.birthday,
+					cm.height,
+					cm.weight,
+					cm.career,
+					cm.contactable,
+					cm.employee_id AS employeeId,
+					cm.store_id AS 'storeId',
+					cm.tenant_id AS 'companyId',
+					cmf.member_id AS 'memberId',
+					cmf.membership,
+					cmf.appellation,
+					cmf.id AS 'memberFamilyId'
+				FROM
+					crm_family cm
+				LEFT JOIN 
+					crm_member_family cmf
+				ON cm.id = cmf.family_id
+				WHERE 
+				cm.id = :familyId
+				<#if memberId??>
+				AND cmf.member_id = :memberId
+				</#if>
+            ]]></body>
+        </sql>
+        <sql id="find_familys" dynamic="true">
+            <body><![CDATA[
+         		SELECT
+					cm.id,
+					cm.name,
+					cm.phone,
+					cm.sex,
+					cm.calendarType,
+					cm.birthday,
+					cm.height,
+					cm.weight,
+					cm.career,
+					cm.contactable,
+					cm.employee_id AS employeeId,
+					cm.store_id AS 'storeId',
+					cm.tenant_id AS 'companyId'
+				FROM
+					crm_family cm
+				WHERE 
+				cm.id IN (<#list familyIds as fid>'${fid}'<#if fid_has_next>, </#if></#list>)
+            ]]></body>
+        </sql>
+        <sql id="find_member_bo">
+            <body><![CDATA[
+         		SELECT
+					cm.id,
+					cm.name,
+					IFNULL( cm.oldMemberCode,
+					cm.memberCardNum ) AS 'cardNo',
+					cm.phone,
+					aee.name AS 'employeeName'
+				FROM
+					crm_member_family cmf
+				INNER JOIN crm_member cm ON
+					cm.id = cmf.member_id
+					AND cmf.family_id = :familyId
+				LEFT JOIN crm_shoppingguide_member csm ON
+					csm.member_id = cmf.member_id
+				LEFT JOIN acp_employee aee ON
+					csm.shoppingguide_id = aee.id
+            ]]></body>
+        </sql>	        
+        <sql id="find_family_bo">
+            <body><![CDATA[
+         		SELECT
+					cf.id,
+					cf.name,
+					cf.phone,
+					cf.sex,
+					cf.calendarType,
+					DATE_FORMAT( cf.birthday, '%Y-%m-%d' ) AS 'birthday',
+					cf.height,
+					cf.weight,
+					cf.career,
+					contactable,
+					cf.employee_id AS 'employeeId',
+					aee.name AS 'employeeName',
+					cmf.membership,
+					cmf.appellation
+				FROM
+					crm_family cf
+				LEFT JOIN crm_member_family cmf
+				ON cmf.family_id = cf.id
+				LEFT JOIN acp_employee aee ON aee.id = employee_id
+				WHERE
+					cf.id = :familyId
+            ]]></body>
+        </sql>
+        <sql id="clear_member_family">
+            <body><![CDATA[
+         		DELETE FROM crm_member_family
+				WHERE member_id = :memberId 
+				AND family_id = :familyId         		
+            ]]></body>
+        </sql>
+	</model>
+</sqls>

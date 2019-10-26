@@ -9,10 +9,8 @@ import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntityAction;
 import com.legooframework.model.dict.entity.KvDictEntity;
 import com.legooframework.model.dict.entity.KvDictEntityAction;
-import com.legooframework.model.smsgateway.entity.RechargeType;
-import com.legooframework.model.smsgateway.entity.SMSEntity;
-import com.legooframework.model.smsgateway.entity.SMSSendRuleEntity;
-import com.legooframework.model.smsgateway.entity.SMSSendRuleEntityAction;
+import com.legooframework.model.membercare.entity.BusinessType;
+import com.legooframework.model.smsgateway.entity.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.context.ApplicationContext;
@@ -90,18 +88,19 @@ public class RechargeDetailControllerTest {
         CrmOrganizationEntity com = app.getBean(CrmOrganizationEntityAction.class).findCompanyById(1).get();
         CrmStoreEntity store = app.getBean(CrmStoreEntityAction.class).findById(com, 8).get();
         KvDictEntity businessType = app.getBean("smsKvDictEntityAction", KvDictEntityAction.class).findByValue("SMS_BUS_TYPE", "90TOUCHED").get();
-        final SMSSendRuleEntity sendRule = app.getBean(SMSSendRuleEntityAction.class).findByType(businessType);
+        final SMSSendRuleEntity sendRule = app.getBean(SMSSendRuleEntityAction.class).loadByType(BusinessType.TOUCHED90);
         final String batch = "0000111122223333";
         List<SMSEntity> sms_list = Lists.newArrayList();
         for (int i = 0; i < 300; i++) {
-            sms_list.add(SMSEntity.createSMS(UUID.randomUUID().toString(), String.format(ssm, i), "1371027",
-                    null, null));
+            sms_list.add(SMSEntity.createSMSMsg(UUID.randomUUID().toString(), null, "1371027", null, String.format(ssm, i)
+                    , 0));
         }
-        DeductionReqDto rechargeDto = new DeductionReqDto(store, businessType, sms_list, "计，任天堂Switch成了去年销量最高的游戏");
+        DeductionReqDto rechargeDto = new DeductionReqDto(store, BusinessType.TOUCHED90, sms_list,
+                "计，任天堂Switch成了去年销量最高的游戏", SendMode.ManualBatch);
         Message<DeductionReqDto> message = MessageBuilder.withPayload(rechargeDto)
                 .setHeader("user", user)
                 .build();
-        msgt.send("channel_sms_balance", message);
+        // msgt.send(BundleService.CHANNEL_SMS_CHARGE, message);
     }
 
 

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       					   http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+	<context:property-placeholder location="classpath:db.properties"/>
+	<task:scheduler id="commons-scheduler" pool-size="8"/>
+	<bean id="crmDataSource" class="com.zaxxer.hikari.HikariDataSource">
+		<property name="driverClassName" value="${crm.jdbc.driver}" />
+		<property name="jdbcUrl" value="${crm.jdbc.url}" />
+		<property name="username" value="${crm.jdbc.username}" />
+		<property name="password" value="${crm.jdbc.password}" />
+		<property name="readOnly" value="false" />
+		<property name="connectionTimeout" value="30000" />
+		<property name="idleTimeout" value="600000" />
+		<property name="maxLifetime" value="1800000" />
+		<property name="maximumPoolSize" value="2" />
+		<property name="minimumIdle" value="2" />
+	</bean>
+	<bean id="systemLogEntityAction" class="com.legooframework.commons.entity.SystemLogEntityAction" destroy-method="shutdown">
+		<property name="dataSource" ref="crmDataSource"></property>
+	</bean>
+	<bean id="saveLogScheduler"
+        class="org.springframework.scheduling.quartz.SchedulerFactoryBean">
+        <property name="triggers">
+            <list>
+                <ref bean="saveLogTrigger"></ref>
+            </list>
+        </property>
+        <property name="autoStartup" value="true"></property>
+    </bean>
+     <bean id="saveLogTrigger"
+        class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="saveLogJob">
+        </property>
+        <property name="cronExpression">
+            <value>0/5 * * * * ?</value>
+        </property>
+    </bean>
+      <bean id="saveLogJob"
+        class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="systemLogEntityAction">
+        </property>
+        <property name="targetMethod" value="saveLogs"></property>
+    </bean>
+     <task:scheduled-tasks scheduler="commons-scheduler">
+        <task:scheduled ref="systemLogEntityAction" method="saveLogs" cron="0/5 * * * * ?"/>
+    </task:scheduled-tasks>
+</beans>

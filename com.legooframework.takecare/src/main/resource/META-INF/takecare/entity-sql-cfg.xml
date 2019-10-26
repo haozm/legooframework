@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="CareRecordEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+    INSERT INTO acp.TAKECARE_RECORD_LOG
+                (care_id, company_id, org_id, store_id, employee_id, member_id, send_info01, business_type, send_channel, context, delete_flag, tenant_id, error_tag, message, send_info02, img_urls, sub_care_id )
+         VALUES (      ?,          ?,      ?,        ?,           ?,         ?,           ?,             ?,            ?,       ?,           0,         ?,         ?,       ?,           ?,        ?, ? )
+            ]]></body>
+        </sql>
+        <sql id="query4list">
+            <body><![CDATA[
+   SELECT trl.id, trl.care_id, trl.company_id, trl.org_id, trl.store_id, trl.employee_id, trl.member_id, trl.send_info01,
+          trl.business_type, trl.send_channel, trl.context, trl.delete_flag, trl.tenant_id, trl.creator, trl.createTime,
+          trl.editor, trl.editTime, trl.error_tag, trl.message, trl.send_info02, trl.img_urls, trl.sub_care_id
+     FROM acp.TAKECARE_RECORD_LOG AS trl
+    WHERE trl.delete_flag = 0
+            ]]></body>
+        </sql>
+    </model>
+    <model id="CareBirthdayEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+   SELECT cbp.id, cbp.followUpContent, cbp.followUpTime, cbp.followUpWay, cbp.memberFeedback, cbp.planState, cbp.shoppingGuideSummary,
+          cbp.updateTime, cbp.member_id, cbp.labelValue, cbp.store_id, cbp.operateType, cbp.company_id, cbp.calendarType,
+          cbp.birthday, cbp.this_year_birthday, cbp.care_date
+     FROM acp.crm_birthdaycareplan AS cbp
+  <#if (sql=="findCareByMemberThisYear")>
+    WHERE cbp.company_id = :companyId
+      AND cbp.member_id = :memberId
+      AND YEAR(cbp.care_date) = YEAR(CURRENT_DATE)
+  </#if>
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+   INSERT INTO acp.crm_birthdaycareplan
+               (followUpContent, followUpTime, memberFeedback, planState, shoppingGuideSummary, updateTime, member_id, store_id, operateType, company_id, calendarType, birthday, this_year_birthday, care_date)
+        VALUES (              ?,            ?,              ?,         ?,                    ?,          ?,         ?,        ?,           ?,          ?,            ?,         ?,                 ?, ?)
+            ]]></body>
+        </sql>
+    </model>
+    <model id="CareHisRecordEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+     INSERT INTO acp.crm_membercarerecord
+                 (createTime, followUpContent, followUpTime, followUpWay, memberFeedback, planId, planName, planType, shoppingGuideSummary, status, updateTime, member_id, store_id, employee_id, operateType)
+          VALUES (     NOW(),               ?,        NOW(),           ?,              ?,      ?,        ?,        ?,                    ?, 1,           NOW(),         ?,        ?,           ?, 2)
+            ]]></body>
+        </sql>
+    </model>
+    <model id="CareNinetyEntity">
+        <sql id="query4List" dynamic="true">
+            <body><![CDATA[
+    SELECT cnf.id, cnf.followUpContent, cnf.followUpTime, cnf.followUpWay, cnf.memberFeedback, cnf.planNode, cnf.planPerformTime,
+           cnf.planState, cnf.shoppingGuideSummary, cnf.updateTime, cnf.member_id, cnf.store_id, cnf.acrossStore, cnf.operateType,
+           cnf.createTime,GROUP_CONCAT(task.id ORDER BY task.id) AS 'taskIds'
+      FROM acp.crm_ninetyplanfollowup AS cnf
+ LEFT JOIN acp.crm_plantask AS task ON cnf.id = task.planId
+ <#if (sql=="findById")>
+     WHERE cnf.id = :id
+ <#elseif (sql=="findByTaskId")>
+    WHERE cnf.id = (SELECT cpt.planId FROM acp.crm_plantask AS cpt WHERE cpt.id = :taskId)
+ <#else>
+     WHERE cnf.id = -1
+ </#if>
+ GROUP BY cnf.id
+            ]]></body>
+        </sql>
+        <sql id="query4TaskList" dynamic="true">
+            <body><![CDATA[
+      SELECT cpt.id, cpt.content, cpt.createTime, cpt.planId, cpt.startTime, cpt.taskNode, cpt.taskState, cpt.taskType,
+             cpt.remark, cpt.sendContent,cnf.member_id,cnf.store_id, sto.company_id,
+             cpt.messageTemplet_id, cpt.doneTime, cpt.operateType, cpt.overdueTime
+        FROM acp.crm_plantask AS cpt
+  INNER JOIN acp.crm_ninetyplanfollowup AS cnf ON cnf.id = cpt.planId
+  INNER JOIN acp.acp_store AS sto ON sto.id = cnf.store_id
+    <#if (sql=="findByCareNinety")>
+       WHERE cpt.planId = :planId
+    ORDER BY cpt.taskNode
+    <#elseif (sql=="findByTaskIds")>
+       WHERE cpt.id IN (${taskIds?join(",")})
+    ORDER BY cpt.id
+    </#if>
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

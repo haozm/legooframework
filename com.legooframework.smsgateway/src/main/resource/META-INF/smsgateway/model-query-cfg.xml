@@ -43,11 +43,9 @@
                  scs.store_id AS 'storeId',
                  scs.store_name AS 'storeName',
                  scs.sms_batchno AS 'smsBatchNo',
-                 scs.business_ruleid AS 'businessRuleId',
                  scs.sms_quantity AS 'smsQuantity',
                  scs.creator AS 'creator',
                  scs.sms_context AS 'smsContext',
-                 scs.operator_name AS 'creatorName',
                  DATE_FORMAT(scs.createTime,'%Y-%m-%d %H:%i:%s') AS 'createTime',
                  scs.business_type AS 'businessType',
                  ( SELECT dict.field_name
@@ -63,7 +61,7 @@
                  scs.finish_send AS 'finishSend',
                  ( SELECT GROUP_CONCAT(DISTINCT stl.send_status ORDER BY stl.send_status SEPARATOR  ',' )
                      FROM SMS_TRANSPORT_LOG stl
-                    WHERE stl.sms_batchno = scs.sms_batchno ) AS 'detailStatus',
+                    WHERE stl.send_batchno = scs.sms_batchno ) AS 'detailStatus',
                    0 AS 'successQuantity',
                    0 AS 'failureQuantity'
             FROM SMS_CHARGE_SUMMARY scs
@@ -129,6 +127,9 @@
                     WHEN 0 THEN '入库提交中'
                     WHEN 1 THEN '等待发送'
                     WHEN 2 THEN '短信网关发送中'
+                    WHEN 3 THEN '短信网关提交完成'
+                    WHEN 4 THEN '短信发送异常'
+                    WHEN 5 THEN '微信发送完成'
                     WHEN 9 THEN '取消发送'
                     ELSE '异常数据' END ) AS 'sendStatusName',
                  stl.phone_no AS 'phoneNo',
@@ -199,9 +200,9 @@
                     WHEN 3 THEN '门店充值'
                     ELSE '非法渠道' END AS 'rechargeRangeName',
                 CASE srd.recharge_scope
-                    WHEN 1 THEN ( SELECT org.name FROM csosm_crm.acp_organization org WHERE org.id =srd.company_id AND org.orgType =1 )
-                    WHEN 2 THEN ( SELECT asv.nodeName FROM csosm_crm.acp_store_view asv WHERE asv.company_id = srd.company_id  AND asv.id = srd.store_group_id and asv.tree_type = 2 )
-                    WHEN 3 THEN ( SELECT str.name FROM csosm_crm.acp_store str WHERE str.id =srd.store_id AND str.company_id = srd.company_id )
+                    WHEN 1 THEN ( SELECT org.name FROM acp_organization org WHERE org.id =srd.company_id AND org.orgType =1 )
+                    WHEN 2 THEN ( SELECT asv.nodeName FROM acp_store_view asv WHERE asv.company_id = srd.company_id  AND asv.id = srd.store_group_id and asv.tree_type = 2 )
+                    WHEN 3 THEN ( SELECT str.name FROM acp_store str WHERE str.id =srd.store_id AND str.company_id = srd.company_id )
                     ELSE '错误来源' END AS 'targetName',
                 srd.rule_id,
                 CASE srd.rule_id
@@ -210,8 +211,8 @@
                 srd.recharge_amount AS 'rechargeAmount', srd.total_quantity AS 'totalQuantity', srd.creator, emp.name AS 'empName',
                 DATE_FORMAT(srd.createTime,'%Y-%m-%d') AS 'rechargeDate'
            FROM SMS_RECHARGE_DETAIL srd
-      LEFT JOIN csosm_crm.acp_organization org ON srd.company_id = org.id AND org.orgType = 1
-      LEFT JOIN csosm_crm.acp_employee emp ON emp.id = srd.creator
+      LEFT JOIN acp_organization org ON srd.company_id = org.id AND org.orgType = 1
+      LEFT JOIN acp_employee emp ON emp.id = srd.creator
           WHERE srd.delete_flag = 0
       <#if companyId??>
             AND srd.company_id = :companyId

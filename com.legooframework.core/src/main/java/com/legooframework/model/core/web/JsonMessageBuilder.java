@@ -20,7 +20,6 @@ public class JsonMessageBuilder {
     private static String OK_CODE = "0000";
     private static String WARN_CODE = "1";
 
-
     private JsonMessageBuilder(String code, String message, String errDetail) {
         Preconditions.checkArgument(StringUtils.isNoneEmpty(code));
         this.code = code;

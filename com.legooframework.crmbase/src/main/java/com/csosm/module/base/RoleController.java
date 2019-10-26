@@ -74,9 +74,9 @@ public class RoleController extends BaseController {
             map.put("desc", r.getDesc());
             map.put("resources", r.getResources());
         });
-
-        if (MapUtils.getObject(map, "resources") != null) {
-            Set<String> resourceIds = (Set<String>) MapUtils.getObject(map, "resources");
+        Optional<Set<String>> resourcesOpt = (Optional<Set<String>>)MapUtils.getObject(map, "resources");
+        if (null != resourcesOpt && resourcesOpt.isPresent()) {
+            Set<String> resourceIds = resourcesOpt.get();
             if (CollectionUtils.isNotEmpty(resourceIds)) {
                 Multimap<String, String> sou = ArrayListMultimap.create();
                 resourceIds.forEach(s -> sou.put(StringUtils.split(s, '_')[0], s));

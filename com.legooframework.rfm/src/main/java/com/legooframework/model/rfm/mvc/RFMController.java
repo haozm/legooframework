@@ -49,8 +49,8 @@ public class RFMController extends BaseController {
             Optional<StoreEntity> store = getBean(StoreEntityAction.class, request).findStoreFromCompany(storeId, company);
             Preconditions.checkState(store.isPresent(), "ID=%s 对应的门店不存在...", storeId);
             getBean(RFM4OrgEntityAction.class, request).savaOrUpdateStoreRFM(loginUser, store.get(), type,
-                    MapUtils.getIntValue(requestBody, "rV1"), MapUtils.getIntValue(requestBody, "rV2"),
-                    MapUtils.getIntValue(requestBody, "rV3"), MapUtils.getIntValue(requestBody, "rV4"),
+                    MapUtils.getIntValue(requestBody, "rV2"), MapUtils.getIntValue(requestBody, "rV3"),
+                    MapUtils.getIntValue(requestBody, "rV4"), MapUtils.getIntValue(requestBody, "rV5"),
                     MapUtils.getIntValue(requestBody, "fV1"), MapUtils.getIntValue(requestBody, "fV2"),
                     MapUtils.getIntValue(requestBody, "fV3"), MapUtils.getIntValue(requestBody, "fV4"),
                     MapUtils.getIntValue(requestBody, "mV1"), MapUtils.getIntValue(requestBody, "mV2"),
@@ -72,8 +72,8 @@ public class RFMController extends BaseController {
             getBean(RFM4OrgService.class, request).savaOrUpdateCompanyRFM(loginUser,
                     organization == null ? company : organization,
                     type,
-                    MapUtils.getIntValue(requestBody, "rV1"), MapUtils.getIntValue(requestBody, "rV2"),
-                    MapUtils.getIntValue(requestBody, "rV3"), MapUtils.getIntValue(requestBody, "rV4"),
+                    MapUtils.getIntValue(requestBody, "rV2"), MapUtils.getIntValue(requestBody, "rV3"),
+                    MapUtils.getIntValue(requestBody, "rV4"), MapUtils.getIntValue(requestBody, "rV5"),
                     MapUtils.getIntValue(requestBody, "fV1"), MapUtils.getIntValue(requestBody, "fV2"),
                     MapUtils.getIntValue(requestBody, "fV3"), MapUtils.getIntValue(requestBody, "fV4"),
                     MapUtils.getIntValue(requestBody, "mV1"), MapUtils.getIntValue(requestBody, "mV2"),

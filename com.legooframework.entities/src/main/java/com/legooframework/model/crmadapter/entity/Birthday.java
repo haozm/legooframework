@@ -1,6 +1,7 @@
 package com.legooframework.model.crmadapter.entity;
 
 import com.google.common.base.MoreObjects;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -14,14 +15,23 @@ public class Birthday implements Cloneable {
     private final DateTimeFormatter YMD_FORMATTER = DateTimeFormat.forPattern("yyyy-MM-dd");
     private final DateTimeFormatter MD_FORMATTER = DateTimeFormat.forPattern("MM-dd");
 
-    Birthday(int type, String birthday) {
-        if (birthday.length() == 5) {
+    private Birthday(int type, String birthday) {
+        if (StringUtils.equals("0000-00-00", birthday)) {
+            this.birthday = null;
+        } else if (birthday.length() == 5) {
             this.birthday = LocalDate.parse(birthday, MD_FORMATTER);
         } else {
             this.birthday = LocalDate.parse(birthday, YMD_FORMATTER);
         }
-
         this.type = type;
+    }
+
+    static Birthday createBirthday(String birthday) {
+        return new Birthday(1, birthday);
+    }
+
+    static Birthday createLunarBirthday(String birthday) {
+        return new Birthday(2, birthday);
     }
 
     public boolean isLunarDate() {

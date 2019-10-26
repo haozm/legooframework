@@ -59,7 +59,7 @@
 	         ]]>
         </macro>
     </macros>
-    <model id="MemberEntity">
+    <model id="OldMemberEntity">
         <sql id="updateBuildFlag">
             <body><![CDATA[
           UPDATE crm_member
@@ -384,7 +384,8 @@
                      WHERE sd.store_id = st.id
                        AND sd.company_id = st.company_id
                        AND sd.status = 1
-                       AND sd.devicetype = 1) AS 'deviceIds'
+                       AND sd.devicetype = 1) AS 'deviceIds',
+                 rfm.val_type AS 'rfmSetting'
 	            </#macro>
 	         ]]>
         </macro>
@@ -474,6 +475,7 @@
              SELECT DISTINCT <@store_fields />
                FROM acp_store AS st
           LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+          LEFT JOIN crm_rfm_setting AS rfm ON rfm.company_id = st.company_id AND rfm.store_id = st.id
               WHERE st.id = :id
             ]]></body>
         </sql>
@@ -494,6 +496,7 @@
              SELECT DISTINCT <@store_fields />
                FROM acp_store AS st
           LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+          LEFT JOIN crm_rfm_setting AS rfm ON rfm.company_id = st.company_id AND rfm.store_id = st.id
               WHERE st.id IN (
                   SELECT ysd.store_id
                     FROM yycomm.store_device AS ysd
@@ -507,8 +510,9 @@
              SELECT DISTINCT <@store_fields />
                FROM acp_store AS st
           LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+          LEFT JOIN crm_rfm_setting AS rfm ON rfm.company_id = st.company_id AND rfm.store_id = st.id
               WHERE FIND_IN_SET(st.id,
-              (SELECT  GROUP_CONCAT(storeIds)  FROM  csosm_crm.acp_store_view 
+              (SELECT  GROUP_CONCAT(storeIds) FROM acp_store_view
               WHERE owner_id = :empId GROUP BY owner_id))
            ORDER BY st.id
             ]]></body>
@@ -518,7 +522,17 @@
              SELECT DISTINCT <@store_fields />
                FROM acp_store AS st
           LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+          LEFT JOIN crm_rfm_setting AS rfm ON rfm.company_id = st.company_id AND rfm.store_id = st.id
               WHERE st.company_id = :companyId
+            ]]></body>
+        </sql>
+         <sql id="loadAllStoreByOrg" macros="store_fields">
+            <body><![CDATA[
+             SELECT DISTINCT <@store_fields />
+               FROM acp_store AS st
+          LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+          LEFT JOIN crm_rfm_setting AS rfm ON rfm.company_id = st.company_id AND rfm.store_id = st.id
+              WHERE st.organization_id = :orgId
             ]]></body>
         </sql>
         <sql id="findStoreFromCompany" macros="store_fields">
@@ -526,6 +540,7 @@
              SELECT DISTINCT <@store_fields />
                FROM acp_store AS st
           LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+          LEFT JOIN crm_rfm_setting AS rfm ON rfm.company_id = st.company_id AND rfm.store_id = st.id
               WHERE st.company_id = :companyId
                 AND st.id = :id
             ]]></body>
@@ -535,6 +550,7 @@
              SELECT DISTINCT <@store_fields />
                FROM acp_store AS st
           LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+          LEFT JOIN crm_rfm_setting AS rfm ON rfm.company_id = st.company_id AND rfm.store_id = st.id
               WHERE st.organization_id IN (
                     SELECT og.id
                       FROM acp_organization AS og
@@ -547,6 +563,7 @@
              SELECT DISTINCT <@store_fields />
                FROM acp_store AS st
           LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+          LEFT JOIN crm_rfm_setting AS rfm ON rfm.company_id = st.company_id AND rfm.store_id = st.id
               WHERE st.organization_id = :orgId
            ORDER BY st.id
             ]]></body>
@@ -556,6 +573,7 @@
              SELECT DISTINCT <@store_fields />
                FROM acp_store AS st
           LEFT JOIN acp_store_ext AS stx ON stx.id = st.id AND st.company_id = stx.company_id
+          LEFT JOIN crm_rfm_setting AS rfm ON rfm.company_id = st.company_id AND rfm.store_id = st.id
               WHERE st.id IN (${ids?join(", ")})
            ORDER BY st.id
             ]]></body>
@@ -578,7 +596,8 @@
                      og.orgShowFlag AS 'orgShowFlag',
                      og.hiddenMemberPhoneFlag AS 'hiddenMemberPhoneFlag',
                      og.linkman_contact AS 'linkMan',
-                     og.linkman_phone AS 'linkPhone'
+                     og.linkman_phone AS 'linkPhone',
+                     rfm.val_type AS 'rfmSetting'
 	            </#macro>
 	         ]]>
         </macro>
@@ -595,8 +614,10 @@
             <body><![CDATA[
              SELECT <@organization_fields />
                FROM acp_organization AS og
+              LEFT JOIN crm_rfm_setting AS rfm 
+               ON rfm.company_id = og.id  AND rfm.store_id = -1 
               WHERE og.orgType = 1
-                AND (og.id = :id OR og.shortName = :shortName)
+                AND (og.id = :id OR og.shortName = :shortName OR og.name =:name)
             ]]></body>
         </sql>
         <sql id="add_company">
@@ -669,6 +690,8 @@
             <body><![CDATA[
              SELECT <@organization_fields />
                FROM acp_organization AS og
+               LEFT JOIN crm_rfm_setting AS rfm 
+               ON rfm.company_id = og.id AND rfm.store_id = -1
               WHERE (og.id = :id
                  OR og.parentId = :id)
                  AND og.status = 1
@@ -678,14 +701,18 @@
             <body><![CDATA[
              SELECT <@organization_fields />
                FROM acp_organization AS og
+               LEFT JOIN crm_rfm_setting AS rfm 
+               ON rfm.company_id = og.id AND rfm.store_id = -1
               WHERE og.id = :id
-                AND og.status = 1 AND og.orgType = 1
+                AND og.status = 1 AND og.orgType = 1 
             ]]></body>
         </sql>
         <sql id="loadAllCompanyies" macros="organization_fields">
             <body><![CDATA[
              SELECT <@organization_fields />
                FROM acp_organization AS og
+               LEFT JOIN crm_rfm_setting AS rfm 
+               ON rfm.company_id = og.id  AND rfm.store_id = -1
               WHERE og.status = 1 AND og.orgType = 1
            ORDER BY og.id
             ]]></body>
@@ -694,6 +721,8 @@
             <body><![CDATA[
              SELECT <@organization_fields />
                FROM acp_organization AS og
+               LEFT JOIN crm_rfm_setting AS rfm 
+               ON rfm.company_id = og.id AND rfm.store_id = -1
               WHERE og.status = 1 AND og.code LIKE :code
            ORDER BY og.code
             ]]></body>
@@ -718,7 +747,8 @@
                  em.pass_word AS 'password',
                  em.status AS 'state',
                  em.organization_id AS 'organizationId',
-                 em.role_ids AS roleIds
+                 em.role_ids AS roleIds,
+                 em.oldEmployeeId AS 'oldEmployeeId'
 	            </#macro>
 	         ]]>
         </macro>
@@ -758,11 +788,19 @@
            ORDER BY em.id,em.employeeState
             ]]></body>
         </sql>
+          <sql id="findAnyById" macros="employee_fields">
+            <body><![CDATA[
+             SELECT <@employee_fields />
+               FROM acp_employee AS em
+              WHERE em.id = :id 
+              AND em.store_id = :storeId
+            ]]></body>
+        </sql>
         <sql id="insertEmp">
             <body><![CDATA[
              INSERT INTO acp_employee
-                         ( employeeType, loginuser_id, password, birthday,status, remark,sex,createTime, organization_id, phone,     createUser_id, name,       store_id, employeeState, company_id,login_name, pass_word,role_ids )
-                  VALUES (:employeeType, :loginUserId, :password,:birthday,     1, :remark,:sex, NOW(), :organizationId, :phoneNo, :createUserId,  :userName, :storeId,  :employeeState,:companyId,:loginName, :password,:roleIds )
+                         ( employeeType, loginuser_id, password, birthday,status, remark,sex,createTime, organization_id, phone,     createUser_id, name,       store_id, employeeState, company_id,login_name, pass_word,role_ids,oldEmployeeId )
+                  VALUES (:employeeType, :loginUserId, :password,:birthday,     1, :remark,:sex, NOW(), :organizationId, :phoneNo, :createUserId,  :userName, :storeId,  1,:companyId,:loginName, :password,:roleIds,:oldEmployeeId )
             ]]></body>
         </sql>
         <sql id="exitAccount">
@@ -792,9 +830,103 @@
         <sql id="update_disable_state" dynamic="true">
             <body><![CDATA[
             UPDATE acp_employee
-               SET employeeState = 2
+               SET employeeState = 0
              WHERE id IN (${empIds?join(",")})
+             <#if companyId??>
                AND company_id =  :companyId
+              </#if>
+              <#if storeId??>
+              	AND store_id = :storeId
+              </#if>
+            ]]></body>
+        </sql>
+        <sql id="remove_employees" dynamic="true">
+            <body><![CDATA[
+            UPDATE acp_employee
+               SET status = 0
+             WHERE id IN (${empIds?join(",")})
+             <#if companyId??>
+               AND company_id =  :companyId
+              </#if>
+              <#if storeId??>
+              	AND store_id = :storeId
+              </#if>
+            ]]></body>
+        </sql>
+        <sql id="release_employees" dynamic="true">
+            <body><![CDATA[
+            UPDATE acp_employee
+               SET status = 0,oldEmployeeId = NULL
+             WHERE id IN (${empIds?join(",")})
+             <#if companyId??>
+               AND company_id =  :companyId
+              </#if>
+              <#if storeId??>
+              	AND store_id = :storeId
+              </#if>
+            ]]></body>
+        </sql>
+         <sql id="copy_employee" dynamic="true">
+            <body><![CDATA[
+          INSERT INTO acp_employee
+			(birthday, certificate, certificateType, employeeType, loginuser_id, password, createTime, 
+			remark, deviceId, sex, organization_id, phone, agingTime, name, photoFileName, source_from, 
+			source_channel, store_id, employeeState, status, oldEmployeeId, company_id, telephone, 
+			oldStoreId, loginTimeE, loginTimeS, weixinConfig_id, companypy, crc32id, login_name, 
+			pass_word, role_ids, createUser_id, updateUser_id, updateTime)
+		 SELECT birthday, certificate, certificateType, employeeType, loginuser_id, password, createTime,
+		   remark, deviceId, sex, organization_id, phone, agingTime, name, photoFileName, source_from, 
+		   source_channel, :destStoreId, 1, 1, :destEmpId, company_id, telephone, 
+		   oldStoreId, loginTimeE, loginTimeS, weixinConfig_id, companypy, crc32id, login_name,
+		   pass_word, role_ids, createUser_id, updateUser_id, updateTime
+		  FROM acp_employee ae WHERE ae.id = :scourceEmpId
+            ]]></body>
+        </sql>
+        <sql id="recover_employee" dynamic="true">
+            <body><![CDATA[
+	           UPDATE acp_employee SET 
+					employeeType = :employeeType,
+					loginuser_id = :loginUserId,
+					password = :password,
+					birthday = :birthday,
+					status = 1,
+					remark = :remark,
+					sex = :sex,
+					phone = :phoneNo,
+					name = :userName,
+					store_id =:storeId,
+					employeeState = 1,
+					login_name = :loginName,
+					pass_word = :password,
+					role_ids = :roleIds,
+					oldEmployeeId = :scourceEmpId
+				WHERE id = :destEmpId
+            ]]></body>
+        </sql>
+         <sql id="update_switch_employees" dynamic="true">
+            <body><![CDATA[
+            UPDATE acp_employee
+               SET status = 0,oldEmployeeId=null
+             WHERE id IN (${empIds?join(",")})
+             <#if companyId??>
+               AND company_id =  :companyId
+              </#if>
+              <#if storeId??>
+              	AND store_id = :storeId
+              </#if>
+            ]]></body>
+        </sql>
+         <sql id="unbind_employees" dynamic="true">
+            <body><![CDATA[
+            UPDATE crm_member
+               SET guide_id = NULL
+             WHERE guide_id IN (${empIds?join(",")})
+             <#if companyId??>
+               AND company_id =  :companyId
+              </#if>
+              <#if storeId??>
+              	AND FIND_IN_SET(store_ids,:storeId)
+              </#if>
             ]]></body>
         </sql>
         <sql id="reset_password" dynamic="true">
@@ -989,6 +1121,22 @@
         INSERT INTO acp_systemlog
                     (crud,  operation, sub_type, message, creator,      createTime)
               VALUES(:crud,:operation,:subType, :message,:createUserId, CURRENT_TIMESTAMP)
+            ]]></body>
+        </sql>
+    </model>
+    <model id="LunarVsGregorianCalendarEntity">
+        <sql id="findByIds" dynamic="true">
+            <body><![CDATA[
+          SELECT gregorian_calendar AS 'id',
+                 lunar_calendar AS 'lunarCalendar',
+                 chinese_era_year AS 'lunarYearName',
+                 chinese_zodiac_year AS 'lunarZodiac',
+                 lunar_calendar_month AS 'lunarMonthName',
+                 lunar_calendar_day AS 'lunarDayName',
+                 weekday AS 'weekDay'
+            FROM YG_Statistics.calendar_g_c_index
+           WHERE gregorian_calendar IN (<#list ids as id> '${id}' <#if id_has_next>,</#if></#list>)
+        ORDER BY gregorian_calendar
             ]]></body>
         </sql>
     </model>

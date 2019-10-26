@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="WechatCircleEntity">
+        <sql id="unread_statistics" dynamic="true">
+            <body><![CDATA[
+          SELECT max(CASE A.cola WHEN 'WechatCircle' THEN A.colb ELSE 0 END ) AS 'WechatCircle',
+                 max(CASE A.cola WHEN 'Liked' THEN A.colb ELSE 0 END ) AS 'Liked',
+                 max(CASE A.cola WHEN 'Comments' THEN A.colb ELSE 0 END ) AS 'Comments',
+                 max(CASE A.cola WHEN 'Other' THEN A.colb ELSE 0 END ) AS 'Other',
+                 '${ownerWxId}' AS 'ownerWxId'
+            FROM (
+                  SELECT 'WechatCircle' AS 'cola',
+                         COUNT(DISTINCT wcc.id) AS 'colb'
+                    FROM WECHAT_CIRCLE_CONTENT AS wcc
+                   WHERE wcc.delete_flag = 0
+                     AND TIMESTAMPDIFF(DAY, FROM_UNIXTIME(wcc.send_time), NOW()) <= 3
+                     AND FIND_IN_SET( '${ownerWxId}:0' , wcc.read_status ) <> 0
+                   UNION
+                   SELECT (CASE wcct.comment_type
+                                WHEN '1' THEN 'Liked'
+                                WHEN '2' THEN 'Comments'
+                           ELSE 'Other' END ) AS 'cola',
+                         COUNT(DISTINCT wcct.id) AS 'colb'
+                    FROM WECHAT_CIRCLE_COMMENT AS wcct
+              INNER JOIN WECHAT_CIRCLE_CONTENT wcc ON wcct.circle_id = wcc.id
+                   WHERE wcct.delete_flag = 0
+                     AND TIMESTAMPDIFF(DAY, FROM_UNIXTIME(wcct.comment_time), NOW()) <= 3
+                     AND FIND_IN_SET( '${ownerWxId}:0' , wcct.read_status ) <> 0
+                GROUP BY wcct.comment_type ) AS A
+            ]]></body>
+        </sql>
+        <sql id="unread_statistics_all" dynamic="true">
+            <body><![CDATA[
+          SELECT max(CASE A.cola WHEN 'WechatCircle' THEN A.colb ELSE 0 END ) AS 'WechatCircle',
+                 max(CASE A.cola WHEN 'Liked' THEN A.colb ELSE 0 END ) AS 'Liked',
+                 max(CASE A.cola WHEN 'Comments' THEN A.colb ELSE 0 END ) AS 'Comments',
+                 max(CASE A.cola WHEN 'Other' THEN A.colb ELSE 0 END ) AS 'Other',
+                 A.ownerWxId AS 'ownerWxId'
+            FROM (
+            <#list ownerWxIds as wx_id>
+                     SELECT 'WechatCircle' AS 'cola',
+                             COUNT(DISTINCT wcc.id) AS 'colb',
+                             '${wx_id}' AS 'ownerWxId'
+                        FROM WECHAT_CIRCLE_CONTENT AS wcc
+                       WHERE wcc.delete_flag = 0
+                         AND TIMESTAMPDIFF(DAY, FROM_UNIXTIME(wcc.send_time), NOW()) <= 3
+                         AND FIND_IN_SET( '${wx_id}:0' , wcc.read_status ) <> 0
+                       UNION
+                       SELECT (CASE wcct.comment_type
+                                    WHEN '1' THEN 'Liked'
+                                    WHEN '2' THEN 'Comments'
+                               ELSE 'Other' END ) AS 'cola',
+                              COUNT(DISTINCT wcct.id) AS 'colb',
+                              '${wx_id}' AS 'ownerWxId'
+                        FROM WECHAT_CIRCLE_COMMENT AS wcct
+                  INNER JOIN WECHAT_CIRCLE_CONTENT wcc ON wcct.circle_id = wcc.id
+                       WHERE wcct.delete_flag = 0
+                         AND TIMESTAMPDIFF(DAY, FROM_UNIXTIME(wcct.comment_time), NOW()) <= 3
+                         AND FIND_IN_SET( '${wx_id}:0' , wcct.read_status ) <> 0
+                    GROUP BY wcct.comment_type
+              <#sep>UNION
+            </#list>
+                 ) AS A
+        GROUP BY A.ownerWxId
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

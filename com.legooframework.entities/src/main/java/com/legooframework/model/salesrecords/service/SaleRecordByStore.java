@@ -18,37 +18,28 @@ import java.util.Map;
 
 public class SaleRecordByStore {
 
-    private static final Logger logger = LoggerFactory.getLogger(SaleRecordByMember.class);
-    private final CrmOrganizationEntity company;
     private final LocalDateTime startDay, endDay;
     private final CrmStoreEntity store;
+    private final String categories;
     private final ArrayListMultimap<CrmMemberEntity, SaleRecordEntity> multimap;
 
-    SaleRecordByStore(CrmOrganizationEntity company, CrmStoreEntity store, LocalDateTime startDay, LocalDateTime endDay,
-                      Map<CrmMemberEntity, List<SaleRecordEntity>> datas) {
-        this.company = company;
+    SaleRecordByStore(CrmStoreEntity store, String categories, LocalDateTime startDay,
+                      LocalDateTime endDay, Map<CrmMemberEntity, Collection<SaleRecordEntity>> datas) {
         this.startDay = startDay;
         this.endDay = endDay;
         this.store = store;
+        this.categories = categories;
         this.multimap = ArrayListMultimap.create();
         if (MapUtils.isNotEmpty(datas))
             datas.forEach(this.multimap::putAll);
     }
 
-    public CrmOrganizationEntity getCompany() {
-        return company;
-    }
-
-    public LocalDateTime getStartDay() {
-        return startDay;
-    }
-
-    public LocalDateTime getEndDay() {
-        return endDay;
-    }
-
     public CrmStoreEntity getStore() {
         return store;
+    }
+
+    public int size() {
+        return multimap.size();
     }
 
     public Collection<CrmMemberEntity> getMember() {
@@ -59,6 +50,10 @@ public class SaleRecordByStore {
         return multimap.get(crmMember);
     }
 
+    public String getCategories() {
+        return categories;
+    }
+
     public Collection<SaleRecordEntity> loadAllSaleRecords() {
         return multimap.values();
     }
@@ -66,8 +61,9 @@ public class SaleRecordByStore {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
-                .add("company", company.getId())
+                .add("company", store.getCompanyId())
                 .add("store", store.getId())
+                .add("categories", categories)
                 .add("startDay", startDay)
                 .add("endDay", endDay)
                 .add("multimap", multimap.size())

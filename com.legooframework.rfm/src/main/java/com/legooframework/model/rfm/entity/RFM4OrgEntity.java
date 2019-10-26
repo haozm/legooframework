@@ -96,7 +96,6 @@ public class RFM4OrgEntity extends BaseEntity<Long> {
                                    int f1, int f2, int f3, int f4,
                                    int m1, int m2, int m3, int m4,
                                    LoginUserContext loginUser) {
-        Preconditions.checkState(r1 < r2 && r2 < r3 && r3 < r4, "非法的R取值...");
         try {
             RFM4OrgEntity clone = (RFM4OrgEntity) super.clone();
             clone.rVal = new RVal(r1, r2, r3, r4);
@@ -110,7 +109,7 @@ public class RFM4OrgEntity extends BaseEntity<Long> {
     }
 
     public Map<String, Object> toView() {
-        return this.toMap();
+        return this.toViewMap();
     }
 
     @Override
@@ -125,7 +124,19 @@ public class RFM4OrgEntity extends BaseEntity<Long> {
         param.put("type", valType);
         return param;
     }
-
+    
+    public Map<String, Object> toViewMap() {
+        Map<String, Object> param = super.toMap();
+        param.put("companyId", companyId);
+        param.put("storeId", storeId);
+        param.put("orgId", orgId);
+        param.putAll(rVal.toViewMap());
+        param.putAll(fVal.toMap());
+        param.putAll(mVal.toMap());
+        param.put("type", valType);
+        return param;
+    }
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

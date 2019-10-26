@@ -1,0 +1,2254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="condition">
+        <sql id="query_search_params" dynamic="true">
+            <body><![CDATA[
+         SELECT GROUP_CONCAT(id) AS ints_search_orgIds,search_orgType AS int_search_orgType FROM 
+		(SELECT id,'2' AS search_orgType,CONCAT('org_',parentId) AS parentId,name FROM acp.acp_organization
+			UNION
+		SELECT id,'3' AS search_orgType,CONCAT('org_',organization_id) AS parentId,name FROM acp.acp_store
+		WHERE company_id = 1
+		UNION
+		SELECT id,'4' AS search_orgType,CONCAT('store_',store_id) AS parentId,name FROM acp.acp_employee WHERE company_id = 1
+		) org WHERE 1 = 1
+		<#if int_search_orgType?? && (int_search_orgType == '1' || int_search_orgType == '2')>
+			AND org.parentId  = 'org_${ints_search_orgIds}'
+		</#if>
+		<#if int_search_orgType?? && int_search_orgType == '3'>
+			AND org.parentId  = 'store_${ints_search_orgIds}'
+		</#if>
+          ]]></body>
+        </sql>
+        <sql id="query_next_orgs" dynamic="true">
+            <body><![CDATA[
+        	SELECT 'org' AS 'type',id FROM acp.acp_organization 
+			WHERE parentId IN (${orgIds?join(",")}) AND orgType <> 1
+			UNION
+			SELECT 'store' AS 'type',id FROM acp.acp_store
+			WHERE organization_id IN (${orgIds?join(",")})
+          ]]></body>
+        </sql>
+        <sql id="query_next_emps" dynamic="true">
+            <body><![CDATA[
+        	select id FROM acp.acp_employee WHERE store_id IN (${storeIds?join(",")})
+          ]]></body>
+        </sql>
+    </model>
+    <model id="saleRecord01">
+        <sql id="summary" dynamic="true">
+            <body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.sale_amount,0),0)) AS 'saleTotalAmount',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.sale_amount,0),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.sale_amount,0),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.sale_amount,0),0)) AS 'relativeRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.sale_amount,0),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.sale_amount,0),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.sale_amount,0),0)) AS 'yoyRatio'
+		FROM YG_Statistics.stat_sales_info_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="subsummary" dynamic="true">
+            <body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			<#elseif employeeIds?? && employeeIds?size != 0>
+				'4' AS 'fix_org_type',
+				emp.id AS 'fix_org_id',
+				emp.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IFNULL(stat.sale_amount,0)) AS salesAmount,
+			SUM(IFNULL(stat.vip_sale_amount,0)) AS memberSalesAmout,
+			SUM(IFNULL(stat.vip_sale_amount,0))/SUM(IFNULL(stat.sale_amount,0)) AS memberSalesPercent
+		<#if employeeIds??&&employeeIds?size !=0>
+			FROM YG_Statistics.stat_sales_info_bysg stat
+			INNER JOIN acp.acp_employee emp ON stat.sg_id = emp.id
+		<#else>
+			FROM YG_Statistics.stat_sales_info_bystore stat
+			INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		</#if>
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE stat.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+					AND stat.stat_type = 1					
+				<#elseif searchTimeType== "week">
+					AND (stat.stat_date BETWEEN YG.base_DateConvertStart('${startDate}',2) AND YG.base_DateConvertEnd('${endDate}',2))
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND (stat.stat_date BETWEEN YG.base_DateConvertStart('${startDate}',3) AND YG.base_DateConvertEnd('${endDate}',3))
+					AND stat.stat_type = 3
+				<#else>
+					AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+					AND stat.stat_type = 1
+				</#if>
+			<#else>
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (SELECT id FROM acp.acp_organization WHERE id IN (${orgIds?join(",")}) OR parentId IN (${orgIds?join(",")}))
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		<#elseif employeeIds??&&employeeIds?size !=0>
+			AND emp.id IN (${employeeIds?join(",")})
+		</#if>
+            ]]></body>
+        </sql>
+        <sql id="detail" dynamic="true">
+            <body><![CDATA[
+            SELECT
+            T.fix_org_type,
+			T.fix_org_id,
+			T.fix_org_name,
+			T.companyId,
+			<#if returnType?? && returnType == "total">
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS fix_start_date,
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS fix_end_date,
+			if('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+			<#else>
+			T.fix_start_date,
+			T.fix_end_date,
+			T.statisticTime,
+			</#if>
+			T.salesAmount,
+			T.memberSalesAmout,
+			T.memberSalesAmout/T.salesAmount AS memberSalesPercent
+			FROM (
+			<#if companyId??>
+	 			SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(stat.sale_amount) AS 'salesAmount',
+                    SUM(vip_sale_amount) AS 'memberSalesAmout'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON store.company_id = org.id
+                INNER JOIN YG_Statistics.stat_sales_info_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+					AND stat.stat_type = 1					
+				<#elseif searchTimeType== "week">
+					AND (stat.stat_date BETWEEN YG.base_DateConvertStart('${startDate}',2) AND YG.base_DateConvertEnd('${endDate}',2))
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND (stat.stat_date BETWEEN YG.base_DateConvertStart('${startDate}',3) AND YG.base_DateConvertEnd('${endDate}',3))
+					AND stat.stat_type = 3
+				<#else>
+					AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+					AND stat.stat_type = 1
+				</#if>
+			<#else>
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			</#if>
+			GROUP BY store.company_id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'salesAmount',
+                    0 AS 'memberSalesAmout'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id = :USER_COMPANY_ID
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(stat.sale_amount) AS 'salesAmount',
+                    SUM(vip_sale_amount) AS 'memberSalesAmout'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON FIND_IN_SET(store.organization_id,(SELECT GROUP_CONCAT(id) FROM acp.acp_organization WHERE FIND_IN_SET(org.id,REPLACE(code,'_',','))))
+                INNER JOIN YG_Statistics.stat_sales_info_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND org.id IN (${orgIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'salesAmount',
+                    0 AS 'memberSalesAmout'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id IN (${orgIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if (orgIds?? && orgIds?size != 0) && (storeIds?? && storeIds?size !=0)>
+		UNION
+		</#if>
+		<#if storeIds?? && storeIds?size !=0>
+			SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(stat.sale_amount) AS 'salesAmount',
+                    SUM(vip_sale_amount) AS 'memberSalesAmout'
+                FROM acp.acp_store store
+                INNER JOIN YG_Statistics.stat_sales_info_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND store.id IN (${storeIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'salesAmount',
+                    0 AS 'memberSalesAmout'
+				FROM acp.acp_store store
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				store.id IN (${storeIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if employeeIds??&&employeeIds?size !=0>
+			SELECT
+					'4' AS 'fix_org_type',
+					emp.id AS 'fix_org_id',
+					emp.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(stat.sale_amount) AS 'salesAmount',
+                    SUM(vip_sale_amount) AS 'memberSalesAmout'
+                FROM acp.acp_employee emp
+                INNER JOIN YG_Statistics.stat_sales_info_bysg stat ON stat.sg_id = emp.id
+			WHERE 
+				emp.company_id = :USER_COMPANY_ID
+				AND emp.id IN (${employeeIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY emp.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'4' AS 'fix_org_type',
+					emp.id AS 'fix_org_id',
+					emp.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'salesAmount',
+                    0 AS 'memberSalesAmout'
+				FROM acp.acp_employee emp
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				emp.id IN (${employeeIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY emp.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if> ) T GROUP BY T.fix_org_id
+		 <#if returnType?? && returnType != "total">
+			,T.statisticTime
+		 </#if>
+		<#if order?? && order!="">
+		ORDER BY ${order}
+		</#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="saleRecord02">
+        <sql id="summary" dynamic="true">
+            <body><![CDATA[
+        SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.sale_orders,0),0)) AS 'salesOrders',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.sale_orders,0),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.sale_orders,0),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.sale_orders,0),0)) AS 'relativeRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.sale_orders,0),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.sale_orders,0),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.sale_orders,0),0)) AS 'yoyRatio'
+		FROM YG_Statistics.stat_sales_info_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="subsummary" dynamic="true">
+            <body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			<#elseif employeeIds?? && employeeIds?size != 0>
+				'4' AS 'fix_org_type',
+				emp.id AS 'fix_org_id',
+				emp.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IFNULL(stat.sale_orders,0)) AS 'salesOrders',
+			SUM(IFNULL(stat.sale_goods,0)) AS 'salesGoods',
+			SUM(IFNULL(stat.sale_amount,0))/SUM(IFNULL(sale_persons,0)) AS 'perCustomerPrice',
+			SUM(IFNULL(stat.sale_amount,0))/SUM(IFNULL(sale_goods,0)) AS 'perGoodsPrice'
+		<#if employeeIds??&&employeeIds?size !=0>
+			FROM YG_Statistics.stat_sales_info_bysg stat
+			INNER JOIN acp.acp_employee emp ON stat.sg_id = emp.id
+		<#else>
+			FROM YG_Statistics.stat_sales_info_bystore stat
+			INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		</#if>
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE stat.company_id = :USER_COMPANY_ID
+		AND stat.stat_date BETWEEN '${startDate}' AND '${endDate}'
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (SELECT id FROM acp.acp_organization WHERE id IN (${orgIds?join(",")}) OR parentId IN (${orgIds?join(",")}))
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		<#elseif employeeIds??&&employeeIds?size !=0>
+			AND emp.id IN (${employeeIds?join(",")})
+		</#if>
+            ]]></body>
+        </sql>
+       <sql id="detail" dynamic="true">
+            <body><![CDATA[
+			SELECT 
+			T.fix_org_type,
+			T.fix_org_id,
+			T.fix_org_name,
+			T.companyId,
+			<#if returnType?? && returnType == "total">
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS fix_start_date,
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS fix_end_date,
+			if('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+			<#else>
+			T.fix_start_date,
+			T.fix_end_date,
+			T.statisticTime,
+			</#if>
+			T.salesOrders,
+			T.salesGoods,
+			T.perCustomerPrice,
+			T.perGoodsPrice
+			FROM (
+			<#if companyId??>
+	 			SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.sale_orders,0)) AS 'salesOrders',
+					SUM(IFNULL(stat.sale_goods,0)) AS 'salesGoods',
+					SUM(IFNULL(stat.sale_amount,0))/SUM(IFNULL(sale_persons,0)) AS 'perCustomerPrice',
+					SUM(IFNULL(stat.sale_amount,0))/SUM(IFNULL(sale_goods,0)) AS 'perGoodsPrice'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON store.company_id = org.id
+                INNER JOIN YG_Statistics.stat_sales_info_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.company_id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'salesOrders',
+					0 AS 'salesGoods',
+					0 AS 'perCustomerPrice',
+					0 AS 'perGoodsPrice'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id = :USER_COMPANY_ID
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.sale_orders,0)) AS 'salesOrders',
+					SUM(IFNULL(stat.sale_goods,0)) AS 'salesGoods',
+					SUM(IFNULL(stat.sale_amount,0))/SUM(IFNULL(sale_persons,0)) AS 'perCustomerPrice',
+					SUM(IFNULL(stat.sale_amount,0))/SUM(IFNULL(sale_goods,0)) AS 'perGoodsPrice'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON FIND_IN_SET(store.organization_id,(SELECT GROUP_CONCAT(id) FROM acp.acp_organization WHERE FIND_IN_SET(org.id,REPLACE(code,'_',','))))
+                INNER JOIN YG_Statistics.stat_sales_info_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND org.id IN (${orgIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'salesOrders',
+					0 AS 'salesGoods',
+					0 AS 'perCustomerPrice',
+					0 AS 'perGoodsPrice'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id IN (${orgIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if (orgIds?? && orgIds?size != 0) && (storeIds?? && storeIds?size !=0)>
+		UNION
+		</#if>
+		<#if storeIds?? && storeIds?size !=0>
+			SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.sale_orders,0)) AS 'salesOrders',
+					SUM(IFNULL(stat.sale_goods,0)) AS 'salesGoods',
+					SUM(IFNULL(stat.sale_amount,0))/SUM(IFNULL(sale_persons,0)) AS 'perCustomerPrice',
+					SUM(IFNULL(stat.sale_amount,0))/SUM(IFNULL(sale_goods,0)) AS 'perGoodsPrice'
+                FROM acp.acp_store store
+                INNER JOIN YG_Statistics.stat_sales_info_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND store.id IN (${storeIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'salesOrders',
+					0 AS 'salesGoods',
+					0 AS 'perCustomerPrice',
+					0 AS 'perGoodsPrice'
+				FROM acp.acp_store store
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				store.id IN (${storeIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if employeeIds??&&employeeIds?size !=0>
+			SELECT
+					'4' AS 'fix_org_type',
+					emp.id AS 'fix_org_id',
+					emp.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.sale_orders,0)) AS 'salesOrders',
+					SUM(IFNULL(stat.sale_goods,0)) AS 'salesGoods',
+					SUM(IFNULL(stat.sale_amount,0))/SUM(IFNULL(sale_persons,0)) AS 'perCustomerPrice',
+					SUM(IFNULL(stat.sale_amount,0))/SUM(IFNULL(sale_goods,0)) AS 'perGoodsPrice'
+                FROM acp.acp_employee emp
+                INNER JOIN YG_Statistics.stat_sales_info_bysg stat ON stat.sg_id = emp.id
+			WHERE 
+				emp.company_id = :USER_COMPANY_ID
+				AND emp.id IN (${employeeIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY emp.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'4' AS 'fix_org_type',
+					emp.id AS 'fix_org_id',
+					emp.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'salesOrders',
+					0 AS 'salesGoods',
+					0 AS 'perCustomerPrice',
+					0 AS 'perGoodsPrice'
+				FROM acp.acp_employee emp
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				emp.id IN (${employeeIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY emp.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if> ) T GROUP BY T.fix_org_id
+		<#if returnType?? && returnType != "total">
+			,T.statisticTime
+		 </#if>
+		<#if order?? && order!="">
+		ORDER BY ${order}
+		</#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="saleRecord03">
+         <sql id="summary" dynamic="true">
+            <body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.C01_R_Amount02,0),0)) AS 'returnAmount',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.C01_R_Amount02,0),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.C01_R_Amount02,0),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.C01_R_Amount02,0),0)) AS 'relativeRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.C01_R_Amount02,0),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.C01_R_Amount02,0),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.C01_R_Amount02,0),0)) AS 'yoyRatio'
+		FROM YG_Statistics.stat_sales_return_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="subsummary" dynamic="true">
+            <body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			<#elseif employeeIds?? && employeeIds?size != 0>
+				'4' AS 'fix_org_type',
+				emp.id AS 'fix_org_id',
+				emp.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IFNULL(stat.C01_R_Amount02,0)) AS 'returnAmount',
+			SUM(IFNULL(stat.C01_R_Persons,0)) AS 'returnPersons',
+			SUM(IFNULL(stat.C01_R_Persons,0)) AS 'returnOrders',
+			SUM(IFNULL(stat.C01_R_Amount02,0))/SUM(IFNULL(C01_R_Persons,0)) AS 'perCustomerPrice',
+			SUM(IFNULL(stat.C01_R_Goods,0))/SUM(IFNULL(C01_R_Orders,0)) AS 'liandaiRatio'
+		<#if employeeIds??&&employeeIds?size !=0>
+			FROM YG_Statistics.stat_sales_return_bysg stat
+			INNER JOIN acp.acp_employee emp ON stat.sg_id = emp.id
+		<#else>
+			FROM YG_Statistics.stat_sales_return_bystore stat
+			INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		</#if>
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE stat.company_id = :USER_COMPANY_ID
+		AND stat.stat_date BETWEEN '${startDate}' AND '${endDate}'
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (SELECT id FROM acp.acp_organization WHERE id IN (${orgIds?join(",")}) OR parentId IN (${orgIds?join(",")}))
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		<#elseif employeeIds??&&employeeIds?size !=0>
+			AND emp.id IN (${employeeIds?join(",")})
+		</#if>
+            ]]></body>
+        </sql>
+         <sql id="detail" dynamic="true">
+            <body><![CDATA[
+			SELECT 
+			T.fix_org_type,
+			T.fix_org_id,
+			T.fix_org_name,
+			T.companyId,
+			<#if returnType?? && returnType == "total">
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS fix_start_date,
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS fix_end_date,
+			if('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+			<#else>
+			T.fix_start_date,
+			T.fix_end_date,
+			T.statisticTime,
+			</#if>
+			T.returnAmount,
+			T.returnPersons,
+			T.returnOrders,
+			T.perCustomerPrice,
+			T.liandaiRatio
+			FROM (
+			<#if companyId??>
+	 			SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.C01_R_Amount02,0)) AS 'returnAmount',
+					SUM(IFNULL(stat.C01_R_Persons,0)) AS 'returnPersons',
+					SUM(IFNULL(stat.C01_R_Persons,0)) AS 'returnOrders',
+					SUM(IFNULL(stat.C01_R_Amount02,0))/SUM(IFNULL(C01_R_Persons,0)) AS 'perCustomerPrice',
+					SUM(IFNULL(stat.C01_R_Goods,0))/SUM(IFNULL(C01_R_Orders,0)) AS 'liandaiRatio'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON store.company_id = org.id
+                INNER JOIN YG_Statistics.stat_sales_return_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.company_id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                   	0 AS 'returnAmount',
+					0 AS 'returnPersons',
+					0 AS 'returnOrders',
+					0 AS 'perCustomerPrice',
+					0 AS 'liandaiRatio'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id = :USER_COMPANY_ID
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.C01_R_Amount02,0)) AS 'returnAmount',
+					SUM(IFNULL(stat.C01_R_Persons,0)) AS 'returnPersons',
+					SUM(IFNULL(stat.C01_R_Persons,0)) AS 'returnOrders',
+					SUM(IFNULL(stat.C01_R_Amount02,0))/SUM(IFNULL(C01_R_Persons,0)) AS 'perCustomerPrice',
+					SUM(IFNULL(stat.C01_R_Goods,0))/SUM(IFNULL(C01_R_Orders,0)) AS 'liandaiRatio'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON FIND_IN_SET(store.organization_id,(SELECT GROUP_CONCAT(id) FROM acp.acp_organization WHERE FIND_IN_SET(org.id,REPLACE(code,'_',','))))
+                INNER JOIN YG_Statistics.stat_sales_return_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND org.id IN (${orgIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                   	0 AS 'returnAmount',
+					0 AS 'returnPersons',
+					0 AS 'returnOrders',
+					0 AS 'perCustomerPrice',
+					0 AS 'liandaiRatio'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id IN (${orgIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if (orgIds?? && orgIds?size != 0) && (storeIds?? && storeIds?size !=0)>
+		UNION
+		</#if>
+		<#if storeIds?? && storeIds?size !=0>
+			SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.C01_R_Amount02,0)) AS 'returnAmount',
+					SUM(IFNULL(stat.C01_R_Persons,0)) AS 'returnPersons',
+					SUM(IFNULL(stat.C01_R_Persons,0)) AS 'returnOrders',
+					SUM(IFNULL(stat.C01_R_Amount02,0))/SUM(IFNULL(C01_R_Persons,0)) AS 'perCustomerPrice',
+					SUM(IFNULL(stat.C01_R_Goods,0))/SUM(IFNULL(C01_R_Orders,0)) AS 'liandaiRatio'
+                FROM acp.acp_store store
+                INNER JOIN YG_Statistics.stat_sales_return_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND store.id IN (${storeIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                  	0 AS 'returnAmount',
+					0 AS 'returnPersons',
+					0 AS 'returnOrders',
+					0 AS 'perCustomerPrice',
+					0 AS 'liandaiRatio'
+				FROM acp.acp_store store
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				store.id IN (${storeIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if employeeIds??&&employeeIds?size !=0>
+			SELECT
+					'4' AS 'fix_org_type',
+					emp.id AS 'fix_org_id',
+					emp.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.C01_R_Amount02,0)) AS 'returnAmount',
+					SUM(IFNULL(stat.C01_R_Persons,0)) AS 'returnPersons',
+					SUM(IFNULL(stat.C01_R_Persons,0)) AS 'returnOrders',
+					SUM(IFNULL(stat.C01_R_Amount02,0))/SUM(IFNULL(C01_R_Persons,0)) AS 'perCustomerPrice',
+					SUM(IFNULL(stat.C01_R_Goods,0))/SUM(IFNULL(C01_R_Orders,0)) AS 'liandaiRatio'
+                FROM acp.acp_employee emp
+                INNER JOIN YG_Statistics.stat_sales_return_bysg stat ON stat.sg_id = emp.id
+			WHERE 
+				emp.company_id = :USER_COMPANY_ID
+				AND emp.id IN (${employeeIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY emp.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'4' AS 'fix_org_type',
+					emp.id AS 'fix_org_id',
+					emp.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                   	0 AS 'returnAmount',
+					0 AS 'returnPersons',
+					0 AS 'returnOrders',
+					0 AS 'perCustomerPrice',
+					0 AS 'liandaiRatio'
+				FROM acp.acp_employee emp
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				emp.id IN (${employeeIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY emp.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if> ) T GROUP BY T.fix_org_id
+		<#if returnType?? && returnType != "total">
+			,T.statisticTime
+		 </#if>
+		<#if order?? && order!="">
+		ORDER BY ${order}
+		</#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="memberDetail">
+        <sql id="totalBySex" dynamic="true">
+            <body><![CDATA[
+		 SELECT cm.company_id AS 'companyId',csm.store_id AS 'storeId',cm.id AS 'memberId',
+                (CASE WHEN cm.sex = 1 THEN 1
+                      WHEN cm.sex = 2 THEN 2
+                      ELSE 3 END ) AS 'sex'
+          FROM acp.crm_member cm
+    INNER JOIN acp.crm_store_member csm ON csm.member_id = cm.id
+            ]]></body>
+        </sql>
+        <sql id="totalByAge" dynamic="true">
+            <body><![CDATA[
+		SELECT temp.companyId,temp.storeId,temp.memberId, temp.birthday,
+               (CASE WHEN temp.birthday = '--' THEN -1
+       		    ELSE TIMESTAMPDIFF(YEAR,temp.birthday,NOW())+1 END) AS 'age'
+          FROM ( SELECT cm.company_id AS 'companyId',csm.store_id AS 'storeId',cm.id AS 'memberId',
+						( CASE WHEN (IFNULL(cm.calendarType,1)= 1 AND cm.birthday IS NOT NULL) THEN cm.birthday
+							   WHEN (cm.calendarType = 2 AND cm.lunarBirthday IS NOT NULL) THEN ( SELECT STR_TO_DATE(MAX(cale.gregorian_calendar),'%Y%m%d')
+								                                                                    FROM YG_Statistics.calendar_g_c_index  cale
+								                                                                   WHERE cale.lunar_calendar = DATE_FORMAT(cm.lunarBirthday,'%Y%m%d')
+								                                                                GROUP BY cale.lunar_calendar )
+							   ELSE '--' END ) AS 'birthday'
+                   FROM acp.crm_member cm
+    INNER JOIN acp.crm_store_member csm ON csm.member_id = cm.id
+         WHERE csm.store_id IS NOT NULL ) AS temp
+            ]]></body>
+        </sql>
+        <sql id="allNumTotal" dynamic="true">
+            <body><![CDATA[
+        	SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			stat.total_members AS 'allNums',
+			'--' AS 'allHbRatio',
+			'--' AS 'allTbRatio'
+		FROM YG_Statistics.stat_member_total_nums_update_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="addNumTotal" dynamic="true">
+            <body><![CDATA[
+       	SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.new_members,0),0)) AS 'addNums',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.new_members,0),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.new_members,0),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.new_members,0),0)) AS 'addHbRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.new_members,0),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.new_members,0),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.new_members,0),0)) AS 'addTbRatio'
+		FROM YG_Statistics.stat_member_add_nums_update_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="sleepNumTotal" dynamic="true">
+            <body><![CDATA[
+        SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.c_sleep_members,0),0)) AS 'sleepNums',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.c_sleep_members,0),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.c_sleep_members,0),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.c_sleep_members,0),0)) AS 'sleepHbRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.c_sleep_members,0),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.c_sleep_members,0),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.c_sleep_members,0),0)) AS 'sleepTbRatio'
+		FROM YG_Statistics.stat_member_sleep_nums_update_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="returnNumTotal" dynamic="true">
+            <body><![CDATA[
+       SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.C01_R_Persons,0),0)) AS 'returnNums',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.C01_R_Persons,0),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.C01_R_Persons,0),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.C01_R_Persons,0),0)) AS 'returnHbRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.C01_R_Persons,0),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.C01_R_Persons,0),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.C01_R_Persons,0),0)) AS 'returnTbRatio'
+		FROM YG_Statistics.stat_sales_return_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="activeNumTotal" dynamic="true">
+            <body><![CDATA[
+        SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.c_active_persons,0),0)) AS 'activeNums',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.c_active_persons,0),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.c_active_persons,0),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.c_active_persons,0),0)) AS 'activeHbRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.c_active_persons,0),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.c_active_persons,0),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.c_active_persons,0),0)) AS 'activeTbRatio'
+		FROM YG_Statistics.stat_member_active_nums_update_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="realAddNumTotal" dynamic="true">
+            <body><![CDATA[
+          SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',stat.addNum -stat.sleepNum+stat.activeNum,0)) AS 'realAddNums',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',stat.addNum -stat.sleepNum+stat.activeNum,0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',stat.addNum -stat.sleepNum+stat.activeNum,0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',stat.addNum -stat.sleepNum+stat.activeNum,0)) AS 'realAddHbRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',stat.addNum -stat.sleepNum+stat.activeNum,0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',stat.addNum -stat.sleepNum+stat.activeNum,0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',stat.addNum -stat.sleepNum+stat.activeNum,0)) AS 'realAddTbRatio'
+		FROM  (
+						SELECT cal.*,
+						total.total_members AS 'totalNum',
+						add_new.new_members AS 'addNum',
+						sleep.c_sleep_members AS 'sleepNum',
+						active.c_active_persons AS 'activeNum',
+						return_sales.C01_R_Persons AS 'reryuesNum',
+						store.id AS 'store_id'
+						FROM YG_Statistics.stat_date_list cal 
+						LEFT JOIN acp.acp_store store ON  store.company_id = 1 
+						LEFT JOIN YG_Statistics.stat_member_total_nums_update_bystore total
+						ON total.stat_date = cal.stat_date AND total.stat_date02 = cal.stat_date02 AND total.stat_type = cal.stat_type AND total.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_add_nums_update_bystore add_new
+						ON add_new.stat_date = cal.stat_date AND add_new.stat_date02 = cal.stat_date02 AND add_new.stat_type = cal.stat_type AND add_new.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_sleep_nums_update_bystore sleep
+						ON sleep.stat_date = cal.stat_date AND sleep.stat_date02 = cal.stat_date02 AND sleep.stat_type = cal.stat_type AND sleep.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_active_nums_update_bystore active
+						ON active.stat_date = cal.stat_date AND active.stat_date02 = cal.stat_date02 AND active.stat_type = cal.stat_type AND active.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_sales_return_bystore return_sales
+						ON return_sales.stat_date = cal.stat_date AND return_sales.stat_date02 = cal.stat_date02 AND return_sales.stat_type = cal.stat_type AND return_sales.store_id = store.id
+						WHERE cal.stat_date BETWEEN '${startDate}' AND '${endDate}') stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="subsummary" dynamic="true">
+            <body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',			
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			(SELECT COUNT(DISTINCT stat.member_id) 
+					FROM acp.crm_store_member stat
+					INNER JOIN acp.acp_store aas ON stat.store_id = aas.id						
+					LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id 
+					WHERE aas.company_id = :USER_COMPANY_ID
+					<#if orgIds?? && orgIds?size != 0>
+						AND aas.organization_id IN (${orgIds?join(",")})
+					<#elseif storeIds?? && storeIds?size != 0>
+						AND aas.id IN (${storeIds?join(",")})		
+					</#if>
+					 ) AS 'totalMembers',
+			SUM(IFNULL(stat.addNum,0)) AS 'addMembers',
+			SUM(IFNULL(stat.sleepNum,0)) AS 'sleepMembers',
+			SUM(IFNULL(stat.reryuesNum,0)) AS 'reOrderMembers',
+			SUM(IFNULL(stat.activeNum,0)) AS 'avticeMembers',
+			IFNULL(SUM(stat.addNum),0)-IFNULL(SUM(stat.sleepNum),0)+IFNULL(SUM(stat.activeNum),0) AS 'actualAddMembers'
+			FROM (
+						SELECT cal.*,
+						total.total_members AS 'totalNum',
+						add_new.new_members AS 'addNum',
+						sleep.c_sleep_members AS 'sleepNum',
+						active.c_active_persons AS 'activeNum',
+						return_sales.C01_R_Persons AS 'reryuesNum',
+						store.id AS 'store_id'
+						FROM YG_Statistics.stat_date_list cal 
+						LEFT JOIN acp.acp_store store ON  store.company_id = 1 
+						LEFT JOIN YG_Statistics.stat_member_total_nums_update_bystore total
+						ON total.stat_date = cal.stat_date AND total.stat_date02 = cal.stat_date02 AND total.stat_type = cal.stat_type AND total.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_add_nums_update_bystore add_new
+						ON add_new.stat_date = cal.stat_date AND add_new.stat_date02 = cal.stat_date02 AND add_new.stat_type = cal.stat_type AND add_new.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_sleep_nums_update_bystore sleep
+						ON sleep.stat_date = cal.stat_date AND sleep.stat_date02 = cal.stat_date02 AND sleep.stat_type = cal.stat_type AND sleep.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_active_nums_update_bystore active
+						ON active.stat_date = cal.stat_date AND active.stat_date02 = cal.stat_date02 AND active.stat_type = cal.stat_type AND active.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_sales_return_bystore return_sales
+						ON return_sales.stat_date = cal.stat_date AND return_sales.stat_date02 = cal.stat_date02 AND return_sales.stat_type = cal.stat_type AND return_sales.store_id = store.id
+						WHERE cal.stat_date BETWEEN '${startDate}' AND '${endDate}') stat
+			INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		AND stat.stat_date BETWEEN '${startDate}' AND '${endDate}'
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (SELECT id FROM acp.acp_organization WHERE id IN (${orgIds?join(",")}) OR parentId IN (${orgIds?join(",")}))
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})		
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+         <sql id="detail" dynamic="true">
+            <body><![CDATA[
+			SELECT 
+			T.fix_org_type,
+			T.fix_org_id,
+			T.fix_org_name,
+			T.companyId,
+			<#if returnType?? && returnType == "total">
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS fix_start_date,
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS fix_end_date,
+			if('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+			<#else>
+			T.fix_start_date,
+			T.fix_end_date,
+			T.statisticTime,
+			</#if>
+			T.totalMembers,
+			T.addMembers,
+			T.sleepMembers,
+			T.reOrderMembers,
+			T.avticeMembers,
+			T.actualAddMembers
+			FROM (
+			<#if companyId??>
+	 			SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.totalNum,0)) AS 'totalMembers',
+					SUM(IFNULL(stat.addNum,0)) AS 'addMembers',
+					SUM(IFNULL(stat.sleepNum,0)) AS 'sleepMembers',
+					SUM(IFNULL(stat.reryuesNum,0)) AS 'reOrderMembers',
+					SUM(IFNULL(stat.activeNum,0)) AS 'avticeMembers',
+					IFNULL(SUM(stat.addNum),0)-IFNULL(SUM(stat.sleepNum),0)+IFNULL(SUM(stat.activeNum),0) AS 'actualAddMembers'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON store.company_id = org.id
+                INNER JOIN (
+						SELECT cal.*,
+						total.total_members AS 'totalNum',
+						add_new.new_members AS 'addNum',
+						sleep.c_sleep_members AS 'sleepNum',
+						active.c_active_persons AS 'activeNum',
+						return_sales.C01_R_Persons AS 'reryuesNum',
+						store.id AS 'store_id'
+						FROM YG_Statistics.stat_date_list cal 
+						LEFT JOIN acp.acp_store store ON  store.company_id = 1 
+						LEFT JOIN YG_Statistics.stat_member_total_nums_update_bystore total
+						ON total.stat_date = cal.stat_date AND total.stat_date02 = cal.stat_date02 AND total.stat_type = cal.stat_type AND total.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_add_nums_update_bystore add_new
+						ON add_new.stat_date = cal.stat_date AND add_new.stat_date02 = cal.stat_date02 AND add_new.stat_type = cal.stat_type AND add_new.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_sleep_nums_update_bystore sleep
+						ON sleep.stat_date = cal.stat_date AND sleep.stat_date02 = cal.stat_date02 AND sleep.stat_type = cal.stat_type AND sleep.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_active_nums_update_bystore active
+						ON active.stat_date = cal.stat_date AND active.stat_date02 = cal.stat_date02 AND active.stat_type = cal.stat_type AND active.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_sales_return_bystore return_sales
+						ON return_sales.stat_date = cal.stat_date AND return_sales.stat_date02 = cal.stat_date02 AND return_sales.stat_type = cal.stat_type AND return_sales.store_id = store.id
+						WHERE cal.stat_date BETWEEN '${startDate}' AND '${endDate}') stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.company_id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                   	0 AS 'totalMembers',
+					0 AS 'addMembers',
+					0 AS 'sleepMembers',
+					0 AS 'reOrderMembers',
+					0 AS 'avticeMembers',
+					0 AS 'actualAddMembers'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id = :USER_COMPANY_ID
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.totalNum,0)) AS 'totalMembers',
+					SUM(IFNULL(stat.addNum,0)) AS 'addMembers',
+					SUM(IFNULL(stat.sleepNum,0)) AS 'sleepMembers',
+					SUM(IFNULL(stat.reryuesNum,0)) AS 'reOrderMembers',
+					SUM(IFNULL(stat.activeNum,0)) AS 'avticeMembers',
+					IFNULL(SUM(stat.addNum),0)-IFNULL(SUM(stat.sleepNum),0)+IFNULL(SUM(stat.activeNum),0) AS 'actualAddMembers'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON FIND_IN_SET(store.organization_id,(SELECT GROUP_CONCAT(id) FROM acp.acp_organization WHERE FIND_IN_SET(org.id,REPLACE(code,'_',','))))
+                INNER JOIN (
+						SELECT cal.*,
+						total.total_members AS 'totalNum',
+						add_new.new_members AS 'addNum',
+						sleep.c_sleep_members AS 'sleepNum',
+						active.c_active_persons AS 'activeNum',
+						return_sales.C01_R_Persons AS 'reryuesNum',
+						store.id AS 'store_id'
+						FROM YG_Statistics.stat_date_list cal 
+						LEFT JOIN acp.acp_store store ON  store.company_id = 1 
+						LEFT JOIN YG_Statistics.stat_member_total_nums_update_bystore total
+						ON total.stat_date = cal.stat_date AND total.stat_date02 = cal.stat_date02 AND total.stat_type = cal.stat_type AND total.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_add_nums_update_bystore add_new
+						ON add_new.stat_date = cal.stat_date AND add_new.stat_date02 = cal.stat_date02 AND add_new.stat_type = cal.stat_type AND add_new.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_sleep_nums_update_bystore sleep
+						ON sleep.stat_date = cal.stat_date AND sleep.stat_date02 = cal.stat_date02 AND sleep.stat_type = cal.stat_type AND sleep.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_active_nums_update_bystore active
+						ON active.stat_date = cal.stat_date AND active.stat_date02 = cal.stat_date02 AND active.stat_type = cal.stat_type AND active.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_sales_return_bystore return_sales
+						ON return_sales.stat_date = cal.stat_date AND return_sales.stat_date02 = cal.stat_date02 AND return_sales.stat_type = cal.stat_type AND return_sales.store_id = store.id
+						WHERE cal.stat_date BETWEEN '${startDate}' AND '${endDate}') stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND org.id IN (${orgIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                   	0 AS 'totalMembers',
+					0 AS 'addMembers',
+					0 AS 'sleepMembers',
+					0 AS 'reOrderMembers',
+					0 AS 'avticeMembers',
+					0 AS 'actualAddMembers'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id IN (${orgIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if (orgIds?? && orgIds?size != 0) && (storeIds?? && storeIds?size !=0)>
+		UNION
+		</#if>
+		<#if storeIds?? && storeIds?size !=0>
+			SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.totalNum,0)) AS 'totalMembers',
+					SUM(IFNULL(stat.addNum,0)) AS 'addMembers',
+					SUM(IFNULL(stat.sleepNum,0)) AS 'sleepMembers',
+					SUM(IFNULL(stat.reryuesNum,0)) AS 'reOrderMembers',
+					SUM(IFNULL(stat.activeNum,0)) AS 'avticeMembers',
+					IFNULL(SUM(stat.addNum),0)-IFNULL(SUM(stat.sleepNum),0)+IFNULL(SUM(stat.activeNum),0) AS 'actualAddMembers'
+                FROM acp.acp_store store
+                INNER JOIN (
+						SELECT cal.*,
+						total.total_members AS 'totalNum',
+						add_new.new_members AS 'addNum',
+						sleep.c_sleep_members AS 'sleepNum',
+						active.c_active_persons AS 'activeNum',
+						return_sales.C01_R_Persons AS 'reryuesNum',
+						store.id AS 'store_id'
+						FROM YG_Statistics.stat_date_list cal 
+						LEFT JOIN acp.acp_store store ON  store.company_id = 1 
+						LEFT JOIN YG_Statistics.stat_member_total_nums_update_bystore total
+						ON total.stat_date = cal.stat_date AND total.stat_date02 = cal.stat_date02 AND total.stat_type = cal.stat_type AND total.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_add_nums_update_bystore add_new
+						ON add_new.stat_date = cal.stat_date AND add_new.stat_date02 = cal.stat_date02 AND add_new.stat_type = cal.stat_type AND add_new.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_sleep_nums_update_bystore sleep
+						ON sleep.stat_date = cal.stat_date AND sleep.stat_date02 = cal.stat_date02 AND sleep.stat_type = cal.stat_type AND sleep.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_member_active_nums_update_bystore active
+						ON active.stat_date = cal.stat_date AND active.stat_date02 = cal.stat_date02 AND active.stat_type = cal.stat_type AND active.store_id = store.id
+						LEFT JOIN YG_Statistics.stat_sales_return_bystore return_sales
+						ON return_sales.stat_date = cal.stat_date AND return_sales.stat_date02 = cal.stat_date02 AND return_sales.stat_type = cal.stat_type AND return_sales.store_id = store.id
+						WHERE cal.stat_date BETWEEN '${startDate}' AND '${endDate}') stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND store.id IN (${storeIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                  	0 AS 'totalMembers',
+					0 AS 'addMembers',
+					0 AS 'sleepMembers',
+					0 AS 'reOrderMembers',
+					0 AS 'avticeMembers',
+					0 AS 'actualAddMembers'
+				FROM acp.acp_store store
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				store.id IN (${storeIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>	
+		</#if> ) T GROUP BY T.fix_org_id
+		<#if returnType?? && returnType != "total">
+			,T.statisticTime
+		 </#if>
+		<#if order?? && order!="">
+		ORDER BY ${order}
+		</#if>
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

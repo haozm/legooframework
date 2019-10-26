@@ -1,6 +1,6 @@
 package com.legooframework.model.crmadapter.entity;
 
-import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,17 +13,17 @@ import java.util.Optional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
-        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
+        locations = { ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-membercare-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml"}
 )
 public class CrmMemberEntityActionTest {
 
     @Test
-    public void loadAllByStore() {
+    public void loadByCompany() {
         Optional<CrmOrganizationEntity> company = organizationEntityAction.findCompanyById(1);
-        Optional<CrmStoreEntity> ss = storeAction.findById(company.get(), 10);
-        Optional<List<CrmEmployeeEntity>> aa = employeeAction.loadAllByStore(ss.get());
+        Optional<List<CrmMemberEntity>> aa = memberEntityAction.loadByCompany(company.get(),
+                Lists.newArrayList(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13));
         System.out.println(aa.get());
     }
 
@@ -33,4 +33,6 @@ public class CrmMemberEntityActionTest {
     private CrmStoreEntityAction storeAction;
     @Autowired
     private CrmEmployeeEntityAction employeeAction;
+    @Autowired
+    private CrmMemberEntityAction memberEntityAction;
 }

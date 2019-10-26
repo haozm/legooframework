@@ -21,6 +21,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -47,11 +48,29 @@ public class WebocxController extends BaseController {
             logger.debug(String.format("[URI = %s] RequestBody->%s", request.getRequestURI(), requestBody));
         LoginUserContext user = loadLoginUser(request);
         String modelId = MapUtils.getString(requestBody, "modelId");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(modelId), "入参 modelId");
+        String pageId = null;
+        if (modelId.indexOf('.') != -1) {
+            String args[] = StringUtils.split(modelId, '.');
+            modelId = args[0];
+            pageId = args[1];
+        }
         String type = MapUtils.getString(requestBody, "type");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(modelId), "请求配置模型ID不可以为空值...");
-        Optional<Map<String, Object>> model = getBean(LegooWebOcxService.class, request).loadOcxById(modelId, user);
+        Optional<Map<String, Object>> model = getBean(LegooWebOcxService.class, request).loadOcxById(modelId, pageId, user);
         Preconditions.checkState(model.isPresent(), "Id=%s 对应的配置项不存在...", modelId);
         return wrapperResponse(model.get());
+    }
+    
+    
+    private String putMapAndGetStmtId(Map<String,Object> params,String stmtId) {
+    	if(stmtId.indexOf(":") != -1) {
+    		String[] splits = stmtId.split(":");
+    		params.put("function", splits[1]);
+    		return splits[0];
+    	}else {
+    		return stmtId;
+    	}
     }
 
     @RequestMapping(value = "/{model}/{stmtId}/list.json")
@@ -63,8 +82,9 @@ public class WebocxController extends BaseController {
             logger.debug(String.format("[URI = %s] RequestBody->%s", request.getRequestURI(), requestBody));
         LoginUserContext user = loadLoginUser(request);
         Map<String, Object> params = user.toMap();
+        String queryId = putMapAndGetStmtId(params,stmtId);
         if (MapUtils.isNotEmpty(requestBody)) params.putAll(requestBody);
-        Optional<List<Map<String, Object>>> mapList = querySupport(request).queryForList(model, stmtId, requestBody);
+        Optional<List<Map<String, Object>>> mapList = querySupport(request).queryForList(model, queryId, requestBody);
         return mapList.isPresent() ? wrapperResponse(mapList.get()) : wrapperEmptyResponse();
     }
 
@@ -77,12 +97,13 @@ public class WebocxController extends BaseController {
             logger.debug(String.format("[URI = %s] RequestBody->%s", request.getRequestURI(), requestBody));
         LoginUserContext user = loadLoginUser(request);
         Map<String, Object> params = user.toMap();
+        String queryId = putMapAndGetStmtId(params,stmtId);
         if (MapUtils.isNotEmpty(requestBody)) params.putAll(requestBody);
         int pageNum = MapUtils.getIntValue(requestBody, "pageNum", 0);
         int pageSize = MapUtils.getIntValue(requestBody, "pageSize", 10);
         requestBody.remove("pageNum");
         requestBody.remove("pageSize");
-        PagingResult paging = querySupport(request).queryForPage(model, stmtId, pageNum, pageSize, params);
+        PagingResult paging = querySupport(request).queryForPage(model, queryId, pageNum, pageSize, params);
         return wrapperResponse(paging.toMap());
     }
 
@@ -133,18 +154,18 @@ public class WebocxController extends BaseController {
         if (logger.isDebugEnabled() && !item.isPresent())
             logger.debug(String.format("groupId=%s 对应的 分组信息  不存在或者授权失败....", groupId));
         if (!item.isPresent()) return wrapperResponse(PagingResult.emptyPagingResult("", ""));
-        Map<String, Object> params = loginUser.toMap();
+        Map<String, Object> source = loginUser.toMap();
         if (MapUtils.isNotEmpty(requestBody)) {
             // 排除 空字符串
             Set<String> keys = Sets.newHashSet(requestBody.keySet());
             for (String key : keys) {
                 if (Strings.isNullOrEmpty(MapUtils.getString(requestBody, key))) requestBody.remove(key);
             }
-            params.putAll(requestBody);
+            source.putAll(requestBody);
         }
-        item.get().getPageDefined().holdParam(params);
+        item.get().getPageDefined().holdParam(source);
         PagingResult paging = querySupport(request).queryForPage(item.get().getSqlModel(), item.get().getSqlStmtId(),
-                pageNum, pageSize, params);
+                pageNum, pageSize, source);
         return wrapperResponse(paging.toMap());
     }
 

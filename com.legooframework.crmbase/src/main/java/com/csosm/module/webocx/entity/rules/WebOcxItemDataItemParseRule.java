@@ -11,9 +11,10 @@ class WebOcxItemDataItemParseRule extends BaseParseRule {
     public void begin(String namespace, String name, Attributes attributes) throws Exception {
         String label = AttributesUtil.getValue(name, attributes, "label");
         String value = AttributesUtil.getValue(name, attributes, "value");
+        Optional<String> unitOpt = AttributesUtil.getIfPresent(attributes, "unit");
         Optional<String> checked = AttributesUtil.getIfPresent(attributes, "checked");
         WebOcxBuilder builder = getDigester().peek();
-        builder.setDatas(label, value, checked.orNull());
+        builder.setDatas(label, value, checked.orNull(),unitOpt.orNull());
     }
 
     @Override

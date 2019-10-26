@@ -33,12 +33,14 @@ public class EmployeeEntity extends BaseEntity<Integer> implements Replaceable {
     private Date birthday;
     private final Integer companyId;
     private final Integer organizationId;
-    private final Integer storeId;
+    private Integer storeId;
     private Collection<Integer> roleIds;
     private final String loginName;
     private String passowrd;
     // 2 女 1 男
     private int sex;
+    //迁移前职员ID
+    private String oldEmployeeId;
 
     @Override
     protected Map<String, Object> toMap() {
@@ -57,18 +59,19 @@ public class EmployeeEntity extends BaseEntity<Integer> implements Replaceable {
         params.put("remark", remark);
         params.put("birthday", birthday);
         params.put("loginName", loginName);
+        params.put("oldEmployeeId", this.oldEmployeeId);
         params.put("roleIds", roleIds != null ? Joiner.on(",").join(roleIds) : "");
         return params;
     }
 
     public static EmployeeEntity anonymous() {
-        return new EmployeeEntity(-1, 1, 2, "匿名", null, null, "****", null, null, null, 1, null, null, 1, null);
+        return new EmployeeEntity(-1, 1, 2, "匿名", null, null, "****", null, null, null, 1, null, null, 1, null,"");
     }
 
     EmployeeEntity(Integer id, Integer employeeState, Integer employeeType, String userName,
                    Integer companyId, Integer storeId, String passowrd, Integer organizationId, String loginName,
                    String phoneNo, int sex, String remark, Date birthday, int state,
-                   Collection<Integer> roleIds) {
+                   Collection<Integer> roleIds,String oldEmployeeId) {
         super(id);
         this.loginUserId = -1;
         this.state = state;
@@ -85,6 +88,7 @@ public class EmployeeEntity extends BaseEntity<Integer> implements Replaceable {
         this.sex = sex;
         this.loginName = loginName;
         this.roleIds = CollectionUtils.isEmpty(roleIds) ? null : Sets.newHashSet(roleIds);
+        this.oldEmployeeId = oldEmployeeId;
     }
 
     static EmployeeEntity addStoreEmployee(String userName, String passowrd, String loginName, String phoneNo,
@@ -96,7 +100,7 @@ public class EmployeeEntity extends BaseEntity<Integer> implements Replaceable {
         EmployeeEntity employeeEntity = new EmployeeEntity(-1, 1, 2, userName,
                 store.getCompanyId().or(-1), store.getId(), passowrd, null, loginName,
                 phoneNo, sex, remarke, birthday, EMPLOYEE_STATE_ON,
-                roles.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+                roles.stream().map(BaseEntity::getId).collect(Collectors.toList()),null);
         employeeEntity.setCreateUserId(loginUser.getUserId());
         return employeeEntity;
     }
@@ -110,13 +114,13 @@ public class EmployeeEntity extends BaseEntity<Integer> implements Replaceable {
      * @param loginUser
      * @return
      */
-    static EmployeeEntity addAdminEmployee(String passowrd, String loginName, OrganizationEntity company,
+    static EmployeeEntity addAdminEmployee(String passowrd, String loginName,String userName,String phoneNo,OrganizationEntity company,
                                            LoginUserContext loginUser) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(loginName), "新增用户登陆账号不可以为空...");
         Preconditions.checkNotNull(company, "注册人所属公司不可以为空...");
-        EmployeeEntity employeeEntity = new EmployeeEntity(-1, 1, 2, String.format("注册人[%s]", company.getName()),
+        EmployeeEntity employeeEntity = new EmployeeEntity(-1, 1, 2, userName,
                 company.getMyCompanyId(), null, passowrd, null, loginName,
-                null, 1, "公司注册人", null, EMPLOYEE_STATE_ON, Lists.newArrayList(1));
+                phoneNo, 1, "公司注册人", null, EMPLOYEE_STATE_ON, Lists.newArrayList(1),null);
         employeeEntity.setCreateUserId(loginUser.getUserId());
         return employeeEntity;
     }
@@ -130,7 +134,7 @@ public class EmployeeEntity extends BaseEntity<Integer> implements Replaceable {
                 loginUser.getCompany().get().getId(),
                 null, passowrd, org == null ? -1 : org.getId(), loginName,
                 phoneNo, sex, remarke, birthday, EMPLOYEE_STATE_ON,
-                roles.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+                roles.stream().map(BaseEntity::getId).collect(Collectors.toList()),null);
         employeeEntity.setCreateUserId(loginUser.getUserId());
         return employeeEntity;
     }
@@ -218,7 +222,43 @@ public class EmployeeEntity extends BaseEntity<Integer> implements Replaceable {
             throw new IllegalArgumentException("复制职员实体异常");
         }
     }
-
+    
+    /**
+     * 迁移门店
+     * @param store
+     * @return
+     */
+    public EmployeeEntity switchStore(StoreEntity store) {
+    	Preconditions.checkNotNull(store, "门店不能为空");
+    	Preconditions.checkArgument(store.getCompanyId().isPresent(), 
+    			String.format("门店[%s]无公司信息", store.getId()));
+    	Preconditions.checkState(this.companyId.intValue() == 
+    			store.getCompanyId().get().intValue(), "不允许跨公司迁移职员");
+    	this.employeeState = EMPLOYEE_STATE_OFF;
+    	EmployeeEntity clone = null;
+    	try {
+			clone = (EmployeeEntity) this.clone();
+			clone.storeId = store.getId();
+			clone.oldEmployeeId = this.getId().toString();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+    	return clone;
+    }
+    
+    public boolean hasOldEmployee() {
+    	return !Strings.isNullOrEmpty(oldEmployeeId);
+    }
+    
+    public boolean isOldEmployee(EmployeeEntity employee) {
+    	return !Strings.isNullOrEmpty(this.oldEmployeeId)
+    			&&Integer.parseInt(this.oldEmployeeId) == employee.getId();
+    }
+    
+    public void setOldEmployee(EmployeeEntity employee) {
+    	this.oldEmployeeId = employee.getId().toString();
+    }
+    
     public int getSex() {
         return sex;
     }
@@ -259,10 +299,15 @@ public class EmployeeEntity extends BaseEntity<Integer> implements Replaceable {
         return Optional.fromNullable(organizationId);
     }
 
+    @Deprecated
     public Optional<Integer> getCompanyId() {
         return Optional.fromNullable(companyId);
     }
-
+    
+    public Integer getExistCompanyId() {
+    	return this.companyId;
+    }
+    
     public boolean isEnabled() {
         return EMPLOYEE_STATE_ON == this.employeeState;
     }
@@ -327,6 +372,14 @@ public class EmployeeEntity extends BaseEntity<Integer> implements Replaceable {
         this.setCreateUserId(loginUser.getUserId());
     }
 
+    public String getOldEmployeeId() {
+    	return this.oldEmployeeId;
+    }
+    
+    public void setCreateUser(LoginUserContext user) {
+    	this.setCreateUserId(user.getUserId());
+    }
+    
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)

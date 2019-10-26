@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -67,13 +68,12 @@ public class MvcController extends BaseController {
         if (getBean(StoreViewEntityAction.class, request).hasStoreView(loginUser.getEmployee())) {
             StoreTreeViewDto treeNode = getBean(StoreViewService.class, request)
                     .loadDataPermissionTreeByUser(loginUser.getEmployee(), loginUser);
-            return wrapperResponse(new StoreTreeViewDto[]{treeNode});
+            return wrapperResponse(new Object[]{treeNode.toMap()});
         }
         if (Strings.isNullOrEmpty(hasStore) || StringUtils.equals("true", hasStore)) {
             Optional<OrgTreeViewDto> treeDto = baseAdapterServer.loadOrgTreeWithStoreByOrgId(
                     loginUser.getOrganization().isPresent() ? loginUser.getOrganization().get().getId()
-                            : loginUser.getCompany().get().getId(),
-                    loginUser);
+                            : loginUser.getCompany().get().getId(), loginUser);
             if (!treeDto.isPresent())
                 return wrapperResponse(new String[0]);
             if (logger.isDebugEnabled())
@@ -181,6 +181,24 @@ public class MvcController extends BaseController {
         return wrapperResponse(retMap);
     }
 
+    private Map<String, Object> getDataWord(Map<String, Object> requestBody) {
+        requestBody.remove("comName");
+        requestBody.remove("comShortName");
+        requestBody.remove("loginName");
+        if (requestBody.containsKey("companyId")) {
+            requestBody.remove("companyId");
+        }
+        if (requestBody.containsKey("linkMan"))
+            requestBody.remove("linkMan");
+        if (requestBody.containsKey("linkPhone"))
+            requestBody.remove("linkPhone");
+        if (requestBody.containsKey("industryType"))
+            requestBody.remove("industryType");
+        if (requestBody.containsKey("nintyServiceDate"))
+            requestBody.remove("nintyServiceDate");
+        return requestBody;
+    }
+
     @RequestMapping(value = "/web/company/register.json")
     public Map<String, Object> registerCompany(@RequestBody Map<String, Object> requestBody,
                                                HttpServletRequest request) {
@@ -198,11 +216,10 @@ public class MvcController extends BaseController {
         String linkMan = MapUtils.getString(requestBody, "linkMan");
         String linkPhone = MapUtils.getString(requestBody, "linkPhone");
         Integer industryType = MapUtils.getInteger(requestBody, "industryType");
-
         TransactionStatus startTx = startTx("registerCompany");
         try {
             getBean(BaseModelServer.class, request).registerCompany(user, companyId, comName, comShortName,
-                    loginName, linkMan, linkPhone, industryType);
+                    loginName, linkMan, linkPhone, industryType, getDataWord(requestBody));
         } catch (Exception e) {
             rollbackTx(startTx);
             throw e;

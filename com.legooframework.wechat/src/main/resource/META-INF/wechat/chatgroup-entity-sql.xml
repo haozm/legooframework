@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="ChatRoomContactEntity">
+        <sql id="findAllByStores" dynamic="true">
+            <body><![CDATA[
+              SELECT
+                MAX(cc.chatroomname) AS 'name',
+                MAX(cc.chatroomnick) AS 'nickname',
+                MAX(cc.displayname) AS 'weixinNames',
+                MAX(cc.memberlist) AS 'weixinIds',
+                GROUP_CONCAT(cc.roomowner) AS 'owners',
+                MAX(cc.company_id) AS 'companyId',
+                GROUP_CONCAT(cc.store_id) AS 'storeIds'
+            FROM
+                yycomm.ChatRoom_Contact cc
+           WHERE
+                 cc.company_id = :companyId
+             AND cc.store_id IN (${storeIds?join(", ")})
+        GROUP BY cc.chatroomname
+            ]]></body>
+        </sql>
+        <sql id="findAllByNames" dynamic="true">
+            <body><![CDATA[
+              SELECT
+                MAX(cc.chatroomname) AS 'name',
+                MAX(cc.chatroomnick) AS 'nickname',
+                MAX(cc.displayname) AS 'weixinNames',
+                MAX(cc.memberlist) AS 'weixinIds',
+                GROUP_CONCAT(cc.roomowner) AS 'owners',
+                MAX(cc.company_id) AS 'companyId',
+                GROUP_CONCAT(cc.store_id) AS 'storeIds'
+            FROM
+                yycomm.ChatRoom_Contact cc
+           WHERE
+                 cc.company_id = :companyId
+             AND cc.chatroomname IN (<#list roomNames as id>'${id}'<#if id_has_next>, </#if></#list>)
+        GROUP BY cc.chatroomname
+            ]]></body>
+        </sql>
+        <sql id="batchInsertGroupActivity">
+            <body><![CDATA[
+            REPLACE INTO yycomm.chatroom_activity_amount
+                         ( chatroomname, total_number, add_number, remove_number, talk_number, msg_number, amount_date, createTime)
+                  VALUES ( ?,            ?,            ?,             ?,          ?, ?, ?, NOW())
+            ]]></body>
+        </sql>
+        <sql id="totalGroupActivity">
+            <body><![CDATA[
+              SELECT
+                    A.* ,
+                    (
+                    SELECT CONCAT( IFNULL( SUM( CASE uhc.flag WHEN 'add_chatroom_member' THEN 1 ELSE 0 END ), 0 ) , ',', IFNULL( SUM( CASE uhc.flag WHEN 'rm_chatroom_member' THEN 1 ELSE 0 END ), 0 ) )
+                      FROM yycomm.Update_His_Contact uhc
+                     WHERE uhc.flag IN ( 'add_chatroom_member', 'rm_chatroom_member' )
+                       AND uhc.userName = A.chatroomname
+                       AND DATEDIFF(CURDATE(),uhc.createtime  ) = 0
+                       AND uhc.store_id = A.storeId
+                  GROUP BY uhc.userName ) AS 'addOrDelSize',
+                    DATE_FORMAT( CURDATE(), '%Y-%m-%d' ) AS 'amountDate',
+                    (
+                       SELECT COUNT( DISTINCT tml.content )
+                         FROM yycomm.Trans_MSG_List tml
+                        WHERE tml.weixinuser = A.chatroomname
+                          AND DATEDIFF(CURDATE(),FROM_UNIXTIME(tml.createtime/1000)) = 0
+                          AND tml.store_id= A.storeId) AS 'mssageSize',
+                    (
+                        SELECT COUNT( DISTINCT tml.chatroomuser )
+                          FROM yycomm.Trans_MSG_List tml
+                         WHERE tml.weixinuser = A.chatroomname
+                           AND DATEDIFF(CURDATE(),FROM_UNIXTIME(tml.createtime/1000) ) = 0
+                           AND tml.store_id= A.storeId) AS 'talkSize'
+                FROM
+                    (
+                  SELECT cc.chatroomname As 'chatroomname',cc.store_id AS 'storeId',
+                         MAX(( 1 +( LENGTH( cc.memberlist ) - LENGTH( REPLACE( cc.memberlist, ';', '' ))))) AS 'totalSize'
+                    FROM yycomm.ChatRoom_Contact cc
+                GROUP BY cc.chatroomname,cc.store_id ) AS A
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

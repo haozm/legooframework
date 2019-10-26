@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    <bean id="wechatcmdBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/wechatcmd/legoo-model-cfg.xml"/>
+    </bean>
+    <bean id="wechatcmdStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]wechatcmd[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="wechatcmdAbstractAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="wechatcmdStatementFactory"/>
+        <property name="dataSource" ref="wechatcmdDataSource"/>
+    </bean>
+    <bean id="remoteCmdEntityAction" class="com.legooframework.model.wechatcmd.entity.RemoteCmdEntityAction"
+          parent="wechatcmdAbstractAction"/>
+</beans>

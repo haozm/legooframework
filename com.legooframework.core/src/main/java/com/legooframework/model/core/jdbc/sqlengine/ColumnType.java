@@ -11,6 +11,7 @@ public enum ColumnType {
     DATE("日期"),
     DATETIME("日期时间"),
     INT("整数"),
+    INTS("整数数组"),
     LONG("长整形"),
     ARRAY("数组"),
     LONGS("LONG数组"),

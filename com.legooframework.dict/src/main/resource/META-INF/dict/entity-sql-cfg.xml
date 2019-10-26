@@ -16,7 +16,9 @@
             <body><![CDATA[
             SELECT kv.id AS 'dictId', kv.dict_type AS 'type', kv.field_value AS 'value',
                    kv.field_name AS 'name', kv.field_index AS 'index',
-                   kv.field_desc AS 'desc', <@crud_fixed_select alias="kv" />
+                   kv.field_desc AS 'desc',
+                   '${tableName}' AS 'tableName',
+                   <@crud_fixed_select alias="kv" />
               FROM ${tableName} AS kv
              WHERE kv.delete_flag = 0
                AND kv.dict_type = :type
@@ -24,19 +26,19 @@
           ORDER BY kv.field_index
             ]]></body>
         </sql>
-        <sql id="insert">
+        <sql id="insert" dynamic="true">
             <body><![CDATA[
-        INSERT INTO DICT_KV_DATA
+        INSERT INTO ${tableName}
                     (id, dict_type, field_value, field_name, field_index, field_desc, tenant_id, creator, createTime)
              VALUES (:id, :type, :value, :name, :index, :desc, :tenantId, :creator, NOW())
               ]]></body>
         </sql>
-        <sql id="edit">
+        <sql id="edit" dynamic="true">
             <body><![CDATA[
-             UPDATE DICT_KV_DATA
-                SET field_name = :name, field_index = :index, field_desc = :desc, editor = :editor, editTime = NOW()
+             UPDATE ${tableName}
+                SET field_name = :name, field_index = :index, field_desc = :desc
               WHERE id = :id
-                AND kv.tenant_id = :TENANT_ID
+                AND tenant_id = :tenantId
               ]]></body>
         </sql>
         <sql id="deleteById" macros="crud_fixed">

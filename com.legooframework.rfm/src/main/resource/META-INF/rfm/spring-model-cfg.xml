@@ -3,7 +3,7 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
     <bean id="rfmEntitySqlFactory" class="com.csosm.commons.jdbc.sqlcfg.SqlMetaEntityFactoryBean">
-        <property name="nameMatch" value=".+[\\/]rfm[\\/].+-entity-sql\.xml$"/>
+        <property name="nameMatch" value=".+[\\/]rfm[\\/]entity-sql-cfg.xml"/>
     </bean>
     <!-- ============================ Cache End ============================ -->
     <bean abstract="true" id="rfmBaseAction" class="com.csosm.commons.entity.BaseEntityAction">

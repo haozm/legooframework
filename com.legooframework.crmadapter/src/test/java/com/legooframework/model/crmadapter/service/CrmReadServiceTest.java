@@ -1,5 +1,6 @@
 package com.legooframework.model.crmadapter.service;
 
+import com.legooframework.model.core.base.runtime.LoginUser;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -16,16 +17,18 @@ import java.util.Optional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
-        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
+        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-nodb-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml"}
 )
 public class CrmReadServiceTest {
     @Test
     public void loadByLoginName() {
-        crmReadService.loadByLoginName(1, "dgqx");
+        LoginUser user = crmReadService.loadByLoginName(999, "zongjingli");
+        System.out.println(user);
     }
-//    SecurityContextPersistenceFilter
+
+    //    SecurityContextPersistenceFilter
 //    ExceptionTranslationFilter
 //    LoginUrlAuthenticationEntryPoint
     //    @Test

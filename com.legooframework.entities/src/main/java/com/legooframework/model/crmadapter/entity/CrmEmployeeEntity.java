@@ -18,18 +18,17 @@ import java.util.stream.Stream;
 public class CrmEmployeeEntity extends BaseEntity<Integer> {
 
     private Integer companyId, orgId, storeId;
-    private String userName, password;
+    private String userName;
     private List<CrmRole> roles;
     private static Ordering<CrmRole> ORDERING = Ordering.natural()
             .onResultOf((Function<CrmRole, Integer>) crmRole -> crmRole != null ? crmRole.getPower() : 0);
 
     CrmEmployeeEntity(Integer id, Integer companyId, Integer orgId, Integer storeId,
-                      String userName, String roleIds, String password) {
+                      String userName, String roleIds) {
         super(id);
         this.companyId = companyId;
         this.orgId = orgId;
         this.storeId = storeId;
-        this.password = password;
         this.userName = userName;
         if (!Strings.isNullOrEmpty(roleIds)) {
             List<CrmRole> _roles = Lists.newArrayList();
@@ -99,10 +98,6 @@ public class CrmEmployeeEntity extends BaseEntity<Integer> {
                 Objects.equals(storeId, that.storeId) &&
                 Objects.equals(userName, that.userName) &&
                 Objects.equals(roles, that.roles);
-    }
-
-    public String getPassword() {
-        return password;
     }
 
     @Override

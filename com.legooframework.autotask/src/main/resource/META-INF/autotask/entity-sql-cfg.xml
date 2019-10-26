@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="TaskSourceEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+    SELECT tsi.id, tsi.company_id, tsi.org_id, tsi.store_id, tsi.employee_id, tsi.member_id, tsi.weixin_id, tsi.business_type, tsi.openid,
+           tsi.status, tsi.payload_type, tsi.payload, tsi.message, tsi.delete_flag AS 'deleteFlag', tsi.tenant_id AS 'tenantId', tsi.creator,
+           tsi.createTime, tsi.editor, tsi.editTime, tsi.generation_time
+      FROM TASK_SOURCE_LOG AS tsi
+     WHERE tsi.delete_flag = 0
+    <#if sql="findUndoList">
+       AND tsi.status = 0
+       AND (tsi.company_id,tsi.business_type) IN (<#list switches as item>(${item})<#sep>,</#list>)
+  ORDER BY tsi.createTime
+    </#if>
+            ]]></body>
+        </sql>
+        <sql id="query4Count" dynamic="true">
+            <body><![CDATA[
+    SELECT COUNT(tsi.id)
+      FROM TASK_SOURCE_LOG AS tsi
+     WHERE tsi.delete_flag = 0
+    <#if sql="findUndoCount">
+       AND tsi.status = 0
+       AND (tsi.company_id,tsi.business_type) IN (<#list switches as item>(${item})<#sep>,</#list>)
+  ORDER BY tsi.createTime
+    </#if>
+            ]]></body>
+        </sql>
+        <sql id="updateStatus">
+            <body><![CDATA[
+    UPDATE TASK_SOURCE_LOG
+       SET status=?, message=?, editTime=CURRENT_TIMESTAMP
+     WHERE id=?
+            ]]></body>
+        </sql>
+    </model>
+    <model id="TaskRuleEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+   INSERT INTO TASK_RULE_INFO
+               (company_id, org_id, store_id, business_type, delay_type, delay_time, send_channel, send_target, template, enabled, delete_flag, tenant_id )
+        VALUES (         ?,      ?,        ?,             ?,          ?,          ?,            ?,           ?,        ?,       ?,           0,         ? )
+            ]]></body>
+        </sql>
+
+        <sql id="query4list">
+            <body><![CDATA[
+    SELECT id, company_id, org_id, store_id, business_type, delay_type, delay_time, send_channel, send_target, template,
+           enabled, delete_flag AS 'deleteFlag', tenant_id AS 'tenantId', creator, createTime, editor, editTime
+      FROM TASK_RULE_INFO
+     WHERE delete_flag = 0
+            ]]></body>
+        </sql>
+    </model>
+    <model id="TaskExecuteEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+     SELECT tei.id, tei.company_id, tei.org_id, tei.store_id, tei.status, tei.source_id, tei.rule_id, tei.send_channel,
+            tei.business_type, tei.delay_type, tei.plan_execute_time, tei.send_info01, tei.send_info02, tei.send_info03,
+            tei.template, tei.delete_flag, tei.tenant_id, tei.creator, tei.createTime, tei.editor, tei.editTime,
+            tei.message, tei.uuid, tei.generation_time, tei.delay_time, tei.send_target
+       FROM TASK_EXECUTE_LOG AS tei
+      WHERE tei.delete_flag = 0
+      <#if (sql=="findTaskExecute4Todo")>
+        AND tei.status = 0
+   ORDER BY tei.id
+      <#elseif (sql="findTaskExecute4Jobs")>
+        AND tei.status = 2
+      <#elseif (sql="findById")>
+        AND tei.id = :id
+      </#if>
+            ]]></body>
+        </sql>
+        <sql id="updateStatus">
+            <body><![CDATA[
+       UPDATE TASK_EXECUTE_LOG SET status = ?, message = ? WHERE id = ?
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+  INSERT INTO TASK_EXECUTE_LOG
+              (company_id, org_id, store_id, status, source_id, rule_id, send_channel, business_type, delay_type, plan_execute_time, send_info01, send_info02, send_info03, message, template, uuid, delete_flag, tenant_id, generation_time, delay_time, send_target )
+       VALUES (         ?,      ?,        ?,      ?,         ?,       ?,            ?,             ?,          ?,                 ?,           ?,           ?,           ?,       ?,        ?,    ?,           0,         ?,               ?,          ?,     ? )
+            ]]></body>
+        </sql>
+    </model>
+    <model id="TaskSwitchEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+  INSERT INTO TASK_PWOER_SWITCH
+              (company_id, business_type, enabled, delete_flag, tenant_id )
+       VALUES (         ?,             ?,       ?,           0,         ?)
+            ]]></body>
+        </sql>
+        <sql id="findAll">
+            <body><![CDATA[
+       SELECT tps.id, tps.company_id, tps.business_type, tps.enabled, tps.delete_flag, tps.tenant_id, tps.creator, tps.createTime, tps.editor, tps.editTime
+         FROM TASK_PWOER_SWITCH AS tps
+        WHERE tps.delete_flag = 0
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

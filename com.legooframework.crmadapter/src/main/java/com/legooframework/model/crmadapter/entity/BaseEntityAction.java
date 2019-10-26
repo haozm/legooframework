@@ -14,6 +14,7 @@ import org.springframework.cache.Cache;
 import org.springframework.core.ResolvableType;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
@@ -23,7 +24,7 @@ import java.util.Optional;
 public abstract class BaseEntityAction<T extends BaseEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(BaseEntityAction.class);
-
+    final static String KEY_HEADER = "Authorization";
     private final Class<T> entityClass;
 
     @SuppressWarnings("unchecked")
@@ -52,8 +53,20 @@ public abstract class BaseEntityAction<T extends BaseEntity> {
         return tenantsRouteFactory;
     }
 
-    Optional<JsonElement> post(String postUrl, Map<String, Object> params, Object... pathVariables) {
+    Optional<JsonElement> post(Integer companyId, String action, Map<String, Object> params, Object... pathVariables) {
+        String postUrl = tenantsRouteFactory.getUrl(companyId, action);
         return tenantsRouteFactory.post(postUrl, params, pathVariables);
+    }
+
+    Optional<JsonElement> postWithRest(Integer companyId, String action, Map<String, Object> params, Object... pathVariables) {
+        String postUrl = tenantsRouteFactory.getUrl(companyId, action);
+        return tenantsRouteFactory.postWithRest(postUrl, params, pathVariables);
+    }
+
+    Optional<JsonElement> postWithToken(Integer companyId, String action, String token, Map<String, Object> params,
+                                        Object... pathVariables) {
+        String url = tenantsRouteFactory.getUrl(companyId, action);
+        return tenantsRouteFactory.post(url, token, params, pathVariables);
     }
 
     private CaffeineCacheManager cacheManager;

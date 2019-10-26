@@ -51,7 +51,23 @@ public class RoleEntityAction extends BaseEntityAction<RoleEntity> {
                 .collect(Collectors.toList());
         return OrderAbledUtil.reverse(subRoles);
     }
-
+    
+    /**
+     * 获取公司的注册人角色
+     * @param company
+     * @return
+     */
+    public RoleEntity loadAdminRole(OrganizationEntity company) {
+    	Preconditions.checkNotNull(company, "入参OrganizationEntity company为空，无法获取角色信息...");
+        Preconditions.checkState(company.isCompany(), "入参必须是公司....");
+        Integer companyId = company.getId();
+        List<RoleEntity> roles = loadByCompany(companyId);
+        Preconditions.checkState(!CollectionUtils.isEmpty(roles), String.format("公司[%s]无注册人角色", company.getId()));
+        List<RoleEntity> subRoles = roles.stream().filter(x -> x.isAdmin()).collect(Collectors.toList());
+        Preconditions.checkState(subRoles.size() == 1, String.format("公司[%s]无注册人角色", company.getId()));
+        return subRoles.get(0);
+    }
+    
     public void clearAuthors(Integer roleId, OrganizationEntity company) {
         Preconditions.checkNotNull(company, "入参 OrganizationEntity company 不可以为空....");
         Integer companyId = company.getId();
@@ -102,12 +118,12 @@ public class RoleEntityAction extends BaseEntityAction<RoleEntity> {
         List<RoleEntity> roles = loadByCompany(company.getId());
         return roles.stream().filter(x -> x.getId().equals(id)).findFirst();
     }
-
-    public List<RoleEntity> findByIds(OrganizationEntity company, Collection<Integer> ids){
-    	List<RoleEntity> roles = loadByCompany(company.getId());
-    	return roles.stream().filter(x -> ids.contains(x.getId())).collect(Collectors.toList());
-    }
     
+    public List<RoleEntity> findByIds(OrganizationEntity company, Collection<Integer> ids) {
+        List<RoleEntity> roles = loadByCompany(company.getId());
+        return roles.stream().filter(x -> ids.contains(x.getId())).collect(Collectors.toList());
+    }
+
     @SuppressWarnings("unchecked")
     private List<RoleEntity> loadByCompany(Integer companyId) {
         final String cache_key = String.format("%s_company_%s", getModel(), companyId);
@@ -116,7 +132,7 @@ public class RoleEntityAction extends BaseEntityAction<RoleEntity> {
             if (cache_val != null) return (List<RoleEntity>) cache_val;
         }
         Map<String, Object> params = Maps.newHashMap();
-        params.put("companyId", 1);
+        params.put("companyId", companyId);
         List<RoleEntity> roles = getNamedParameterJdbcTemplate()
                 .query(getExecSql("loadByCompany", params), params, new RowMapperImpl());
         Preconditions.checkState(!CollectionUtils.isEmpty(roles), "公司 %s 对应的角色尚未初始化...", companyId);

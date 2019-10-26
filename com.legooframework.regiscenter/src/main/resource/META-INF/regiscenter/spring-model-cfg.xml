@@ -24,27 +24,22 @@
             </util:list>
         </property>
     </bean>
+    <bean id="regisCenterEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="regiscenterStatementFactory"/>
+        <property name="dataSource" ref="regisCenterDataSource"/>
+    </bean>
     <bean id="regiscenterJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
-        <qualifier value="regiscenterJdbcQuery"/>
         <property name="statementFactory" ref="regiscenterQueryStatementFactory"/>
-        <property name="dataSource" ref="regeDataSource"/>
+        <property name="dataSource" ref="regisCenterDataSource"/>
     </bean>
     <bean id="devicePinCodeEntityAction" class="com.legooframework.model.regiscenter.entity.DevicePinCodeEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="regiscenterStatementFactory"/>
-        <property name="dataSource" ref="regeDataSource"/>
-    </bean>
+          parent="regisCenterEntityAction"/>
     <bean id="storeActiveInfoEntityAction"
           class="com.legooframework.model.regiscenter.entity.StoreActiveInfoEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="regiscenterStatementFactory"/>
-        <property name="dataSource" ref="regeDataSource"/>
-    </bean>
+          parent="regisCenterEntityAction"/>
     <bean id="tenantNetConfigEntityAction"
           class="com.legooframework.model.regiscenter.entity.TenantNetConfigEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="regiscenterStatementFactory"/>
-        <property name="dataSource" ref="regeDataSource"/>
-    </bean>
+          parent="regisCenterEntityAction"/>
     <bean id="regisCenterService" class="com.legooframework.model.regiscenter.service.RegisCenterService"/>
 </beans>

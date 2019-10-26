@@ -9,25 +9,40 @@ import com.google.common.collect.Range;
 import java.util.Map;
 
 public class RVal extends AbstractVal {
-
+	
+	private int val1;
+	
+	private int val2;
+	
+	private int val3;
+	
+	private int val4;
+	
     RVal(int val1, int val2, int val3, int val4) {
-        Preconditions.checkState(val1 < val2 && val2 < val3 && val3 < val4, "错误的Monetary取值[%s,%s,%s,%s]",
-                val1, val2, val3, val4);
-        this.range5lv = Range.closedOpen(1, val1);
-        this.range4th = Range.closedOpen(val1, val2);
-        this.range3rd = Range.closedOpen(val2, val3);
-        this.range2nd = Range.closedOpen(val3, val4);
-        this.range1st = Range.closed(val4, Integer.MAX_VALUE);
+        this.val1 = val1;
+        this.val2 = val2;
+        this.val3 = val3;
+        this.val4 = val4;
     }
 
     @Override
     Map<String, Object> toMap() {
         Map<String, Object> params = Maps.newHashMap();
-        params.put("rV1", range5lv.upperEndpoint());
-        params.put("rV2", range4th.upperEndpoint());
-        params.put("rV3", range3rd.upperEndpoint());
-        params.put("rV4", range2nd.upperEndpoint());
+        params.put("rV1", this.val1);
+        params.put("rV2", this.val2);
+        params.put("rV3", this.val3);
+        params.put("rV4", this.val4);
         return params;
+    }
+    
+    public Map<String,Object> toViewMap(){
+    	 Map<String, Object> params = Maps.newHashMap();
+         params.put("rV1", 0);
+         params.put("rV2", this.val1);
+         params.put("rV3", this.val2);
+         params.put("rV4", this.val3);
+         params.put("rV5", this.val4);
+         return params;
     }
 
     @Override

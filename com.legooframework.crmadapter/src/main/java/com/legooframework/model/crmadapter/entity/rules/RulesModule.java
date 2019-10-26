@@ -16,9 +16,10 @@ public class RulesModule extends AbstractRulesModule {
 
     @Override
     protected void configure() {
-        List<BaseParseRule> rules = Lists.newArrayListWithCapacity(8);
-        rules.add(new TenantParseRule());
+        List<BaseParseRule> rules = Lists.newArrayListWithCapacity(4);
         rules.add(new PostUrlParseRule());
+        rules.add(new PostUrlRefParseRule());
+        rules.add(new PostDomainParseRule());
         rules.forEach(r -> Stream.of(r.getPatterns()).forEach(c -> forPattern(c).addRule(r)));
     }
 

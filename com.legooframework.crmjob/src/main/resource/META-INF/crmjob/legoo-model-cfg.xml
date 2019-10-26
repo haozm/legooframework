@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="crmjob" version="1.0.0">
+    <depends>
+        <bundle name="legooCore" version="1.0.0" use="required"/>
+    </depends>
+</model>

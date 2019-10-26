@@ -1,7 +1,5 @@
 package com.legooframework.model.core.base.runtime;
 
-import com.google.common.collect.Sets;
-
 public class AnonymousCtx extends LoginUser {
 
     public AnonymousCtx(Long tenantId) {

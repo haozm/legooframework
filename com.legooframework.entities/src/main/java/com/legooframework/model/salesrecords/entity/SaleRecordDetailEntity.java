@@ -37,7 +37,7 @@ public class SaleRecordDetailEntity extends BaseEntity<Integer> {
         return totalPrice;
     }
 
-    Map<String, Object> toViewMap() {
+    public Map<String, Object> toViewMap() {
         Map<String, Object> params = Maps.newHashMap();
         params.put("id", getId());
         params.put("goodsCount", googsCount);

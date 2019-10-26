@@ -18,10 +18,8 @@ public class RoleSupportParseRule extends BaseParseRule {
     public void begin(String namespace, String name, Attributes attributes) {
         Optional<String> include = AttributesUtil.getIfPresent(attributes, "include");
         Optional<String> exclude = AttributesUtil.getIfPresent(attributes, "exclude");
-        String[] args_in = include.isPresent() ? StringUtils.split(include.get(), ',') :
-                null;
-        String[] args_ex = include.isPresent() ? StringUtils.split(exclude.get(), ',') :
-                null;
+        String[] args_in = include.map(s -> StringUtils.split(s, ',')).orElse(null);
+        String[] args_ex = exclude.map(s -> StringUtils.split(s, ',')).orElse(null);
         SQLStatementBuilder builder = getDigester().peek();
         builder.setIncluds(args_in);
         builder.setExcluds(args_ex);

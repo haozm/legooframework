@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="MaterialDetail">
+        <sql id="list_4_mgn_count" dynamic="true" desc="面向管理界输出的列表">
+            <body><![CDATA[
+            <#assign param_size= 0 />
+              SELECT COUNT(A.id) FROM
+                (
+                  SELECT
+                    cmd.id AS 'id',
+                    cmd.company_id AS 'companyId',
+                    cmd.meta_range AS 'range',
+                    (CASE cmd.meta_range WHEN 1 THEN '原始素材' WHEN 2 THEN '公司素材' WHEN 3 THEN '组织素材' WHEN 4 THEN '门店素材' END ) AS 'rangeName',
+                    cmd.meta_group AS 'groupId',
+                    (SELECT cmg.group_name FROM chat_material_group cmg WHERE cmg.id = cmd.meta_group ) AS 'groupName',
+                    cmd.org_id AS 'orgId',
+                    ( CASE cmd.meta_range
+                         WHEN 1 THEN '羿购公司'
+                         WHEN 2 THEN (SELECT og.name FROM acp_organization AS og WHERE og.id = cmd.org_id AND og.orgType =1 )
+                         WHEN 3 THEN (SELECT og.name FROM acp_organization AS og WHERE og.id = cmd.org_id AND og.orgType =2 )
+                         WHEN 4 THEN (SELECT st.name FROM acp_store AS st WHERE st.id = cmd.org_id )
+                         ELSE '数据异常'
+                     END ) AS 'orgName',
+                    cmd.meta_size AS 'size',
+                    cmd.meta_type AS 'type',
+                    ( CASE cmd.meta_type
+                          WHEN 1 THEN '文本'
+                          WHEN 3 THEN '图片'
+                          WHEN 34 THEN '语音'
+                          WHEN 43 THEN '视频'
+                          WHEN 47 THEN '图片表情'
+                          WHEN 49 THEN '网页信息'
+                          WHEN 99 THEN '图文'
+                          ELSE '其他'
+                      END ) AS 'typeName',
+                    DATE_FORMAT(cmd.meta_deadline,'%Y-%m-%d') AS 'deadline',
+                    ( CASE WHEN cmd.meta_deadline IS NULL THEN 99999 ELSE DATEDIFF(cmd.meta_deadline,CURDATE()) END) AS 'effectiveDays',
+                    ( CASE IFNULL(LENGTH(cmd.meta_deadline),0)  WHEN 0 THEN '长期有效'  ELSE DATE_FORMAT(cmd.meta_deadline,'%Y-%m-%d') END ) AS 'deadlineName',
+                    cmd.meta_enabled AS 'enabled',
+                    ( CASE meta_enabled WHEN 0 THEN '停用' ELSE '启用' END ) AS 'enabledName',
+                    cmd.meta_ctx AS 'context',
+              <#if blacklist??>FIND_IN_SET(cmd.id,'${blacklist?join(",")}') AS 'blacked',<#else>0 AS 'blacked', </#if>
+                    DATE_FORMAT(cmd.createTime,'%Y-%m-%d') AS 'createTime'
+                FROM
+                    chat_material_detail AS cmd
+               WHERE (cmd.meta_range,cmd.org_id) IN ( <#list orgIds as val>(${val})<#if val_has_next>,</#if></#list> )
+                ) AS A
+              <#if where>
+                 WHERE
+                   <#if my_mate??>
+                        <#if (param_size == 1)>AND </#if> (A.companyId,A.range,A.orgId ) IN ((${my_mate.companyId},${my_mate.range},${my_mate.orgId})) <#assign param_size= 1 />
+                   </#if>
+                   <#if groups??>
+                        <#if (param_size == 1)>AND </#if> A.groupId = :groups <#assign param_size= 1 />
+                   </#if>
+                   <#if myrange?? && (myrange != 5)>
+                        <#if (param_size == 1)>AND </#if> A.range = :myrange <#assign param_size= 1 />
+                   </#if>
+                   <#if myrange?? && (myrange == 5)>
+                        <#if (param_size == 1)>AND </#if> A.id IN (${whitelist?join(", ")}) <#assign param_size= 1 />
+                   </#if>
+                   <#if enabled??>
+                       <#if enabled>
+              <#if (param_size == 1)>AND </#if> A.enabled = 1 AND A.blacked = 0 AND A.effectiveDays >= 0
+                       <#else>
+              <#if (param_size == 1)>AND </#if> (A.enabled = 0 OR A.blacked <> 0 OR A.effectiveDays < 0 )
+                       </#if>
+                       <#assign param_size= 1 />
+                   </#if>
+                   <#if types??>
+            <#if (param_size == 1)>AND </#if> A.type IN (${types?join(", ")}) <#assign param_size= 1 />
+                   </#if>
+              </#if>
+            ]]></body>
+        </sql>
+        <sql id="list_4_mgn" dynamic="true">
+            <body><![CDATA[
+            <#assign param_size= 0 />
+            SELECT A.* FROM
+            (
+              SELECT
+                cmd.id AS 'id',
+                cmd.company_id AS 'companyId',
+                cmd.meta_range AS 'range',
+                (CASE cmd.meta_range
+                        WHEN 1 THEN '原始素材'
+                        WHEN 2 THEN '公司素材'
+                        WHEN 3 THEN '组织素材'
+                        WHEN 4 THEN '门店素材'
+                  END ) AS 'rangeName',
+                cmd.meta_group AS 'groupId',
+                (SELECT cmg.group_name FROM chat_material_group cmg WHERE cmg.id = cmd.meta_group ) AS 'groupName',
+                cmd.org_id AS 'orgId',
+                ( CASE cmd.meta_range
+                     WHEN 1 THEN '羿购公司'
+                     WHEN 2 THEN (SELECT og.name FROM acp_organization AS og WHERE og.id = cmd.org_id AND og.orgType =1 )
+                     WHEN 3 THEN (SELECT og.name FROM acp_organization AS og WHERE og.id = cmd.org_id AND og.orgType =2 )
+                     WHEN 4 THEN (SELECT st.name FROM acp_store AS st WHERE st.id = cmd.org_id )
+                     ELSE '数据异常'
+                 END ) AS 'orgName',
+                cmd.meta_size AS 'size',
+                cmd.meta_type AS 'type',
+                ( CASE cmd.meta_type
+                      WHEN 1 THEN '文本'
+                      WHEN 3 THEN '图片'
+                      WHEN 34 THEN '语音'
+                      WHEN 43 THEN '视频'
+                      WHEN 47 THEN '图片表情'
+                      WHEN 49 THEN '网页信息'
+                      WHEN 99 THEN '图文'
+                      ELSE '其他'
+                  END ) AS 'typeName',
+                DATE_FORMAT(cmd.meta_deadline,'%Y-%m-%d') AS 'deadline',
+                ( CASE WHEN cmd.meta_deadline IS NULL THEN 99999 ELSE DATEDIFF(cmd.meta_deadline,CURDATE()) END) AS 'effectiveDays',
+                ( CASE IFNULL(LENGTH(cmd.meta_deadline),0)  WHEN 0 THEN '长期有效'  ELSE DATE_FORMAT(cmd.meta_deadline,'%Y-%m-%d') END ) AS 'deadlineName',
+                cmd.meta_enabled AS 'enabled',
+                ( CASE meta_enabled WHEN 0 THEN '停用' ELSE '启用' END ) AS 'enabledName',
+                cmd.meta_ctx AS 'context',
+          <#if blacklist??>FIND_IN_SET(cmd.id,'${blacklist?join(",")}') AS 'blacked',<#else>0 AS 'blacked', </#if>
+          <#if whitelist??>FIND_IN_SET(cmd.id,'${whitelist?join(",")}') AS 'fansed',<#else>0 AS 'fansed', </#if>
+                ( SELECT COUNT(*) FROM chat_material_blacklist cmb WHERE FIND_IN_SET(cmd.id,cmb.whitelist) <> 0 ) AS 'fanSize',
+                DATE_FORMAT(cmd.createTime,'%Y-%m-%d') AS 'createTime'
+            FROM
+                chat_material_detail AS cmd
+           WHERE (cmd.meta_range,cmd.org_id) IN ( <#list orgIds as val>(${val})<#if val_has_next>,</#if></#list> )
+            ) AS A
+           <#if where>
+                 WHERE
+                   <#if my_mate??>
+                        <#if (param_size == 1)>AND </#if> (A.companyId,A.range,A.orgId ) IN ((${my_mate.companyId},${my_mate.range},${my_mate.orgId})) <#assign param_size= 1 />
+                   </#if>
+                   <#if groups??>
+                        <#if (param_size == 1)>AND </#if> A.groupId = :groups <#assign param_size= 1 />
+                   </#if>
+                   <#if myrange?? && (myrange != 5)>
+                        <#if (param_size == 1)>AND </#if> A.range = :myrange <#assign param_size= 1 />
+                   </#if>
+                   <#if myrange?? && (myrange == 5)>
+                        <#if (param_size == 1)>AND </#if> A.id IN (${whitelist?join(", ")}) <#assign param_size= 1 />
+                   </#if>
+                   <#if enabled??>
+                       <#if enabled>
+              <#if (param_size == 1)>AND </#if> A.enabled = 1 AND A.blacked = 0 AND A.effectiveDays >= 0
+                       <#else>
+              <#if (param_size == 1)>AND </#if> (A.enabled = 0 OR A.blacked <> 0 OR A.effectiveDays < 0)
+                       </#if>
+                       <#assign param_size= 1 />
+                   </#if>
+                   <#if types??>
+            <#if (param_size == 1)>AND </#if> A.type IN (${types?join(", ")}) <#assign param_size= 1 />
+                   </#if>
+              </#if>
+              <#if order??>
+               ORDER BY <#if (order == "fansSize")> A.fanSize <#elseif (order == "createTime")> A.id </#if> DESC
+              <#else>
+                   ORDER BY A.id DESC
+              </#if>
+              LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+        <sql id="loadEnabledTalking_count" dynamic="true">
+            <body><![CDATA[
+          SELECT COUNT(cmd.id) AS 'count'
+            FROM chat_material_detail AS cmd
+            WHERE cmd.meta_group IN (SELECT acmg.id
+                                      FROM chat_material_group acmg
+                                     WHERE acmg.group_type = ${groupType} )
+             AND cmd.org_id IN ( ${ids?join(",")} )
+         <#if search??>
+             AND cmd.meta_ctx LIKE '${search}'
+         </#if>
+         <#if blacklist??>
+             AND cmd.id NOT IN (${blacklist?join(",")})
+         </#if>
+            ]]></body>
+        </sql>
+        <sql id="loadEnabledTalking" dynamic="true">
+            <body><![CDATA[
+             SELECT cmd.id AS 'id',
+                    cmd.company_id AS 'companyId',
+                    cmd.meta_range AS 'range',
+                    cmd.meta_group AS 'groupVal',
+                    cmd.org_id AS 'orgId',
+                    cmd.meta_size AS 'size',
+                    cmd.meta_type AS 'type',
+                    cmd.meta_deadline AS 'deadline',
+                    cmd.meta_enabled AS 'enabled',
+                    cmd.meta_ctx AS 'context',
+                    cmd.user_times AS 'useTimes',
+                    cmd.createUserId AS 'createUserId',
+                    cmd.createTime AS 'createTime',
+                    cmd.modifyUserId AS 'modifyUserId',
+                    cmd.modifyTime AS 'modifyTime'
+            FROM chat_material_detail AS cmd
+           WHERE cmd.meta_group IN (SELECT acmg.id
+                                      FROM chat_material_group acmg
+                                     WHERE acmg.group_type = ${groupType} )
+             AND cmd.org_id IN ( ${ids?join(",")} )
+             AND cmd.meta_enabled = 1
+         <#if search??>
+             AND cmd.meta_ctx LIKE '${search}'
+         </#if>
+         <#if blacklist??>
+             AND cmd.id NOT IN (${blacklist?join(",")})
+         </#if>
+         ORDER BY cmd.user_times DESC
+         LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

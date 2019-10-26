@@ -2,6 +2,8 @@ package com.legooframework.model.dict.entity;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.legooframework.model.core.base.entity.Sorting;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.dict.dto.KvDictDto;
@@ -22,6 +24,7 @@ public class KvDictEntity extends BaseDictEnity implements Sorting {
             this.name = res.getString("name");
             this.desc = res.getString("desc");
             this.index = res.getInt("index");
+            this.tableName = res.getString("tableName");
         } catch (SQLException e) {
             throw new RuntimeException("Restore KvDictEntity has SQLException", e);
         }
@@ -39,6 +42,7 @@ public class KvDictEntity extends BaseDictEnity implements Sorting {
 
     public KvDictEntity edit(String name, String desc, int index) {
         KvDictEntity clone = (KvDictEntity) cloneMe();
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(name), "字典name 不可以为空值...");
         clone.name = name;
         clone.desc = desc;
         clone.index = index;

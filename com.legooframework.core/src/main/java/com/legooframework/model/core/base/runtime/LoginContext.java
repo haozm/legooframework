@@ -2,10 +2,7 @@ package com.legooframework.model.core.base.runtime;
 
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public interface LoginContext extends UserDetails {
     // 用户ID
@@ -21,8 +18,19 @@ public interface LoginContext extends UserDetails {
 
     boolean isStoreManager();
 
+    boolean isShoppingGuide();
+
+    boolean isManager();
+
+    boolean isRegediter();
+
+    boolean isBoss();
+
+    boolean isAreaManagerRole();
+
     String getLoginName();
 
     Integer getStoreId();
 
+    Optional<Collection<Integer>> getStoreIds();
 }

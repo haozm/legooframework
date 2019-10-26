@@ -1,18 +1,11 @@
 package com.legooframework.model.core.utils;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.Ints;
 import com.legooframework.model.core.base.entity.Sorting;
-import net.sourceforge.pinyin4j.PinyinHelper;
-import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
-import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
-import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
-import net.sourceforge.pinyin4j.format.HanyuPinyinVCharType;
-import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 
 public abstract class CommonsUtils {
 
@@ -29,29 +22,8 @@ public abstract class CommonsUtils {
         return RandomStringUtils.random(lenth, KEY_STRING);
     }
 
-    public static String transformShortPinYin(String inputString) {
-        if (Strings.isNullOrEmpty(inputString)) return null;
-        HanyuPinyinOutputFormat format = new HanyuPinyinOutputFormat();
-        format.setCaseType(HanyuPinyinCaseType.UPPERCASE);
-        format.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
-        format.setVCharType(HanyuPinyinVCharType.WITH_V);
-        char[] input = (inputString).trim().toCharArray();
-        if (ArrayUtils.isEmpty(input)) return null;
-        StringBuilder output = new StringBuilder();
-        try {
-            for (char anInput : input) {
-                if (Character.toString(anInput).matches("[\\u4E00-\\u9FA5]+")) {
-                    String[] temp = PinyinHelper.toHanyuPinyinStringArray(anInput, format);
-                    if (ArrayUtils.isNotEmpty(temp)) {
-                        output.append(temp[0], 0, 1);
-                    }
-                } else {
-                    output.append(Character.toString(anInput));
-                }
-            }
-        } catch (BadHanyuPinyinOutputFormatCombination e) {
-            return null;
-        }
-        return output.toString();
+    public static Long random10Num() {
+        return RandomUtils.nextLong(1000000000L, 9999999999L);
     }
+
 }

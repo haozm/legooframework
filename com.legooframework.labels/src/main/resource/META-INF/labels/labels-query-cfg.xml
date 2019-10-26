@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="LabelNode">
+        <sql id="loadTypesByCompany">
+            <body><![CDATA[
+            SELECT ult.id AS 'id',
+                   ult.pid AS 'pId',
+                   ult.label_type AS 'labelType',
+                   ult.label_name AS 'labelName',
+                   ult.label_desc AS 'labelDesc',
+                   ult.label_enbale AS 'labelEnbale',
+                   (CASE ult.label_enbale
+                    WHEN 0 THEN 'false'
+                    WHEN 1 THEN 'true' END ) AS 'labelStatus'
+              FROM user_label_tree AS ult
+             WHERE ult.label_type = 1
+               AND ult.company_id = :companyId
+               AND ult.store_id = -1
+               AND ult.id BETWEEN 100000 AND 100999
+            ]]></body>
+        </sql>
+        <sql id="loadSubList">
+            <body><![CDATA[
+            SELECT ult.id AS 'id',
+                   ult.pid AS 'pId',
+                   ult.label_type AS 'labelType',
+                   ult.label_name AS 'labelName',
+                   ult.label_desc AS 'labelDesc',
+                   ult.label_enbale AS 'labelEnbale',
+                   ( CASE ult.label_enbale
+                     WHEN 0 THEN 'false'
+                     WHEN 1 THEN 'true' END ) AS 'labelStatus'
+              FROM user_label_tree AS ult
+             WHERE ult.label_type = 1
+               AND ult.company_id = :companyId
+               AND ult.pid = :pId
+               AND ult.store_id = -1
+            ]]></body>
+        </sql>
+        <sql id="findByUser" dynamic="true">
+            <body><![CDATA[
+        SELECT ulr.member_id AS 'memberId',
+               ult.label_name AS 'labelName',
+               ulr.label_id AS 'labelId',
+               ulr.weixin_id AS 'weixinId',
+               ulr.store_id AS 'storeId',
+               ulr.company_id AS 'companyId',
+               GROUP_CONCAT(DISTINCT ulr.id) AS ids
+          FROM user_label_remark AS ulr
+     LEFT JOIN user_label_tree AS ult ON ulr.label_id = ult.id AND ult.company_id = :USER_COMPANY_ID
+         WHERE ulr.store_id = :storeId
+           AND LEFT(ulr.label_id, 3) = '100'
+           AND ulr.enabled = 1
+          <#if memberId??>
+           AND ulr.member_id = :memberId
+          </#if>
+          <#if weixinId??>
+           AND ulr.weixin_id = :weixinId
+          </#if>
+      GROUP BY ulr.member_id,ulr.label_id,ult.label_name,ulr.weixin_id,ulr.store_id,ulr.company_id
+     UNION ALL
+   SELECT ulr.member_id AS 'memberId',
+               ult.label_name AS 'labelName',
+               ulr.label_id AS 'labelId',
+               ulr.weixin_id AS 'weixinId',
+               ulr.store_id AS 'storeId',
+               ulr.company_id AS 'companyId',
+               GROUP_CONCAT(DISTINCT ulr.id) AS ids
+          FROM user_label_remark AS ulr
+     LEFT JOIN user_label_tree AS ult ON ulr.label_id = ult.id AND  ulr.store_id = ult.store_id AND ult.company_id = :USER_COMPANY_ID
+         WHERE ulr.store_id = :storeId
+           AND ulr.enabled = 1
+           AND LEFT(ulr.label_id, 3) = '200'
+          <#if memberId??>
+           AND ulr.member_id = :memberId
+          </#if>
+          <#if weixinId??>
+           AND ulr.weixin_id = :weixinId
+          </#if>
+      GROUP BY ulr.member_id,ulr.label_id,ult.label_name,ulr.weixin_id,ulr.store_id,ulr.company_id
+            ]]></body>
+        </sql>
+    </model>
+    <model id="UserRemarks">
+        <sql id="findByWeixinOrMember" dynamic="true">
+            <body><![CDATA[
+           SELECT GROUP_CONCAT(url.id) AS ids,
+                  url.member_id AS 'memberId',
+                  url.weixin_id AS 'weixinId',
+                  url.remarks AS 'remarks',
+                  url.store_id AS 'storeId',
+                  url.company_id AS 'companyId',
+                  url.createUserId AS 'createUserId',
+                  url.createTime,
+                  DATE_FORMAT(url.createTime,'%Y-%m-%d %H:%i:%s') AS 'remarkTime',
+                  (SELECT DISTINCT ae.name
+                     FROM acp_employee ae
+                    WHERE ae.id = url.createUserId
+                      AND ae.store_id = url.store_id ) AS 'employeeName'
+             FROM user_remarks_list url
+            WHERE url.delete_flag = 0
+              AND url.store_id = :storeId
+          <#if memberIds??>
+              AND url.member_id IN ( ${memberIds?join(", ")})
+          <#else>
+              AND url.weixin_id IN ( <#list weixinIds as val>'${val}' <#if val_has_next>,</#if></#list> )
+          </#if>
+         GROUP BY url.member_id,url.weixin_id,url.remarks,url.store_id,url.company_id,url.createTime,createUserId,remarkTime,employeeName
+         ORDER BY url.createTime DESC
+            ]]></body>
+        </sql>
+        <sql id="loadUsagelist" dynamic="true">
+            <body><![CDATA[
+				SELECT ult.id AS 'labelId',ult.label_name AS 'labelName'
+					FROM user_label_tree ult 
+					LEFT JOIN user_label_remark ulr 
+								 ON ult.id = ulr.label_id 
+					WHERE ult.id NOT IN (100,200) 
+								AND (ult.company_id = :companyId 
+								OR ult.store_id = :storeId)
+								AND ult.label_enbale = 1
+								AND ulr.enabled = 1
+					GROUP BY ulr.label_id,ult.label_name
+					ORDER BY count(*) DESC
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

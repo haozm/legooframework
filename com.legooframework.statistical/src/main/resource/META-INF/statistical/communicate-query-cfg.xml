@@ -1,0 +1,748 @@
+<sqls>
+	<model id="communication01">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',stat.receive_nums,0))/SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',stat.send_nums,0)) AS 'wx_send_receive_ratio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',(stat.receive_nums+stat.send_nums),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',(stat.receive_nums+stat.send_nums),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',(stat.receive_nums+stat.send_nums),0)) AS 'relativeRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',(stat.receive_nums+stat.send_nums),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',(stat.receive_nums+stat.send_nums),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',(stat.receive_nums+stat.send_nums),0)) AS 'yoyRatio'
+		FROM YG_Statistics.stat_wxmember_comm_behavior_bystore_detail stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id		
+            ]]></body>
+		</sql>
+		<sql id="subsummary" dynamic="true">
+            <body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',			
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(stat.receive_wxid)/SUM(stat.send_wxid) AS 'wx_send_receive_ratio',
+			SUM(stat.send_nums+stat.receive_nums) AS 'total_send_receive',
+			SUM(stat.receive_nums) AS 'total_receive',
+			SUM(stat.send_nums) AS 'total_send'		
+			FROM YG_Statistics.stat_wxmember_comm_behavior_bystore_detail stat
+			INNER JOIN acp.acp_store aas ON stat.store_id = aas.id		
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE stat.company_id = :USER_COMPANY_ID
+		AND stat.stat_date BETWEEN '${startDate}' AND '${endDate}'
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		<#elseif employeeIds??&&employeeIds?size !=0>
+			AND emp.id IN (${employeeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+		<sql id="detail" dynamic="true">
+            <body><![CDATA[
+            SELECT
+            T.fix_org_type,
+			T.fix_org_id,
+			T.fix_org_name,
+			T.companyId,
+			<#if returnType?? && returnType == "total">
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS fix_start_date,
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS fix_end_date,
+			if('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+			<#else>
+			T.fix_start_date,
+			T.fix_end_date,
+			T.statisticTime,
+			</#if>
+			T.wx_total_receive/T.wx_total_send AS wx_send_receive_ratio,
+			T.total_send_receive,
+			T.total_receive,
+			T.total_send
+			FROM (
+			<#if companyId??>
+	 			SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(stat.send_wxid) AS 'wx_total_send',
+					SUM(stat.receive_wxid) AS 'wx_total_receive',
+					SUM(stat.send_nums+stat.receive_nums) AS 'total_send_receive',
+					SUM(stat.receive_nums) AS 'total_receive',
+					SUM(stat.send_nums) AS 'total_send'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON store.company_id = org.id
+                INNER JOIN YG_Statistics.stat_wxmember_comm_behavior_bystore_detail stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.company_id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'wx_total_send',
+					0 AS 'wx_total_receive',
+					0 AS 'total_send_receive',
+					0 AS 'total_receive',
+					0 AS 'total_send'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id = :USER_COMPANY_ID
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(stat.send_wxid) AS 'wx_total_send',
+					SUM(stat.receive_wxid) AS 'wx_total_receive',
+					SUM(stat.send_nums+stat.receive_nums) AS 'total_send_receive',
+					SUM(stat.receive_nums) AS 'total_receive',
+					SUM(stat.send_nums) AS 'total_send'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON store.organization_id = org.id
+                INNER JOIN YG_Statistics.stat_wxmember_comm_behavior_bystore_detail stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND store.organization_id IN (${orgIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.organization_id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'wx_total_send',
+					0 AS 'wx_total_receive',
+					0 AS 'total_send_receive',
+					0 AS 'total_receive',
+					0 AS 'total_send'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id IN (${orgIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if (orgIds?? && orgIds?size != 0) && (storeIds?? && storeIds?size !=0)>
+		UNION
+		</#if>
+		<#if storeIds?? && storeIds?size !=0>
+			SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(stat.send_wxid) AS 'wx_total_send',
+					SUM(stat.receive_wxid) AS 'wx_total_receive',
+					SUM(stat.send_nums+stat.receive_nums) AS 'total_send_receive',
+					SUM(stat.receive_nums) AS 'total_receive',
+					SUM(stat.send_nums) AS 'total_send'
+                FROM acp.acp_store store
+                INNER JOIN YG_Statistics.stat_wxmember_comm_behavior_bystore_detail stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND store.id IN (${storeIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'wx_total_send',
+					0 AS 'wx_total_receive',
+					0 AS 'total_send_receive',
+					0 AS 'total_receive',
+					0 AS 'total_send'
+				FROM acp.acp_store store
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				store.id IN (${storeIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		 ) T GROUP BY T.fix_org_id
+		 <#if returnType?? && returnType != "total">
+			,T.statisticTime
+		 </#if>
+		<#if order?? && order!="">
+		ORDER BY ${order}
+		</#if>
+            ]]></body>
+        </sql>
+	</model>
+	<model id="communication04">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',(stat.receive_nums+stat.send_nums),0)) AS 'total_send_receive',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',(stat.receive_nums+stat.send_nums),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL((stat.receive_nums+stat.send_nums),0),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',(stat.receive_nums+stat.send_nums),0)) AS 'relativeRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',(stat.receive_nums+stat.send_nums),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL((stat.receive_nums+stat.send_nums),0),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',(stat.receive_nums+stat.send_nums),0)) AS 'yoyRatio'
+		FROM YG_Statistics.stat_wxmember_comm_behavior_bystore_detail stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+		</sql>
+		<sql id="detail" dynamic="true">
+            <body><![CDATA[
+			SELECT T.fix_org_type,T.fix_org_id,T.fix_org_name,
+			T.companyId,T.fix_start_date,T.fix_end_date,T.statisticTime,
+			<#if returnType?? && returnType == "summary">
+			SUM(T.wx_total_receive)/SUM(T.wx_total_send) AS wx_send_receive_ratio,
+			SUM(T.total_send_receive) AS total_send_receive,
+			SUM(T.total_receive) AS total_receive,
+			SUM(T.total_send) AS total_send
+			<#else>
+			T.wx_total_receive/T.wx_total_send AS wx_send_receive_ratio,T.total_send_receive,T.total_receive,T.total_send
+			</#if>
+			FROM (
+			<#if companyId??>
+	 			SELECT
+					'1' AS 'fix_org_type',
+					aao.id AS 'fix_org_id',
+					aao.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 			<#if returnType?? && returnType == "detail" && searchTimeType??>
+					<#if searchTimeType=="week">
+						DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(acsr.createTime,'%w')-1),'%Y-%m-%d') AS 'fix_start_date',
+						DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(acsr.createTime,'%w')-7),'%Y-%m-%d') AS 'fix_end_date',
+						CONCAT(DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(ysswnubs.stat_date,'%w')-1),'%m-%d'),'至',DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(ysswnubs.stat_date,'%w')-7),'%m-%d')) AS 'statisticTime',
+					<#elseif searchTimeType =="month">
+						DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-01') AS 'fix_start_date',
+						DATE_FORMAT(LAST_DAY(ysswnubs.stat_date),'%Y-%m-%d') AS 'fix_end_date',
+						CONCAT(DATE_FORMAT(ysswnubs.stat_date,'%m-01'),'至',DATE_FORMAT(LAST_DAY(ysswnubs.stat_date),'%m-%d')) AS 'statisticTime',
+					<#elseif searchTimeType =="day">
+						DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+						DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-%d') AS 'fix_end_date',
+						DATE_FORMAT(ysswnubs.stat_date,'%m-%d') AS 'statisticTime',
+					</#if>
+				<#else>
+						DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+						DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+						IF('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+				</#if>
+					SUM(ysswnubs.send_wxid) AS 'wx_total_send',
+					SUM(ysswnubs.receive_wxid) AS 'wx_total_receive',
+					SUM(ysswnubs.send_nums+ysswnubs.receive_nums) AS 'total_send_receive',
+					SUM(ysswnubs.receive_nums) AS 'total_receive',
+					SUM(ysswnubs.send_nums) AS 'total_send'
+				FROM acp.acp_store aas 
+				LEFT JOIN YG_Statistics.stat_wxmember_comm_behavior_bystore_detail ysswnubs
+				ON ysswnubs.store_id = aas.id
+				AND ysswnubs.stat_date BETWEEN DATE_FORMAT('${startDate}','%Y-%m-%d 00:00:00') AND DATE_FORMAT('${endDate}','%Y-%m-%d 23:59:59')
+				LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+			WHERE aas.company_id = :USER_COMPANY_ID
+			<#if dateRange??>
+				<#if dateRange== "TODAY">
+					AND ysswnubs.stat_type = 1
+				<#elseif dateRange== "WEEK">
+					AND ysswnubs.stat_type = 2
+				<#elseif dateRange== "MONTH">
+					AND ysswnubs.stat_type = 3
+				<#elseif dateRange== "JIDU">
+					AND ysswnubs.stat_type = 3
+				<#else>
+					AND ysswnubs.stat_type = 1
+				</#if>
+			</#if>
+			<#if returnType?? && returnType == "detail" && searchTimeType??>
+					<#if searchTimeType=="week">
+						GROUP BY DATE_FORMAT(ysswnubs.stat_date,'%Y-%u')
+					<#elseif searchTimeType =="month">
+						GROUP BY DATE_FORMAT(ysswnubs.stat_date,'%Y-%m')
+					<#elseif searchTimeType =="day">
+						GROUP BY DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-%d')
+					</#if>
+			</#if>	
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			SELECT
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+				${USER_COMPANY_ID} AS 'companyId',
+ 			<#if returnType?? && returnType == "detail" && searchTimeType??>
+					<#if searchTimeType=="week">
+						DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(acsr.createTime,'%w')-1),'%Y-%m-%d') AS 'fix_start_date',
+						DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(acsr.createTime,'%w')-7),'%Y-%m-%d') AS 'fix_end_date',
+						CONCAT(DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(ysswnubs.stat_date,'%w')-1),'%m-%d'),'至',DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(ysswnubs.stat_date,'%w')-7),'%m-%d')) AS 'statisticTime',
+					<#elseif searchTimeType =="month">
+						DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-01') AS 'fix_start_date',
+						DATE_FORMAT(LAST_DAY(ysswnubs.stat_date),'%Y-%m-%d') AS 'fix_end_date',
+						CONCAT(DATE_FORMAT(ysswnubs.stat_date,'%m-01'),'至',DATE_FORMAT(LAST_DAY(ysswnubs.stat_date),'%m-%d')) AS 'statisticTime',
+					<#elseif searchTimeType =="day">
+						DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+						DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-%d') AS 'fix_end_date',
+						DATE_FORMAT(ysswnubs.stat_date,'%m-%d') AS 'statisticTime',
+					</#if>
+				<#else>
+						DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+						DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+						IF('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+				</#if>
+					SUM(ysswnubs.send_wxid) AS 'wx_total_send',
+					SUM(ysswnubs.receive_wxid) AS 'wx_total_receive',
+					SUM(ysswnubs.send_nums+ysswnubs.receive_nums) AS 'total_send_receive',
+					SUM(ysswnubs.receive_nums) AS 'total_receive',
+					SUM(ysswnubs.send_nums) AS 'total_send'
+				FROM acp.acp_store aas
+				LEFT JOIN YG_Statistics.stat_wxmember_comm_behavior_bystore_detail ysswnubs ON ysswnubs.store_id = aas.id
+				AND ysswnubs.stat_date BETWEEN DATE_FORMAT('${startDate}','%Y-%m-%d 00:00:00') AND DATE_FORMAT('${endDate}','%Y-%m-%d 23:59:59')
+				LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+			WHERE aas.company_id = :USER_COMPANY_ID
+			AND aas.organization_id IN (${orgIds?join(",")})
+			<#if dateRange??>
+				<#if dateRange== "TODAY">
+					AND ysswnubs.stat_type = 1
+				<#elseif dateRange== "WEEK">
+					AND ysswnubs.stat_type = 2
+				<#elseif dateRange== "MONTH">
+					AND ysswnubs.stat_type = 3
+				<#elseif dateRange== "JIDU">
+					AND ysswnubs.stat_type = 3
+				<#else>
+					AND ysswnubs.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY aas.organization_id
+			<#if returnType?? && returnType == "detail" && searchTimeType??>
+				<#if searchTimeType=="week">
+					,DATE_FORMAT(ysswnubs.stat_date,'%Y-%u')
+				<#elseif searchTimeType =="month">
+					,DATE_FORMAT(ysswnubs.stat_date,'%Y-%m')
+				<#elseif searchTimeType =="day">
+					,DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-%d')
+				</#if>
+			</#if>
+		</#if>
+		<#if (orgIds?? && orgIds?size != 0) && (storeIds?? && storeIds?size !=0)>
+		UNION
+		</#if>
+		<#if storeIds?? && storeIds?size !=0>
+			SELECT
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',	
+				${USER_COMPANY_ID} AS 'companyId',		
+ 			<#if returnType?? && returnType == "detail" && searchTimeType??>
+					<#if searchTimeType=="week">
+						DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(acsr.createTime,'%w')-1),'%Y-%m-%d') AS 'fix_start_date',
+						DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(acsr.createTime,'%w')-7),'%Y-%m-%d') AS 'fix_end_date',
+						CONCAT(DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(ysswnubs.stat_date,'%w')-1),'%m-%d'),'至',DATE_FORMAT(SUBDATE(ysswnubs.stat_date,DATE_FORMAT(ysswnubs.stat_date,'%w')-7),'%m-%d')) AS 'statisticTime',
+					<#elseif searchTimeType =="month">
+						DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-01') AS 'fix_start_date',
+						DATE_FORMAT(LAST_DAY(ysswnubs.stat_date),'%Y-%m-%d') AS 'fix_end_date',
+						CONCAT(DATE_FORMAT(ysswnubs.stat_date,'%m-01'),'至',DATE_FORMAT(LAST_DAY(ysswnubs.stat_date),'%m-%d')) AS 'statisticTime',
+					<#elseif searchTimeType =="day">
+						DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+						DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-%d') AS 'fix_end_date',
+						DATE_FORMAT(ysswnubs.stat_date,'%m-%d') AS 'statisticTime',
+					</#if>
+				<#else>
+						DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+						DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+						IF('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+				</#if>
+				SUM(ysswnubs.send_wxid) AS 'wx_total_send',
+					SUM(ysswnubs.receive_wxid) AS 'wx_total_receive',
+					SUM(ysswnubs.send_nums+ysswnubs.receive_nums) AS 'total_send_receive',
+					SUM(ysswnubs.receive_nums) AS 'total_receive',
+					SUM(ysswnubs.send_nums) AS 'total_send'
+				FROM acp.acp_store aas
+				LEFT JOIN YG_Statistics.stat_wxmember_comm_behavior_bystore_detail ysswnubs ON ysswnubs.store_id = aas.id 
+				AND ysswnubs.stat_date BETWEEN DATE_FORMAT('${startDate}','%Y-%m-%d 00:00:00') AND DATE_FORMAT('${endDate}','%Y-%m-%d 23:59:59')		
+			WHERE aas.company_id = :USER_COMPANY_ID
+			AND aas.id IN (${storeIds?join(",")})
+			<#if dateRange??>
+				<#if dateRange== "TODAY">
+					AND ysswnubs.stat_type = 1
+				<#elseif dateRange== "WEEK">
+					AND ysswnubs.stat_type = 2
+				<#elseif dateRange== "MONTH">
+					AND ysswnubs.stat_type = 3
+				<#elseif dateRange== "JIDU">
+					AND ysswnubs.stat_type = 3
+				<#else>
+					AND ysswnubs.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY aas.id
+			<#if returnType?? && returnType == "detail" && searchTimeType??>
+				<#if searchTimeType=="week">
+					,DATE_FORMAT(ysswnubs.stat_date,'%Y-%u')
+				<#elseif searchTimeType =="month">
+					,DATE_FORMAT(ysswnubs.stat_date,'%Y-%m')
+				<#elseif searchTimeType =="day">
+					,DATE_FORMAT(ysswnubs.stat_date,'%Y-%m-%d')
+				</#if>
+			</#if>
+		</#if>) T
+		<#if returnType?? && returnType == "summary">
+		GROUP BY T.companyId
+		</#if>
+		<#if order?? && order!="">
+		ORDER BY ${order}
+		</#if>
+            ]]></body>
+        </sql>
+	</model>
+	<model id="communication05">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.receive_nums,0),0)) AS 'total_receive',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.receive_nums,0),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.receive_nums,0),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.receive_nums,0),0)) AS 'relativeRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.receive_nums,0),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.receive_nums,0),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.receive_nums,0),0)) AS 'yoyRatio'
+		FROM YG_Statistics.stat_wxmember_comm_behavior_bystore_detail stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+		</sql>
+	</model>
+	<model id="communication06">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.send_nums,0),0)) AS 'total_send',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.send_nums,0),0)) - SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.send_nums,0),0)))/SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.send_nums,0),0)) AS 'relativeRatio',
+			(SUM(IF(stat.stat_date BETWEEN '${thisDate[0]}' AND '${thisDate[1]}',IFNULL(stat.send_nums,0),0)) - SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.send_nums,0),0)))/SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.send_nums,0),0)) AS 'yoyRatio'
+		FROM YG_Statistics.stat_wxmember_comm_behavior_bystore_detail stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id
+            ]]></body>
+		</sql>
+	</model>
+</sqls>

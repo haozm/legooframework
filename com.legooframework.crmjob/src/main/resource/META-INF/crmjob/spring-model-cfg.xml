@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    <bean id="crmJobBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/crmjob/legoo-model-cfg.xml"/>
+    </bean>
+    <bean id="crmJobStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]crmjob[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="crmJobAbstractAction" class="com.legooframework.model.core.base.entity.BaseEntityAction" abstract="true">
+        <property name="statementFactory" ref="crmJobStatementFactory"/>
+        <property name="dataSource" ref="crmJobDataSource"/>
+    </bean>
+    <bean id="deviceWithWeixinEntityAction" class="com.legooframework.model.crmjob.entity.DeviceWithWeixinEntityAction"
+          parent="crmJobAbstractAction"/>
+    <bean id="wehatCircleAutoSyncService" class="com.legooframework.model.crmjob.service.WechatCircleAutoSyncService"/>
+</beans>

@@ -37,7 +37,7 @@ CREATE TABLE TENANT_NET_CONFIG (
   ENGINE = InnoDB;
 
 INSERT INTO TENANT_NET_CONFIG (company_id, web_domain, web_port,  tenant_id, creator,createTime)
-VALUES(100000000, '113.106.222.250', 9001, 100000000, -1,NOW());
+VALUES(100000000, 'test00.csosm.com', 80, 100000000, -1,NOW());
 
 RENAME TABLE tenant_net_config TO TENANT_NET_CONFIG;
 RENAME TABLE device_pin_code TO DEVICE_PIN_CODE;
@@ -68,7 +68,3 @@ ALTER TABLE DEVICE_PIN_CODE ADD pincode_status INT(2) NULL;
 ALTER TABLE DEVICE_PIN_CODE ADD batch_no varchar(65) NULL;
 UPDATE DEVICE_PIN_CODE SET pincode_status = 2 WHERE device_id IS NOT NULL OR device_id  <> '';
 UPDATE DEVICE_PIN_CODE SET pincode_status = 1 WHERE device_id = '' OR device_id IS NULL;
-
-
-
-

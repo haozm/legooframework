@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="sale_goods_field">
+            <![CDATA[
+             <#macro sale_goods_field>
+                  cg.id AS 'id',
+                  cg.name AS 'goodsName',
+                  cg.oldGoodsId AS 'goodsNo',
+                  cg.barCode AS 'barCode',
+                  cg.retailPrice AS 'retailPrice',
+                  cg.goodsClassify_id AS 'goodsClassify',
+                  cg.season AS 'season',
+                  cg.brand_id AS 'brand',
+                  cg.unit AS 'unit',
+                  cg.function AS 'function',
+                  cg.color_id AS 'color',
+                  cg.modelSize_id AS 'modelSize',
+                  cg.company_id  AS 'companyId'
+	         </#macro>
+           ]]>
+        </macro>
+    </macros>
+    <model id="SaleGoodsEntity">
+        <sql id="goodsList_count" dynamic="true">
+            <body><![CDATA[
+         SELECT COUNT(cg.oldGoodsId)
+           FROM crm_goods AS cg
+          WHERE cg.company_id = :companyId
+            AND cg.status = 1
+         <#if goodsName??>
+              AND cg.name LIKE :goodsName
+          </#if>
+            ]]></body>
+        </sql>
+        <sql id="goodsList" dynamic="true" macros="sale_goods_field">
+            <params>
+                <p name="goodsName" type="STRING" format="%{value}%"/>
+            </params>
+            <body><![CDATA[
+           SELECT <@sale_goods_field />
+             FROM crm_goods AS cg
+            WHERE cg.company_id = :companyId
+              AND cg.status = 1
+          <#if goodsName??>
+              AND cg.name LIKE :goodsName
+          </#if>
+         ORDER BY cg.retailPrice
+            LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="sale_record_field">
+            <![CDATA[
+             <#macro sale_record_field>
+                sale.id AS 'id',
+                sale.oldSaleRecordId AS 'oldSaleRecordId',
+                sale.scoreMultiple AS 'scoreMultiple',
+                sale.store_id AS 'storeId',
+                sale.company_id AS 'companyId',
+                DATE_FORMAT(sale.createTime,'%Y-%m-%d') AS 'saleDate',
+                sale.consumeType AS 'consumeType',
+                (SELECT kv.field_name
+                   FROM dict_kv_data kv
+                  WHERE kv.dict_type = 'PAYMENTMODE'
+                    AND kv.field_value = IFNULL(sale.consumeType,5)
+                    AND kv.tenant_id = -1 ) AS 'consumeTypeDesc',
+                ( SELECT SUM(deital.goodsPrice)
+                    FROM crm_salesubrecord deital
+                   WHERE deital.oldSaleRecordId = sale.oldSaleRecordId ) AS 'goodsTotalAmount',
+                ( SELECT SUM(deital.salePrice)
+                    FROM crm_salesubrecord deital
+                   WHERE deital.oldSaleRecordId = sale.oldSaleRecordId ) AS 'saleTotalAmount',
+                ( SELECT SUM(deital.goodsCount)
+                    FROM crm_salesubrecord deital
+                   WHERE deital.oldSaleRecordId = sale.oldSaleRecordId ) AS 'saleCount',
+                ( CASE IFNULL( mm.guide_id , 0)
+                    WHEN 0 THEN '-'
+                    ELSE ( SELECT emp.name
+                             FROM acp_employee emp
+                            WHERE emp.company_id = sale.company_id
+                              AND emp.id = mm.guide_id ) END ) AS 'employeeName',
+                sto.name AS 'storeName',
+                org.name AS 'companyName',
+                mm.name AS 'memberName',
+                mm.mobilePhone AS 'mobilePhone',
+                ( CASE FIND_IN_SET(mm.store_ids,IFNULL(sale.store_id,-1) )
+                    WHEN 0 THEN false
+                    ELSE true END ) AS 'crossStore'
+	         </#macro>
+           ]]>
+        </macro>
+    </macros>
+    <model id="SaleRecordEntity">
+        <sql id="salerecord_count" dynamic="true">
+            <body><![CDATA[
+         SELECT COUNT(sale.id)
+           FROM crm_salerecord AS sale
+     INNER JOIN acp_store sto ON sto.id = sale.store_id AND sto.company_id = sale.company_id
+     INNER JOIN acp_organization org ON org.id = sale.company_id AND org.orgType = 1
+      LEFT JOIN crm_member mm ON mm.company_id = sale.company_id AND mm.id = sale.member_id
+          WHERE sale.company_id = :TENANT_ID
+            AND sale.status = 1
+          <#if ROLE_IDS?seq_contains(5) >
+              AND sale.store_id = :STORE_ID
+         <#elseif ROLE_IDS?seq_contains(7) >
+              AND sale.store_id = :STORE_ID
+              AND mm.guide_id = :LOGIN_ID
+         <#else>
+              AND sale.store_id = :storeId
+         </#if>
+          <#if searchVal??>
+            AND ( sale.oldSaleRecordId LIKE :searchVal
+               OR mm.name LIKE :searchVal
+               OR mm.mobilePhone LIKE :searchVal )
+         </#if>
+         <#if saleDate_start??>
+            AND sale.createTime BETWEEN :saleDate_start AND :saleDate_end
+         </#if>
+            ]]></body>
+        </sql>
+        <sql id="salerecord" dynamic="true" macros="sale_record_field">
+            <params>
+                <p name="searchVal" type="STRING" format="%{value}%"/>
+                <p name="saleDate" type="DATERANGE"/>
+            </params>
+            <body><![CDATA[
+           SELECT <@sale_record_field />,
+           <#if ROLE_IDS?seq_contains(5) || ROLE_IDS?seq_contains(7) >
+                  'enabled' AS 'operating'
+           <#else>
+                  'disabled' AS 'operating'
+           </#if>
+             FROM crm_salerecord AS sale
+       INNER JOIN acp_store sto ON sto.id = sale.store_id AND sto.company_id = sale.company_id
+       INNER JOIN acp_organization org ON org.id = sale.company_id AND org.orgType = 1
+        LEFT JOIN crm_member mm ON mm.company_id = sale.company_id AND mm.id = sale.member_id
+            WHERE sale.company_id = :TENANT_ID
+              AND sale.status = 1
+         <#if ROLE_IDS?seq_contains(5) >
+              AND sale.store_id = :STORE_ID
+         <#elseif ROLE_IDS?seq_contains(7) >
+              AND sale.store_id = :STORE_ID
+              AND mm.guide_id = :LOGIN_ID
+         <#else>
+              AND sale.store_id = :storeId
+         </#if>
+         <#if searchVal??>
+              AND ( sale.oldSaleRecordId LIKE :searchVal
+                   OR mm.name LIKE :searchVal
+                   OR mm.mobilePhone LIKE :searchVal )
+         </#if>
+         <#if saleDate_start??>
+            AND sale.createTime BETWEEN :saleDate_start AND :saleDate_end
+         </#if>
+         ORDER BY sale.createTime DESC
+            LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+        <sql id="saledetails">
+            <body><![CDATA[
+           SELECT record.id AS 'id',
+                  record.cardPrice AS 'cardPrice',
+                  record.salePrice AS 'salePrice',
+                  record.goodsCount AS 'goodsCount',
+                  record.totalPrice AS 'totalPrice',
+                  goods.name AS 'goodsName',
+                  goods.oldGoodsId AS 'oldGoodsId'
+             FROM crm_salesubrecord AS record
+       INNER JOIN crm_goods goods ON record.oldGoodsId = goods.oldGoodsId
+            WHERE record.oldSaleRecordId= :saleRecordId
+         ORDER BY record.id DESC
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

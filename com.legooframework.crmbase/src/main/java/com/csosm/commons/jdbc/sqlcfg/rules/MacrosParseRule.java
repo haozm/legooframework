@@ -17,6 +17,7 @@ public class MacrosParseRule extends AbstractSqlParseRule {
     public void body(String namespace, String name, String text) throws Exception {
         String id = getDigester().pop("macroMap");
         Map<String, String> macroMap = getDigester().peek("macroMap");
+        if(macroMap.containsKey(id)) return ;
         Preconditions.checkState(!macroMap.containsKey(id), "存在重复的 macros Id=%s", id);
         macroMap.put(id, text);
     }

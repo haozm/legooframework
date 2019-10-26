@@ -18,10 +18,10 @@ public class RoleEntityActionTest {
 
     @Test
     public void loadRoleSetByUser() {
-        Optional<EmployeeEntity> employee = employeeEntityAction.findById(20);
-        Preconditions.checkState(employee.isPresent());
-        RoleSet rs = roleEntityAction.loadRoleSetByUser(employee.get());
-        System.out.println(rs);
+//        Optional<EmployeeEntity> employee = employeeEntityAction.findById(20);
+//        Preconditions.checkState(employee.isPresent());
+//        RoleSet rs = roleEntityAction.loadRoleSetByUser(employee.get());
+//        System.out.println(rs);
     }
 
     @Autowired

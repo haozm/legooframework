@@ -53,9 +53,7 @@ public class StoreViewEntity extends BaseEntity<String> {
             if (!Strings.isNullOrEmpty(storeInfo)) {
                 maps.putAll(Splitter.on(',').withKeyValueSeparator('@').split(storeInfo));
                 this.storeInfo = Maps.newHashMap();
-                maps.entrySet().forEach(k -> {
-                    this.storeInfo.put(Integer.valueOf(k.getKey()), k.getValue());
-                });
+                maps.forEach((k, v) -> this.storeInfo.put(Integer.valueOf(k), v));
             } else {
                 this.storeInfo = null;
             }
@@ -84,7 +82,7 @@ public class StoreViewEntity extends BaseEntity<String> {
         Preconditions.checkNotNull(loginUser);
         Preconditions.checkArgument(loginUser.getCompany().isPresent(), "当前用户%s尚未绑定公司信息，无法实例化门店分组视图.",
                 loginUser.getEmployee().getUserName());
-        this.companyId = loginUser.getCompany().get().getId();
+        this.companyId = parent.getCompanyId();
         init4Create(loginUser.getUserId());
     }
 
@@ -96,7 +94,7 @@ public class StoreViewEntity extends BaseEntity<String> {
         this.nodeDesc = nodeDesc;
         this.treeType = treeType;
         this.parentId = getId();
-        this.companyId = employee.getCompanyId().or(-1);
+        this.companyId = employee.getExistCompanyId();
         init4Create(loginUser.getUserId());
     }
 
@@ -198,7 +196,7 @@ public class StoreViewEntity extends BaseEntity<String> {
         Set<Integer> news = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toSet());
         Set<Integer> olds = Sets.newHashSet(this.storeIds);
         Sets.SetView<Integer> setView = Sets.intersection(news, olds);
-        return setView.isEmpty() ? null : setView.immutableCopy();
+        return setView.isEmpty() ? null : Sets.newHashSet(setView);
     }
 
     /**

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    <bean id="wechatCircleBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/wechatcircle/legoo-model-cfg.xml"/>
+    </bean>
+    <!-- ========================= Query SQL Factory ========================= -->
+    <bean id="wechatCircleStatementFactory"
+          class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]wechatcircle[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="wechatCircleQueryFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]wechatcircle[\\,/].*-query-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="wechatCircleJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
+        <qualifier value="query"/>
+        <property name="statementFactory" ref="wechatCircleQueryFactory"/>
+        <property name="dataSource" ref="wechatCircleDataSource"/>
+    </bean>
+    <bean id="wechatCircleCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
+        <property name="caffeineSpecs">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="CirclePermissionCache" value="initialCapacity=64,maximumSize=1024,expireAfterAccess=20h"/>
+            </util:map>
+        </property>
+    </bean>
+    <bean id="wechatCircleAbstractAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="wechatCircleStatementFactory"/>
+        <property name="dataSource" ref="wechatCircleDataSource"/>
+    </bean>
+    <bean id="wechatCircleEntityAction"
+          class="com.legooframework.model.wechatcircle.entity.WechatCircleEntityAction"
+          parent="wechatCircleAbstractAction"/>
+    <bean id="circleCommentEntityAction"
+          class="com.legooframework.model.wechatcircle.entity.CircleCommentEntityAction"
+          parent="wechatCircleAbstractAction"/>
+    <bean id="circlePermissionEntityAction"
+          class="com.legooframework.model.wechatcircle.entity.CirclePermissionEntityAction"
+          parent="wechatCircleAbstractAction">
+        <property name="cacheManager" ref="wechatCircleCacheManager"/>
+    </bean>
+    <bean id="circleSyncCycleEntityAction"
+          class="com.legooframework.model.wechatcircle.entity.CircleSyncCycleEntityAction"
+          parent="wechatCircleAbstractAction">
+        <property name="cacheManager" ref="wechatCircleCacheManager"/>
+    </bean>
+    <!--
+     <task:executor id="webchatcirecle-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>
+    <bean id="wechatCircleMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
+    <int:publish-subscribe-channel id="CHANNEL_WECHATCIRCLE_EVENTBUS" task-executor="webchatcirecle-executor"/>
+  -->
+    <bean id="wechatCircleCommonsService"
+          class="com.legooframework.model.wechatcircle.service.WechatCircleCommonsService"/>
+</beans>

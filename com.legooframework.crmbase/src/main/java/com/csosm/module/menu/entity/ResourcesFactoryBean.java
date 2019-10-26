@@ -14,7 +14,7 @@ public class ResourcesFactoryBean extends AbstractFactoryBean<ResourcesFactory> 
 
     @Override
     protected ResourcesFactory createInstance() throws Exception {
-        MonitorFileSystem monitorFileSystem = getBeanFactory().getBean(MonitorFileSystem.class);
+        MonitorFileSystem monitorFileSystem = getBeanFactory().getBean("crmMonitorFileSystem", MonitorFileSystem.class);
         Preconditions.checkNotNull(monitorFileSystem);
         ResourcesFactory factory = new ResourcesFactory(new ResRulesModule(), monitorFileSystem, pattern);
         //  Optional<List<File>> files = monitorFileSystem.findFiles(pattern);

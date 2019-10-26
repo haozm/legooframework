@@ -8,7 +8,7 @@ public class FormatSqlException extends BaseException {
         super("2000", message);
     }
 
-    public FormatSqlException(String message, Throwable cause) {
+    FormatSqlException(String message, Throwable cause) {
         super("2000", message, cause);
     }
 

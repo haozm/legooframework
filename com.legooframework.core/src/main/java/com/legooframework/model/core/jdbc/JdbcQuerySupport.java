@@ -17,6 +17,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class JdbcQuerySupport extends NamedParameterJdbcDaoSupport {
@@ -36,6 +37,7 @@ public class JdbcQuerySupport extends NamedParameterJdbcDaoSupport {
                     model, stmtId, params, execSql));
         Stopwatch stopwatch = Stopwatch.createUnstarted();
         stopwatch.start();
+        @SuppressWarnings("ConstantConditions")
         long count = getQueryTemplate().queryForObject(execSql, _paramMap, Long.class);
         stopwatch.stop();
         if (logger.isDebugEnabled())
@@ -77,7 +79,6 @@ public class JdbcQuerySupport extends NamedParameterJdbcDaoSupport {
         try {
             List<Map<String, Object>> resultSet = getQueryTemplate().queryForList(directSql, params);
             stopwatch.stop();
-
             if (logger.isDebugEnabled())
                 logger.debug(String.format("queryForList [%sresult's size is %s and elapsed %s ms]",
                         directSql, CollectionUtils.isEmpty(resultSet) ? 0 : resultSet.size(),
@@ -147,6 +148,39 @@ public class JdbcQuerySupport extends NamedParameterJdbcDaoSupport {
             logger.error(err_msg, e);
             throw new ExecJdbcSqlException(err_msg, e);
         }
+    }
+
+    public CompletableFuture<AsyncResult> queryListSupplyAsync(final String model, final String stmtId, final Map<String, Object> params) {
+        checkParams(model, stmtId, params);
+        final String execSql = statementFactory.getExecSql(model, stmtId, params);
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("\nsql-> [%s.%s] \n params-> [%s] \n execsql -> %s",
+                    model, stmtId, params, execSql));
+        return CompletableFuture.supplyAsync(() -> {
+            Stopwatch stopwatch = Stopwatch.createStarted();
+            List<Map<String, Object>> result = getQueryTemplate().queryForList(execSql, params);
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("queryListSupplyAsync [%s,%s result.size %s and elapsed %s ms]",
+                        model, stmtId, CollectionUtils.isEmpty(result) ? 0 : result.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+            return AsyncResult.creat4ListMap(model, stmtId, params, CollectionUtils.isEmpty(result) ? null : result);
+        });
+    }
+
+    public CompletableFuture<AsyncResult> queryMapSupplyAsync(final String model, final String stmtId, final Map<String, Object> params) {
+        checkParams(model, stmtId, params);
+        final String execSql = statementFactory.getExecSql(model, stmtId, params);
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("\nsql-> [%s.%s] \n params-> [%s] \n execsql -> %s",
+                    model, stmtId, params, execSql));
+        return CompletableFuture.supplyAsync(() -> {
+            Stopwatch stopwatch = Stopwatch.createStarted();
+            List<Map<String, Object>> result = getQueryTemplate().queryForList(execSql, params);
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("queryMapSupplyAsync [%s,%s result is %s and elapsed %s ms]",
+                        model, stmtId, result, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+            if (CollectionUtils.isEmpty(result)) return AsyncResult.creat4Map(model, stmtId, params, null);
+            return AsyncResult.creat4Map(model, stmtId, params, result.get(0));
+        });
     }
 
     public <T> Optional<T> queryForObject(String model, String stmtId, String key, Object value, Class<T> clazz) {

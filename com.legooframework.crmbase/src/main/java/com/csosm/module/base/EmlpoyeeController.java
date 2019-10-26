@@ -117,7 +117,17 @@ public class EmlpoyeeController extends BaseController {
             Preconditions.checkArgument(params.containsKey("storeId"), "请求参数缺少门店编号[storeId]");
             return MapUtils.getInteger(params, "storeId");
         }
-
+        
+        private Integer checkAndGetSourceStoreId() {
+        	 Preconditions.checkArgument(params.containsKey("sourceStoreId"), "请求参数缺少门店编号[sourceStoreId]");
+             return MapUtils.getInteger(params, "sourceStoreId");
+        }
+        
+        private Integer checkAndGetDestStoreId() {
+       	 Preconditions.checkArgument(params.containsKey("destStoreId"), "请求参数缺少门店编号[destStoreId]");
+            return MapUtils.getInteger(params, "destStoreId");
+       }
+        
         private String getSearch() {
             return MapUtils.getString(params, "search");
         }
@@ -178,7 +188,56 @@ public class EmlpoyeeController extends BaseController {
         }).collect(Collectors.toList());
         return wrapperResponse(result);
     }
-
+    
+    
+    @RequestMapping(value = "/{channel}/fire.json")
+    @ResponseBody
+    public Map<String, Object> fireEmployee(@PathVariable(value = "channel") String channel,
+                                            @RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("fireEmployee(%s,url=%s)", "null", request.getRequestURL()));
+        LoginUserContext user = loadLoginUser(request);
+        ParamsHolder holder = new ParamsHolder(requestBody);
+        List<Integer> empIds = holder.checkAndGetEmpIds();
+        Integer storeId = holder.checkAndGetStoreId();
+        TransactionStatus status = startTx("fireEmployee");
+        try {
+        	getBean(EmployeeServer.class, request).fireEmployees(storeId, empIds);
+            commitTx(status);
+        } catch (Exception e) {
+            rollbackTx(status);
+            throw e;
+        }
+        return wrapperEmptyResponse();
+    }
+    /**
+     * 迁移职员
+     * @param channel
+     * @param requestBody
+     * @param request
+     * @return
+     */
+    @RequestMapping(value = "/{channel}/switch.json")
+    @ResponseBody
+    public Map<String, Object> switchEmployee(@PathVariable(value = "channel") String channel,
+                                            @RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("switchEmployee(%s,url=%s)", "null", request.getRequestURL()));
+        LoginUserContext user = loadLoginUser(request);
+        ParamsHolder holder = new ParamsHolder(requestBody);
+        Integer empId = holder.checkAndGetEmpId();
+        Integer destStoreId = holder.checkAndGetDestStoreId();
+        Integer sourceStoreId = holder.checkAndGetSourceStoreId();
+        TransactionStatus status = startTx("switchEmployee");
+        try {
+        	getBean(EmployeeServer.class, request).switchStore(user, sourceStoreId, destStoreId, empId);
+            commitTx(status);
+        } catch (Exception e) {
+            rollbackTx(status);
+            throw e;
+        }
+        return wrapperEmptyResponse();
+    }
     /**
      * 新增职员
      *
@@ -320,10 +379,11 @@ public class EmlpoyeeController extends BaseController {
         String oldPwd = holder.checkAndGetOldPwd();
         String newPwd = holder.checkAndGetNewPwd();
         String confirmPwd = holder.checkAndGetConfirmPwd();
-        getBean(EmployeeEntityAction.class, request).changePassword(holder.checkAndGetEmpId(), oldPwd, newPwd, confirmPwd,
+        getBean(EmployeeEntityAction.class, request).changePassword(user, oldPwd, newPwd, confirmPwd,
                 user.getCompany().get());
         return wrapperEmptyResponse();
     }
+    
 
     @RequestMapping(value = "/{channel}/manager/list.json")
     @ResponseBody
@@ -346,5 +406,5 @@ public class EmlpoyeeController extends BaseController {
             return wrapperResponse(new String[0]);
         return wrapperResponse(managersOpt.get());
     }
-
+    
 }

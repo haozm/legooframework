@@ -7,6 +7,7 @@ import com.google.common.collect.Maps;
 import org.joda.time.DateTime;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
@@ -56,6 +57,21 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
         this.id = id;
     }
 
+ public static int Guid=10000;
+    
+    public static String generateId() {
+		Guid+=1;
+		long now = System.currentTimeMillis();  
+		SimpleDateFormat dateFormat=new SimpleDateFormat("yyyy");  
+		String time=dateFormat.format(now);
+		String info=now+"";
+		int ran=0;
+		if(Guid>99999) Guid=10000;    	
+		ran=Guid;
+		return time+info.substring(2, info.length())+ran;  
+    }
+    
+    
     private Object modifyUserId;
     private Date modifyTime;
 

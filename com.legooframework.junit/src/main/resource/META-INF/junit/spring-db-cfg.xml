@@ -1,34 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:util="http://www.springframework.org/schema/util"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+
                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
     <context:property-placeholder location="classpath:META-INF/junit/jdbc.properties"/>
-    <!-- db for batch crm -->
-    <bean id="svr02DataSource" class="com.zaxxer.hikari.HikariDataSource">
-        <property name="driverClassName" value="${svracp.jdbc.driver}"/>
-        <property name="jdbcUrl" value="${svracp.jdbc.url}"/>
-        <property name="username" value="${svracp.jdbc.username}"/>
-        <property name="password" value="${svracp.jdbc.password}"/>
-        <property name="readOnly" value="false"/>
-        <property name="connectionTimeout" value="30000"/>
-        <property name="idleTimeout" value="600000"/>
-        <property name="maxLifetime" value="1800000"/>
-        <property name="maximumPoolSize" value="2"/>
-        <property name="minimumIdle" value="2"/>
-    </bean>
-    <!--
-    <bean id="multipleDataSource" class="com.legooframework.model.core.jdbc.MultipleDataSource">
-        <property name="config">
-            <util:list value-type="java.lang.String">
-                <value>name=svr02;dataSource=svr02DataSource;companys=1</value>
-            </util:list>
-        </property>
-    </bean>
-    -->
     <!-- db for batch job -->
     <bean id="jobDataSource" class="com.zaxxer.hikari.HikariDataSource">
         <property name="driverClassName" value="${testjob.jdbc.driver}"/>
@@ -78,6 +55,18 @@
         <property name="maximumPoolSize" value="2"/>
         <property name="minimumIdle" value="2"/>
     </bean>
+    <bean id="smsResDataSourced" class="com.zaxxer.hikari.HikariDataSource">
+        <property name="driverClassName" value="${smsres.jdbc.driver}"/>
+        <property name="jdbcUrl" value="${smsres.jdbc.url}"/>
+        <property name="username" value="${smsres.jdbc.username}"/>
+        <property name="password" value="${smsres.jdbc.password}"/>
+        <property name="readOnly" value="false"/>
+        <property name="connectionTimeout" value="30000"/>
+        <property name="idleTimeout" value="600000"/>
+        <property name="maxLifetime" value="1800000"/>
+        <property name="maximumPoolSize" value="2"/>
+        <property name="minimumIdle" value="2"/>
+    </bean>
     <bean id="crmDataSource" class="com.zaxxer.hikari.HikariDataSource">
         <property name="driverClassName" value="${crm.jdbc.driver}"/>
         <property name="jdbcUrl" value="${crm.jdbc.url}"/>
@@ -94,11 +83,10 @@
         <property name="dataSource" ref="smsDataSourced"/>
     </bean>
 
-
     <alias name="regDataSource" alias="dictDataSource"/>
     <alias name="jobDataSource" alias="jobDataSource"/>
-    <alias name="svr02DataSource" alias="dataSourceHikari"/>
     <alias name="smsDataSourced" alias="smsGateWayDataSource"/>
+    <alias name="smsResDataSourced" alias="smsResultDataSource"/>
     <alias name="tempDataSourced" alias="tempDataSource"/>
     <alias name="regDataSource" alias="regeDataSource"/>
     <alias name="crmDataSource" alias="tokenDataSource"/>

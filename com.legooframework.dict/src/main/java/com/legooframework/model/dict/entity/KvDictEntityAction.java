@@ -50,17 +50,17 @@ public class KvDictEntityAction extends BaseEntityAction<KvDictEntity> {
         getCache().ifPresent(c -> c.evict(cacheByIdKey(entity.getType())));
     }
 
-    public int editAction(KvDictEntity updateInstance) {
-        Preconditions.checkNotNull(updateInstance);
-        Optional<KvDictEntity> exits = findByValue(updateInstance.getType(), updateInstance.getValue());
+    public int editAction(String type, String value, String name, String desc, int index) {
+        Optional<KvDictEntity> exits = findByValue(type, value);
         Preconditions.checkState(exits.isPresent(), "不存在Type=%s,Value=%s 对应的参数值，请检查输入.",
-                updateInstance.getType(), updateInstance.getValue());
-        if (exits.get().equals(updateInstance)) return 0;
+                type, value);
+        KvDictEntity clone = exits.get().edit(name, desc, index);
+        if (exits.get().equals(clone)) return 0;
         LoginContext loginContext = LoginContextHolder.get();
-        updateInstance.setEditor(loginContext.getLoginId());
-        int result = super.update(getStatementFactory(), getModelName(), "edit", updateInstance);
+        clone.setEditor(loginContext.getLoginId());
+        int result = super.update(getStatementFactory(), getModelName(), "edit", clone);
         Preconditions.checkState(1 == result);
-        getCache().ifPresent(c -> c.evict(cacheByIdKey(updateInstance.getType())));
+        getCache().ifPresent(c -> c.evict(cacheByIdKey(clone.getType())));
         return result;
     }
 

@@ -11,6 +11,7 @@ import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.smsgateway.entity.RechargeType;
+import com.legooframework.model.smsgateway.service.BundleService;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -55,8 +56,9 @@ public class RechargeController extends BaseController {
                 rechargeAmount, totalQuantity, remarke);
         Message<RechargeReqDto> msg_request = MessageBuilder.withPayload(rechargeDto)
                 .setHeader("user", user)
+                .setHeader("action", "recharge")
                 .build();
-        Message<?> message_rsp = getMessagingTemplate(request).sendAndReceive(msg_request);
+        Message<?> message_rsp = getMessagingTemplate(request).sendAndReceive(BundleService.CHANNEL_SMS_BILLING, msg_request);
         if (message_rsp.getPayload() instanceof Exception)
             throw (Exception) message_rsp.getPayload();
         return JsonMessageBuilder.OK().toMessage();

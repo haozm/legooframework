@@ -72,7 +72,8 @@ public class QueryEngineService extends NamedParameterJdbcDaoSupport implements 
 
         Stopwatch stopwatch = Stopwatch.createStarted();
         Future<Long> count_future = executor.submit(new Callable<Long>() {
-            public Long call() throws Exception {
+            @Override
+			public Long call() throws Exception {
                 try {
                     Long count = getNamedParameterJdbcTemplate().queryForObject(execSql_count, _paramMap, Long.class);
                     if (count == null) count = 0L;
@@ -85,12 +86,10 @@ public class QueryEngineService extends NamedParameterJdbcDaoSupport implements 
         });
 
         final String execSql = sqlMetaEntityFactory.getExecSql(model, stmtId, _paramMap);
-        Future<Optional<List<Map<String, Object>>>> list_future = executor.submit(new Callable<Optional<List<Map<String, Object>>>>() {
-            public Optional<List<Map<String, Object>>> call() throws Exception {
-                List<Map<String, Object>> result = getNamedParameterJdbcTemplate().queryForList(execSql, _paramMap);
-                if (CollectionUtils.isEmpty(result)) return Optional.absent();
-                return Optional.of(result);
-            }
+        Future<Optional<List<Map<String, Object>>>> list_future = executor.submit(() -> {
+            List<Map<String, Object>> result = getNamedParameterJdbcTemplate().queryForList(execSql, _paramMap);
+            if (CollectionUtils.isEmpty(result)) return Optional.absent();
+            return Optional.of(result);
         });
 
 
@@ -173,6 +172,11 @@ public class QueryEngineService extends NamedParameterJdbcDaoSupport implements 
     public Optional<List<ColumnMeta>> getColumnMetas(String model, String stmtId) {
         SqlMetaEntity sqlMetaEntity = sqlMetaEntityFactory.getSqlMetaEntity(model, stmtId);
         return sqlMetaEntity.getColumnMetas();
+    }
+    
+    public Optional<List<ColumnMeta>> getColumnMetas(String model, String stmtId,String type) {
+        SqlMetaEntity sqlMetaEntity = sqlMetaEntityFactory.getSqlMetaEntity(model, stmtId);
+        return sqlMetaEntity.getColumnMetas(type);
     }
 
     public List<ColumnMeta> loadColumnMetas(String model, String stmtId) {

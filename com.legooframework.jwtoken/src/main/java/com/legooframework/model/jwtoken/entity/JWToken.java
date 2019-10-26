@@ -2,6 +2,7 @@ package com.legooframework.model.jwtoken.entity;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDateTime;
 
 import java.io.Serializable;
@@ -18,6 +19,14 @@ public class JWToken implements Serializable {
         this.channel = channle;
         this.loginName = loginName;
         this.lastVisitTime = lastVisitTime;
+    }
+
+    static JWToken secureAnonymous() {
+        return new JWToken("SecureAnonymous", "Secure@Anonymous", "1", LocalDateTime.now().toString());
+    }
+
+    public boolean isAnonymous() {
+        return StringUtils.equals("SecureAnonymous", this.tokenId) && StringUtils.equals("Secure@Anonymous", this.loginName);
     }
 
     public String getTokenId() {

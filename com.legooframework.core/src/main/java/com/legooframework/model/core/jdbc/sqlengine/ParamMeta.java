@@ -40,8 +40,14 @@ public class ParamMeta {
             Preconditions.checkNotNull(MapUtils.getObject(queryParams, name), "缺少SQL执行必须参数: %s", name);
         }
         // 默认 仅支持 字符串
+        Object _val = MapUtils.getObject(queryParams, name);
+        if (null == _val) {
+            queryParams.remove(name);
+            if (logger.isTraceEnabled())
+                logger.debug(String.format("handleParams ( %s ) is null,so remove it and return ", name));
+            return;
+        }
         if (isString()) {
-            Object _val = MapUtils.getObject(queryParams, name);
             if (_val instanceof String && !Strings.isNullOrEmpty(format)) {
                 boolean formated = MapUtils.getBoolean(queryParams, String.format("%s_fmted", name), false);
                 if (formated) return; // 防止多次处理
@@ -52,7 +58,6 @@ public class ParamMeta {
             }
         } else if (isArray()) { // 字符串数组
             String split_tag = Strings.isNullOrEmpty(this.format) ? "," : this.format;
-            Object _val = MapUtils.getObject(queryParams, name);
             if (_val instanceof String) {
                 queryParams.put(name, StringUtils.split((String) _val, split_tag));
                 if (logger.isTraceEnabled())
@@ -60,15 +65,20 @@ public class ParamMeta {
                             Arrays.toString((String[]) queryParams.get(name))));
             }
         } else if (isLong()) {
-            Object _val = MapUtils.getObject(queryParams, name);
             if (_val instanceof Long) return;
             if (_val instanceof String) queryParams.put(name, NumberUtils.createLong(_val.toString()));
         } else if (isInt()) {
-            Object _val = MapUtils.getObject(queryParams, name);
             if (_val instanceof Integer) return;
             if (_val instanceof String) queryParams.put(name, NumberUtils.createInteger(_val.toString()));
+        } else if (isInts()) {
+            if (_val instanceof Integer[] || _val instanceof Long[] || _val instanceof List || _val instanceof Set)
+                return;
+            if (_val instanceof String) {
+                String[] vals = StringUtils.split((String) _val, ',');
+                List<Integer> lgs = Stream.of(vals).map(Integer::valueOf).collect(Collectors.toList());
+                queryParams.put(name, lgs);
+            }
         } else if (isLongs()) {
-            Object _val = MapUtils.getObject(queryParams, name);
             if (_val instanceof Long[] || _val instanceof List || _val instanceof Set) return;
             if (_val instanceof String) {
                 String[] vals = StringUtils.split((String) _val, ',');
@@ -76,8 +86,7 @@ public class ParamMeta {
                 queryParams.put(name, lgs);
             }
         } else if (isBoolean()) {
-            Object _val = MapUtils.getObject(queryParams, name);
-            if (null == _val || _val instanceof Boolean) return;
+            if (_val instanceof Boolean) return;
             queryParams.put(name, StringUtils.equalsIgnoreCase("true", _val.toString()));
         } else if (isRfm()) {
             boolean formated = MapUtils.getBoolean(queryParams, String.format("%s_fmted", name), false);
@@ -130,6 +139,10 @@ public class ParamMeta {
         return ColumnType.ARRAY == this.type;
     }
 
+    private boolean isInts() {
+        return ColumnType.INTS == this.type;
+    }
+
     boolean isLong() {
         return ColumnType.LONG == this.type;
     }
@@ -137,7 +150,6 @@ public class ParamMeta {
     boolean isBoolean() {
         return ColumnType.BOOLEAN == this.type;
     }
-
 
     private boolean isLongs() {
         return ColumnType.LONGS == this.type;

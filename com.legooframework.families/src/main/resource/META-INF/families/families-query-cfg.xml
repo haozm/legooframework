@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+	<model id="family">
+		<sql id="search_store_familys" dynamic="true">
+            <body><![CDATA[
+	        SELECT 
+				cf.id AS 'familyId',
+				cf.name AS 'familyName',
+				cf.phone AS 'familyPhone'
+				FROM crm_family cf LEFT JOIN
+				crm_member_family cmf ON cf.id = cmf.family_id
+			WHERE 1 = 1
+			<#if memberId??>
+			AND cmf.member_id = :memberId
+			</#if>
+			<#if storeId??>
+			AND cf.store_id = :storeId
+			<#else>
+			AND cf.store_id = :USER_STORE_ID
+			</#if>
+			<#if keyword??>
+			AND (cf.name LIKE '%${keyword}%' OR cf.phone LIKE '%${keyword}%')
+			</#if>
+            ]]></body>
+        </sql>
+		<sql id="search_familys_count" dynamic="true">
+            <body><![CDATA[
+	         SELECT 
+				COUNT(*)
+				FROM crm_family cf
+				LEFT JOIN crm_member_family cmf
+				ON cf.id = cmf.family_id
+				LEFT JOIN crm_member cm 
+				ON cm.id = cmf.member_id 
+				LEFT JOIN crm_store_member csm
+				ON cm.id = csm.member_id AND csm.store_id = cmf.store_id
+				LEFT JOIN acp_employee aee
+				ON aee.id = cf.employee_id
+			WHERE 
+			<#if storeId??>
+				cf.store_id = :storeId
+			<#else>
+				cf.store_id = :USER_STORE_ID
+			</#if>
+			<#if employeeId??>
+				AND cf.employee_id = :employeeId
+			</#if>
+			<#if birthdayBegin??>
+				AND cf.birthday BETWEEN '${birthdayBegin} 00:00:00' AND '${birthdayEnd} 23:59:59'
+			</#if>
+			<#if career??>
+				AND cf.career = :career	
+			</#if>
+			<#if membership??>
+				AND cmf.membership =:membership
+			</#if>
+			<#if minHeight??>
+				AND cf.height BETWEEN :minHeight AND :maxHeight
+			</#if>
+			<#if minWeight??>
+				AND cf.weight BETWEEN :minWeight AND :maxWeight
+			</#if>
+			<#if bind??>
+				<#if bind == 1>
+					AND cmf.member_id IS NOT NULL
+				<#else>
+					AND cmf.member_id IS NULL
+				</#if>
+			</#if>
+			<#if hasphone??>
+				<#if hasphone == 1>
+					AND cf.phone IS NOT NULL
+				<#else>
+					AND cf.phone IS NULL
+				</#if>
+			</#if>
+			<#if phone??>
+				AND cf.phone = :phone
+			</#if>
+			<#if contactable??>
+				AND cf.contactable = :contactable
+			</#if>
+			<#if keyword??>
+				AND (cf.name LIKE '%${keyword}%' 
+				OR cm.name LIKE '%${keyword}%'
+				OR cm.phone LIKE '%${keyword}%'
+				OR cf.phone LIKE '%${keyword}%'
+				OR cm.oldMemberCode LIKE '%${keyword}%'
+				OR cm.memberCardNum LIKE '%${keyword}%')
+			</#if>
+            ]]></body>
+        </sql>
+		<sql id="search_familys_count" dynamic="true">
+            <body><![CDATA[
+	         SELECT 
+				COUNT(*)
+				FROM crm_family cf
+				LEFT JOIN crm_member_family cmf
+				ON cf.id = cmf.family_id
+				LEFT JOIN crm_member cm 
+				ON cm.id = cmf.member_id 
+				LEFT JOIN crm_store_member csm
+				ON cm.id = csm.member_id AND csm.store_id = cmf.store_id
+				LEFT JOIN acp_employee aee
+				ON aee.id = cf.employee_id
+			WHERE 
+			<#if storeId??>
+				cf.store_id = :storeId
+			<#else>
+				cf.store_id = :USER_STORE_ID
+			</#if>
+			<#if employeeId??>
+				AND cf.employee_id = :employeeId
+			</#if>
+			<#if birthdayBegin??>
+				AND cf.birthday BETWEEN '${birthdayBegin} 00:00:00' AND '${birthdayEnd} 23:59:59'
+			</#if>
+			<#if career??>
+				AND cf.career = :career	
+			</#if>
+			<#if membership??>
+				AND cmf.membership =:membership
+			</#if>
+			<#if memberId??>
+				AND cmf.member_id = :memberId
+			</#if>
+			<#if minHeight??>
+				AND cf.height BETWEEN :minHeight AND :maxHeight
+			</#if>
+			<#if minWeight??>
+				AND cf.weight BETWEEN :minWeight AND :maxWeight
+			</#if>
+			<#if bind??>
+				<#if bind == 1>
+					AND cmf.member_id IS NOT NULL
+				<#else>
+					AND cmf.member_id IS NULL
+				</#if>
+			</#if>
+			<#if hasphone??>
+				<#if hasphone == 1>
+					AND cf.phone IS NOT NULL
+				<#else>
+					AND cf.phone IS NULL
+				</#if>
+			</#if>
+			<#if phone??>
+				AND cf.phone = :phone
+			</#if>
+			<#if contactable??>
+				AND cf.contactable = :contactable
+			</#if>
+			<#if keyword??>
+				AND (cf.name LIKE '%${keyword}%' 
+				OR cm.name LIKE '%${keyword}%'
+				OR cm.phone LIKE '%${keyword}%'
+				OR cf.phone LIKE '%${keyword}%'
+				OR cm.oldMemberCode LIKE '%${keyword}%'
+				OR cm.memberCardNum LIKE '%${keyword}%')
+			</#if>
+            ]]></body>
+        </sql>
+		<sql id="search_familys" dynamic="true">
+            <body><![CDATA[
+	         SELECT 
+				cf.id AS 'id',
+				cf.name AS 'name',
+				cf.sex AS 'sex',
+				IF(cf.sex = 1,'男','女') AS 'sexName',
+				DATE_FORMAT(cf.birthday,'%Y-%m-%d') AS 'birthday',
+				CONCAT(DATE_FORMAT(cf.birthday,'%Y-%m-%d'),IF(cf.calendarType =1 ,'(公历)','(农历)')) AS 'birthdayName',
+				cmf.member_id AS 'memberId',
+				cm.name AS 'memberName',
+				cm.phone AS 'memberPhone',
+				IFNULL(cm.memberCardNum,cm.oldMemberCode) AS 'memberCardNo',
+				cmf.membership AS 'membership',
+				(SELECT field_name FROM dict_kv_data 
+				WHERE field_value = cmf.membership 
+				AND dict_type = cmf.membership_dict_type AND tenant_id = cf.tenant_id)
+				AS 'membershipName',
+				cmf.appellation as 'appellation',
+				cf.employee_id AS 'employeeId',
+				aee.name AS 'employeeName',
+				cf.contactable AS 'contactable',
+				IF(cf.contactable = 0,'不可以','可以') AS 'contactableName',
+				cf.career AS 'career',
+				(SELECT field_name FROM dict_kv_data 
+				WHERE field_value = cf.career 
+				AND dict_type = cf.career_dict_type AND tenant_id = cf.tenant_id)
+				AS 'careerName',
+				cf.phone AS 'phone',
+				cf.height AS 'height',
+				cf.weight AS 'weight'
+				FROM crm_family cf
+				LEFT JOIN crm_member_family cmf
+				ON cf.id = cmf.family_id
+				LEFT JOIN crm_member cm 
+				ON cm.id = cmf.member_id 
+				LEFT JOIN crm_store_member csm
+				ON cm.id = csm.member_id AND csm.store_id = cmf.store_id
+				LEFT JOIN acp_employee aee
+				ON aee.id = cf.employee_id
+			WHERE 
+			<#if storeId??>
+				cf.store_id = :storeId
+			<#else>
+				cf.store_id = :USER_STORE_ID
+			</#if>
+			<#if employeeId??>
+				AND cf.employee_id = :employeeId
+			</#if>
+			<#if birthdayBegin??>
+				AND cf.birthday BETWEEN '${birthdayBegin} 00:00:00' AND '${birthdayEnd} 23:59:59'
+			</#if>
+			<#if career??>
+				AND cf.career = :career	
+			</#if>
+			<#if membership??>
+				AND cmf.membership =:membership
+			</#if>
+			<#if minHeight??>
+				AND cf.height BETWEEN :minHeight AND :maxHeight
+			</#if>
+			<#if minWeight??>
+				AND cf.weight BETWEEN :minWeight AND :maxWeight
+			</#if>
+			<#if memberId??>
+				AND cmf.member_id = :memberId
+			</#if>
+			<#if bind??>
+				<#if bind == 1>
+					AND cmf.member_id IS NOT NULL
+				<#else>
+					AND cmf.member_id IS NULL
+				</#if>
+			</#if>
+			<#if hasphone??>
+				<#if hasphone == 1>
+					AND cf.phone IS NOT NULL
+				<#else>
+					AND cf.phone IS NULL
+				</#if>
+			</#if>
+			<#if phone??>
+				AND cf.phone = :phone
+			</#if>
+			<#if contactable??>
+				AND cf.contactable = :contactable
+			</#if>
+			<#if keyword??>
+				AND (cf.name LIKE '%${keyword}%' 
+				OR cm.name LIKE '%${keyword}%'
+				OR cm.phone LIKE '%${keyword}%'
+				OR cf.phone LIKE '%${keyword}%'
+				OR cm.oldMemberCode LIKE '%${keyword}%'
+				OR cm.memberCardNum LIKE '%${keyword}%')
+			</#if>
+			LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+	</model>
+</sqls>

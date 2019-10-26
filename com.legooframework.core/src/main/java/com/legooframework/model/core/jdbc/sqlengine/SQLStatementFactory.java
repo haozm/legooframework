@@ -8,7 +8,6 @@ import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Table;
-import com.legooframework.model.core.config.FileMonitorEvent;
 import com.legooframework.model.core.config.FileReloadSupport;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
@@ -42,7 +41,7 @@ public class SQLStatementFactory extends FileReloadSupport<ConfigByFileMeta> {
         this.cache = CacheBuilder.from(DEF_CACHE_POLICY).build();
     }
 
-    public Optional<SQLStatement> findStmtById(final String model, final String stmtId) {
+    Optional<SQLStatement> findStmtById(final String model, final String stmtId) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(model), "String model can not be null");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(stmtId), "String stmtId can not be null");
         Optional<SQLStatement> optional;
@@ -154,16 +153,13 @@ public class SQLStatementFactory extends FileReloadSupport<ConfigByFileMeta> {
     }
 
     @Override
-    public void handleileMonitorEvent(FileMonitorEvent monitorEvent) {
-        if (monitorEvent.isFileCreatedEvent() || monitorEvent.isFileChangedEvent()) {
-            build(monitorEvent.getFile());
-        } else if (monitorEvent.isFileDeletedEvent()) {
-            removeConfig(monitorEvent.getFile());
-        }
+    public void addConfig(File file, ConfigByFileMeta config) {
+        super.addConfig(file, config);
     }
 
-    void build(File file) {
-        if (!isSupported(file)) return;
+    @Override
+    protected Optional<ConfigByFileMeta> parseFile(File file) {
+        if (!isSupported(file)) return Optional.empty();
         Digester digester = DigesterLoader.newLoader(this.rulesModule).newDigester();
         Table<String, String, SQLStatement> statements = HashBasedTable.create();
         Map<String, String> macros = Maps.newHashMap();
@@ -173,12 +169,13 @@ public class SQLStatementFactory extends FileReloadSupport<ConfigByFileMeta> {
             digester.parse(file);
             ConfigByFileMeta fileMeta = new ConfigByFileMeta(file, macros, statements);
             if (logger.isDebugEnabled()) logger.debug(String.format("finish parse sql-cfg: %s", fileMeta));
-            addConfig(file, fileMeta);
+            return Optional.of(fileMeta);
         } catch (Exception e) {
             logger.error(String.format("parse file=%s has error", file), e);
         } finally {
             digester.clear();
         }
+        return Optional.empty();
     }
 
 }

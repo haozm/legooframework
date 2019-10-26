@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/util https://www.springframework.org/schema/util/spring-util.xsd">
+    <bean id="statisticalBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/statistical/legoo-model-cfg.xml"/>
+    </bean>
+    <bean id="statisticalDefinedFactory"
+          class="com.legooframework.model.statistical.entity.StatisticalDefinedFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]statistical[\\,/].*-definition-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="statisticalStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]statistical[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="statisticalQueryFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]statistical[\\,/].*-query-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="statisticalEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="statisticalStatementFactory"/>
+        <property name="dataSource" ref="statisticalDataSource"/>
+    </bean>
+    <bean id="statisticalQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
+        <qualifier value="query"/>
+        <property name="statementFactory" ref="statisticalQueryFactory"/>
+        <property name="dataSource" ref="statisticalDataSource"/>
+    </bean>
+    <bean id="statisticalRefEntityAction" class="com.legooframework.model.statistical.entity.StatisticalRefEntityAction"
+          parent="statisticalEntityAction"/>
+    <bean id="statisticalLayoutEntityAction"
+          class="com.legooframework.model.statistical.entity.StatisticalLayoutEntityAction"
+          parent="statisticalEntityAction"/>
+    <bean id="statisticalService" class="com.legooframework.model.statistical.service.StatisticalService"/>
+</beans>

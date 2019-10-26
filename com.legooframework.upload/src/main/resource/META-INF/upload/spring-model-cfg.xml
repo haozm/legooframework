@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+	     <property name="maxUploadSize" value="104857600" />
+	     <property name="maxInMemorySize" value="4096" />
+	     <property name="defaultEncoding" value="UTF-8"></property>
+	  </bean>
+	  <bean id="qiniuUploadServer" class="com.legooframework.model.upload.service.QiniuUploadServer">
+	  </bean>
+	  <bean id="channelAction" class="com.legooframework.model.upload.entity.ChannelEntityAction">
+	  	<property name="dataSource" ref="uploadDataBase"/>
+	  </bean>
+	  <bean id="namespaceEntity" class="com.legooframework.model.upload.entity.NamespaceEntity">
+	  </bean>
+	  <bean id="namespaceEntityAction" class="com.legooframework.model.upload.entity.NamespaceEntityAction">
+	  	<property name="dataSource" ref="uploadDataBase"/>
+	  </bean>
+	  <bean id="uploadFileServer" class="com.legooframework.model.upload.service.UploadFileServer">
+	  </bean>
+	  <bean id="uploadRecordAction" class="com.legooframework.model.upload.entity.UploadRecordAction">
+	  	<property name="dataSource" ref="uploadDataBase"/>
+	  </bean>
+</beans>

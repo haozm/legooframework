@@ -11,8 +11,6 @@ import org.springframework.util.ResourceUtils;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
@@ -37,8 +35,11 @@ public class SMSBlackListEntityActionTest {
     @Test
     public void diabled() {
         LoginContextHolder.setAnonymousCtx();
-        List<String> list = Lists.newArrayList("18588828127", "18588828126", "18588828125", "18228828127");
-        blackListEntityAction.diabled(list, 1);
+        List<SMSBlackListEntity> list = Lists.newArrayList();
+        list.add(SMSBlackListEntity.disableInstance(1, 22, "18588828127"));
+        list.add(SMSBlackListEntity.disableInstance(1, 21, "18588828127"));
+        list.add(SMSBlackListEntity.disableInstance(1, 19, "18588828127"));
+        blackListEntityAction.diabled(list);
     }
 
     @Test

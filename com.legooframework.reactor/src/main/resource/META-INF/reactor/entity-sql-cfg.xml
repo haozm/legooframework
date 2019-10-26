@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="retailfact_info_fields">
+            <![CDATA[
+             <#macro retailfact_agg_fields maxId shortName>
+    SELECT MAX(crt.id) AS 'id',MAX(crt.createtime) AS 'createtime',
+           DATE_FORMAT(MAX(crt.createtime), '%Y-%m-%d %H:%i') AS 'fmtCreatetime',crt.retailid, MAX(crt.vipid) AS 'vipid',
+	       MAX(crt.vipname) AS 'vipname', MAX(crt.birthday) AS 'birthday', MAX(crt.createcardtime) AS 'createcardtime',
+	       MAX(crt.phone) AS 'phone', MAX(crt.sex) AS 'sex' , MAX(crt.old_store_id) AS 'old_store_id',
+	       MAX(crt.viptype) AS 'viptype',MAX(crt.company) AS 'companypy', MAX(crt.employeeids) AS 'employeeids',
+	       MAX(crt.integral) AS 'integral',
+	       GROUP_CONCAT(CONCAT_WS('^^',crt.id,crt.goodsid,crt.saleprice,crt.cardprice,crt.goodnum,crt.goodname) ORDER BY crt.saleprice SEPARATOR '$$') AS 'saleInfo'
+      FROM acp.crm_retail_table AS crt
+     WHERE crt.goodnum > 0
+       AND LOWER(crt.company) = LOWER('${shortName}')
+       AND crt.id > ${maxId}
+  GROUP BY crt.retailid
+  ORDER BY crt.id DESC
+	         </#macro>
+	         <#macro max_index_bycom>
+	     IFNULL((SELECT CONVERT(MAX(IFNULL(rlr.source_id,0)),UNSIGNED)
+                   FROM acp.REACTOR_LOG_RECORD rlr
+                  WHERE rlr.source_table = 'acp.crm_retail_table'
+                    AND rlr.company_id = :companyId ),0)
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="RetailFactEntity">
+        <sql id="query4list" dynamic="true" macros="retailfact_info_fields">
+            <body><![CDATA[
+    SELECT agg.*,sto.company_id AS 'companyId', sto.id AS 'storeId',
+           cm.id AS 'memberId', cm.memberCardNum, csm.shoppingguide_id AS 'employeeId'
+      FROM (<@retailfact_agg_fields maxId=maxId shortName=companyShortName />) AS agg
+INNER JOIN acp.acp_store AS sto ON LOWER(sto.oldStoreId) = LOWER(agg.old_store_id) AND LOWER(sto.companypy) = LOWER(agg.companypy)
+ LEFT JOIN acp.crm_member as cm ON cm.company_id = sto.company_id and cm.phone = agg.phone
+ LEFT JOIN acp.crm_shoppingguide_member AS csm ON csm.member_id = cm.id
+    <#if (sql="query4RetailSmsJob")>
+     WHERE sto.company_id = ${companyId}
+       AND agg.createtime > DATE_SUB(NOW(),INTERVAL 8 HOUR)
+    <#else>
+     WHERE agg.id = -1
+    </#if>
+            ]]></body>
+        </sql>
+        <sql id="count4RetailSmsJob" dynamic="true" macros="retailfact_info_fields">
+            <body><![CDATA[
+    SELECT COUNT(crt.id) AS 'total', <@max_index_bycom /> AS 'maxId'
+      FROM acp.crm_retail_table AS crt
+INNER JOIN acp.acp_store AS sto ON LOWER(sto.oldStoreId) = LOWER(crt.old_store_id) AND LOWER(sto.companypy) = LOWER(crt.company)
+     WHERE crt.goodnum > 0
+       AND sto.company_id = :companyId
+       AND crt.createtime > DATE_SUB(NOW(),INTERVAL 8 HOUR)
+       AND crt.id > <@max_index_bycom />
+            ]]></body>
+        </sql>
+    </model>
+    <model id="ReactorLogEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+    INSERT INTO acp.REACTOR_LOG_RECORD
+                (company_id, org_id, store_id, source_id, source_table, template_id, error_code, before_ctx, after_ctx, error_msg, delete_flag, tenant_id, creator, createTime, editor, editTime)
+         VALUES (         ?,      ?,        ?,         ?,            ?,           ?,          ?,          ?,         ?,         ?,           0,         ?, -1, CURRENT_TIMESTAMP, 0, CURRENT_TIMESTAMP)
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

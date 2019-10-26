@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="JobDetailBuilderEnity">
+        <sql id="scheduler_list_count" dynamic="true">
+            <body><![CDATA[
+          SELECT COUNT(std.id)
+            FROM SCHEDULE_TRIGGERS_DEFINITION AS std
+           WHERE std.delete_flag = 0
+             AND std.owner_bundle = :ownerBundle
+            ]]></body>
+        </sql>
+        <sql id="scheduler_list" dynamic="true">
+            <body><![CDATA[
+          SELECT COUNT(std.id)
+            FROM SCHEDULE_TRIGGERS_DEFINITION AS std
+           WHERE std.delete_flag = 0
+             AND std.owner_bundle = :ownerBundle
+            LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

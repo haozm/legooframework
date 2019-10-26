@@ -56,6 +56,43 @@ public class CrmStoreEntityAction extends BaseEntityAction<CrmStoreEntity> {
         return stores.stream().filter(x -> x.getId().equals(storeId)).findFirst();
     }
 
+    public Optional<CrmStoreEntity> findByIdWitRest(CrmOrganizationEntity company, Integer storeId) {
+        Preconditions.checkNotNull(storeId, "Integer storeId 不可以为空...");
+        List<CrmStoreEntity> stores = loadAllByCompanyWithRest(company);
+        return stores.stream().filter(x -> x.getId().equals(storeId)).findFirst();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<CrmStoreEntity> loadAllByCompanyWithRest(CrmOrganizationEntity company) {
+        Preconditions.checkNotNull(company, "公司不可以为空...");
+        final String cache_key = String.format("%s_company_%s", getModelName(), company.getId());
+        if (getCache().isPresent()) {
+            List<CrmStoreEntity> entities = getCache().get().get(cache_key, List.class);
+            if (CollectionUtils.isNotEmpty(entities)) {
+                if (logger.isDebugEnabled())
+                    logger.debug("loadAllByCompany(store::%s) from cache by %s", company.getId(), cache_key);
+                return entities;
+            }
+        }
+        Optional<JsonElement> payload = super.postWithRest(company.getId(), "crmbase.loadAllStores", null, company.getId());
+        if (!payload.isPresent()) return null;
+        List<CrmStoreEntity> stores = Lists.newArrayList();
+        JsonArray jsonArray = payload.get().getAsJsonArray();
+        for (JsonElement jsonElement : jsonArray) {
+            JsonObject _json = jsonElement.getAsJsonObject();
+            stores.add(new CrmStoreEntity(_json.get("id").getAsInt(),
+                    _json.get("name").getAsString(), _json.get("orgCode").getAsString(),
+                    _json.get("orgId").getAsInt(), _json.get("companyId").getAsInt(),
+                    _json.get("companyName").getAsString()));
+        }
+        if (getCache().isPresent() && CollectionUtils.isNotEmpty(stores))
+            getCache().get().put(cache_key, stores);
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("loadAllByCompanyId(company:%s) has store size is %s .", company.getId(),
+                    stores.size()));
+        return stores;
+    }
+
     @SuppressWarnings("unchecked")
     public List<CrmStoreEntity> loadAllByCompany(CrmOrganizationEntity company) {
         Preconditions.checkNotNull(company, "公司不可以为空...");
@@ -68,9 +105,8 @@ public class CrmStoreEntityAction extends BaseEntityAction<CrmStoreEntity> {
                 return entities;
             }
         }
-        Optional<JsonElement> payload = super.post(getTenantsRouteFactory().getUrl(company.getId(), "loadAllStores"), null,
-                company.getId());
-        Preconditions.checkState(payload.isPresent(), "公司Id=%s 无门店信息...", company.getId());
+        Optional<JsonElement> payload = super.post(company.getId(), "crmbase.loadAllStores", null, company.getId());
+        if (!payload.isPresent()) return null;
         List<CrmStoreEntity> stores = Lists.newArrayList();
         JsonArray jsonArray = payload.get().getAsJsonArray();
         for (JsonElement jsonElement : jsonArray) {

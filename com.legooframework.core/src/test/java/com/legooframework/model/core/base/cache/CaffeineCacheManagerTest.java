@@ -1,5 +1,6 @@
 package com.legooframework.model.core.base.cache;
 
+import org.apache.commons.vfs2.impl.DefaultFileSystemManager;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -14,7 +15,7 @@ import org.springframework.util.ResourceUtils;
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/statement/spring-cache-cfg.xml"}
 )
 public class CaffeineCacheManagerTest {
-
+//    DefaultFileSystemManager
     @Test
     public void getCache() {
         Assert.assertNotNull(cacheManager);

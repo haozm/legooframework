@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="MsgTemplateEnity">
+        <sql id="quert4EnabledList">
+            <body><![CDATA[
+      SELECT cmt.id, cmt.content, cmt.name, IFNULL(cmt.sortNo,0) AS 'sortNo' ,
+             IFNULL(cmt.subUseType,0) AS 'subUseType',
+             (CASE WHEN cmt.defaultState = 1 THEN '缺省' ELSE '普通' END ) AS 'defaultState',
+             (CASE WHEN IFNULL(cmt.store_id,0) = 0 THEN '公司' ELSE '门店' END ) AS 'useRange',
+             cmt.company_id AS 'companyId', IFNULL(cmt.store_id,0) AS 'storeId'
+        FROM acp.crm_messagetemplet AS cmt
+       WHERE cmt.status = 1
+         AND cmt.useType = :useType
+         AND cmt.company_id = :USER_COMPANY_ID
+         AND IFNULL(cmt.templetState,1) = 1
+         AND (cmt.store_id = :USER_STORE_ID OR cmt.store_id IS NULL)
+    ORDER BY cmt.defaultState, cmt.store_id
+            ]]></body>
+        </sql>
+    </model>
+    <model id="DBStorage">
+        <sql id="GetTaskNums" dynamic="true">
+            <body><![CDATA[
+      CALL YG.task_GetTaskNums(${USER_ID},'${task_code}','${subtask_code}','${date_start}','${date_end}','${keywords}', ${right_level})
+            ]]></body>
+        </sql>
+        <sql id="GetTaskList" dynamic="true">
+            <body><![CDATA[
+      CALL YG.task_GetTaskList(${USER_ID},'${task_code}','${subtask_code}','${subtaskstate_code}','${date_start}','${date_end}', ${right_level}, ${pageSize}, ${pageNum},'${keywords}')
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

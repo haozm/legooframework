@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="member_fields">
+            <![CDATA[
+             <#macro member_fields>
+                 md.id AS 'id',
+                 md.cardId AS 'cardId',
+                 md.name AS 'name',
+                 md.sex_type AS 'sexType',
+                 md.birthday AS 'birthday',
+                 md.phone AS 'phone',
+                 md.mobile AS 'mobile',
+                 md.education_type AS 'educationType',
+                 md.height AS 'height',
+                 md.weight AS 'weight',
+                 md.familyAddr AS 'familyAddr',
+                 md.workAddr AS 'workAddr',
+                 md.email AS 'email'
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="MemberEntity">
+        <sql id="findByIDcard" macros="member_fields">
+            <body><![CDATA[
+          SELECT <@member_fields />
+            FROM insurance_member_data AS md
+           WHERE md.cardId = :cardId
+            ]]></body>
+        </sql>
+        <sql id="findById" macros="member_fields">
+            <body><![CDATA[
+          SELECT <@member_fields />
+            FROM insurance_member_data AS md
+           WHERE md.id = :id
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+         INSERT INTO insurance_member_data
+                     ( id,  cardId, name, sex_type, birthday, phone, mobile, education_type, height, weight, familyAddr, workAddr, email)
+              VALUES (:id, :cardId,:name, :sexType, :birthday,:phone,:mobile, :educationType, :height, :weight, :familyAddr, :workAddr, :email)
+            ]]></body>
+        </sql>
+        <sql id="update">
+            <body><![CDATA[
+       UPDATE insurance_member_data
+          SET cardId= :cardId, name= :name, sex_type= :sexType, birthday = :birthday, phone= :phone, mobile= :mobile,
+              education_type= :educationType, height= :height, weight= :weight, familyAddr= :familyAddr, workAddr= :workAddr,
+              email = :email
+       WHERE id = :id
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="bank_card_fields">
+            <![CDATA[
+             <#macro bank_card_fields>
+             bc.id AS 'id',
+             bc.member_id AS 'memberId',
+             bc.bank_type AS 'bankType',
+             bc.account AS 'account',
+             ( SELECT kv.field_name
+                 FROM insurance_kv_data AS kv
+                WHERE kv.dict_type = 'BANK'
+                  AND kv.field_value = bc.bank_type ) AS 'bankName'
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="BankCardEntity">
+        <sql id="findByAccount" macros="bank_card_fields">
+            <body><![CDATA[
+          SELECT <@bank_card_fields />
+            FROM insurance_bank_card AS bc
+           WHERE bc.account = :account
+            ]]></body>
+        </sql>
+        <sql id="findByMember" macros="bank_card_fields">
+            <body><![CDATA[
+          SELECT <@bank_card_fields />
+            FROM insurance_bank_card AS bc
+           WHERE bc.member_id = :memberId
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="insurance_info_fields">
+            <![CDATA[
+             <#macro insurance_info_fields>
+             a.id AS 'id',
+             a.insurance_id AS 'insuranceId',
+             a.insurance_type AS 'insuranceType',
+             a.insurance_amount AS 'insuranceAmount',
+             a.is_primary AS 'primary',
+             ( SELECT kv.field_name
+                 FROM insurance_kv_data AS kv
+                WHERE kv.dict_type = 'INSURANCE'
+                  AND kv.field_value = a.insurance_type ) AS 'insuranceName'
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="InsuranceInfoEntity">
+        <sql id="findByInsurance" macros="insurance_info_fields">
+            <body><![CDATA[
+          SELECT <@insurance_info_fields />
+            FROM insurance_list_info AS a
+           WHERE a.insurance_id = :insuranceId
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+         INSERT INTO insurance_list_info
+                     (insurance_id, insurance_type, insurance_amount )
+              VALUES (           ?,              ?,                ? )
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="insurance_policy_fields">
+            <![CDATA[
+             <#macro insurance_policy_fields>
+                 a.id AS 'id',
+                 a.insurance_no AS 'insuranceNo',
+                 a.insured_date AS 'insuredDate',
+                 a.defrayer_id AS 'defrayer',
+                 a.accepter_id AS 'accepter',
+                 a.relationship_type AS 'relationshipType',
+                 ( SELECT kv.field_name
+                     FROM insurance_kv_data AS kv
+                    WHERE kv.dict_type = 'RELATIONSHIP'
+                      AND kv.field_value = a.relationship_type ) AS 'relationshipName',
+                 a.is_myself AS 'myself',
+                 a.payment_type AS 'paymentType',
+                 a.pay_amount AS 'payAmount',
+                 ( SELECT kv.field_name
+                     FROM insurance_kv_data AS kv
+                    WHERE kv.dict_type = 'PAYMENTTYPE'
+                      AND kv.field_value = a.payment_type ) AS 'paymentTypeName',
+                 a.bankcard_id AS 'bankCardId',
+                 a.beneficiary_info AS 'beneficiary',
+                 a.remarks AS 'remarks'
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="InsurancePolicyEntity">
+        <sql id="findByInsuranceNo" macros="insurance_policy_fields">
+            <body><![CDATA[
+          SELECT <@insurance_policy_fields />
+            FROM insurance_policy_info AS a
+           WHERE a.insurance_no = :insuranceNo
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+         INSERT INTO insurance_policy_info
+                     ( id, insurance_no, insured_date, defrayer_id, accepter_id, relationship_type, is_myself, payment_type, pay_amount, bankcard_id, beneficiary_info, remarks )
+              VALUES (:id, :insuranceNo, :insuredDate, :defrayer,   :accepter,   :relationshipType, :myself,   :paymentType, :payAmount, :bankCardId, :beneficiary,     :remarks)
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

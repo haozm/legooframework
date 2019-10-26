@@ -37,11 +37,15 @@ public class StoreEntity extends BaseEntity<Integer> implements Replaceable {
 
     //门店启用状态 1 为启用 2为禁用
     private Integer state;
-
+    
+    //RFM设置 1为累计 2全年
+    private Integer rfmSetting;
+    
     public StoreEntity(Integer id, int type, String name, String address, String oldStoreId,
                        int status, Integer organizationId, Integer companyId, String deviceIds,
                        String qrCode, int birthdayBefore, int beforeDays,
-                       String phone, Integer hiddenMemberPhoneFlag, Integer state) {
+                       String phone, Integer hiddenMemberPhoneFlag, Integer state,
+                       Integer rfmSetting) {
         super(id);
         this.type = type;
         this.name = name;
@@ -58,6 +62,7 @@ public class StoreEntity extends BaseEntity<Integer> implements Replaceable {
         this.phone = phone;
         this.hiddenMemberPhoneFlag = hiddenMemberPhoneFlag;
         this.state = state;
+        this.rfmSetting = rfmSetting;
     }
 
     StoreEntity(OrganizationEntity company, OrganizationEntity parent, int type, String name,
@@ -210,11 +215,21 @@ public class StoreEntity extends BaseEntity<Integer> implements Replaceable {
         return Optional.fromNullable(organizationId);
     }
 
+    public Integer getExistCompanyId() {
+        return this.companyId;
+    }
+    
+    @Deprecated
     public Optional<Integer> getCompanyId() {
         return Optional.fromNullable(companyId);
     }
-
-    public String getContactTableName() {
+    
+    public Integer getRfmSetting() {
+		return rfmSetting;
+	}
+   
+    
+	public String getContactTableName() {
         Preconditions.checkState(this.getCompanyId().isPresent(), String.format("门店[%s] 无公司信息", this.getId()));
         if (hasDevice())
             return String.format("CONTACT_%s_%s", this.getCompanyId().get(), this.getId());
@@ -229,7 +244,7 @@ public class StoreEntity extends BaseEntity<Integer> implements Replaceable {
         this.setModifyUserId(loginUser.getUserId());
     }
 
-    @Override
+	@Override
     public Map<String, Object> toMap() {
         Map<String, Object> map = super.toMap();
         map.put("name", this.name);
@@ -243,6 +258,7 @@ public class StoreEntity extends BaseEntity<Integer> implements Replaceable {
         map.put("organizationId", this.organizationId);
         map.put("hiddenMemberPhoneFlag", this.hiddenMemberPhoneFlag);
         map.put("beforeDays", this.beforeDays == -1 ? 2 : this.beforeDays);
+        map.put("rfmSetting", this.rfmSetting);
         return map;
     }
 
@@ -261,6 +277,7 @@ public class StoreEntity extends BaseEntity<Integer> implements Replaceable {
         map.put("organizationId", this.organizationId);
         map.put("hiddenMemberPhoneFlag", this.hiddenMemberPhoneFlag == null ? 1 : this.hiddenMemberPhoneFlag);
         map.put("beforeDays", this.beforeDays == -1 ? 2 : this.beforeDays);
+        map.put("rfmSetting", this.rfmSetting);
         return map;
     }
 

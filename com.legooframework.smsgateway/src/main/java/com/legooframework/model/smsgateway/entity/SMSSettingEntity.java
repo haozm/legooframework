@@ -2,12 +2,17 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.legooframework.model.core.base.entity.BaseEntity;
+import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
+import java.util.Optional;
 
 public class SMSSettingEntity extends BaseEntity<Integer> {
 
@@ -21,15 +26,25 @@ public class SMSSettingEntity extends BaseEntity<Integer> {
         this.smsPrefix = smsPrefix;
     }
 
-    SMSSettingEntity(Integer id, ResultSet res) {
-        super(id, res);
+    SMSSettingEntity(ResultSet res) {
+        super(0, res);
         try {
             this.companyId = ResultSetUtil.getObject(res, "companyId", Integer.class);
             this.storeId = ResultSetUtil.getOptObject(res, "storeId", Integer.class).orElse(-1);
-            this.smsPrefix = ResultSetUtil.getString(res, "smsPrefix");
+            String _prefix = ResultSetUtil.getString(res, "smsPrefix");
+            this.smsPrefix = _prefix.length() > 13 ? _prefix.substring(0, 13) : _prefix;
         } catch (SQLException e) {
             throw new RuntimeException("Restore SMSSettingEntity has SQLException", e);
         }
+    }
+
+    Optional<SMSSettingEntity> changeSmsPrefix(String prefix, LoginContext user) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(StringUtils.trimToEmpty(prefix)), "前缀值不可以为空值...");
+        if (StringUtils.equals(smsPrefix, prefix)) return Optional.empty();
+        SMSSettingEntity clone = (SMSSettingEntity) this.cloneMe();
+        clone.smsPrefix = StringUtils.trimToEmpty(prefix);
+        clone.setEditor(user.getLoginId());
+        return Optional.of(clone);
     }
 
     public Integer getCompanyId() {
@@ -45,12 +60,21 @@ public class SMSSettingEntity extends BaseEntity<Integer> {
     }
 
 
-    public boolean isCompany(CrmStoreEntity store) {
-        return this.storeId == -1 && this.companyId.equals(store.getCompanyId());
+    public boolean isCompany(Integer companyId) {
+        return this.storeId == -1 && this.companyId.equals(companyId);
     }
 
-    boolean isStore(CrmStoreEntity store) {
-        return this.companyId.equals(store.getCompanyId()) && this.storeId.equals(store.getId());
+    boolean isStore(Integer companyId, Integer storeId) {
+        return this.companyId.equals(companyId) && this.storeId.equals(storeId);
+    }
+
+    @Override
+    public Map<String, Object> toViewMap() {
+        Map<String, Object> map = super.toViewMap();
+        map.put("companyId", this.companyId);
+        map.put("storeId", this.storeId);
+        map.put("smsPrefix", this.smsPrefix);
+        return map;
     }
 
     @Override

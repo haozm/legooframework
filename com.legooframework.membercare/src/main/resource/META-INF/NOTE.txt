@@ -1,0 +1,32 @@
+//    @RequestMapping(value = "/read/{businessType}/switch.json")
+//    public JsonMessage loadTouch90Switch(@PathVariable(value = "businessType") String businessType,
+//                                         @RequestBody(required = false) Map<String, Object> requestBody, HttpServletRequest request) {
+//        if (logger.isDebugEnabled())
+//            logger.debug(String.format("loadTouch90Switch(url:%s)", request.getRequestURI()));
+//        LoginContext user = LoginContextHolder.get();
+//        Integer pageNum = MapUtils.getInteger(requestBody, "pageNum", 1);
+//        Integer pageSize = MapUtils.getInteger(requestBody, "pageSize", 20);
+//        Map<String, Object> params = Maps.newHashMap();
+//        params.putAll(user.toParams());
+//        params.put("businessType", BusinessType.parse(StringUtils.upperCase(businessType)).toString());
+//        PagingResult page = getQuerySupport(request).queryForPage("TaskSwitchEntity", "load_switch", pageNum, pageSize, params);
+//        if (page.getResultSet().isPresent()) {
+//            page.getResultSet().get().forEach(map -> map.put("enabled", MapUtils.getIntValue(map, "enabled", 0) == 1));
+//        }
+//        if (logger.isDebugEnabled())
+//            logger.debug(page.toString());
+//        return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
+//    }
+
+//    @RequestMapping(value = "/update/{businessType}/switch.json")
+//    public JsonMessage update90Switch(@PathVariable(value = "businessType") String businessType,
+//                                      @RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+//        if (logger.isDebugEnabled())
+//            logger.debug(String.format("update90Switch(url:%s,requestBody = %s )", request.getRequestURI(), requestBody));
+//        Integer storeId = MapUtils.getInteger(requestBody, "storeId", -1);
+//        boolean enabled = MapUtils.getBoolean(requestBody, "enabled", true);
+//        String startDate_str = MapUtils.getString(requestBody, "startDate");
+//        LocalDateTime startDate = DateTimeUtils.parseDef(String.format("%s 00:00:01", startDate_str));
+//        getBean(TaskSwitchEntityAction.class, request).updateTouch90Switch(storeId, enabled, startDate);
+//        return JsonMessageBuilder.OK().toMessage();
+//    }

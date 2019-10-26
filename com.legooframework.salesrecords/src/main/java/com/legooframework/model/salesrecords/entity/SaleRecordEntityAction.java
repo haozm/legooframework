@@ -1,27 +1,31 @@
 package com.legooframework.model.salesrecords.entity;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.legooframework.model.core.base.entity.MultipleBaseEntityAction;
+import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.core.utils.ExceptionUtil;
 import com.legooframework.model.crmadapter.entity.CrmMemberEntity;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public class SaleRecordEntityAction extends MultipleBaseEntityAction<SaleRecordEntity> {
+public class SaleRecordEntityAction extends BaseEntityAction<SaleRecordEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(SaleRecordEntityAction.class);
 
@@ -32,29 +36,51 @@ public class SaleRecordEntityAction extends MultipleBaseEntityAction<SaleRecordE
     /**
      * 必须是同一家公司的数据信息
      *
-     * @param stores 门店列表
-     * @param start  开始日期
-     * @param end    截至日期
-     * @param sample 是否简要信息
+     * @param store      门店
+     * @param categories 商品分类
+     * @param start      开始日期
+     * @param end        截至日期
+     * @param sample     是否简要信息
      * @return Optional&lt;List&lt;SaleRecordEntity&gt;&gt;
      */
-    public Optional<List<SaleRecordEntity>> loadByDateInterval(Collection<CrmStoreEntity> stores,
+    public Optional<List<SaleRecordEntity>> loadByDateInterval(CrmStoreEntity store, String categories,
                                                                LocalDateTime start, LocalDateTime end,
                                                                boolean sample) {
-        Integer router = stores.iterator().next().getCompanyId();
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("storeId", store.getId());
+        params.put("sample", !sample);
+        if (!Strings.isNullOrEmpty(categories) && !StringUtils.equals("0", categories))
+            params.put("categories", categories);
+        params.put("companyId", store.getCompanyId());
+        params.put("startDay", DateTimeUtils.format(start));
+        params.put("endDay", DateTimeUtils.format(end));
+        params.put("sql", "loadByDateInterval");
+        Optional<List<SaleRecordEntity>> saleRecordEntities = queryForEntities("loadByDateInterval", params,
+                getRowMapper());
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("loadByDateInterval(%s,%s,%s,%s,%s) resisze is %s", store.getId(), start, end, sample,
+                    categories, saleRecordEntities.map(List::size).orElse(0)));
+        return saleRecordEntities;
+    }
+
+  /*  public Optional<List<SaleRecordEntity>> loadByDateInterval(Collection<CrmStoreEntity> stores, String categories,
+                                                               LocalDateTime start, LocalDateTime end,
+                                                               boolean sample) {
         if (stores.size() <= 100) {
             Map<String, Object> params = Maps.newHashMap();
             Set<Integer> ids = stores.stream().map(CrmStoreEntity::getId).collect(Collectors.toSet());
             params.put("storeIds", ids);
             params.put("sample", !sample);
+            if (!Strings.isNullOrEmpty(categories) && StringUtils.equals("0", categories))
+                params.put("categories", categories);
             params.put("companyId", stores.iterator().next().getCompanyId());
             params.put("startDay", DateTimeUtils.format(start));
             params.put("endDay", DateTimeUtils.format(end));
             Optional<List<SaleRecordEntity>> saleRecordEntities = queryForEntities("loadByDateInterval", params,
-                    getRowMapper(), router);
+                    getRowMapper());
             if (logger.isDebugEnabled())
-                logger.debug(String.format("loadByDateInterval(%s,%s,%s,%s) resisze is %s", ids, start, end, sample,
-                        saleRecordEntities.map(List::size).orElse(0)));
+                logger.debug(String.format("loadByDateInterval(%s,%s,%s,%s,%s) resisze is %s", ids, start, end, sample,
+                        categories, saleRecordEntities.map(List::size).orElse(0)));
             return saleRecordEntities;
         } else {
             List<SaleRecordEntity> saleRecords = Lists.newArrayList();
@@ -63,6 +89,7 @@ public class SaleRecordEntityAction extends MultipleBaseEntityAction<SaleRecordE
             Map<String, Object> fixed = Maps.newHashMap();
             fixed.put("startDay", DateTimeUtils.format(start));
             fixed.put("endDay", DateTimeUtils.format(end));
+            if (!Strings.isNullOrEmpty(categories)) fixed.put("categories", categories);
             fixed.put("companyId", stores.iterator().next().getCompanyId());
             fixed.put("sample", !sample);
             List<CompletableFuture<Void>> cfs = Lists.newArrayList();
@@ -70,7 +97,7 @@ public class SaleRecordEntityAction extends MultipleBaseEntityAction<SaleRecordE
                 Map<String, Object> params = Maps.newHashMap();
                 params.put("storeIds", list.stream().map(CrmStoreEntity::getId).collect(Collectors.toSet()));
                 params.putAll(fixed);
-                CompletableFuture<Void> res = asyncQueryForEntities("loadByDateInterval", params, getRowMapper(), router)
+                CompletableFuture<Void> res = asyncQueryForEntities("loadByDateInterval", params, getRowMapper())
                         .thenAccept(x -> {
                             if (CollectionUtils.isNotEmpty(x)) saleRecords.addAll(x);
                         });
@@ -86,31 +113,38 @@ public class SaleRecordEntityAction extends MultipleBaseEntityAction<SaleRecordE
             wait_all.join();
             return Optional.ofNullable(saleRecords.isEmpty() ? null : saleRecords);
         }
-    }
+    }*/
 
     public Optional<List<SaleRecordEntity>> loadMemberBy90Days(CrmMemberEntity member, CrmStoreEntity store) {
         Preconditions.checkNotNull(member);
         Preconditions.checkNotNull(store);
         Map<String, Object> params = Maps.newHashMap();
         params.put("memberId", member.getId());
+        params.put("companyId", store.getCompanyId());
         params.put("storeId", store.getId());
         params.put("hasDetail", true);
-        Optional<List<SaleRecordEntity>> detrails = super.queryForEntities("loadMemberBy90Days", params,
-                new RowMapperImpl(), store.getCompanyId());
+        Optional<List<SaleRecordEntity>> detrails = super.queryForEntities("loadMemberBy90Days", params, getRowMapper());
         if (logger.isDebugEnabled())
-            logger.debug(String.format("loadMemberBy90Days(%s) size is %s .", params,
-                    detrails.map(List::size).orElse(0)));
+            logger.debug(String.format("loadMemberBy90Days(%s) size is %s .", params, detrails.map(List::size).orElse(0)));
         return detrails;
     }
 
-
-    public MergeSaleRecords getMergeSaleRecords(Collection<CrmStoreEntity> stores,
-                                                LocalDateTime start, LocalDateTime end, boolean sample) {
-        Optional<List<SaleRecordEntity>> saleRecords = loadByDateInterval(stores, start, end, sample);
-        Integer companyId = stores.iterator().next().getCompanyId();
-        return saleRecords.map(x -> new MergeSaleRecords(companyId, start, end, x))
-                .orElseGet(() -> new MergeSaleRecords(companyId, start, end, null));
+    public void updateChangeFlag(Collection<SaleRecordEntity> saleRecords) {
+        if (CollectionUtils.isEmpty(saleRecords)) return;
+        super.batchUpdate("updateChangeFlag", (ps, saleRecord) -> {
+            ps.setObject(1, saleRecord.getChangeFlag());
+            ps.setObject(2, saleRecord.getId());
+        }, saleRecords);
     }
+
+
+//    public MergeSaleRecords getMergeSaleRecords(Collection<CrmStoreEntity> stores, String categories,
+//                                                LocalDateTime start, LocalDateTime end, boolean sample) {
+//        Optional<List<SaleRecordEntity>> saleRecords = loadByDateInterval(stores, categories, start, end, sample);
+//        Integer companyId = stores.iterator().next().getCompanyId();
+//        return saleRecords.map(x -> new MergeSaleRecords(companyId, start, end, x))
+//                .orElseGet(() -> new MergeSaleRecords(companyId, start, end, null));
+//    }
 
     public Optional<SaleRecordEntity> findSampleById(Object id, CrmOrganizationEntity company) {
         Preconditions.checkNotNull(id, "findSampleById(Object id) id is not null");
@@ -120,7 +154,7 @@ public class SaleRecordEntityAction extends MultipleBaseEntityAction<SaleRecordE
             params.put("hasDetail", false);
             Integer router = company.getId();
             return super.queryForEntity(getStatementFactory(), getModelName(), "findById",
-                    params, getRowMapper(), router);
+                    params, getRowMapper());
         } catch (Exception e) {
             String err_msg = String.format("%s(%s) has error", "findSampleById", id);
             throw ExceptionUtil.handleException(e, err_msg, logger);

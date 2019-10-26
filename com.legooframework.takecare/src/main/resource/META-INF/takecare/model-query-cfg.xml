@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="care_birthday_macro">
+            <![CDATA[
+     <#macro care_birthday_macro year storeId>
+       SELECT ooo.id AS 'memberId', IFNULL(ooo.calendarType,1) AS 'birthdayType',
+              ( CASE WHEN IFNULL(ooo.calendarType,1) = 1 THEN ooo.birthday ELSE ooo.lunarBirthday END) AS 'btday',
+              ( CASE WHEN IFNULL(ooo.calendarType,1) = 1 THEN STR_TO_DATE(CONCAT( '${year}',DATE_FORMAT(ooo.birthday,'%m%d')),'%Y%m%d')
+                     ELSE (SELECT STR_TO_DATE(MAX(ooxx.gregorian_calendar),'%Y%m%d')
+                             FROM YG_Statistics.calendar_g_c_index AS ooxx
+                            WHERE ooxx.lunar_calendar = CONCAT('${year}',DATE_FORMAT(ooo.lunarBirthday,'%m%d')))
+                END ) AS 'thisYearBirthday',
+              ( CASE WHEN IFNULL(ooo.calendarType,1) = 1 THEN TIMESTAMPDIFF(DAY, CURRENT_DATE, STR_TO_DATE(CONCAT('${year}',DATE_FORMAT(ooo.birthday,'%m%d')),'%Y%m%d'))
+                     ELSE TIMESTAMPDIFF(DAY, CURRENT_DATE, (SELECT STR_TO_DATE(MAX(ooxx.gregorian_calendar),'%Y%m%d')
+                                                              FROM YG_Statistics.calendar_g_c_index AS ooxx
+                                                             WHERE ooxx.lunar_calendar = CONCAT('${year}',DATE_FORMAT(ooo.lunarBirthday,'%m%d'))))
+                END ) AS 'fromTodayDays'
+        FROM acp.crm_member AS ooo
+  INNER JOIN acp.crm_store_member AS xxx ON xxx.member_id= ooo.id
+         AND xxx.store_id = ${storeId}
+     </#macro>
+     <#macro member_info_macro>
+    cm.id, cm.certificate, cm.certificateType, cm.characterType, cm.createCardTime, cm.createTime, cm.detailAddress,
+    cm.memberType, cm.name, cm.oldMemberCode, cm.oldStoreId, cm.rechargeAmount, cm.remark, cm.serviceLevel, cm.sex, cm.source_channel, cm.source_from, cm.status,
+    cm.company_id, cm.memberCardType_id, cm.assignState, cm.memberCardNum, cm.unreachable, cm.lastVisitTime, cm.rfm, cm.createStoreId,
+    cm.consumeTotalCount, cm.maxConsumePriceCurYear,IFNULL(cm.phone,'') AS 'phone' ,
+    cm.effectiveFlag, cm.totalScore,  cm.store_id, cm.daysAgoCount, cm.has_wechat_fan, cm.totalScore02
+     </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="CareBirthdayEntity">
+        <sql id="MemberBirthdayCare_count" dynamic="true" macros="care_birthday_macro">
+            <body><![CDATA[
+   SELECT COUNT(T.id)
+     FROM (  SELECT cbc.id AS 'careId', cmm.birthdayType, DATE_FORMAT(cmm.btday, '%m-%d') AS 'birthdayMMDD', cmm.fromTodayDays, cm.id
+          FROM acp.crm_member cm
+    INNER JOIN (<@care_birthday_macro year=thisYear storeId=USER_STORE_ID />) AS cmm ON cmm.memberId = cm.id
+     LEFT JOIN acp.crm_birthdaycareplan AS cbc ON cbc.member_id = cm.id AND YEAR(cbc.care_date) = ${thisYear}
+         WHERE cmm.thisYearBirthday BETWEEN '${thisStartTime}' AND '${thisEndTime}'
+<#if nextYear??>
+         UNION
+        SELECT cbc.id AS 'careId', cmm.birthdayType,DATE_FORMAT(cmm.btday, '%m-%d') AS 'birthdayMMDD', cmm.fromTodayDays, cm.id
+          FROM acp.crm_member cm
+    INNER JOIN (<@care_birthday_macro year=nextYear storeId=USER_STORE_ID />) AS cmm ON cmm.memberId = cm.id
+     LEFT JOIN acp.crm_birthdaycareplan AS cbc ON cbc.member_id = cm.id AND YEAR(cbc.care_date) = ${nextYear}
+         WHERE cmm.thisYearBirthday BETWEEN '${nextStartTime}' AND '${nextEndTime}'
+</#if>   ) AS T
+LEFT JOIN acp.crm_shoppingguide_member T2 ON T2.member_id = T.id
+  <#if condition>
+       WHERE 1=1
+<#if (USER_ROLE=="ShoppingGuide")> AND T2.shoppingguide_id = :USER_ID </#if>
+<#if birthdayType??>AND T.birthdayType = :birthdayType </#if>
+<#if careStatus??>AND <#if careStatus==1> T.careId IS NOT NULL <#else> T.careId IS NULL </#if></#if>
+<#if keyword??>AND (T.name LIKE :keyword OR T.phone LIKE :keyword OR T.memberCardNum LIKE :keyword ) </#if>
+   </#if>
+            ]]></body>
+        </sql>
+        <sql id="MemberBirthdayCare" dynamic="true" macros="care_birthday_macro">
+            <body><![CDATA[
+   SELECT T.*,T3.name AS 'shoppingguideName',IFNULL(T4.weixin_id,'') AS 'weixinId',IFNULL(T.careId,0) AS 'careIdVal',
+          (CASE WHEN T.careId IS NULL THEN 2 ELSE 1 END ) AS 'careStatus'
+     FROM ( SELECT cbc.id AS 'careId', cmm.birthdayType, DATE_FORMAT(cmm.btday, '%m-%d') AS 'birthdayMMDD', cmm.fromTodayDays,
+                   <@member_info_macro />
+              FROM acp.crm_member cm
+        INNER JOIN (<@care_birthday_macro year=thisYear storeId=USER_STORE_ID />) AS cmm ON cmm.memberId = cm.id
+         LEFT JOIN acp.crm_birthdaycareplan AS cbc ON cbc.member_id = cm.id AND YEAR(cbc.care_date) = ${thisYear}
+             WHERE cmm.thisYearBirthday BETWEEN '${thisStartTime}' AND '${thisEndTime}'
+    <#if nextYear??>
+             UNION
+            SELECT cbc.id AS 'careId', cmm.birthdayType, DATE_FORMAT(cmm.btday, '%m-%d') AS 'birthdayMMDD', cmm.fromTodayDays,
+                   <@member_info_macro />
+              FROM acp.crm_member cm
+        INNER JOIN (<@care_birthday_macro year=nextYear storeId=USER_STORE_ID />) AS cmm ON cmm.memberId = cm.id
+         LEFT JOIN acp.crm_birthdaycareplan AS cbc ON cbc.member_id = cm.id AND YEAR(cbc.care_date) = ${nextYear}
+             WHERE cmm.thisYearBirthday BETWEEN '${nextStartTime}' AND '${nextEndTime}'
+    </#if> ) AS T
+  LEFT JOIN acp.crm_shoppingguide_member T2 ON T2.member_id = T.id
+  LEFT JOIN acp.acp_employee T3 ON T3.id = T2.shoppingguide_id
+  LEFT JOIN acp.acp_weixin_member T4 ON T4.member_id = T.id
+   <#if condition>
+       WHERE 1=1
+<#if (USER_ROLE=="ShoppingGuide")> AND T2.shoppingguide_id = :USER_ID </#if>
+<#if birthdayType??>AND T.birthdayType = :birthdayType </#if>
+<#if careStatus??>AND <#if (careStatus==1)> T.careId IS NOT NULL <#else> T.careId IS NULL</#if></#if>
+<#if keyword??>AND (T.name LIKE :keyword OR T.phone LIKE :keyword OR T.memberCardNum LIKE :keyword ) </#if>
+   </#if>
+        LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
+    <model id="HisCareRecordEntity">
+        <sql id="quert4Details" dynamic="true">
+            <body><![CDATA[
+        SELECT cmr.id, DATE_FORMAT(cmr.createTime, GET_FORMAT(DATETIME,'iso'))  AS 'createTime',
+               cmr.followUpContent, DATE_FORMAT(cmr.followUpTime, GET_FORMAT(DATETIME,'iso')) AS 'followUpTime',
+               cmr.followUpWay, cmr.memberFeedback, cmr.planId, cmr.planName, cmr.planType,
+               cmr.shoppingGuideSummary, cmr.status,cm.name AS 'memberId',
+               DATE_FORMAT(cmr.updateTime, GET_FORMAT(DATETIME,'iso')) AS 'updateTime',
+               cmr.member_id, cmr.store_id, cmr.employee_id, cmr.operateType, cm.totalScore , cm.rechargeAmount,
+               (CASE WHEN cmr.followUpWay= 1 THEN '短信'
+                     WHEN cmr.followUpWay= 2 THEN '微信'
+                     WHEN cmr.followUpWay= 5 THEN '线下跟进'
+                     WHEN cmr.followUpWay= 10 THEN '取消跟进'
+                     ELSE '其他类型' END ) AS 'followUpWayName'
+          FROM acp.crm_membercarerecord AS cmr
+    INNER JOIN acp.crm_member AS cm ON cmr.member_id = cm.id
+         WHERE
+     <#if (sql=="birthdayCareDetailByMember")>
+              cmr.member_id = :memberId
+          AND cmr.planType = :businessType
+     ORDER BY cmr.createTime DESC
+        LIMIT 10
+     <#else>
+          AND cmr.planType = -1
+     </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="CareNinetyEntity">
+        <sql id="quertDetailByNinety">
+            <body><![CDATA[
+    SELECT trl.* ,
+           (CASE WHEN trl.send_channel = 0 THEN '短信'
+                 WHEN trl.send_channel = 1 THEN '微信'
+                 WHEN trl.send_channel = 3 THEN '线下跟进'
+                 WHEN trl.send_channel = 4 THEN '电话跟进'
+                 WHEN trl.send_channel = 9 THEN '取消跟进'
+                 ELSE '其他渠道' END ) AS 'sendChannelName',
+           task.taskNode, task.id AS 'taskId',
+           DATE_FORMAT(task.startTime, GET_FORMAT(DATETIME,'iso')) AS 'taskStartTime',
+           DATE_FORMAT(task.doneTime, GET_FORMAT(DATETIME,'iso')) AS 'taskDoneTime',
+           DATE_FORMAT(task.overdueTime, GET_FORMAT(DATETIME,'iso')) AS 'taskOverdueTime'
+      FROM acp.TAKECARE_RECORD_LOG trl
+INNER JOIN acp.crm_ninetyplanfollowup AS ninety ON ninety.id = trl.care_id AND trl.business_type=6
+INNER JOIN acp.crm_plantask AS task ON task.id = trl.sub_care_id AND trl.business_type=6
+     WHERE ninety.id = :planId
+  ORDER BY trl.createTime DESC
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

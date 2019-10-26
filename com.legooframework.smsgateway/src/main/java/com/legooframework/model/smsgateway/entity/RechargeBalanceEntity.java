@@ -52,6 +52,18 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         }
     }
 
+    Integer getCompanyId() {
+        return companyId;
+    }
+
+    Integer getStoreId() {
+        return storeId;
+    }
+
+    String getStoreGroupId() {
+        return storeGroupId;
+    }
+
     long deduction(long size) {
         Preconditions.checkState(size > 0, "待扣除的短信数量需为正数，非法取值：%s", size);
         if (this.balance >= size) {
@@ -68,7 +80,7 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         return rechargeScope;
     }
 
-    void addBalance(int smsNum) {
+    public void addBalance(int smsNum) {
         this.balance += smsNum;
     }
 

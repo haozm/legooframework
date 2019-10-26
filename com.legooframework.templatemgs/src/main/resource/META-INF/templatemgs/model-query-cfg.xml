@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="company_list_innser">
+            <![CDATA[
+             <#macro company_list_innser >
+                 SELECT mtc.id AS 'id',
+                  mtc.company_id AS 'companyId',
+                  ( SELECT org.name
+                      FROM acp_organization org
+                     WHERE org.orgType = 1
+                       AND org.id = mtc.company_id) AS 'companyName',
+                  mtc.org_id AS 'orgId',
+                  mtc.store_id AS 'storeId',
+                  '-' AS 'storeName',
+                  mtc.temp_title AS 'title',
+                  mtc.temp_context AS 'template',
+                  mtc.classifies AS 'classifies',
+                  mtc.use_scopes AS 'useScopes',
+                  mtc.expire_date AS 'expireDate',
+                  'COMPANY' AS 'tempType',
+                  '公司模板' AS 'tempTypeDesc',
+                  mtc.blacked AS 'blacked',
+                  mtc.delete_flag AS 'deleteFlag',
+                  mtc.is_default AS 'isDefault',
+                  DATE_FORMAT(mtc.createTime,'%Y-%m-%d') AS 'createDate'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = :companyId
+              AND mtc.store_id = -1
+            UNION
+           SELECT mtc.id AS 'id',
+                  mtc.company_id AS 'companyId',
+                  '系统内置' AS 'companyName',
+                  mtc.org_id AS 'orgId',
+                  mtc.store_id AS 'storeId',
+                  '-' AS 'storeName',
+                  mtc.temp_title AS 'title',
+                  mtc.temp_context AS 'template',
+                  mtc.classifies AS 'classifies',
+                  mtc.use_scopes AS 'useScopes',
+                  mtc.expire_date AS 'expireDate',
+                  'GENERAL' AS 'tempType',
+                  '通用模板' AS 'tempTypeDesc',
+                  (SELECT POSITION(mtc.id IN IFNULL(mtb.black_list,'EMPTY_LIST'))
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = -1 ) AS 'blacked',
+                  mtc.delete_flag AS 'deleteFlag',
+                  mtc.is_default AS 'isDefault',
+                  DATE_FORMAT(mtc.createTime,'%Y-%m-%d') AS 'createDate'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = -1
+              AND mtc.blacked <> 1
+	         </#macro>
+	          ]]>
+        </macro>
+        <macro id="store_list_innser">
+            <![CDATA[
+             <#macro store_list_innser>
+                  SELECT mtc.id AS 'id',
+                   mtc.company_id AS 'companyId',
+                  ( SELECT org.name
+                      FROM acp_organization org
+                     WHERE org.orgType = 1
+                       AND org.id = mtc.company_id) AS 'companyName',
+                  mtc.org_id AS 'orgId',
+                  mtc.store_id AS 'storeId',
+                  (SELECT str.name
+                     FROM acp_store str
+                    WHERE str.id = mtc.store_id
+                      AND str.company_id = mtc.company_id ) AS 'storeName',
+                  mtc.temp_title AS 'title',
+                  mtc.temp_context AS 'template',
+                  mtc.classifies AS 'classifies',
+                  mtc.use_scopes AS 'useScopes',
+                  mtc.expire_date AS 'expireDate',
+                  'STORE' AS 'tempType',
+                  '门店模板' AS 'tempTypeDesc',
+                  mtc.blacked AS 'blacked',
+                  mtc.delete_flag AS 'deleteFlag',
+                  mtc.is_default AS 'isDefault',
+                  DATE_FORMAT(mtc.createTime,'%Y-%m-%d') AS 'createDate'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = :companyId
+              AND mtc.store_id = :storeId
+             UNION
+             SELECT mtc.id AS 'id',
+                   mtc.company_id AS 'companyId',
+                  ( SELECT org.name
+                      FROM acp_organization org
+                     WHERE org.orgType = 1
+                       AND org.id = mtc.company_id) AS 'companyName',
+                  mtc.org_id AS 'orgId',
+                  mtc.store_id AS 'storeId',
+                  '-' AS 'storeName',
+                  mtc.temp_title AS 'title',
+                  mtc.temp_context AS 'template',
+                  mtc.classifies AS 'classifies',
+                  mtc.use_scopes AS 'useScopes',
+                  mtc.expire_date AS 'expireDate',
+                  'COMPANY' AS 'tempType',
+                  '公司模板' AS 'tempTypeDesc',
+                  (SELECT POSITION(mtc.id IN IFNULL(mtb.black_list,'EMPTY_LIST'))
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = :storeId ) AS 'blacked',
+                  mtc.delete_flag AS 'deleteFlag',
+                  mtc.is_default AS 'isDefault',
+                  DATE_FORMAT(mtc.createTime,'%Y-%m-%d') AS 'createDate'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = :companyId
+              AND mtc.store_id = -1
+              AND mtc.blacked <> 1
+            UNION
+           SELECT mtc.id AS 'id',
+                  mtc.company_id AS 'companyId',
+                  '系统内置' AS 'companyName',
+                  mtc.org_id AS 'orgId',
+                  mtc.store_id AS 'storeId',
+                  '-' AS 'storeName',
+                  mtc.temp_title AS 'title',
+                  mtc.temp_context AS 'template',
+                  mtc.classifies AS 'classifies',
+                  mtc.use_scopes AS 'useScopes',
+                  mtc.expire_date AS 'expireDate',
+                  'GENERAL' AS 'tempType',
+                  '通用模板' AS 'tempTypeDesc',
+                  (SELECT POSITION(mtc.id IN IFNULL(mtb.black_list,'EMPTY_LIST'))
+                     FROM MSG_TEMPLATE_BLACKLIST mtb
+                    WHERE mtb.company_id = :companyId
+                      AND mtb.org_id = -1
+                      AND mtb.store_id = :storeId ) AS 'blacked',
+                  mtc.delete_flag AS 'deleteFlag',
+                  mtc.is_default AS 'isDefault',
+                  DATE_FORMAT(mtc.createTime,'%Y-%m-%d') AS 'createDate'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = -1
+              AND mtc.blacked <> 1
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="MsgTemplateEntity">
+        <sql id="general_list_count" dynamic="true">
+            <body><![CDATA[
+          SELECT COUNT(mtc.id)
+            FROM MSG_TEMPLATE_CONTEXT mtc
+           WHERE mtc.delete_flag = 0
+             AND mtc.company_id = -1
+             AND mtc.store_id = -1
+           <#if template??>
+             AND mtc.temp_context LIKE :template
+           </#if>
+           <#if classifies??>
+             AND mtc.classifies = :classifies
+           </#if>
+           <#if blacked??>
+             AND mtc.blacked = :blacked
+           </#if>
+           <#if useScopes??>
+             AND ( <#list useScopes as sc> FIND_IN_SET('${sc}',mtc.use_scopes) <> 0 <#sep>OR</#list> )
+           </#if>
+            ]]></body>
+        </sql>
+        <sql id="general_list" dynamic="true">
+            <params>
+                <p name="template" type="STRING" format="%{value}%"/>
+                <p name="classifies" type="STRING"/>
+                <p name="tempType" type="STRING"/>
+                <p name="blacked" type="INT"/>
+                <p name="useScopes" type="INTS"/>
+            </params>
+            <body><![CDATA[
+           SELECT mtc.id AS 'id',
+                  mtc.company_id AS 'companyId',
+                  '系统内置' AS 'companyName',
+                  mtc.store_id AS 'storeId',
+                  '-' AS 'storeName',
+                  mtc.temp_title AS 'title',
+                  mtc.temp_context AS 'template',
+                  mtc.classifies AS 'classifies',
+                  mtc.use_scopes AS 'useScopes',
+                  mtc.expire_date AS 'expireDate',
+                  mtc.blacked AS 'blacked',
+                  CASE mtc.blacked
+                    WHEN 0 THEN '有效'
+                    ELSE '无效' END AS 'blackedStatus',
+                  'GENERAL' AS 'tempType',
+                  '通用模板' AS 'tempTypeDesc',
+                  mtc.is_default AS 'isDefault',
+                  DATE_FORMAT(mtc.createTime,'%Y-%m-%d') AS 'createDate'
+             FROM MSG_TEMPLATE_CONTEXT AS mtc
+            WHERE mtc.delete_flag = 0
+              AND mtc.company_id = -1
+           <#if template??>
+              AND mtc.temp_context LIKE :template
+           </#if>
+           <#if classifies??>
+              AND mtc.classifies = :classifies
+           </#if>
+           <#if classifies??>
+              AND mtc.classifies = :classifies
+           </#if>
+           <#if blacked??>
+             AND mtc.blacked = :blacked
+           </#if>
+           <#if useScopes??>
+             AND ( <#list useScopes as sc> FIND_IN_SET('${sc}',mtc.use_scopes) <> 0 <#sep>OR</#list> )
+           </#if>
+         ORDER BY mtc.blacked DESC
+            LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+        <sql id="company_list_count" dynamic="true" macros="company_list_innser">
+            <body><![CDATA[
+          SELECT COUNT(A.id)
+           FROM ( <@company_list_innser /> ) AS A
+           WHERE A.deleteFlag = 0
+           <#if template??>
+             AND A.template LIKE :template
+           </#if>
+           <#if classifies??>
+             AND A.classifies = :classifies
+           </#if>
+           <#if tempType??>
+             AND A.tempType = :tempType
+           </#if>
+           <#if blacked??>
+            AND IFNULL(A.blacked,0) <#if (blacked = 0)> = 0 <#else> <> 0 </#if>
+           </#if>
+           <#if useScopes??>
+             AND ( <#list useScopes as sc> FIND_IN_SET('${sc}',A.useScopes) <> 0 <#sep>OR</#list> )
+           </#if>
+            ]]></body>
+        </sql>
+        <sql id="company_list" dynamic="true" macros="company_list_innser">
+            <params>
+                <p name="template" type="STRING" format="%{value}%"/>
+                <p name="classifies" type="STRING"/>
+                <p name="tempType" type="STRING"/>
+                <p name="blacked" type="INT"/>
+                <p name="useScopes" type="INTS"/>
+            </params>
+            <body><![CDATA[
+           SELECT A.id,A.companyId,A.companyName,A.orgId,A.storeId,A.storeName,A.template,A.classifies,A.useScopes,
+                  A.expireDate, A.tempType, A.deleteFlag, A.createDate,A.title , A.tempTypeDesc ,
+                  IFNULL(A.blacked,0) AS 'blacked', A.isDefault ,
+                  (CASE IFNULL(A.blacked,0)
+                    WHEN 0 THEN '有效'
+                    ELSE '无效' END )  AS 'blackedStatus'
+             FROM (<@company_list_innser /> ) AS A
+           WHERE A.deleteFlag = 0
+           <#if template??>
+             AND A.template LIKE :template
+           </#if>
+           <#if classifies??>
+             AND A.classifies = :classifies
+           </#if>
+           <#if tempType??>
+             AND A.tempType = :tempType
+           </#if>
+           <#if blacked??>
+            AND IFNULL(A.blacked,0) <#if (blacked = 0)> = 0 <#else> <> 0 </#if>
+           </#if>
+           <#if useScopes??>
+             AND ( <#list useScopes as sc> FIND_IN_SET('${sc}',A.useScopes) <> 0 <#sep>OR</#list> )
+           </#if>
+        ORDER BY A.blacked DESC,A.companyId
+           LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+        <sql id="store_list_count" dynamic="true" macros="store_list_innser">
+            <body><![CDATA[
+          SELECT COUNT(A.id)
+            FROM (<@store_list_innser /> ) AS A
+           WHERE A.deleteFlag = 0
+           <#if template??>
+             AND A.template LIKE :template
+           </#if>
+           <#if classifies??>
+             AND A.classifies = :classifies
+           </#if>
+           <#if tempType??>
+             AND A.tempType = :tempType
+           </#if>
+           <#if blacked??>
+            AND IFNULL(A.blacked,0) <#if (blacked = 0)> = 0 <#else> <> 0 </#if>
+           </#if>
+           <#if useScopes??>
+             AND ( <#list useScopes as sc> FIND_IN_SET('${sc}',A.useScopes) <> 0 <#sep>OR</#list> )
+           </#if>
+            ]]></body>
+        </sql>
+        <sql id="store_list" dynamic="true" macros="store_list_innser">
+            <params>
+                <p name="template" type="STRING" format="%{value}%"/>
+                <p name="classifies" type="STRING"/>
+                <p name="tempType" type="STRING"/>
+            </params>
+            <body><![CDATA[
+           SELECT A.id,A.companyId, A.companyName,A.storeId,A.storeName,A.template,A.classifies,A.useScopes,
+                  A.expireDate, A.tempType,A.deleteFlag, A.createDate,A.title, A.tempTypeDesc,
+                  IFNULL(A.blacked,0) AS 'blacked', A.isDefault ,
+                  (CASE IFNULL(A.blacked,0)
+                    WHEN 0 THEN '有效'
+                    ELSE '无效' END )  AS 'blackedStatus'
+             FROM ( <@store_list_innser /> ) AS A
+           WHERE A.deleteFlag = 0
+           <#if template??>
+             AND A.template LIKE :template
+           </#if>
+           <#if classifies??>
+             AND A.classifies = :classifies
+           </#if>
+           <#if tempType??>
+             AND A.tempType = :tempType
+           </#if>
+           <#if blacked??>
+            AND IFNULL(A.blacked,0) <#if (blacked = 0)> = 0 <#else> <> 0 </#if>
+           </#if>
+           <#if useScopes??>
+             AND ( <#list useScopes as sc> FIND_IN_SET('${sc}',A.useScopes) <> 0 <#sep>OR</#list> )
+           </#if>
+        ORDER BY blacked, companyId, A.storeId
+           LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
+    <model id="MsgReplaceHoldEntity">
+        <sql id="loadReplaceSource" dynamic="true">
+            <body><![CDATA[
+        SELECT mm.id AS 'id',
+               TRIM(mm.name) AS '会员姓名',
+               TRIM(mm.mobilePhone) AS '会员电话',
+               TRIM(mm.mobilePhone) AS 'mobile',
+               TRIM(sto.name) AS '门店名称',
+               ( CASE IFNULL(mm.sex, 2)
+                  WHEN 1 THEN '先生'
+                  WHEN 2 THEN '女士'
+                  ELSE '先生/女士' END )  AS '性别',
+               TRIM(org.name) AS '公司名称',
+               TRIM(sto.phone) AS '门店电话',
+               ( CASE IFNULL(mm.calendarType , 1)
+                 WHEN 1 THEN DATE_FORMAT(mm.birthday, '%Y-%m-%d')
+                 ELSE DATE_FORMAT(mm.lunarBirthday,'%Y-%m-%d' )  END ) AS '会员生日',
+           <#if employeeId == -1>
+               '店长' AS '店长',
+               '导购' AS '导购姓名',
+           <#else>
+               ( SELECT TRIM(emp.name)
+                  FROM acp_employee emp
+                 WHERE emp.company_id = mm.company_id
+                   AND emp.store_id = mm.store_ids
+                   AND FIND_IN_SET ('5',emp.role_ids) limit 1 ) AS '店长',
+                ( SELECT TRIM(emp.name)
+                   FROM acp_employee emp
+                  WHERE emp.id = ${employeeId}
+                    AND emp.company_id = mm.company_id ) AS '导购姓名',
+            </#if>
+               awm.weixin_id AS 'weixinId',
+               ( SELECT sd.deviceId
+                   FROM yycomm.store_device AS sd
+                  WHERE sd.company_id = sto.company_id
+                    AND sd.store_id = sto.id
+                    AND sd.status =1 LIMIT 1) AS 'deviceId'
+          FROM crm_member AS mm
+    INNER JOIN acp_store AS sto ON sto.id = mm.store_ids AND sto.company_id = mm.company_id
+    INNER JOIN acp_organization AS org ON org.id =mm.company_id AND org.orgType = 1
+     LEFT JOIN acp_weixin_member AS awm ON awm.company_id = mm.company_id AND awm.store_id = sto.id AND awm.member_id = mm.id
+         WHERE mm.company_id = :companyId
+           AND mm.id IN (${memberIds?join(",")})
+            ]]></body>
+        </sql>
+    </model>
+    <model id="holiday" dynamic="true">
+        <sql id="load_system_holiday" dynamic="true">
+            <body><![CDATA[
+            	SELECT
+					id,
+					name,
+					remark,
+					cronContext AS 'cron',
+					IF(cronType = 'LUNAR','农历','公历') AS 'cronType',
+					duration,
+					CASE
+					WHEN type = 'SYSTEM' THEN '系统缺省'
+					WHEN type = 'COMPANY' THEN '公司级别'
+					WHEN type = 'STORE' THEN '门店级别'
+					END AS 'type',
+					enable AS 'enable',
+					0 AS 'editable'
+				FROM
+					holiday_info
+				WHERE type = 'SYSTEM' <#if enable??>AND enable=:enable</#if>
+               ]]></body>
+        </sql>
+        <sql id="load_company_holiday" dynamic="true">
+            <body><![CDATA[
+            	SELECT
+					id,
+					name,
+					remark,
+					cronContext AS 'cron',
+					IF(cronType = 'LUNAR','农历','公历') AS 'cronType',
+					duration,
+					CASE
+					WHEN type = 'SYSTEM' THEN '系统缺省'
+					WHEN type = 'COMPANY' THEN '公司级别'
+					WHEN type = 'STORE' THEN '门店级别'
+					END AS 'type',
+					IF(!FIND_IN_SET(:companyId,company_blackList), 1, 0) AS 'enable',
+					0 AS 'editable'
+				FROM
+					holiday_info
+				WHERE type = 'SYSTEM' AND enable=1
+				UNION
+				SELECT
+					id,
+					name,
+					remark,
+					cronContext AS 'cron',
+					IF(cronType = 'LUNAR','农历','公历') AS 'cronType',
+					duration,
+					CASE
+					WHEN type = 'SYSTEM' THEN '系统缺省'
+					WHEN type = 'COMPANY' THEN '公司级别'
+					WHEN type = 'STORE' THEN '门店级别'
+					END AS 'type',
+					enable AS 'enable',
+					editable AS 'editable'
+				FROM
+					holiday_info
+				WHERE type = 'COMPANY' AND company_id = :companyId <#if enable??>AND enable=:enable</#if>
+               ]]></body>
+        </sql>
+        <sql id="load_store_holiday" dynamic="true">
+            <body><![CDATA[
+            	SELECT
+					id,
+					name,
+					remark,
+					cronContext AS 'cron',
+					IF(cronType = 'LUNAR','农历','公历') AS 'cronType',
+					duration,
+					CASE
+					WHEN type = 'SYSTEM' THEN '系统缺省'
+					WHEN type = 'COMPANY' THEN '公司级别'
+					WHEN type = 'STORE' THEN '门店级别'
+					END AS 'type',
+					IF(!FIND_IN_SET(:companyId,company_blackList)||!FIND_IN_SET(:storeId,store_blackList), 1, 0) AS 'enable',
+					0 AS 'editable'
+				FROM
+					holiday_info
+				WHERE type = 'SYSTEM' AND enable=1
+				UNION
+				SELECT
+					id,
+					name,
+					remark,
+					cronContext AS 'cron',
+					IF(cronType = 'LUNAR','农历','公历') AS 'cronType',
+					duration,
+					CASE
+					WHEN type = 'SYSTEM' THEN '系统缺省'
+					WHEN type = 'COMPANY' THEN '公司级别'
+					WHEN type = 'STORE' THEN '门店级别'
+					END AS 'type',
+					IF(!FIND_IN_SET(:storeId,store_blackList), 1, 0) AS 'enable',
+					0 AS 'editable'
+				FROM
+					holiday_info
+				WHERE type = 'COMPANY' AND company_id = :companyId AND enable=1
+				UNION
+				SELECT
+					id,
+					name,
+					remark,
+					cronContext AS 'cron',
+					IF(cronType = 'LUNAR','农历','公历') AS 'cronType',
+					duration,
+					CASE
+					WHEN type = 'SYSTEM' THEN '系统缺省'
+					WHEN type = 'COMPANY' THEN '公司级别'
+					WHEN type = 'STORE' THEN '门店级别'
+					END AS 'type',
+					enable AS 'enable',
+					editable AS 'editable'
+				FROM
+					holiday_info
+				WHERE type = 'STORE' AND store_id = :storeId <#if enable??>AND enable=:enable</#if>
+               ]]></body>
+        </sql>
+    </model>
+</sqls>

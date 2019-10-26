@@ -35,7 +35,7 @@ public class MvcController extends BaseController {
 
     @RequestMapping(value = "/list.json")
     @ResponseBody
-    public Map<String, Object> query4List(@RequestBody Map<String, String> requestBody, HttpServletRequest request) {
+    public Map<String, Object> query4List(@RequestBody(required=false) Map<String, String> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("[REQ][%s]->%s", request.getRequestURI(), requestBody));
         String modelName = requestBody.remove("modelName");
@@ -47,9 +47,10 @@ public class MvcController extends BaseController {
         loggerBegin(modelName, stmtId, requestBody, request);
         Stopwatch stopwatch = Stopwatch.createStarted();
         Map<String, Object> params = holdParams(requestBody, request);
-        Optional<List<Map<String, Object>>> optional = queryEngineService.queryForList(modelName, stmtId, params);
+        String queryId = putMapAndGetStmtId(params,stmtId);
+        Optional<List<Map<String, Object>>> optional = queryEngineService.queryForList(modelName, queryId, params);
         if (need_meta) {
-            Optional<List<ColumnMeta>> listOptional = queryEngineService.getColumnMetas(modelName, stmtId);
+            Optional<List<ColumnMeta>> listOptional = queryEngineService.getColumnMetas(modelName, queryId);
             Map<String, Object> meta_header = Maps.newHashMap();
             if (listOptional.isPresent()) meta_header.put("meta", listOptional.get());
             if (logger.isDebugEnabled())
@@ -57,7 +58,7 @@ public class MvcController extends BaseController {
                         stopwatch.elapsed(TimeUnit.MILLISECONDS)));
             return wrapperResponse(meta_header, optional.isPresent() ? optional.get() : null);
         }
-        loggerEnd(modelName, stmtId, requestBody, request, stopwatch);
+        loggerEnd(modelName, queryId, requestBody, request, stopwatch);
         return wrapperResponse(optional.isPresent() ? optional.get() : null);
     }
 
@@ -68,8 +69,9 @@ public class MvcController extends BaseController {
         loggerBegin(modelName, stmtId, requestBody, request);
         Map<String, Object> params = holdParams(requestBody, request);
         Stopwatch stopwatch = Stopwatch.createStarted();
-        Optional<Map<String, Object>> optional = queryEngineService.queryForMap(modelName, stmtId, params);
-        loggerEnd(modelName, stmtId, requestBody, request, stopwatch);
+        String queryId = putMapAndGetStmtId(params,stmtId);
+        Optional<Map<String, Object>> optional = queryEngineService.queryForMap(modelName, queryId, params);
+        loggerEnd(modelName, queryId, requestBody, request, stopwatch);
         return wrapperResponse(optional.isPresent() ? optional.get() : null);
     }
 
@@ -102,8 +104,9 @@ public class MvcController extends BaseController {
         if (meta) metaOptional = queryEngineService.getColumnMetas(modelName, stmtId);
         Stopwatch stopwatch = Stopwatch.createStarted();
         Map<String, Object> params = holdParams(requestBody, request);
-        PagingResult pagingResult = queryEngineService.queryForPage(modelName, stmtId, pageNum, pageSize, params);
-        loggerEnd(modelName, stmtId, requestBody, request, stopwatch);
+        String queryId = putMapAndGetStmtId(params,stmtId);
+        PagingResult pagingResult = queryEngineService.queryForPage(modelName, queryId, pageNum, pageSize, params);
+        loggerEnd(modelName, queryId, requestBody, request, stopwatch);
         return metaOptional.isPresent() ? wrapperResponse(pagingResult.toMap(metaOptional.get())) :
                 wrapperResponse(pagingResult.toMap());
     }
@@ -111,20 +114,30 @@ public class MvcController extends BaseController {
     @RequestMapping(value = "/{modelName}/{stmtId}/list.json")
     @ResponseBody
     public Map<String, Object> queryAssignList(@PathVariable String modelName, @PathVariable String stmtId,
-                                               @RequestBody Map<String, String> requestBody, HttpServletRequest request) {
+                                               @RequestBody(required=false) Map<String, String> requestBody, HttpServletRequest request) {
         loggerBegin(modelName, stmtId, requestBody, request);
         boolean meta = MapUtils.getBoolean(requestBody, "meta", false);
         Optional<List<ColumnMeta>> metaOptional = Optional.absent();
         if (meta) metaOptional = queryEngineService.getColumnMetas(modelName, stmtId);
         Stopwatch stopwatch = Stopwatch.createStarted();
         Map<String, Object> params = holdParams(requestBody, request);
-        Optional<List<Map<String, Object>>> optional = queryEngineService.queryForList(modelName, stmtId, params);
-        loggerEnd(modelName, stmtId, requestBody, request, stopwatch);
+        String queryId = putMapAndGetStmtId(params,stmtId);
+        Optional<List<Map<String, Object>>> optional = queryEngineService.queryForList(modelName, queryId, params);
+        loggerEnd(modelName, queryId, requestBody, request, stopwatch);
         return wrapperResponse(metaOptional.isPresent() ? metaOptional.get() : null,
                 optional.isPresent() ? optional.get() : null);
     }
 
-
+    private String putMapAndGetStmtId(Map<String,Object> params,String stmtId) {
+    	if(stmtId.indexOf(":") != -1) {
+    		String[] splits = stmtId.split(":");
+    		params.put("function", splits[1]);
+    		return splits[0];
+    	}else {
+    		return stmtId;
+    	}
+    }
+    
     private void loggerBegin(String modelName, String stmtId, Map<String, String> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("[REQ][%s][%s.%s]->%s", modelName, stmtId, request.getRequestURI(), requestBody));

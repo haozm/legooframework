@@ -12,9 +12,22 @@
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]templatemgs[\\,/].*-sql-cfg.xml$</value>
-                <value>.*[\\,/]base[\\,/]macro-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
             </util:list>
         </property>
+    </bean>
+    <bean id="templateQueryFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]templatemgs[\\,/].*-query-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="templateJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
+        <qualifier value="query"/>
+        <property name="statementFactory" ref="templateQueryFactory"/>
+        <property name="dataSource" ref="templateMgsDataSource"/>
     </bean>
     <bean id="templatemgsCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
         <property name="caffeineSpecs">
@@ -23,12 +36,25 @@
             </util:map>
         </property>
     </bean>
-    <bean id="templateClassifyEntityAction"
-          class="com.legooframework.model.templatemgs.entity.TemplateClassifyEntityAction"
-          parent="baseEntityAction">
+    <bean id="templateMgsEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
         <property name="statementFactory" ref="templatemgsStatementFactory"/>
-        <property name="dataSource" ref="tempDataSource"/>
+        <property name="dataSource" ref="templateMgsDataSource"/>
         <property name="cacheManager" ref="templatemgsCacheManager"/>
     </bean>
+    <bean id="templateClassifyEntityAction"
+          class="com.legooframework.model.templatemgs.entity.TemplateClassifyEntityAction"
+          parent="templateMgsEntityAction"/>
+    <bean id="msgTemplateEntityAction"
+          class="com.legooframework.model.templatemgs.entity.MsgTemplateEntityAction"
+          parent="templateMgsEntityAction"/>
+    <bean id="msgReplaceHoldEntityAction"
+          class="com.legooframework.model.templatemgs.entity.MsgReplaceHoldEntityAction"
+          parent="templateMgsEntityAction"/>
+    <bean id="holidayEntityAction"
+          class="com.legooframework.model.templatemgs.entity.HolidayEntityAction"
+          parent="templateMgsEntityAction"/>
+    <bean id="holidayService" class="com.legooframework.model.templatemgs.service.HolidayService"/>
+
     <bean id="templateMgnService" class="com.legooframework.model.templatemgs.service.TemplateMgnService"/>
 </beans>

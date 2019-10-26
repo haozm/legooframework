@@ -24,6 +24,7 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -332,12 +333,10 @@ public class OrganizationEntityAction extends BaseEntityAction<OrganizationEntit
      * 通过ID获取公司信息，注意 该ID可能是一个组织部门ID 并非公司ID type=1 才是公司
      */
     public Optional<OrganizationEntity> findCompanyById(Integer id) {
-        Optional<OrganizationEntity> comOpt = findById(id);
-        if (!comOpt.isPresent()) return comOpt;
-        if (!comOpt.get().isCompany()) return Optional.absent();
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("<%s> findCompanyById(%s) return %s", getModel(), id, comOpt.get()));
-        return comOpt;
+        Optional<List<OrganizationEntity>> list = loadAllCompanies();
+        if (!list.isPresent()) return Optional.absent();
+        java.util.Optional<OrganizationEntity> comOpt = list.get().stream().filter(x -> x.getId().equals(id)).findFirst();
+        return comOpt.map(Optional::of).orElseGet(Optional::absent);
     }
 
     @SuppressWarnings("unchecked")
@@ -471,7 +470,8 @@ public class OrganizationEntityAction extends BaseEntityAction<OrganizationEntit
                         (Integer) resultSet.getObject("orgShowFlag"),
                         (Integer) resultSet.getObject("hiddenMemberPhoneFlag"),
                         resultSet.getString("linkMan"),
-                        resultSet.getString("linkPhone"));
+                        resultSet.getString("linkPhone"),
+                        resultSet.getObject("rfmSetting") == null ? null : resultSet.getInt("rfmSetting"));
             }
             return null;
         }
@@ -518,7 +518,8 @@ public class OrganizationEntityAction extends BaseEntityAction<OrganizationEntit
                     (Integer) resultSet.getObject("orgShowFlag"),
                     (Integer) resultSet.getObject("hiddenMemberPhoneFlag"),
                     resultSet.getString("linkMan"),
-                    resultSet.getString("linkPhone"));
+                    resultSet.getString("linkPhone"),
+                    resultSet.getObject("rfmSetting") == null ? null : resultSet.getInt("rfmSetting"));
         }
     }
 }

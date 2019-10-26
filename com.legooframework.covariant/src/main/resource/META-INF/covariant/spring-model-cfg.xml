@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       					   http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    <bean id="covariantBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/covariant/legoo-model-cfg.xml"/>
+    </bean>
+    <bean id="covariantStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]covariant[\\,/]entity-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="covariantQueryFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]covariant[\\,/].*-query-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="covariantJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
+        <property name="statementFactory" ref="covariantQueryFactory"/>
+        <property name="dataSource" ref="acpDataSource"/>
+    </bean>
+    <bean id="covariantCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
+        <property name="caffeineSpecs">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="covariantCache" value="initialCapacity=64,maximumSize=1024,expireAfterAccess=5m"/>
+            </util:map>
+        </property>
+    </bean>
+    <bean id="covariantAbsEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="covariantStatementFactory"/>
+        <property name="dataSource" ref="acpDataSource"/>
+        <property name="cacheManager" ref="covariantCacheManager"/>
+    </bean>
+    <bean id="covariantOrgEntityAction" class="com.legooframework.model.covariant.entity.OrgEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantStoEntityAction" class="com.legooframework.model.covariant.entity.StoEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantBalanceAction" class="com.legooframework.model.covariant.entity.SmsBalanceEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantUserAction" class="com.legooframework.model.covariant.entity.UserAuthorEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantSmsAction" class="com.legooframework.model.covariant.entity.SendSmsEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantEmpAction" class="com.legooframework.model.covariant.entity.EmpEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantMemberAction" class="com.legooframework.model.covariant.entity.MemberEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantWxUserAction" class="com.legooframework.model.covariant.entity.WxUserEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantEWeiShopMemberAction"
+          class="com.legooframework.model.covariant.entity.EWeiShopMemberEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantTemplateAction" class="com.legooframework.model.covariant.entity.TemplateEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantSendWechatAction" class="com.legooframework.model.covariant.entity.SendWechatEntityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantMsgTemplateAction" class="com.legooframework.model.covariant.entity.MsgTemplateEnityAction"
+          parent="covariantAbsEntityAction"/>
+    <bean id="covariantService" class="com.legooframework.model.covariant.service.CovariantService"/>
+</beans>

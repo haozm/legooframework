@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 /**
  * 该类主要是是 适配 struts MVC 与 Spring MVC 之间的 会话参数传递（单向） 后期的业务逻辑开发 转入 Spring MVC 作为服务发布渠道之一
@@ -66,7 +67,11 @@ public class BaseController {
         } else if (e instanceof IllegalStateException) {
             response.put("msg", message);
             response.put("detail", e.getMessage());
-        } else if (e instanceof RuntimeException) {
+        } else if (e instanceof ExecutionException) {
+        	 response.put("msg", "系统发生未知错误，请联系系统管理员。");
+             response.put("detail", e.getMessage());
+        }
+        else  if (e instanceof RuntimeException) {
             if (Strings.isNullOrEmpty(message)) {
                 response.put("msg", "系统发生未知错误，请联系系统管理员。");
                 response.put("detail", e.getMessage());

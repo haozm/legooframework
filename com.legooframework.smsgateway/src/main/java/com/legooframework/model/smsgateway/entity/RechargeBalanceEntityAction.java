@@ -58,6 +58,21 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
     }
 
     /**
+     * 加载一批指定ID的 余额记录
+     *
+     * @param balanceIds
+     * @return
+     */
+    public List<RechargeBalanceEntity> loadByIds(Collection<String> balanceIds) {
+        Preconditions.checkArgument(CollectionUtils.isNotEmpty(balanceIds));
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("balanceIds", balanceIds);
+        Optional<List<RechargeBalanceEntity>> balanceList = super.queryForEntities("loadByIds", params, getRowMapper());
+        Preconditions.checkState(balanceList.isPresent());
+        return balanceList.get();
+    }
+
+    /**
      * 门店可供扣除的余额
      *
      * @param store

@@ -12,6 +12,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -84,8 +85,8 @@ public class RoleEntity extends BaseEntity<Integer> implements OrderAbled, Grant
         }
     }
 
-    public Set<String> getResources() {
-        return resources;
+    public Optional<Set<String>> getResources() {
+        return Optional.ofNullable(CollectionUtils.isEmpty(resources) ? null : resources);
     }
 
     @Override
@@ -121,7 +122,16 @@ public class RoleEntity extends BaseEntity<Integer> implements OrderAbled, Grant
     public boolean isManager() {
         return "AreaManagerRole".equals(roleName);
     }
-
+    
+    public boolean isRole(String roleName) {
+    	return StringUtils.equals(this.roleName, roleName);
+    }
+    
+    public boolean isRoleOf(Collection<String> roleNames) {
+    	if(roleNames.contains("*")) return true;
+    	return roleNames.contains(this.roleName);
+    }
+    
     public boolean isLeader() {
         return isAdmin() || isBoss() || isManager();
     }

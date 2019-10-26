@@ -1,9 +1,8 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.legooframework.model.core.base.entity.BaseEntityAction;
-import com.legooframework.model.core.base.runtime.LoginContext;
-import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.membercare.entity.BusinessType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -24,36 +23,17 @@ public class ChargeSummaryEntityAction extends BaseEntityAction<ChargeSummaryEnt
      *
      * @param store       门店
      * @param smsQuantity 短信数量
-     * @return
+     * @return 存储批次号
      */
-    public String insertAuto(CrmStoreEntity store, SMSSendRuleEntity businessRule, String smsBatchNo,
-                             long smsQuantity, String smsContext) {
-        LoginContext user = LoginContextHolder.get();
-        ChargeSummaryEntity billingSummary = ChargeSummaryEntity.autoJob(store, businessRule, smsBatchNo,
-                smsQuantity, smsContext);
+    public String insert(CrmStoreEntity store, SMSSendRuleEntity businessRule, BusinessType businessType, String smsBatchNo,
+                         long smsQuantity, long wxQuantity, boolean isAuto, String smsContext) {
+        ChargeSummaryEntity billingSummary = ChargeSummaryEntity.createInstance(store, businessRule, businessType, smsBatchNo,
+                isAuto, smsQuantity < 0 ? 0 : smsQuantity, wxQuantity < 0 ? 0 : wxQuantity, smsContext);
         super.updateAction(billingSummary, "insert");
         if (logger.isDebugEnabled())
             logger.debug(String.format("insert(%s,%s,%s)", store.getId(), businessRule, smsQuantity));
         return billingSummary.getId();
     }
-
-    /**
-     * 生成汇总记录
-     *
-     * @param store       门店
-     * @param smsQuantity 短信数量
-     * @return
-     */
-    public String insertManual(CrmStoreEntity store, SMSSendRuleEntity businessRule, String smsBatchNo,
-                               long smsQuantity, String smsContext) {
-        ChargeSummaryEntity billingSummary = ChargeSummaryEntity.manual(store, businessRule, smsBatchNo,
-                smsQuantity, smsContext, LoginContextHolder.get());
-        super.updateAction(billingSummary, "insert");
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("insert(%s,%s,%s)", store.getId(), businessRule, smsQuantity));
-        return billingSummary.getId();
-    }
-
 
     @Override
     protected RowMapper<ChargeSummaryEntity> getRowMapper() {

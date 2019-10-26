@@ -14,6 +14,7 @@ import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,7 @@ public class OrganizationEntity extends BaseEntity<Integer> implements Replaceab
     // 手机号隐藏（0：隐藏；1：不隐藏）
     private Integer hiddenMemberPhoneFlag = 1;
     private String linkMan, linkPhone;
+    private Integer rfmSetting;
 
     OrganizationEntity(OrganizationEntity parent, Integer id, String name, String shortName) {
         super(id);
@@ -59,7 +61,7 @@ public class OrganizationEntity extends BaseEntity<Integer> implements Replaceab
     OrganizationEntity(Integer id, String code, Integer parentId, Integer type,
                        String name, String shortName, Integer status, Integer depth,
                        boolean rootNode, Integer industryType, Integer orgShowFlag,
-                       Integer hiddenMemberPhoneFlag, String linkMan, String linkPhone) {
+                       Integer hiddenMemberPhoneFlag, String linkMan, String linkPhone, Integer rfmSetting) {
         super(id);
         this.code = code;
         this.parentId = parentId;
@@ -75,6 +77,7 @@ public class OrganizationEntity extends BaseEntity<Integer> implements Replaceab
         this.hiddenMemberPhoneFlag = hiddenMemberPhoneFlag;
         this.linkMan = linkMan;
         this.linkPhone = linkPhone;
+        this.rfmSetting = rfmSetting;
     }
 
     public OrganizationEntity modifyOrganization(String name, String shortName, Integer hiddenPhone) {
@@ -136,9 +139,12 @@ public class OrganizationEntity extends BaseEntity<Integer> implements Replaceab
     public Integer getMyCompanyId() {
         if (isCompany()) return getId();
         String[] splits = StringUtils.split(code, '_');
-        Preconditions.checkPositionIndex(
-                0, splits.length, String.format("异常的错误组织代码 code = %s", getCode()));
+        Preconditions.checkPositionIndex(0, splits.length, String.format("异常的错误组织代码 code = %s", getCode()));
         return Integer.valueOf(splits[0]);
+    }
+
+    public Integer getRfmSetting() {
+        return rfmSetting;
     }
 
     public String getCode() {
@@ -166,12 +172,12 @@ public class OrganizationEntity extends BaseEntity<Integer> implements Replaceab
 
     public boolean isMyParent(OrganizationEntity parent) {
         Preconditions.checkNotNull(parent);
-        return this.parentId == parent.getId();
+        return this.parentId.equals(parent.getId());
     }
 
     public boolean isMyself(OrganizationEntity parent) {
         Preconditions.checkNotNull(parent);
-        return this.getId() == parent.getId();
+        return this.getId().equals(parent.getId());
     }
 
     public int getLevel() {
@@ -326,7 +332,6 @@ public class OrganizationEntity extends BaseEntity<Integer> implements Replaceab
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
-        // TODO Auto-generated method stub
         return super.clone();
     }
 

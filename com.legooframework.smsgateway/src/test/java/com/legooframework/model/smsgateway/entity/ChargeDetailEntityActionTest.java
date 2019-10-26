@@ -5,8 +5,8 @@ import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntityAction;
-import com.legooframework.model.dict.entity.KvDictEntity;
 import com.legooframework.model.dict.entity.KvDictEntityAction;
+import com.legooframework.model.membercare.entity.BusinessType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +16,6 @@ import org.springframework.util.ResourceUtils;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Optional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
@@ -30,8 +29,8 @@ public class ChargeDetailEntityActionTest {
     @Test
     public void batchInsert() {
         LoginContextHolder.setAnonymousCtx();
-        Optional<KvDictEntity> buty = kvDictEntityAction.findByValue("SMS_BUS_TYPE", "90TOUCHED");
-        SMSSendRuleEntity rule = businessRuleEntityAction.findByType(buty.get());
+        // Optional<KvDictEntity> buty = kvDictEntityAction.findByValue("SMS_BUS_TYPE", "90TOUCHED");
+        SMSSendRuleEntity rule = businessRuleEntityAction.loadByType(BusinessType.TOUCHED90);
         CrmOrganizationEntity com = organizationEntityAction.findCompanyById(1).get();
         CrmStoreEntity store = storeEntityAction.findById(com, 8).get();
         RechargeBalanceList balanceList = balanceEntityAction.loadOrderEnabledByStore(store);

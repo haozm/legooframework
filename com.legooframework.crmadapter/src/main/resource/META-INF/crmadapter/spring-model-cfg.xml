@@ -7,15 +7,10 @@
     <bean id="crmAdapterBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/crmadapter/legoo-model-cfg.xml"/>
     </bean>
-    <bean id="crmAdapterStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
-        <property name="patterns">
-            <util:list value-type="java.lang.String">
-                <value>.*[\\,/]crmadapter[\\,/]entity-sql-cfg.xml$</value>
-                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
-            </util:list>
-        </property>
-    </bean>
-    <bean id="crmCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
+
+    <bean id="crmAdapterRestTemplate" class="org.springframework.web.client.RestTemplate"/>
+
+    <bean id="crmAdapterCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
         <property name="caffeineSpecs">
             <util:map key-type="java.lang.String" value-type="java.lang.String">
                 <entry key="CrmAdapterCache" value="initialCapacity=64,maximumSize=1024,expireAfterAccess=5m"/>
@@ -28,23 +23,42 @@
                 <value>.*[\\,/]crmadapter[\\,/]tenants-route-cfg.xml$</value>
             </util:list>
         </property>
+        <property name="restTemplate" ref="crmAdapterRestTemplate"/>
     </bean>
     <bean id="crmAdapterBaseEntityAction" class="com.legooframework.model.crmadapter.entity.BaseEntityAction"
           abstract="true">
         <property name="tenantsRouteFactory" ref="tenantsRouteFactory"/>
-        <property name="cacheManager" ref="crmCacheManager"/>
+        <property name="cacheManager" ref="crmAdapterCacheManager"/>
     </bean>
-    <bean id="crmOrganizationEntityAction"
+    <bean id="adapterOrganizationEntityAction"
           class="com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction"
           parent="crmAdapterBaseEntityAction"/>
-    <bean id="crmStoreEntityAction"
+    <bean id="adapterStoreEntityAction"
           class="com.legooframework.model.crmadapter.entity.CrmStoreEntityAction"
           parent="crmAdapterBaseEntityAction"/>
-    <bean id="crmEmployeeEntityAction"
+    <bean id="adapterEmployeeEntityAction"
           class="com.legooframework.model.crmadapter.entity.CrmEmployeeEntityAction"
           parent="crmAdapterBaseEntityAction"/>
-    <bean id="crmMemberEntityAction"
+    <bean id="adapterMemberEntityAction"
           class="com.legooframework.model.crmadapter.entity.CrmMemberEntityAction"
           parent="crmAdapterBaseEntityAction"/>
-    <bean id="crmReadService" class="com.legooframework.model.crmadapter.service.CrmReadService"/>
+    <bean id="adapterStoreViewEntityAction"
+          class="com.legooframework.model.crmadapter.entity.StoreViewEntityAction"
+          parent="crmAdapterBaseEntityAction"/>
+    <bean id="adapterMsgTemplateProxyAction"
+          class="com.legooframework.model.crmadapter.entity.MsgTemplateProxyAction"
+          parent="crmAdapterBaseEntityAction"/>
+    <bean id="adapterSmsGatewayProxyAction"
+          class="com.legooframework.model.crmadapter.entity.SmsGatewayProxyAction"
+          parent="crmAdapterBaseEntityAction"/>
+    <bean id="adapterWechatCircleProxyAction"
+          class="com.legooframework.model.crmadapter.entity.WechatCircleProxyAction"
+          parent="crmAdapterBaseEntityAction"/>
+    <bean id="adapterMemberCareProxyAction" class="com.legooframework.model.crmadapter.entity.MemberCareProxyAction"
+          parent="crmAdapterBaseEntityAction"/>
+    <bean id="uploadInformationAction"
+          class="com.legooframework.model.crmadapter.entity.UploadInformationAction"
+          parent="crmAdapterBaseEntityAction"/>
+    <bean id="adapterCrmReadService" class="com.legooframework.model.crmadapter.service.CrmReadService"/>
+    <bean id="adapterCrmPermissionHelper" class="com.legooframework.model.crmadapter.service.CrmPermissionHelper"/>
 </beans>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="RemoteCmdEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+      INSERT INTO yycomm.Send_Order_List
+                  (tag, fromdeviceid, todeviceid, orderMSG, uuid, sendFlag, success, remark, createtime)
+           VALUES (?, ?, ?, ?, ?, 0, 0, ?, CURRENT_TIMESTAMP)
+            ]]></body>
+        </sql>
+        <sql id="loadDeviceId">
+            <body><![CDATA[
+      SELECT sd.deviceid AS 'deviceId'
+        FROM yycomm.store_device AS sd
+       WHERE sd.company_id = :companyId
+         AND sd.store_id = :storeId
+         AND sd.weixin = :weixinId
+         AND sd.status = 1
+         AND sd.devicetype = 1
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

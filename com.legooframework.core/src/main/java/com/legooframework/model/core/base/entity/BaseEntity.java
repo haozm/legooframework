@@ -15,6 +15,7 @@ import java.beans.PropertyDescriptor;
 import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,6 +36,14 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
         this.tenantId = null;
         this.creator = null;
         this.createTime = DateTime.now();
+    }
+
+    protected BaseEntity(T id, DateTime createTime) {
+        Preconditions.checkNotNull(id, "实体唯一标识ID不可以为空值.");
+        this.id = id;
+        this.creator = -1L;
+        this.tenantId = -1L;
+        this.createTime = createTime;
     }
 
     protected BaseEntity(T id, Long tenantId, Long creator) {
@@ -149,6 +158,10 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
         return params;
     }
 
+    public Map<String, Object> toViewMap() {
+        return null;
+    }
+
     protected Object cloneMe() {
         try {
             return super.clone();
@@ -175,6 +188,20 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
         if (o == null || getClass() != o.getClass()) return false;
         BaseEntity<?> baseEnity = (BaseEntity<?>) o;
         return Objects.equal(tenantId, baseEnity.tenantId);
+    }
+
+    public static int Guid = 10000;
+
+    public static String generateId() {
+        Guid += 1;
+        long now = System.currentTimeMillis();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy");
+        String time = dateFormat.format(now);
+        String info = now + "";
+        int ran = 0;
+        if (Guid > 99999) Guid = 10000;
+        ran = Guid;
+        return time + info.substring(2, info.length()) + ran;
     }
 
     @Override

@@ -30,7 +30,6 @@ public abstract class BaseController {
     protected final static String[] CHANNELS = new String[]{"web", "mobile"};
     protected final static String[] RANGES = new String[]{"all", "company"};
 
-
     protected LoginContext getLoginContext() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         Assert.isInstanceOf(LoginContext.class, principal);
@@ -52,6 +51,7 @@ public abstract class BaseController {
     @ResponseBody
     public JsonMessage defaultErrorHandler(HttpServletRequest req, Exception e) {
         logger.error(e.getMessage(), e);
+        LoginContextHolder.clear();
         return JsonMessageBuilder.ERROR(e).toMessage();
     }
 
@@ -83,6 +83,10 @@ public abstract class BaseController {
 
     protected MessageGateWay getEventBus(HttpServletRequest request) {
         return getAppCtx(request).getBean("messageGateWay", MessageGateWay.class);
+    }
+
+    protected boolean exitBeanByName(String beanName, HttpServletRequest request) {
+        return getAppCtx(request).containsBean("beanName");
     }
 
     protected Bundle getBundle(String beanName, HttpServletRequest request) {

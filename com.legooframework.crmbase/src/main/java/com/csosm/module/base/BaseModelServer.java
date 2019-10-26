@@ -20,7 +20,9 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -31,6 +33,10 @@ public class BaseModelServer extends AbstractBaseServer {
 
     public void cleanCache(String cacheName) {
         getBean(GuavaCacheManager.class).clearByName(cacheName);
+    }
+
+    public void cleanAll() {
+        getBean(GuavaCacheManager.class).clearAll();
     }
 
     public Collection<GuavaCache> getAllCaches() {
@@ -312,54 +318,44 @@ public class BaseModelServer extends AbstractBaseServer {
         // 登陆账户信息
         Optional<EmployeeEntity> employee = getBean(EmployeeEntityAction.class).findByLoginName(userName, company.get());
         if (!employee.isPresent()) return null;
-        
+
         // 登陆账户角色信息
         RoleSet roleSet = getBean(RoleEntityAction.class).loadRoleSetByUser(employee.get());
-
         // 登陆账户门店信息
         Optional<StoreEntity> store = Optional.absent();
-        if (employee.get().getStoreId().isPresent()) {
-            store = getBean(StoreEntityAction.class).findById(employee.get().getStoreId().get());
-            Preconditions.checkState(store.isPresent(), "ID=%s 对应的门店不存在...");
-        }
-
-        // 登陆账户所在组织以及下级组织
         Optional<OrganizationEntity> organization = Optional.absent();
         Set<Integer> subOrgs = null;
-        if (employee.get().getOrganizationId().isPresent()) {
-            organization = getBean(OrganizationEntityAction.class)
-                    .findById(employee.get().getOrganizationId().get());
-            Preconditions.checkState(organization.isPresent(), "Id=%s 对应的组织节点不存在...");
-            Optional<List<OrganizationEntity>> organizations = getBean(OrganizationEntityAction.class)
-                    .loadAllSubOrgs(Integer.valueOf(companyId), employee.get().getOrganizationId().get(), true);
-            if (organizations.isPresent()) {
-                subOrgs = Sets.newHashSet();
-                for (OrganizationEntity sub : organizations.get()) {
-                    subOrgs.add(sub.getId());
-                }
+        List<Integer> subStoreIds = Lists.newArrayList();
+        boolean hasStoreView = false;
+        if (roleSet.hasShoppingGuideRole() || roleSet.hasStoreManagerRole()) {
+            if (employee.get().getStoreId().isPresent()) {
+                store = getBean(StoreEntityAction.class).findById(employee.get().getStoreId().get());
+                Preconditions.checkState(store.isPresent(), "ID=%s 对应的门店不存在...");
+            }
+        } else if (roleSet.hasAdminRole() || roleSet.hasBossRole()) {
+            Optional<List<StoreEntity>> sub_stores = getBean(StoreEntityAction.class).loadAllStoreByCompany(company.get());
+            if (sub_stores.isPresent()) {
+                sub_stores.get().forEach(x -> subStoreIds.add(x.getId()));
+            }
+        } else {
+            if (getBean(StoreViewEntityAction.class).hasStoreView(employee.get())) {
+                List<StoreEntity> treeStores = getBean(StoreEntityAction.class).loadTreeStores(employee.get());
+                treeStores.forEach(x -> subStoreIds.add(x.getId()));
+                hasStoreView = true;
+            } else if (organization.isPresent()) {
+                Optional<List<StoreEntity>> listOptional = getBean(StoreEntityAction.class).loadAllSubStoreByOrg(organization.get());
+                if (listOptional.isPresent())
+                    for (StoreEntity $it : listOptional.get()) subStoreIds.add($it.getId());
             }
         }
 
         // 登陆账户所在门店
-        List<Integer> subStoreIds = Lists.newArrayList();
-        boolean hasStoreView = false;
-        if(getBean(StoreViewEntityAction.class).hasStoreView(employee.get())) {
-        	List<StoreEntity> treeStores = getBean(StoreEntityAction.class).loadTreeStores(employee.get());
-        	treeStores.forEach(x -> subStoreIds.add(x.getId()));
-        	hasStoreView = true;
-        }else if (roleSet.getMaxPowerRole().isPresent() && !(roleSet.getMaxPowerRole().get().isStoreManager() ||
-                roleSet.getMaxPowerRole().get().isShoppingGuide()) && organization.isPresent()) {
-            Optional<List<StoreEntity>> listOptional = getBean(StoreEntityAction.class)
-                    .loadAllSubStoreByOrg(organization.get());
-            if (listOptional.isPresent())
-                for (StoreEntity $it : listOptional.get()) subStoreIds.add($it.getId());
-        }
 
         String loginDomain = "http://localhost:80/";
         String ip = "localhost";
-        
+
         LoginUserContext user = new LoginUserContext(employee.get(), organization.isPresent() ? organization.get() : null,
-                store, company.get(), roleSet, loginDomain, ip, subStoreIds, subOrgs, null,hasStoreView);
+                store, company.get(), roleSet, loginDomain, ip, subStoreIds, subOrgs, null, hasStoreView);
         if (logger.isDebugEnabled())
             logger.debug(String.format("loadByUserName( %s , %s) return %s", companyId, userName, user));
         return user;
@@ -390,11 +386,11 @@ public class BaseModelServer extends AbstractBaseServer {
 
         List<Integer> subStoreIds = Lists.newArrayList();
         boolean hasStoreView = false;
-        if(getBean(StoreViewEntityAction.class).hasStoreView(employee)) {
-        	List<StoreEntity> treeStores = getBean(StoreEntityAction.class).loadTreeStores(employee);
-        	treeStores.forEach(x -> subStoreIds.add(x.getId()));
-        	hasStoreView = true;
-        }else if (roleSet.getMaxPowerRole().isPresent() && !(roleSet.getMaxPowerRole().get().isStoreManager() ||
+        if (getBean(StoreViewEntityAction.class).hasStoreView(employee)) {
+            List<StoreEntity> treeStores = getBean(StoreEntityAction.class).loadTreeStores(employee);
+            treeStores.forEach(x -> subStoreIds.add(x.getId()));
+            hasStoreView = true;
+        } else if (roleSet.getMaxPowerRole().isPresent() && !(roleSet.getMaxPowerRole().get().isStoreManager() ||
                 roleSet.getMaxPowerRole().get().isShoppingGuide()) && organization.isPresent()) {
             Optional<List<StoreEntity>> listOptional = getBean(StoreEntityAction.class)
                     .loadAllSubStoreByOrg(organization.get());
@@ -426,16 +422,21 @@ public class BaseModelServer extends AbstractBaseServer {
 
         return new LoginUserContext(employee, organization.isPresent() ? organization.get() : null,
                 store, company.isPresent() ? company.get() : null, roleSet, loginDomain, ip,
-                subStoreIds, subOrgs, null,hasStoreView);
+                subStoreIds, subOrgs, null, hasStoreView);
     }
 
     public void registerCompany(LoginUserContext loginUser, Integer companyId, String comName, String comShortName,
-                                String loginName, String linkMan, String linkPhone, Integer industryType) {
+                                String loginName, String linkMan, String linkPhone, Integer industryType,
+                                Map<String, Object> datas) {
         Objects.requireNonNull(loginUser);
-//    	Preconditions.checkState(loginUser.getRoleSet().hasDBARole(), "用户无权限创建公司");
+        Preconditions.checkState(loginUser.getRoleSet().hasDBARole(), "用户无权限创建公司");
+        datas.put("COMPANY_ID", companyId);
+        datas.put("COMPANY_NAME", comName);
+        getBean(InitCompanySqlEntityAction.class).initCompany(datas);
         OrganizationEntity company = getBean(OrganizationEntityAction.class).saveCompany(loginUser, companyId,
                 comName, industryType, comShortName, linkMan, linkPhone);
-        getBean(EmployeeEntityAction.class).saveOrgEmployee(loginUser, company, loginName, null, null, 1, null);
+        getBean(EmployeeEntityAction.class).saveCompanyAdmin(loginUser, company, loginName, linkMan, linkPhone, 1);
+        cleanAll();
     }
 
     public Optional<OrgTreeViewDto> loadOrgTree(Integer companyId) {

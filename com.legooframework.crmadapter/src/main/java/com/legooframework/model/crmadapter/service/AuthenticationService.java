@@ -21,7 +21,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Map;
 
-public class AuthenticationService extends CrmAdapterService implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
+public class AuthenticationService extends BundleService implements AuthenticationSuccessHandler, AuthenticationFailureHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 

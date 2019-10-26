@@ -1,0 +1,746 @@
+<sqls>
+	<model id="wxFriend01">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+		SELECT 
+		T.*,
+		(T.totalWxFriend-T.huanbiWxFriend)/IF(T.huanbiWxFriend = 0 ,1,T.huanbiWxFriend) AS 'relativeRatio',
+		(T.totalWxFriend-T.tongbiWxFriend)/IF(T.tongbiWxFriend = 0 ,1,T.tongbiWxFriend) AS 'yoyRatio'
+		FROM
+   		(SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.TotalWXMembers,0),0)) AS 'totalWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.TotalWXMembers,0),0)) AS 'huanbiWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.TotalWXMembers,0),0)) AS 'tongbiWxFriend'
+		FROM (SELECT * FROM 
+			(SELECT	* FROM YG_Statistics.stat_wxmember_nums_update_bystore stat
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					WHERE stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					WHERE stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					WHERE stat.stat_type = 3
+				<#else>
+					WHERE stat.stat_type = 1
+				</#if>
+		</#if>
+			GROUP BY stat.store_id,stat.stat_date DESC) T GROUP BY T.store_id) stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id) T
+            ]]></body>
+		</sql>
+		<sql id="subsummary" dynamic="true">
+            <body><![CDATA[
+   		SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>			
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			(SELECT SUM(T.total_wx_members) FROM 
+			(SELECT	
+			SUBSTRING_INDEX(GROUP_CONCAT(TotalWXMembers ORDER BY stat.stat_date DESC),',',1) AS 'total_wx_members' FROM YG_Statistics.stat_wxmember_nums_update_bystore stat
+			LEFT JOIN acp.acp_store store ON stat.store_id = store.id
+			WHERE store.company_id = :USER_COMPANY_ID
+			AND stat.stat_date BETWEEN '${startDate}' AND '${endDate}'
+			<#if orgIds?? && orgIds?size != 0>
+				AND store.organization_id IN (${orgIds?join(",")})
+			<#elseif storeIds?? && storeIds?size != 0>
+				AND store.id IN (${storeIds?join(",")})		
+			</#if> 
+			GROUP BY store_id) T) AS 'totalWxFriend',
+			(SELECT SUM(T.total_bind_members) FROM 
+			(SELECT	
+			SUBSTRING_INDEX(GROUP_CONCAT(TotalWXMembersRelations ORDER BY stat.stat_date DESC),',',1) AS 'total_bind_members' FROM YG_Statistics.stat_wxmember_nums_update_bystore stat
+			LEFT JOIN acp.acp_store store ON stat.store_id = store.id
+			WHERE store.company_id = :USER_COMPANY_ID
+			AND stat.stat_date BETWEEN '${startDate}' AND '${endDate}'
+			<#if orgIds?? && orgIds?size != 0>
+				AND store.organization_id IN (${orgIds?join(",")})
+			<#elseif storeIds?? && storeIds?size != 0>
+				AND store.id IN (${storeIds?join(",")})		
+			</#if> 
+			GROUP BY store_id) T) AS 'bindWxFriend',
+			SUM(IFNULL(stat.NewWxMembers,0)) AS 'newWxFriend',
+			SUM(IFNULL(stat.ActualGrowth,0)) AS 'actualNewWxFriend',
+			SUM(IFNULL(stat.NewWXMembersRelations,0)) AS 'newBindWxFriend',
+			SUM(IFNULL(stat.BlackWxMembers,0)) AS 'blackWxFriend',
+			SUM(IFNULL(stat.PassiveDeleteWxMembers,0)) AS 'passivityDelWxFriend',
+			SUM(IFNULL(stat.ActiveDeleteWxMembers,0)) AS 'initiativeDelWxFriend'
+			FROM YG_Statistics.stat_wxmember_nums_update_bystore stat
+			INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE stat.company_id = :USER_COMPANY_ID
+		AND stat.stat_date BETWEEN '${startDate}' AND '${endDate}'
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})		
+		</#if>
+		GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+		<sql id="detail" dynamic="true">
+            <body><![CDATA[
+            SELECT
+            T.fix_org_type,
+			T.fix_org_id,
+			T.fix_org_name,
+			T.companyId,
+			<#if returnType?? && returnType == "total">
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS fix_start_date,
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS fix_end_date,
+			if('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+			<#else>
+			T.fix_start_date,
+			T.fix_end_date,
+			T.statisticTime,
+			</#if>
+			T.totalWxFriend,
+			T.bindWxFriend,
+			T.newWxFriend,
+			T.actualNewWxFriend,
+			T.newBindWxFriend,
+			T.blackWxFriend,
+			T.passivityDelWxFriend,
+			T.initiativeDelWxFriend
+			FROM (
+			<#if companyId??>
+	 			SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.TotalWXMembers,0)) AS 'totalWxFriend',
+					SUM(IFNULL(stat.TotalWXMembersRelations,0)) AS 'bindWxFriend',
+					SUM(IFNULL(stat.NewWxMembers,0)) AS 'newWxFriend',
+					SUM(IFNULL(stat.ActualGrowth,0)) AS 'actualNewWxFriend',
+					SUM(IFNULL(stat.NewWXMembersRelations,0)) AS 'newBindWxFriend',
+					SUM(IFNULL(stat.BlackWxMembers,0)) AS 'blackWxFriend',
+					SUM(IFNULL(stat.PassiveDeleteWxMembers,0)) AS 'passivityDelWxFriend',
+					SUM(IFNULL(stat.ActiveDeleteWxMembers,0)) AS 'initiativeDelWxFriend'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON store.company_id = org.id
+                INNER JOIN YG_Statistics.stat_wxmember_nums_update_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.company_id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'1' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                    0 AS 'totalWxFriend',
+					0 AS 'bindWxFriend',
+					0 AS 'newWxFriend',
+					0 AS 'actualNewWxFriend',
+					0 AS 'newBindWxFriend',
+					0 AS 'blackWxFriend',
+					0 AS 'passivityDelWxFriend',
+					0 AS 'initiativeDelWxFriend'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id = :USER_COMPANY_ID
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.TotalWXMembers,0)) AS 'totalWxFriend',
+					SUM(IFNULL(stat.TotalWXMembersRelations,0)) AS 'bindWxFriend',
+					SUM(IFNULL(stat.NewWxMembers,0)) AS 'newWxFriend',
+					SUM(IFNULL(stat.ActualGrowth,0)) AS 'actualNewWxFriend',
+					SUM(IFNULL(stat.NewWXMembersRelations,0)) AS 'newBindWxFriend',
+					SUM(IFNULL(stat.BlackWxMembers,0)) AS 'blackWxFriend',
+					SUM(IFNULL(stat.PassiveDeleteWxMembers,0)) AS 'passivityDelWxFriend',
+					SUM(IFNULL(stat.ActiveDeleteWxMembers,0)) AS 'initiativeDelWxFriend'
+				FROM acp.acp_organization org
+                INNER JOIN acp.acp_store store ON store.organization_id = org.id
+                INNER JOIN YG_Statistics.stat_wxmember_nums_update_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND store.organization_id IN (${orgIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.organization_id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'2' AS 'fix_org_type',
+					org.id AS 'fix_org_id',
+					org.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                     0 AS 'totalWxFriend',
+					0 AS 'bindWxFriend',
+					0 AS 'newWxFriend',
+					0 AS 'actualNewWxFriend',
+					0 AS 'newBindWxFriend',
+					0 AS 'blackWxFriend',
+					0 AS 'passivityDelWxFriend',
+					0 AS 'initiativeDelWxFriend'
+				FROM acp.acp_organization org
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				org.id IN (${orgIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY org.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>
+		<#if (orgIds?? && orgIds?size != 0) && (storeIds?? && storeIds?size !=0)>
+		UNION
+		</#if>
+		<#if storeIds?? && storeIds?size !=0>
+			SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(stat.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT(stat.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+					if(stat.stat_date = stat.stat_date02,stat.stat_date,CONCAT(DATE_FORMAT(stat.stat_date,'%m-%d'),'至',DATE_FORMAT(stat.stat_date02,'%m-%d'))) AS 'statisticTime',
+					SUM(IFNULL(stat.TotalWXMembers,0)) AS 'totalWxFriend',
+					SUM(IFNULL(stat.TotalWXMembersRelations,0)) AS 'bindWxFriend',
+					SUM(IFNULL(stat.NewWxMembers,0)) AS 'newWxFriend',
+					SUM(IFNULL(stat.ActualGrowth,0)) AS 'actualNewWxFriend',
+					SUM(IFNULL(stat.NewWXMembersRelations,0)) AS 'newBindWxFriend',
+					SUM(IFNULL(stat.BlackWxMembers,0)) AS 'blackWxFriend',
+					SUM(IFNULL(stat.PassiveDeleteWxMembers,0)) AS 'passivityDelWxFriend',
+					SUM(IFNULL(stat.ActiveDeleteWxMembers,0)) AS 'initiativeDelWxFriend'
+                FROM acp.acp_store store
+                INNER JOIN YG_Statistics.stat_wxmember_nums_update_bystore stat ON stat.store_id = store.id
+			WHERE 
+				store.company_id = :USER_COMPANY_ID
+				AND store.id IN (${storeIds?join(",")})
+				AND (stat.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,stat.stat_date
+				<#elseif searchTimeType== "week">
+					,stat.stat_week
+				<#elseif searchTimeType== "month">
+					,stat.stat_month
+				<#else>
+					,stat.stat_date
+				</#if>
+			</#if>
+		UNION
+		SELECT
+					'3' AS 'fix_org_type',
+					store.id AS 'fix_org_id',
+					store.name AS 'fix_org_name',
+					${USER_COMPANY_ID} AS 'companyId',
+	 				DATE_FORMAT(cal.stat_date,'%Y-%m-%d') AS 'fix_start_date',
+                    DATE_FORMAT(cal.stat_date02,'%Y-%m-%d') AS 'fix_end_date',
+                    if(cal.stat_date = cal.stat_date02,cal.stat_date,CONCAT(DATE_FORMAT(cal.stat_date,'%m-%d'),'至',DATE_FORMAT(cal.stat_date02,'%m-%d'))) AS 'statisticTime',
+                     0 AS 'totalWxFriend',
+					0 AS 'bindWxFriend',
+					0 AS 'newWxFriend',
+					0 AS 'actualNewWxFriend',
+					0 AS 'newBindWxFriend',
+					0 AS 'blackWxFriend',
+					0 AS 'passivityDelWxFriend',
+					0 AS 'initiativeDelWxFriend'
+				FROM acp.acp_store store
+                LEFT JOIN YG_Statistics.stat_date_list cal ON (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			WHERE 
+				store.id IN (${storeIds?join(",")})
+				AND (cal.stat_date BETWEEN '${startDate}' AND '${endDate}')
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND cal.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND cal.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND cal.stat_type = 3
+				<#else>
+					AND cal.stat_type = 1
+				</#if>
+			</#if>
+			GROUP BY store.id
+			<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					,cal.stat_date
+				<#elseif searchTimeType== "week">
+					,cal.stat_week
+				<#elseif searchTimeType== "month">
+					,cal.stat_month
+				<#else>
+					,cal.stat_date
+				</#if>
+			</#if>
+		</#if>) T GROUP BY T.fix_org_id
+		 <#if returnType?? && returnType != "total">
+			,T.statisticTime
+		 </#if>
+		<#if order?? && order!="">
+		ORDER BY ${order}
+		</#if>
+            ]]></body>
+        </sql>
+	</model>
+	<model id="wxFriend02">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+		SELECT 
+		T.*,
+		(T.bindWxFriend - T.huabiWxFriend)/IF(T.huabiWxFriend = 0 ,1,T.huabiWxFriend) AS 'relativeRatio',
+		(T.bindWxFriend - T.tongbiWxFriend)/IF(T.tongbiWxFriend = 0 ,1,T.tongbiWxFriend) AS 'yoyRatio'
+		FROM
+   		(SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.TotalWXMembersRelations,0),0)) AS 'bindWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.TotalWXMembersRelations,0),0)) AS 'huabiWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.TotalWXMembersRelations,0),0)) AS 'tongbiWxFriend'
+		FROM (SELECT * FROM (SELECT	* FROM YG_Statistics.stat_wxmember_nums_update_bystore stat 
+			<#if searchTimeType??>
+					<#if searchTimeType== "day">
+						WHERE stat.stat_type = 1
+					<#elseif searchTimeType== "week">
+						WHERE stat.stat_type = 2
+					<#elseif searchTimeType== "month">
+						WHERE stat.stat_type = 3
+					<#else>
+						WHERE stat.stat_type = 1
+					</#if>
+			</#if>
+		GROUP BY stat.store_id,stat.stat_date DESC) T GROUP BY T.store_id) stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id	) T
+            ]]></body>
+		</sql>
+	</model>
+	<model id="wxFriend03">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+		SELECT
+		T.*,
+		(T.newWxFriend - T.huanbiWxFriend)/IF(T.huanbiWxFriend = 0 ,1,T.huanbiWxFriend) AS 'relativeRatio',
+		(T.newWxFriend - T.tongbiWxFriend)/IF(T.tongbiWxFriend = 0 ,1,T.tongbiWxFriend) AS 'yoyRatio'
+		FROM
+   		(SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.NewWxMembers,0),0)) AS 'newWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.NewWxMembers,0),0)) AS 'huanbiWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.NewWxMembers,0),0)) AS 'tongbiWxFriend'
+		FROM YG_Statistics.stat_wxmember_nums_update_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id ) T
+            ]]></body>
+		</sql>
+	</model>
+	<model id="wxFriend04">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+		SELECT 
+		T.*,
+		(T.actualNewWxFriend - T.huanbiWxFriend)/IF(T.huanbiWxFriend = 0 ,1,T.huanbiWxFriend) AS 'relativeRatio',
+		(T.actualNewWxFriend - T.tongbiWxFriend)/IF(T.tongbiWxFriend = 0 ,1,T.tongbiWxFriend) AS 'yoyRatio'
+		FROM
+   		(SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.ActualGrowth,0),0)) AS 'actualNewWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.ActualGrowth,0),0)) AS 'huanbiWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.ActualGrowth,0),0)) AS 'tongbiWxFriend'
+		FROM YG_Statistics.stat_wxmember_nums_update_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id) T
+            ]]></body>
+		</sql>
+	</model>
+	<model id="wxFriend05">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+		SELECT
+		T.*,
+		(T.newBindWxFriend - T.huanbiWxFriend)/IF(T.huanbiWxFriend = 0 ,1,T.huanbiWxFriend) AS 'relativeRatio',
+		(T.newBindWxFriend - T.tongbiWxFriend)/IF(T.tongbiWxFriend = 0 ,1,T.tongbiWxFriend) AS 'yoyRatio'
+		FROM
+   		(SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.NewWXMembersRelations,0),0)) AS 'newBindWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.NewWXMembersRelations,0),0)) AS 'huanbiWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.NewWXMembersRelations,0),0)) AS 'tongbiWxFriend'
+		FROM YG_Statistics.stat_wxmember_nums_update_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id) T
+            ]]></body>
+		</sql>
+	</model>
+	<model id="wxFriend06">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+		SELECT
+		T.*,
+		(T.blackWxFriend - T.huanbiWxFriend)/IF(T.huanbiWxFriend = 0 ,1,T.huanbiWxFriend) AS 'relativeRatio',
+		(T.blackWxFriend - T.tongbiWxFriend)/IF(T.tongbiWxFriend = 0 ,1,T.tongbiWxFriend)  AS 'yoyRatio'
+		FROM
+   		(SELECT 
+			<#if companyId??>
+				'1' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif orgIds?? && orgIds?size != 0>
+				'2' AS 'fix_org_type',
+				aao.id AS 'fix_org_id',
+				aao.name AS 'fix_org_name',
+			<#elseif storeIds?? && storeIds?size != 0>
+				'3' AS 'fix_org_type',
+				aas.id AS 'fix_org_id',
+				aas.name AS 'fix_org_name',
+			</#if>
+			DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+			DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+			SUM(IF(stat.stat_date BETWEEN '${startDate}' AND '${endDate}',IFNULL(stat.BlackWxMembers,0),0)) AS 'blackWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${huanbiDate[0]}' AND '${huanbiDate[1]}',IFNULL(stat.BlackWxMembers,0),0)) AS 'tongbiWxFriend',
+			SUM(IF(stat.stat_date BETWEEN '${tongbiDate[0]}' AND '${tongbiDate[1]}',IFNULL(stat.BlackWxMembers,0),0)) AS 'huanbiWxFriend'
+		FROM YG_Statistics.stat_wxmember_nums_update_bystore stat
+		INNER JOIN acp.acp_store aas ON stat.store_id = aas.id
+		<#if companyId??>
+			LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+		<#elseif orgIds?? && orgIds?size != 0>
+			LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+		</#if>
+		WHERE aas.company_id = :USER_COMPANY_ID
+		<#if searchTimeType??>
+				<#if searchTimeType== "day">
+					AND stat.stat_type = 1
+				<#elseif searchTimeType== "week">
+					AND stat.stat_type = 2
+				<#elseif searchTimeType== "month">
+					AND stat.stat_type = 3
+				<#else>
+					AND stat.stat_type = 1
+				</#if>
+		</#if>
+		<#if orgIds?? && orgIds?size != 0>
+			AND aas.organization_id IN (${orgIds?join(",")})
+		<#elseif storeIds?? && storeIds?size != 0>
+			AND aas.id IN (${storeIds?join(",")})
+		</#if>
+		GROUP BY aas.company_id ) T
+            ]]></body>
+		</sql>
+	</model>
+</sqls>

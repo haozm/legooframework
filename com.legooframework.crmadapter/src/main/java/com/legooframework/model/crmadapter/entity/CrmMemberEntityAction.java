@@ -9,6 +9,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,13 +27,13 @@ public class CrmMemberEntityAction extends BaseEntityAction<CrmMemberEntity> {
     }
 
     /**
-     * @param store
-     * @return
+     * @param store mendain
+     * @return lishi
      */
     public Optional<List<CrmMemberEntity>> loadAllByStore(CrmStoreEntity store) {
         Preconditions.checkNotNull(store, "会员所属门店不可以为空...");
-        Optional<JsonElement> payload = super.post(getTenantsRouteFactory().getUrl(store.getCompanyId(),
-                "loadMembersByStore"), null, "bystore", store.getCompanyId(), store.getId());
+        Optional<JsonElement> payload = super.post(store.getCompanyId(), "crmbase.loadMembersByStore", null, "bystore",
+                store.getCompanyId(), store.getId());
         if (!payload.isPresent()) return Optional.empty();
         List<CrmMemberEntity> members = Lists.newArrayList();
         JsonArray jsonArray = payload.get().getAsJsonArray();
@@ -43,13 +44,21 @@ public class CrmMemberEntityAction extends BaseEntityAction<CrmMemberEntity> {
     }
 
     private CrmMemberEntity build(JsonObject _json) {
-        return new CrmMemberEntity(_json.get("id").getAsInt(), _json.get("nm").getAsString(),
-                _json.get("pNo").getAsString(), _json.get("bdy").getAsInt(),
-                _json.get("bdyVal").isJsonNull() ? null : _json.get("bdyVal").getAsString(),
-                _json.get("efg").getAsInt(),
-                _json.get("sgIds").isJsonNull() ? null : _json.get("sgIds").getAsString(),
+        String mobile = _json.get("ph").getAsString();
+        String sId = _json.get("sId").getAsString();
+        int gId = _json.get("gId").getAsInt();
+        return new CrmMemberEntity(_json.get("id").getAsInt(),
+                _json.get("nm").getAsString(),
+                StringUtils.equals("NULL", mobile) ? null : mobile,
+                _json.get("bdt").getAsInt(),
+                _json.get("bd").getAsString(),
+                _json.get("lbd").getAsString(),
                 _json.get("cId").getAsInt(),
-                _json.get("sId").getAsInt());
+                _json.get("cnm").getAsString(),
+                StringUtils.equals("-1", sId) ? null : Integer.valueOf(sId),
+                _json.get("snm").getAsString(),
+                gId == -1 ? null : gId,
+                gId == -1 ? null : _json.get("gnm").getAsString());
     }
 
     public Optional<List<CrmMemberEntity>> loadByCompany(CrmOrganizationEntity company, Collection<Integer> memberIds) {
@@ -57,8 +66,8 @@ public class CrmMemberEntityAction extends BaseEntityAction<CrmMemberEntity> {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(memberIds), "入参 memberIds 不可以为空值...");
         Map<String, Object> params = Maps.newHashMap();
         params.put("memberIds", Joiner.on(',').join(memberIds));
-        Optional<JsonElement> payload = super.post(getTenantsRouteFactory().getUrl(company.getId(),
-                "loadMembersByIds"), params, "byMemberIds", company.getId(), -1);
+        Optional<JsonElement> payload = super.post(company.getId(), "crmbase.loadMembersByIds", params, "loadMembersByIds",
+                company.getId());
         if (!payload.isPresent()) return Optional.empty();
         List<CrmMemberEntity> members = Lists.newArrayList();
         JsonArray jsonArray = payload.get().getAsJsonArray();

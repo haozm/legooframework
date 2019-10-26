@@ -4,28 +4,42 @@
         <sql id="getLastJobInstance">
             <body><![CDATA[
             SELECT BJE.JOB_INSTANCE_ID
-              FROM BATCH_JOB.BATCH_JOB_EXECUTION AS BJE
-         LEFT JOIN BATCH_JOB.BATCH_JOB_INSTANCE BJI ON BJE.JOB_INSTANCE_ID = BJI.JOB_INSTANCE_ID
+              FROM BATCH_JOB_EXECUTION AS BJE
+         LEFT JOIN BATCH_JOB_INSTANCE BJI ON BJE.JOB_INSTANCE_ID = BJI.JOB_INSTANCE_ID
              WHERE BJI.JOB_NAME = :jobName
           ORDER BY BJE.CREATE_TIME DESC
              LIMIT 1
             ]]></body>
         </sql>
-        <sql id="getLastJobExecution" dynamic="true">
+        <sql id="loadLastJobExecution" dynamic="true">
             <body><![CDATA[
-            SELECT BJE.JOB_EXECUTION_ID
-              FROM BATCH_JOB.BATCH_JOB_EXECUTION AS BJE
-         LEFT JOIN BATCH_JOB.BATCH_JOB_INSTANCE BJI ON BJE.JOB_INSTANCE_ID = BJI.JOB_INSTANCE_ID
-             WHERE BJI.JOB_NAME = :jobName
-             <#if companyId??>
-               AND BJE.JOB_EXECUTION_ID IN ( SELECT DISTINCT BHEP.JOB_EXECUTION_ID
-                                               FROM BATCH_JOB.BATCH_JOB_EXECUTION_PARAMS BHEP
-                                              WHERE BHEP.JOB_EXECUTION_ID = BJE.JOB_EXECUTION_ID
-                                                AND BHEP.KEY_NAME = 'companyId'
-                                                AND BHEP.LONG_VAL = :companyId )
-             </#if>
-          ORDER BY BJE.CREATE_TIME DESC
-             LIMIT 1
+        SELECT jdep.JOB_EXECUTION_ID
+          FROM BATCH_JOB_EXECUTION_PARAMS jdep
+    INNER JOIN BATCH_JOB_EXECUTION bje ON jdep.JOB_EXECUTION_ID = bje.JOB_EXECUTION_ID
+    INNER JOIN BATCH_JOB_INSTANCE bji ON bji.JOB_INSTANCE_ID = bje.JOB_INSTANCE_ID
+         WHERE bji.JOB_NAME = :jobName
+          AND jdep.KEY_NAME = 'job.params'
+          AND jdep.TYPE_CD='STRING'
+          AND jdep.STRING_VAL = :jobParams
+          AND bje.EXIT_CODE = 'COMPLETED'
+          AND bje.STATUS = 'COMPLETED'
+     ORDER BY jdep.JOB_EXECUTION_ID DESC
+        LIMIT 1
+            ]]></body>
+        </sql>
+        <sql id="disableJobByParams" dynamic="true">
+            <body><![CDATA[
+         UPDATE ( SELECT DISTINCT jdep.JOB_EXECUTION_ID
+                   FROM BATCH_JOB_EXECUTION_PARAMS jdep
+             INNER JOIN BATCH_JOB_EXECUTION bje ON jdep.JOB_EXECUTION_ID = bje.JOB_EXECUTION_ID
+             INNER JOIN BATCH_JOB_INSTANCE bji ON bji.JOB_INSTANCE_ID = bje.JOB_INSTANCE_ID
+                  WHERE bji.JOB_NAME = '${jobName}' ) AS temp, BATCH_JOB_EXECUTION_PARAMS AS a
+           SET a.STRING_VAL = CONCAT(a.STRING_VAL,',disabled=1')
+         WHERE a.JOB_EXECUTION_ID = temp.JOB_EXECUTION_ID
+           AND (
+         <#list jobParams as param>
+            ( a.KEY_NAME = '${param[0]}' AND a.STRING_VAL = '${param[1]}' ) <#sep>OR
+         </#list> )
             ]]></body>
         </sql>
     </model>

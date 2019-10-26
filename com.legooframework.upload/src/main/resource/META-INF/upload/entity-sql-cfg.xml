@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+	<model id="qiniu_upload">
+		<sql id="findByCompanyId">
+			<body><![CDATA[
+             	SELECT 
+						company_id AS 'companyId',
+						name_short AS 'nameShort',
+						domain AS 'domain',
+						namespace AS 'namespace',
+						channel_ids AS 'channelIds'
+				FROM yyfilestore.qiniu_company_namespace
+				WHERE company_id = :companyId
+            ]]></body>
+		</sql>
+		<sql id="findByNamespace">
+			<body><![CDATA[
+             	SELECT 
+						company_id AS 'companyId',
+						name_short AS 'nameShort',
+						domain AS 'domain',
+						namespace AS 'namespace',
+						channel_ids AS 'channelIds'
+				FROM yyfilestore.qiniu_company_namespace
+				WHERE namespace = :namespace
+            ]]></body>
+		</sql>
+		<sql id="loadAllNamespace">
+			<body><![CDATA[
+             	SELECT 			
+						qcn.company_id AS 'companyId',
+						CASE 
+						WHEN qcn.company_id = -1 THEN '羿元科技'
+						ELSE ao.name
+						END AS 'companyName',
+						qcn.name_short AS 'nameShort',
+						qcn.domain AS 'domain',
+						qcn.namespace AS 'namespace',
+						qcn.channel_ids AS 'channelIds'
+				FROM yyfilestore.qiniu_company_namespace qcn
+				LEFT JOIN
+						acp.acp_organization ao
+				ON qcn.company_id = ao.id
+            ]]></body>
+		</sql>
+		<sql id="findByChannelId">
+			<body><![CDATA[
+             	SELECT 
+						id AS 'id',
+						name AS 'name',
+						file_type AS 'fileType',
+						decoder AS 'decoder',
+						path AS 'path'
+				FROM yyfilestore.qiniu_channel
+				WHERE id = :channelId
+            ]]></body>
+		</sql>
+		<sql id="loadAllChannel">
+			<body><![CDATA[
+             	SELECT 
+						id AS 'id',
+						name AS 'name',
+						file_type AS 'fileType',
+						decoder AS 'decoder',
+						path AS 'path'
+				FROM yyfilestore.qiniu_channel
+            ]]></body>
+		</sql>
+		<sql id="insertNamespace">
+			<body><![CDATA[
+             	INSERT INTO yyfilestore.qiniu_company_namespace
+						(company_id,domain,namespace,channel_ids)
+				VALUES(:companyId,:domain,:namespace,:channelIds)
+            ]]></body>
+		</sql>
+		<sql id="updateNamespace">
+			<body><![CDATA[
+             	UPDATE yyfilestore.qiniu_company_namespace 
+             			SET 
+             			domain =:domain,
+             			namespace = :namespace
+				WHERE company_id = :companyId
+            ]]></body>
+		</sql>
+		<sql id="deleteNamespace">
+			<body><![CDATA[
+             	DELETE FROM yyfilestore.qiniu_company_namespace
+				WHERE company_id = :companyId
+            ]]></body>
+		</sql>
+	</model>
+</sqls>

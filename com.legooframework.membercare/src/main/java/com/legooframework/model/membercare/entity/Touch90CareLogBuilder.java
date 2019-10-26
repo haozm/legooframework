@@ -12,13 +12,13 @@ import java.util.Optional;
 
 public class Touch90CareLogBuilder {
 
-    private final CrmOrganizationEntity company;
     private final CrmStoreEntity store;
     private List<Detail> delegate;
+    private String categories;
 
-    public Touch90CareLogBuilder(CrmOrganizationEntity company, CrmStoreEntity store, List<SaleRecordEntity> saleRecords) {
-        this.company = company;
+    public Touch90CareLogBuilder(CrmStoreEntity store, String categories, List<SaleRecordEntity> saleRecords) {
         this.store = store;
+        this.categories = categories;
         this.delegate = Lists.newArrayList();
         saleRecords.forEach($cur -> {
             LocalDate _date = $cur.getModifyDate().toLocalDate();
@@ -35,8 +35,7 @@ public class Touch90CareLogBuilder {
 
     public List<Touch90CareLogEntity> build() {
         List<Touch90CareLogEntity> logEntities = Lists.newArrayList();
-        this.delegate.forEach(x ->
-                logEntities.add(new Touch90CareLogEntity(company, store, x.logDate, x.addList, x.uploadList)));
+        this.delegate.forEach(x -> logEntities.add(new Touch90CareLogEntity(store, categories, x.logDate, x.addList, x.uploadList)));
         return logEntities;
     }
 
@@ -67,7 +66,7 @@ public class Touch90CareLogBuilder {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
-                .add("company", company.getId())
+                .add("company", store.getCompanyId())
                 .add("store", store.getId())
                 .add("delegate", delegate.size())
                 .toString();

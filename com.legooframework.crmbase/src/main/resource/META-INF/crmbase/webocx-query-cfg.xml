@@ -1,0 +1,730 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="mymember">
+        <sql id="detail_count" dynamic="true">
+            <body><![CDATA[
+            SELECT COUNT(memberId) FROM 
+             (SELECT
+				cm.id AS 'memberId',
+				cm.name AS 'name',
+				CASE 
+				WHEN cm.sex = 1 THEN '男'
+				WHEN cm.sex = 2 THEN '女'
+				END AS 'sex',
+				cm.mobilePhone AS 'mobilePhone',
+				CASE 
+				WHEN cm.effectiveFlag = 1 THEN '有效'
+				WHEN cm.effectiveFlag = 0 THEN '无效'
+				END AS 'enable',
+				CASE
+					WHEN cm.calendarType = 1 THEN DATE_FORMAT( cm.birthday, '%Y-%m-%d' )
+					WHEN cm.calendarType = 2 THEN CONCAT( DATE_FORMAT( cm.lunarBirthday, '%Y-%m-%d' ), '(农)' )
+				END AS 'birthday',
+				(
+				SELECT
+					name
+				FROM
+					acp_employee
+				WHERE
+					id = cm.guide_id ) 'shoppingGuideName',
+			   <#if function?? && function == "birthday">
+				CASE
+					WHEN cm.calendarType = 1 THEN TO_DAYS(STR_TO_DATE(CONCAT(YEAR(NOW()),'-',MONTH(cm.birthday),'-',DAYOFMONTH(cm.birthday)),'%Y-%m-%d')) - TO_DAYS(NOW())
+					WHEN cm.calendarType = 2 THEN 
+					TO_DAYS((SELECT STR_TO_DATE(gregorian_calendar,'%Y%m%d') 
+					FROM YG_Statistics.calendar_g_c_index 
+					WHERE lunar_calendar = DATE_FORMAT(STR_TO_DATE(CONCAT(YEAR(NOW()),'-',MONTH(cm.lunarBirthday),'-',DAYOFMONTH(cm.lunarBirthday)),'%Y-%m-%d'),'%Y%m%d')))
+					- TO_DAYS(NOW())
+				END AS 'days',
+				CASE
+					WHEN cm.calendarType = 1 THEN STR_TO_DATE(CONCAT(YEAR(NOW()),'-',MONTH(cm.birthday),'-',DAYOFMONTH(cm.birthday)),'%Y-%m-%d')
+					WHEN cm.calendarType = 2 THEN 
+					(SELECT STR_TO_DATE(gregorian_calendar,'%Y%m%d') 
+					FROM YG_Statistics.calendar_g_c_index 
+					WHERE lunar_calendar = DATE_FORMAT(STR_TO_DATE(CONCAT(YEAR(NOW()),'-',MONTH(cm.lunarBirthday),'-',DAYOFMONTH(cm.lunarBirthday)),'%Y-%m-%d'),'%Y%m%d'))
+				END AS 'curBirthday',
+				</#if>
+			<#if STORE_RFM_SETTING?? && STORE_RFM_SETTING == 2>
+				CONCAT( rfm.S01_R_Level, '-' ,rfm.S01_F_Level, '-' , rfm.S01_M_Level ) AS 'storeRFM',
+			</#if>
+			<#if STORE_RFM_SETTING?? && STORE_RFM_SETTING == 1>
+				CONCAT( rfm.S02_R_Level, '-' ,rfm.S02_F_Level, '-' , rfm.S02_M_Level ) AS 'storeRFM',
+			</#if>
+			<#if COMPANY_RFM_SETTING?? && COMPANY_RFM_SETTING == 2>
+				CONCAT( rfm.C01_R_Level, '-' ,rfm.C01_F_Level, '-' , rfm.C01_M_Level ) AS 'companyRFM',
+			</#if>
+			<#if COMPANY_RFM_SETTING?? && COMPANY_RFM_SETTING == 1>
+				CONCAT( rfm.C02_R_Level, '-' ,rfm.C02_F_Level, '-' , rfm.C02_M_Level ) AS 'companyRFM',
+			</#if>
+				cm.totalScore AS 'totleScore',
+				0 AS 'balance',
+				cmc.field_name AS 'memberCardName',
+				CASE 
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 7 THEN '周活跃'
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 30 THEN '月活跃'
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 120 THEN '季活跃'
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 185 THEN '半年活跃'
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 365 THEN '年活跃'
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) > 365 THEN '沉睡'
+				ELSE ''
+				END
+				AS 'liveness',
+				DATE_FORMAT(mtb.s_total_buy_max_time,'%Y-%m-%d') AS 'lastVisitTime',
+				IFNULL(mpyb.s_py_buy_amount02,0) AS 'pastYearBuyAmount',
+				IFNULL(mpyb.s_py_buy_freq,0) AS 'pastYearBuyCount',
+				IFNULL(mtyb.s_ty_buy_amount02,0) AS 'thisYearBuyAmount',
+				IFNULL(mtyb.s_ty_buy_freq,0) AS 'thisYearBuyCount',
+				IFNULL(mtb.s_total_buy_amount02,0) AS 'totalBuyAmount',
+				IFNULL(mtb.s_total_buy_freq ,0) AS 'totalBuyCount',
+				DATE_FORMAT(mrb.s_recent_buy_time,'%Y-%m-%d %h:%i:%s') AS 'recentBuyTime',
+				DATE_FORMAT(cm.createTime,'%Y-%m-%d %h:%i:%s') AS 'createTime',
+				IF(cm.guide_id IS NULL,'未分配','已分配') AS 'assgin',
+				cm.totalScore AS 'totalScore',
+				mcbh.rechargeAmount AS 'rechargeAmount'
+			FROM
+				crm_member cm
+			INNER JOIN member_addition_info mai ON
+				cm.id = mai.member_id
+			LEFT JOIN member_consume_behavior mcbh ON 
+				mcbh.member_id = cm.id
+			LEFT JOIN 
+				dict_kv_data cmc 
+			ON cmc.field_value = cm.memberCardType_id AND cmc.dict_type = 'MEMBERCARDTYPE'
+			LEFT JOIN YG_Statistics.stat_member_rfm rfm ON 
+				rfm.member_id = cm.id
+			LEFT JOIN YG_Statistics.stat_member_past_year_buy mpyb
+			ON cm.company_id = mpyb.company_id AND mpyb.member_id = cm.id
+			LEFT JOIN YG_Statistics.stat_member_this_year_buy mtyb
+			ON cm.company_id = mtyb.company_id AND mtyb.member_id = cm.id
+			LEFT JOIN YG_Statistics.stat_member_total_buy mtb
+			ON cm.company_id = mtb.company_id AND mtb.member_id = cm.id
+			LEFT JOIN YG_Statistics.stat_member_recent_buy mrb
+			ON cm.company_id = mrb.company_id AND mrb.member_id = cm.id
+			WHERE
+				cm.company_id = :USER_COMPANY_ID
+			<#if storeId??>
+				AND FIND_IN_SET(cm.store_ids, :storeId )
+			<#else>
+				AND FIND_IN_SET(cm.store_ids, :USER_STORE_ID )
+			</#if>
+			<#if STORE_RFM_SETTING??> 
+				 <#if STORE_RFM_SETTING == 2>
+					 <#if storeRFM[0]?? && storeRFM[1]??>AND (${storeRFM[0]} <= rfm.S01_R_Level AND rfm.S01_R_Level <= ${storeRFM[1]})</#if>
+	                 <#if storeRFM[2]?? && storeRFM[3]??>AND (${storeRFM[2]} <= rfm.S01_F_Level AND rfm.S01_F_Level <= ${storeRFM[3]})</#if>
+	                 <#if storeRFM[4]?? && storeRFM[5]??>AND (${storeRFM[4]} <= rfm.S01_M_Level AND rfm.S01_M_Level <= ${storeRFM[5]})</#if>
+				 <#elseif STORE_RFM_SETTING == 1>
+					 <#if storeRFM[0]?? && storeRFM[1]??>AND (${storeRFM[0]} <= rfm.S02_R_Level AND rfm.S02_R_Level <= ${storeRFM[1]})</#if>
+	                 <#if storeRFM[2]?? && storeRFM[3]??>AND (${storeRFM[2]} <= rfm.S02_F_Level AND rfm.S02_F_Level <= ${storeRFM[3]})</#if>
+	                 <#if storeRFM[4]?? && storeRFM[5]??>AND (${storeRFM[4]} <= rfm.S02_M_Level AND rfm.S02_M_Level <= ${storeRFM[5]})</#if>
+				 </#if>
+			<#elseif COMPANY_RFM_SETTING??>
+				<#if COMPANY_RFM_SETTING == 2>
+					<#if storeRFM[0]?? && storeRFM[1]??>AND (${storeRFM[0]} <= rfm.C01_R_Level AND rfm.C01_R_Level <= ${storeRFM[1]})</#if>
+	                <#if storeRFM[2]?? && storeRFM[3]??>AND (${storeRFM[2]} <= rfm.C01_F_Level AND rfm.C01_F_Level <= ${storeRFM[3]})</#if>
+	                <#if storeRFM[4]?? && storeRFM[5]??>AND (${storeRFM[4]} <= rfm.C01_M_Level AND rfm.C01_M_Level <= ${storeRFM[5]})</#if>
+				<#elseif COMPANY_RFM_SETTING == 1>
+					<#if storeRFM[0]?? && storeRFM[1]??>AND (${storeRFM[0]} <= rfm.C02_R_Level AND rfm.C02_R_Level <= ${storeRFM[1]})</#if>
+	                <#if storeRFM[2]?? && storeRFM[3]??>AND (${storeRFM[2]} <= rfm.C02_F_Level AND rfm.C02_F_Level <= ${storeRFM[3]})</#if>
+	                <#if storeRFM[4]?? && storeRFM[5]??>AND (${storeRFM[4]} <= rfm.C02_M_Level AND rfm.C02_M_Level <= ${storeRFM[5]})</#if>
+				</#if>
+			</#if>
+			<#if enable??>
+				AND cm.effectiveFlag = :enable
+			</#if>		
+			<#if consumeAmount??>
+				<#if consumePeriod =="pastyear">
+					<#if consumeAmount[0]??>AND ${consumeAmount[0]} <= IFNULL(mpyb.s_py_buy_amount02,0)</#if>
+					<#if consumeAmount[1]??>AND IFNULL(mpyb.s_py_buy_amount02,0) <= ${consumeAmount[1]}</#if>
+				<#elseif consumePeriod =="curyear">
+					<#if consumeAmount[0]??>AND ${consumeAmount[0]} <= IFNULL(mtyb.s_ty_buy_amount02,0)</#if>
+					<#if consumeAmount[1]??>AND IFNULL(mtyb.s_ty_buy_amount02,0) <= ${consumeAmount[1]}</#if>
+				<#else>
+					<#if consumeAmount[0]??>AND ${consumeAmount[0]} <= IFNULL(mtb.s_total_buy_amount02,0)</#if>
+					<#if consumeAmount[1]??>AND IFNULL(mtb.s_total_buy_amount02,0) <= ${consumeAmount[1]}</#if>
+				</#if>
+			</#if>
+			<#if consumeTimes??>
+				<#if consumeTimesPeriod =="pastyear">
+					<#if consumeTimes[0]??>AND ${consumeTimes[0]} <= IFNULL(mpyb.s_py_buy_freq,0)</#if>
+					<#if consumeTimes[1]??>AND IFNULL(mpyb.s_py_buy_freq,0) <= ${consumeTimes[1]}</#if>
+				<#elseif consumeTimesPeriod =="curyear">
+					<#if consumeTimes[0]??>AND ${consumeTimes[0]} <= IFNULL(mtyb.s_ty_buy_freq,0)</#if>
+					<#if consumeTimes[1]??>AND IFNULL(mtyb.s_ty_buy_freq,0) <= ${consumeTimes[1]}</#if>
+				<#else>
+					<#if consumeTimes[0]??>AND ${consumeTimes[0]} <= IFNULL(mtb.s_total_buy_freq ,0)</#if>
+					<#if consumeTimes[1]??>AND IFNULL(mtb.s_total_buy_freq ,0) <= ${consumeTimes[1]}</#if>
+				</#if>
+			</#if>
+			<#if cusomeRange??>
+				<#if cusomeRange[0]??>AND '${cusomeRange[0]} 00:00:00' <= mrb.s_recent_buy_time</#if>
+				<#if cusomeRange[1]??>AND mrb.s_recent_buy_time <= '${cusomeRange[1]} 23:59:59'</#if>
+			</#if>
+			<#if visitTimeRange??>
+				<#if visitTimeRange[0]??>AND '${visitTimeRange[0]} 00:00:00' <= mtb.s_total_buy_max_time</#if>
+				<#if visitTimeRange[1]??>AND mtb.s_total_buy_max_time <= '${visitTimeRange[1]} 23:59:59'</#if>			
+			</#if>
+			<#if addDaysRange??>
+				<#if addDaysRange[0]??>AND '${addDaysRange[0]} 00:00:00' <= cm.createTime</#if>
+				<#if addDaysRange[1]??>AND cm.createTime <= '${addDaysRange[1]} 23:59:59'</#if>			
+			</#if>
+			<#if liveness??>
+			   <#if liveness == "week">
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 7
+               <#elseif liveness == "month">
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 30
+               <#elseif liveness == "jidu">
+                AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 120
+               <#elseif liveness == "half">
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 185
+               <#elseif liveness == "year">
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 365
+               <#elseif liveness == "sleep">
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) > 365
+               <#else>
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) > 9999999
+               </#if>			
+			</#if>
+			<#if shoppingguide??>
+				AND cm.guide_id = :shoppingguide
+			</#if>
+			<#if memberCardType??>
+				AND cm.memberCardType_id = :memberCardType
+			</#if>
+			<#if keyWords??>
+				AND (cm.name LIKE '%${keyWords}%' OR cm.mobilePhone LIKE '%${keyWords}%' OR cm.memberCardNum LIKE '%${keyWords}%')
+			</#if>
+			<#if assginFlag??>
+				AND IF(cm.guide_id IS NULL,0,1) = :assginFlag
+			</#if>
+			<#if consumeFlag??>
+				AND IF(mtb.member_id IS NULL,0,1) = :consumeFlag
+			</#if>
+			<#if function?? && function == "birthday" && calendarType??>
+				AND cm.calendarType = :calendarType 
+			</#if>
+				ORDER BY cm.createTime DESC ) T
+			WHERE 1 = 1
+			<#if function?? && function == "birthday" && birthdayRange??>
+				<#if birthdayRange[0]??>AND '${birthdayRange[0]} 00:00:00' <= T.curBirthday</#if>
+				<#if birthdayRange[1]??>AND T.curBirthday <= '${birthdayRange[1]} 23:59:59'</#if> 
+			</#if>
+			<#if function?? && function == "birthday" && livingDays??>
+				AND T.days BETWEEN ${livingDays[0]} AND ${livingDays[1]}
+			</#if>			
+            ]]></body>
+        </sql>
+        <sql id="detail" dynamic="true">        	
+            <meta>            	
+                <col id="memberId" name="唯一标识" type="LONG"/>
+                <col id="name" name="姓名" type="STRING" fixed="true"/>
+                <col id="sex" name="性别" type="STRING" fixed="true"/>
+                <col id="birthday" name="生日" type="STRING" fixed="true"/>
+                <col id="livingDays" name="距今天数" type="STRING" for="birthday:1"></col>
+                <col id="lastVisitTime" name="到店时间" type="STRING"/>
+                <col id="mobilePhone" name="电话号码" type="STRING" showType="PHONE" fixed="true"/>
+                <col id="enable" name="有效状态" type="STRING" fixed="true"/>
+                <col id="storeRFM" name="门店RFM" type="STRING" fixed="true"/>
+                <col id="companyRFM" name="公司RFM" type="STRING" fixed="true"/>
+                <col id="liveness" name="活跃度" type="STRING"/>
+                <col id="memberCardName" name="会员卡" type="STRING"/>
+                <col id="shoppingGuideName" name="所属导购" type="STRING"/>
+                <col id="pastYearBuyCount" name="近一年消费次数" type="INT"/>
+                <col id="thisYearBuyCount" name="本年消费次数" type="INT"/>
+                <col id="totalBuyCount" name="累计消费次数" type="INT"/>
+                <col id="pastYearBuyAmount" name="近一年消费总额" type="INT" showType="MONEY"/>
+                <col id="thisYearBuyAmount" name="本年消费总额" type="INT" showType="MONEY"/>
+                <col id="totalBuyAmount" name="累计消费总额" type="INT" showType="MONEY"/>
+                <col id="recentBuyTime" name="消费时间" type="STRING"/>
+                <col id="createTime" name="新增时间" type="STRING"/>
+                <col id="assgin" name="分配情况" type="STRING"/>
+                <col id="totalScore" name="总积分" type="STRING"/>
+                <col id="rechargeAmount" name="余额" type="INT" showType="MONEY"/>
+            </meta>           
+             <params>
+            	<p name="storeId" type="int"/>
+                <p name="consumeAmount" type="ints"/>
+                <p name="consumePeriod" type="str"/>
+                <p name="consumeTimes" type="ints"/>
+                <p name="consumeTimesPeriod" type="str"/>
+                <p name="cusomeRange" type="btn"/>
+                <p name="visitTimeRange" type="btn"/>
+                <p name="storeRFM" type="ints"/>
+                <p name="enable" type="int"/>
+                <p name="addDaysRange" type="btn"/>               
+                <p name="liveness" type="str"/>
+                <p name="shoppingguide" type="int"/>
+                <p name="keyWords" type="str"/>
+                <p name="memberCardType" type="int"/>
+                <p name="consumeFlag" type="int"/>
+                <p name="assginFlag" type="int"/>
+                <p name="memberCardType" type="btn"/>
+                <p name="livingDays" type="ints"/>
+		<p name="birthdayRange" type="btn"/>
+		<p name="calendarType" type="int"/>
+            </params>
+            <body><![CDATA[
+             SELECT T.* 
+             <#if function?? && function == "birthday">
+             ,IF(T.days > 0,T.days,'已过') AS 'livingDays'
+             </#if>
+             FROM 
+             (SELECT
+				cm.id AS 'memberId',
+				cm.name AS 'name',
+				CASE 
+				WHEN cm.sex = 1 THEN '男'
+				WHEN cm.sex = 2 THEN '女'
+				END AS 'sex',
+				cm.mobilePhone AS 'mobilePhone',
+				CASE 
+				WHEN cm.effectiveFlag = 1 THEN '有效'
+				WHEN cm.effectiveFlag = 0 THEN '无效'
+				END AS 'enable',
+				CASE
+					WHEN cm.calendarType = 1 THEN DATE_FORMAT( cm.birthday, '%Y-%m-%d' )
+					WHEN cm.calendarType = 2 THEN CONCAT( DATE_FORMAT( cm.lunarBirthday, '%Y-%m-%d' ), '(农)' )
+				END AS 'birthday',
+				(
+				SELECT
+					name
+				FROM
+					acp_employee
+				WHERE
+					id = cm.guide_id ) 'shoppingGuideName',
+			   <#if function?? && function == "birthday">
+				CASE
+					WHEN cm.calendarType = 1 THEN TO_DAYS(STR_TO_DATE(CONCAT(YEAR(NOW()),'-',MONTH(cm.birthday),'-',DAYOFMONTH(cm.birthday)),'%Y-%m-%d')) - TO_DAYS(NOW())
+					WHEN cm.calendarType = 2 THEN 
+					TO_DAYS((SELECT STR_TO_DATE(gregorian_calendar,'%Y%m%d') 
+					FROM YG_Statistics.calendar_g_c_index 
+					WHERE lunar_calendar = DATE_FORMAT(STR_TO_DATE(CONCAT(YEAR(NOW()),'-',MONTH(cm.lunarBirthday),'-',DAYOFMONTH(cm.lunarBirthday)),'%Y-%m-%d'),'%Y%m%d')))
+					- TO_DAYS(NOW())
+				END AS 'days',
+				CASE
+					WHEN cm.calendarType = 1 THEN STR_TO_DATE(CONCAT(YEAR(NOW()),'-',MONTH(cm.birthday),'-',DAYOFMONTH(cm.birthday)),'%Y-%m-%d')
+					WHEN cm.calendarType = 2 THEN 
+					(SELECT STR_TO_DATE(gregorian_calendar,'%Y%m%d') 
+					FROM YG_Statistics.calendar_g_c_index 
+					WHERE lunar_calendar = DATE_FORMAT(STR_TO_DATE(CONCAT(YEAR(NOW()),'-',MONTH(cm.lunarBirthday),'-',DAYOFMONTH(cm.lunarBirthday)),'%Y-%m-%d'),'%Y%m%d'))
+				END AS 'curBirthday',
+				</#if>
+			<#if STORE_RFM_SETTING?? && STORE_RFM_SETTING == 2>
+				CONCAT( rfm.S01_R_Level, '-' ,rfm.S01_F_Level, '-' , rfm.S01_M_Level ) AS 'storeRFM',
+			</#if>
+			<#if STORE_RFM_SETTING?? && STORE_RFM_SETTING == 1>
+				CONCAT( rfm.S02_R_Level, '-' ,rfm.S02_F_Level, '-' , rfm.S02_M_Level ) AS 'storeRFM',
+			</#if>
+			<#if COMPANY_RFM_SETTING?? && COMPANY_RFM_SETTING == 2>
+				CONCAT( rfm.C01_R_Level, '-' ,rfm.C01_F_Level, '-' , rfm.C01_M_Level ) AS 'companyRFM',
+			</#if>
+			<#if COMPANY_RFM_SETTING?? && COMPANY_RFM_SETTING == 1>
+				CONCAT( rfm.C02_R_Level, '-' ,rfm.C02_F_Level, '-' , rfm.C02_M_Level ) AS 'companyRFM',
+			</#if>
+				cm.totalScore AS 'totleScore',
+				0 AS 'balance',
+				cmc.field_name AS 'memberCardName',
+				CASE 
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 7 THEN '周活跃'
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 30 THEN '月活跃'
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 120 THEN '季活跃'
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 185 THEN '半年活跃'
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 365 THEN '年活跃'
+				WHEN TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) > 365 THEN '沉睡'
+				ELSE ''
+				END
+				AS 'liveness',
+				DATE_FORMAT(mtb.s_total_buy_max_time,'%Y-%m-%d') AS 'lastVisitTime',
+				IFNULL(mpyb.s_py_buy_amount02,0) AS 'pastYearBuyAmount',
+				IFNULL(mpyb.s_py_buy_freq,0) AS 'pastYearBuyCount',
+				IFNULL(mtyb.s_ty_buy_amount02,0) AS 'thisYearBuyAmount',
+				IFNULL(mtyb.s_ty_buy_freq,0) AS 'thisYearBuyCount',
+				IFNULL(mtb.s_total_buy_amount02,0) AS 'totalBuyAmount',
+				IFNULL(mtb.s_total_buy_freq ,0) AS 'totalBuyCount',
+				DATE_FORMAT(mrb.s_recent_buy_time,'%Y-%m-%d %h:%i:%s') AS 'recentBuyTime',
+				DATE_FORMAT(cm.createTime,'%Y-%m-%d %h:%i:%s') AS 'createTime',
+				IF(cm.guide_id IS NULL,'未分配','已分配') AS 'assgin',
+				cm.totalScore AS 'totalScore',
+				mcbh.rechargeAmount AS 'rechargeAmount'
+			FROM
+				crm_member cm
+			INNER JOIN member_addition_info mai ON
+				cm.id = mai.member_id
+			LEFT JOIN member_consume_behavior mcbh ON 
+				mcbh.member_id = cm.id
+			LEFT JOIN 
+				dict_kv_data cmc 
+			ON cmc.field_value = cm.memberCardType_id AND cmc.dict_type = 'MEMBERCARDTYPE'
+			LEFT JOIN YG_Statistics.stat_member_rfm rfm ON 
+				rfm.member_id = cm.id
+			LEFT JOIN YG_Statistics.stat_member_past_year_buy mpyb
+			ON cm.company_id = mpyb.company_id AND mpyb.member_id = cm.id
+			LEFT JOIN YG_Statistics.stat_member_this_year_buy mtyb
+			ON cm.company_id = mtyb.company_id AND mtyb.member_id = cm.id
+			LEFT JOIN YG_Statistics.stat_member_total_buy mtb
+			ON cm.company_id = mtb.company_id AND mtb.member_id = cm.id
+			LEFT JOIN YG_Statistics.stat_member_recent_buy mrb
+			ON cm.company_id = mrb.company_id AND mrb.member_id = cm.id
+			WHERE
+				cm.company_id = :USER_COMPANY_ID
+			<#if storeId??>
+				AND FIND_IN_SET(cm.store_ids, :storeId )
+			<#else>
+				AND FIND_IN_SET(cm.store_ids, :USER_STORE_ID )
+			</#if>
+			<#if STORE_RFM_SETTING??> 
+				 <#if STORE_RFM_SETTING == 2>
+					 <#if storeRFM[0]?? && storeRFM[1]??>AND (${storeRFM[0]} <= rfm.S01_R_Level AND rfm.S01_R_Level <= ${storeRFM[1]})</#if>
+	                 <#if storeRFM[2]?? && storeRFM[3]??>AND (${storeRFM[2]} <= rfm.S01_F_Level AND rfm.S01_F_Level <= ${storeRFM[3]})</#if>
+	                 <#if storeRFM[4]?? && storeRFM[5]??>AND (${storeRFM[4]} <= rfm.S01_M_Level AND rfm.S01_M_Level <= ${storeRFM[5]})</#if>
+				 <#elseif STORE_RFM_SETTING == 1>
+					 <#if storeRFM[0]?? && storeRFM[1]??>AND (${storeRFM[0]} <= rfm.S02_R_Level AND rfm.S02_R_Level <= ${storeRFM[1]})</#if>
+	                 <#if storeRFM[2]?? && storeRFM[3]??>AND (${storeRFM[2]} <= rfm.S02_F_Level AND rfm.S02_F_Level <= ${storeRFM[3]})</#if>
+	                 <#if storeRFM[4]?? && storeRFM[5]??>AND (${storeRFM[4]} <= rfm.S02_M_Level AND rfm.S02_M_Level <= ${storeRFM[5]})</#if>
+				 </#if>
+			<#elseif COMPANY_RFM_SETTING??>
+				<#if COMPANY_RFM_SETTING == 2>
+					<#if storeRFM[0]?? && storeRFM[1]??>AND (${storeRFM[0]} <= rfm.C01_R_Level AND rfm.C01_R_Level <= ${storeRFM[1]})</#if>
+	                <#if storeRFM[2]?? && storeRFM[3]??>AND (${storeRFM[2]} <= rfm.C01_F_Level AND rfm.C01_F_Level <= ${storeRFM[3]})</#if>
+	                <#if storeRFM[4]?? && storeRFM[5]??>AND (${storeRFM[4]} <= rfm.C01_M_Level AND rfm.C01_M_Level <= ${storeRFM[5]})</#if>
+				<#elseif COMPANY_RFM_SETTING == 1>
+					<#if storeRFM[0]?? && storeRFM[1]??>AND (${storeRFM[0]} <= rfm.C02_R_Level AND rfm.C02_R_Level <= ${storeRFM[1]})</#if>
+	                <#if storeRFM[2]?? && storeRFM[3]??>AND (${storeRFM[2]} <= rfm.C02_F_Level AND rfm.C02_F_Level <= ${storeRFM[3]})</#if>
+	                <#if storeRFM[4]?? && storeRFM[5]??>AND (${storeRFM[4]} <= rfm.C02_M_Level AND rfm.C02_M_Level <= ${storeRFM[5]})</#if>
+				</#if>
+			</#if>
+			<#if enable??>
+				AND cm.effectiveFlag = :enable
+			</#if>		
+			<#if consumeAmount??>
+				<#if consumePeriod =="pastyear">
+					<#if consumeAmount[0]??>AND ${consumeAmount[0]} <= IFNULL(mpyb.s_py_buy_amount02,0)</#if>
+					<#if consumeAmount[1]??>AND IFNULL(mpyb.s_py_buy_amount02,0) <= ${consumeAmount[1]}</#if>
+				<#elseif consumePeriod =="curyear">
+					<#if consumeAmount[0]??>AND ${consumeAmount[0]} <= IFNULL(mtyb.s_ty_buy_amount02,0)</#if>
+					<#if consumeAmount[1]??>AND IFNULL(mtyb.s_ty_buy_amount02,0) <= ${consumeAmount[1]}</#if>
+				<#else>
+					<#if consumeAmount[0]??>AND ${consumeAmount[0]} <= IFNULL(mtb.s_total_buy_amount02,0)</#if>
+					<#if consumeAmount[1]??>AND IFNULL(mtb.s_total_buy_amount02,0) <= ${consumeAmount[1]}</#if>
+				</#if>
+			</#if>
+			<#if consumeTimes??>
+				<#if consumeTimesPeriod =="pastyear">
+					<#if consumeTimes[0]??>AND ${consumeTimes[0]} <= IFNULL(mpyb.s_py_buy_freq,0)</#if>
+					<#if consumeTimes[1]??>AND IFNULL(mpyb.s_py_buy_freq,0) <= ${consumeTimes[1]}</#if>
+				<#elseif consumeTimesPeriod =="curyear">
+					<#if consumeTimes[0]??>AND ${consumeTimes[0]} <= IFNULL(mtyb.s_ty_buy_freq,0)</#if>
+					<#if consumeTimes[1]??>AND IFNULL(mtyb.s_ty_buy_freq,0) <= ${consumeTimes[1]}</#if>
+				<#else>
+					<#if consumeTimes[0]??>AND ${consumeTimes[0]} <= IFNULL(mtb.s_total_buy_freq ,0)</#if>
+					<#if consumeTimes[1]??>AND IFNULL(mtb.s_total_buy_freq ,0) <= ${consumeTimes[1]}</#if>
+				</#if>
+			</#if>
+			<#if cusomeRange??>
+				<#if cusomeRange[0]??>AND '${cusomeRange[0]} 00:00:00' <= mrb.s_recent_buy_time</#if>
+				<#if cusomeRange[1]??>AND mrb.s_recent_buy_time <= '${cusomeRange[1]} 23:59:59'</#if>
+			</#if>
+			<#if visitTimeRange??>
+				<#if visitTimeRange[0]??>AND '${visitTimeRange[0]} 00:00:00' <= mtb.s_total_buy_max_time</#if>
+				<#if visitTimeRange[1]??>AND mtb.s_total_buy_max_time <= '${visitTimeRange[1]} 23:59:59'</#if>			
+			</#if>
+			<#if addDaysRange??>
+				<#if addDaysRange[0]??>AND '${addDaysRange[0]} 00:00:00' <= cm.createTime</#if>
+				<#if addDaysRange[1]??>AND cm.createTime <= '${addDaysRange[1]} 23:59:59'</#if>			
+			</#if>
+			<#if liveness??>
+			   <#if liveness == "week">
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 7
+               <#elseif liveness == "month">
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 30
+               <#elseif liveness == "jidu">
+                AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 120
+               <#elseif liveness == "half">
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 185
+               <#elseif liveness == "year">
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) <= 365
+               <#elseif liveness == "sleep">
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) > 365
+               <#else>
+               AND TIMESTAMPDIFF(DAY,mtb.s_total_buy_max_time,NOW()) > 9999999
+               </#if>			
+			</#if>
+			<#if shoppingguide??>
+				AND cm.guide_id = :shoppingguide
+			</#if>
+			<#if memberCardType??>
+				AND cm.memberCardType_id = :memberCardType
+			</#if>
+			<#if keyWords??>
+				AND (cm.name LIKE '%${keyWords}%' OR cm.mobilePhone LIKE '%${keyWords}%' OR cm.memberCardNum LIKE '%${keyWords}%')
+			</#if>
+			<#if assginFlag??>
+				AND IF(cm.guide_id IS NULL,0,1) = :assginFlag
+			</#if>
+			<#if consumeFlag??>
+				AND IF(mtb.member_id IS NULL,0,1) = :consumeFlag
+			</#if>
+			<#if function?? && function == "birthday" && calendarType??>
+				AND cm.calendarType = :calendarType 
+			</#if>			
+				ORDER BY cm.createTime DESC ) T
+			WHERE 1 = 1
+			<#if function?? && function == "birthday" && birthdayRange??>
+				<#if birthdayRange[0]??>AND '${birthdayRange[0]} 00:00:00' <= T.curBirthday</#if>
+				<#if birthdayRange[1]??>AND T.curBirthday <= '${birthdayRange[1]} 23:59:59'</#if> 
+			</#if>
+			<#if function?? && function == "birthday" && livingDays??>
+				AND T.days BETWEEN ${livingDays[0]} AND ${livingDays[1]}
+			</#if>
+			LIMIT :offset,:rows 
+            ]]></body>
+        </sql>
+        <sql id="salerecode" dynamic="true">
+            <meta>
+                <col id="saleDate" name="销售日期" type="STRING"/>
+                <col id="oldSaleRecordId" name="销售单号" type="STRING" fixed="true"/>
+                <col id="saleGoodDetail" name="消费商品" type="STRING" fixed="true"/>
+                <col id="saleTotalAmount" name="消费金额" type="STRING" fixed="true" showType="MONEY"/>
+                <col id="storeName" name="所属门店" type="STRING"/>
+            </meta>
+            <params>
+                <p name="memberId" type="int" required="true"/>
+            </params>
+            <body><![CDATA[
+        SELECT csr.id AS 'saleId', csr.consumeType AS 'consumeType',
+               csr.createTime AS 'createTime',
+               DATE_FORMAT(csr.createTime , '%Y-%m-%d %T') AS 'saleDate',
+               csr.discount AS 'discount',
+               csr.oldMemberId AS 'oldMemberId',
+               csr.oldSaleRecordId AS 'oldSaleRecordId',
+               csr.oldStoreId AS 'oldStoreId',
+               csr.saleCount AS 'saleCount',
+               csr.saleOrderNo AS 'saleOrderNo',
+               csr.saleTotalAmount AS 'saleTotalAmount',
+               csr.scoreMultiple AS 'scoreMultiple',
+               csr.status AS 'status',
+               csr.updateTime AS 'updateTime',
+               csr.company_id AS 'companyId',
+               csr.createUser_id AS 'createUserId',
+               csr.member_id AS 'memberId',
+               csr.store_id AS 'storeId',
+               csr.ninetyPlanFollowUp_id AS 'ninetyPlanFollowUpId',
+               csr.oldShoppingGuideId AS 'oldShoppingGuideId',
+               csr.sure AS 'sure',
+               cm.name AS 'memberName',
+               st.name AS 'storeName',
+               (SELECT GROUP_CONCAT(DISTINCT acg.name)
+                  FROM crm_goods acg
+                 WHERE acg.oldGoodsId IN ( SELECT csbr.oldGoodsId
+                                             FROM crm_salesubrecord csbr
+                                            WHERE csbr.oldSaleRecordId = csr.oldSaleRecordId )) AS 'saleGoodDetail'
+          FROM crm_salerecord csr
+    INNER JOIN crm_member cm ON cm.id = csr.member_id
+    INNER JOIN acp_store st ON csr.store_id = st.id
+         WHERE csr.status = 1
+           AND csr.member_id = :memberId
+           AND csr.company_id = :USER_COMPANY_ID
+      ORDER BY csr.createTime DESC
+         LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+        <sql id="salerecode_count">
+            <body><![CDATA[
+        SELECT COUNT(csr.id) AS 'counts'
+          FROM crm_salerecord csr
+         WHERE csr.status = 1
+           AND csr.member_id = :memberId
+           AND csr.company_id = :USER_COMPANY_ID
+            ]]></body>
+        </sql>
+        <sql id="membercare_count">
+            <body><![CDATA[
+        SELECT COUNT(cmc.id) AS 'counts'
+          FROM acp.crm_membercarerecord cmc
+         WHERE cmc.member_id = :memberId
+           AND cmc.store_id = :USER_STORE_ID_QUERY
+            ]]></body>
+        </sql>
+        <sql id="membercare">
+            <meta>            	
+                <col id="storeName" name="所属门店" type="LONG" />           
+                <col id="memberName" name="会员姓名" type="STRING" fixed="true"/>
+                <col id="createTimeName" name="计划跟进时间" type="STRING" fixed="true"/>
+                <col id="followUpTimeName" name="实际更新时间" type="STRING" fixed="true"/>
+                <col id="followUpWayName" name="跟进方式" type="STRING"/>
+                <col id="planName" name="触发计划" type="STRING"/>
+                <col id="followUpContent" name="跟进内容" type="STRING"/>
+                <col id="memberFeedback" name="用户反馈" type="STRING"/>
+                <col id="shoppingGuideSummary" name="导购总结" type="STRING"/>
+            </meta>
+            <params>
+                <p name="memberId" type="int" required="true"/>
+            </params>
+            <body><![CDATA[
+        SELECT
+            aas.name AS 'storeName',
+            cm.name AS 'memberName',
+            (CASE
+                IFNULL(cmc.followUpWay, 5)
+                WHEN 1 THEN '短信'
+                WHEN 2 THEN '电话'
+                WHEN 3 THEN '微信'
+                WHEN 4 THEN '上门'
+                ELSE '其他' END ) AS 'followUpWayName' ,
+            DATE_FORMAT(cmc.followUpTime, '%Y-%m-%d') AS 'followUpTimeName',
+            cmc.followUpContent AS 'followUpContent',
+            cmc.planId ,
+            cmc.createTime AS 'createTime',
+            DATE_FORMAT(cmc.createTime, '%Y-%m-%d') AS 'createTimeName',
+            cmc.planName AS 'planName',
+            cmc.memberFeedback AS 'memberFeedback',
+            cmc.shoppingGuideSummary AS 'shoppingGuideSummary'
+        FROM
+            acp.crm_membercarerecord cmc
+   INNER JOIN acp.crm_member cm ON cmc.member_id = cm.id
+   INNER JOIN acp.acp_store aas ON cmc.store_id = aas.id
+        WHERE cmc.member_id = :memberId
+          AND cmc.store_id = :USER_STORE_ID_QUERY
+     ORDER BY cmc.createTime DESC
+            ]]></body>
+        </sql>
+        <sql id="visitback_count">
+            <body><![CDATA[
+        SELECT COUNT(cvm.id) AS 'counts'
+          FROM acp.crm_visitmemberplan cvm
+         WHERE cvm.member_id = :memberId
+           AND cvm.store_id = :USER_STORE_ID_QUERY
+            ]]></body>
+        </sql>
+        <sql id="visitback">
+            <meta>
+                <col id="visitId" name="回访ID" type="LONG"/>
+                <col id="visitDateName" name="回访日期" type="STRING" fixed="true"/>
+                <col id="visitTypeName" name="回访类型" type="STRING" fixed="true"/>
+                <col id="followUpWayName" name="回访方式" type="STRING" fixed="true"/>
+                <col id="employeeName" name="回访人员" type="STRING"/>
+                <col id="followUpContent" name="回访内容" type="STRING"/>
+                <col id="followUpContent" name="用户反馈" type="STRING"/>
+                <col id="shoppingGuideSummary" name="导购总结" type="STRING"/>
+            </meta>
+            <params>
+                <p name="memberId" type="int" required="true"/>
+            </params>
+            <body><![CDATA[
+       SELECT cvm.id AS 'visitId',
+              cvm.createTime,
+              cvm.followUpContent AS 'followUpContent',
+              cvm.followUpTime,
+              cvm.followUpWay AS 'followUpWay',
+              (CASE IFNULL(cvm.followUpWay,5)
+                WHEN 1 THEN '短信'
+                WHEN 2 THEN '电话'
+                WHEN 3 THEN '微信'
+                WHEN 4 THEN '上门'
+                ELSE '其他' END ) AS 'followUpWayName' ,
+              cvm.labelValue,
+              cvm.memberFeedback AS 'memberFeedback',
+              cvm.planState AS 'planState',
+              ( CASE IFNULL(cvm.planState,1)
+                WHEN 1 THEN '待回访'
+                WHEN 2 THEN '已回访'
+                WHEN 3 THEN '已过期'
+                WHEN 4 THEN '已取消' END) AS 'planStateName',
+              cvm.shoppingGuideSummary AS 'shoppingGuideSummary',
+              cvm.updateTime,
+              cvm.visitDate AS 'visitDate',
+              DATE_FORMAT(cvm.visitDate,'%Y-%m-%d') AS 'visitDateName',
+              cvm.visitType AS 'visitType',
+              (CASE  IFNULL(cvm.visitType,6)
+                WHEN 1 THEN '销售回访'
+                WHEN 2 THEN '活动通知'
+                WHEN 3 THEN '服务邀约'
+                WHEN 4 THEN '感恩回访'
+                When 5 then '满意度调查'
+                ELSE '其他' END) AS 'visitTypeName',
+              cvm.company_id,
+              cvm.employee_id,
+              cvm.member_id,
+              cvm.store_id,
+              aas.name AS 'storeName',
+              cvm.agingTime, cvm.batchAddNo,
+              cvm.effectiveDays, cvm.remark, cvm.createUser_id, cvm.updateUser_id,
+              cvm.operateType,
+              acm.name AS 'memberName',
+              aae.name AS 'employeeName'
+         FROM acp.crm_visitmemberplan cvm
+   INNER JOIN acp.crm_member acm ON cvm.member_id = acm.id
+   INNER JOIN acp.acp_store aas ON cvm.store_id = aas.id
+   INNER JOIN acp.acp_employee aae ON aae.id = cvm.employee_id
+        WHERE cvm.member_id = :memberId
+          AND cvm.store_id = :USER_STORE_ID_QUERY
+     ORDER BY cvm.createTime DESC
+            ]]></body>
+        </sql>
+        <sql id="shopreservation_count">
+            <body><![CDATA[
+        SELECT COUNT(cvm.id) AS 'counts'
+          FROM acp.crm_shopreservation cvm
+         WHERE cvm.member_id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="shopreservation">
+            <meta>
+                <col id="shopreservationId" name="预约ID" type="LONG"/>
+                <col id="reservationTypeNAme" name="预约方式" type="STRING" fixed="true"/>
+                <col id="reservationArriveTimeName" name="预约到店时间" type="STRING" fixed="true"/>
+                <col id="createTimeName" name="预约创建时间" type="STRING" fixed="true"/>
+                <col id="actualWaiterName" name="实际服务人员" type="STRING"/>
+                <col id="actualArriveTimeName" name="实际到店时间" type="STRING"/>
+                <col id="serviceStartTimeName" name="服务开始时间" type="STRING"/>
+                <col id="memberName" name="预约人员" type="STRING"/>
+            </meta>
+            <params>
+                <p name="memberId" type="int" required="true"/>
+            </params>
+            <body><![CDATA[
+        SELECT
+            acs.id AS 'shopreservationId',
+            acs.createTime AS 'createTime',
+            DATE_FORMAT(acs.createTime, '%Y-%m-%d %H-%i-%s') AS 'createTimeName',
+            acs.reservationType AS 'reservationType',
+            (CASE acs.reservationType
+                WHEN 1 THEN '电话预约'
+                WHEN 2 THEN '微信预约'
+                WHEN 3 THEN '短信预约'
+                WHEN 4 THEN '到店预约'
+                ELSE '其他' END ) AS 'reservationTypeNAme',
+            acs.reservationArriveTime AS 'reservationArriveTime',
+            DATE_FORMAT(acs.reservationArriveTime, '%Y-%m-%d %H-%i-%s') AS 'reservationArriveTimeName',
+            acs.reservationWaiter_id AS 'reservationWaiterId',
+            acsv1.name AS 'reservationWaiterName',
+            acs.shopReservationState AS 'shopReservationState',
+            ( CASE acs.shopReservationState
+                WHEN 2 THEN '已服务'
+                ELSE '其他' END ) AS 'shopReservationStateName',
+            acsv.name AS 'actualWaiterName',
+            acs.actualWaiter_id AS 'actualWaiterId',
+            acs.actualArriveTime AS 'actualArriveTime',
+            DATE_FORMAT(acs.actualArriveTime, '%Y-%m-%d %H-%i-%s') AS 'actualArriveTimeName',
+            acs.member_id AS 'memberId',
+            acm.name AS 'memberName',
+            acs.serviceEndTime AS 'serviceEndTime',
+            DATE_FORMAT(acs.serviceEndTime, '%Y-%m-%d %H-%i-%s') AS 'serviceEndTimeName',
+            acs.serviceStartTime AS 'serviceStartTime',
+            DATE_FORMAT(acs.serviceStartTime, '%Y-%m-%d %H-%i-%s') AS 'serviceStartTimeName',
+            acs.updateTime AS 'updateTime',
+            DATE_FORMAT(acs.updateTime, '%Y-%m-%d %H-%i-%s') AS 'updateTimeName',
+            acs.reservationRegister_id AS 'reservationRegisterId',
+            acs.store_id,
+            aas.name AS 'storeName'
+        FROM
+            acp.crm_shopreservation acs
+        LEFT JOIN acp.acp_store aas ON aas.id = acs.store_id
+        LEFT JOIN acp.crm_member acm ON acm.id = acs.member_id
+        LEFT JOIN acp.crm_shopreservationwaiter acsv ON acsv.id = acs.actualWaiter_id
+        LEFT JOIN acp.crm_shopreservationwaiter acsv1 ON acsv1.id = acs.reservationWaiter_id AND acsv.store_id = acs.store_id
+            WHERE acs.member_id = :memberId
+         ORDER BY acs.createTime DESC
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

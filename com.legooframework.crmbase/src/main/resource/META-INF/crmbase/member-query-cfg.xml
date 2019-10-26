@@ -1,0 +1,403 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="member">
+         <sql id="load_member">
+            <body><![CDATA[
+            	SELECT
+					cm.id AS 'memberId',
+					DATE_FORMAT(cm.birthday,'%Y-%m-%d') AS 'birthday',
+					CAST(cm.calendarType AS CHAR) AS 'calendarType',
+					cm.email AS 'email',
+					CAST(cm.memberType AS CHAR) AS 'memberType',
+					cm.name AS 'name',
+					cm.mobilePhone AS 'mobilePhone',
+					cm.mobilePhone AS 'phoneNo',
+					cm.qqNum AS 'qqNum',
+					CAST(cm.serviceLevel AS CHAR) AS 'serviceLevel',
+					(SELECT field_name FROM dict_kv_data 
+						WHERE dict_type = 'SERVICELEVEL' 
+					AND field_value = cm.serviceLevel AND tenant_id = cm.company_id)
+					AS 'serviceLevelName',
+					CAST(cm.sex AS CHAR) AS 'sex',
+					cm.weiboNum AS 'weiboNum',
+					cm.weixin_id AS 'weixinId',
+					cm.telephone AS 'telephone',
+					cm.namePinyin AS 'namePinyin',
+					DATE_FORMAT(cm.lunarBirthday,'%Y-%m-%d') AS 'lunarBirthday',
+					cm.iconUrl AS 'iconUrl',
+					cm.id AS 'memberId',
+					CAST(cm.memberCardType_id AS CHAR) AS 'memberCardType',
+				    cmc.field_name AS 'memberCardName',
+					cm.memberCardNum AS 'memberCardNum',
+					DATE_FORMAT(createCardTime,'%Y-%m-%d') AS 'createCardTime',
+					cm.createStoreId AS 'createStoreId',
+					ast.`name` AS 'createStoreName',
+					cm.limitday AS 'limitday',
+					cm.totalScore AS 'totalScore',
+					mai.carePeople AS 'carePeople',
+					CAST(mai.characterType AS CHAR)  AS 'characterType',
+					CAST(mai.faithType AS CHAR)  AS 'faithType',
+					mai.hobby AS 'hobby',
+					mai.idols AS 'idols',
+					mai.jobType AS 'jobType',
+					mai.likeBrand AS 'likeBrand',
+					CAST(mai.likeContact AS CHAR) AS 'likeContact',
+					CAST(mai.marryStatus AS CHAR) AS 'marryStatus',
+					mai.specialDay AS 'specialDay',
+					CAST(mai.zodiac AS CHAR)  AS 'zodiac',
+					CAST(mai.education AS CHAR) AS 'education',
+					CAST(mai.likeContactTime AS CHAR) AS 'likeContactTime',
+					mai.detailAddress AS 'detailAddress',
+					mai.certificate AS 'certificate',
+					CAST(mai.certificateType AS CHAR) AS 'certificateType',
+					mei.jacketSize,
+					mei.bottomsSize,
+					mei.braSize,
+					mei.briefsSize,
+					mei.shoeSize,
+					mei.afterFork,
+					mei.beforeFork,
+					mei.chest,
+					mei.clothingLong,
+					mei.footLength,
+					mei.hipline,
+					mei.kneeCircumference,
+					mei.onChest,
+					mei.outseam,
+					mei.shoulder,
+					mei.sleeveLength,
+					mei.thighCircumference,
+					mei.trouserLeg,
+					mei.underChest,
+					mei.waistline
+				FROM
+					crm_member cm
+				INNER JOIN member_addition_info mai ON cm.id = mai.member_id
+				LEFT JOIN crm_memberextrainfo mei ON cm.id = mei.member_id
+				LEFT JOIN 
+					acp_store  ast
+				ON ast.id = cm.createStoreId
+				LEFT JOIN 
+					dict_kv_data cmc 
+				ON cmc.field_value = cm.memberCardType_id AND cmc.dict_type = 'MEMBERCARDTYPE'
+				WHERE cm.id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="load_member_base">
+            <body><![CDATA[
+            	SELECT
+					id AS 'memberId',
+					DATE_FORMAT(birthday,'%Y-%m-%d') AS 'birthday',
+					CAST(calendarType AS CHAR) AS 'calendarType',
+					email AS 'email',
+					CAST(memberType AS CHAR) memberType AS 'memberType',
+					name AS 'name',
+					mobilePhone AS 'mobilePhone',
+					qqNum AS 'qqNum',
+					CAST(serviceLevel AS CHAR) serviceLevel AS 'serviceLevel',
+					CAST(sex AS CHAR) sex AS 'sex',
+					weiboNum AS 'weiboNum',
+					weixin_id AS 'weixinId',
+					telephone AS 'telephone',
+					namePinyin AS 'namePinyin',
+					DATE_FORMAT(lunarBirthday,'%Y-%m-%d') AS 'lunarBirthday',
+					iconUrl AS 'iconUrl'
+				FROM
+					crm_member
+				WHERE id = :memberId
+            ]]></body>
+        </sql>
+         <sql id="load_member_card">
+            <body><![CDATA[
+            	SELECT
+					cm.id AS 'memberId',
+					v.memberCardType_id AS 'memberCardType',
+				  	cmc.field_name AS 'memberCardName',
+					cm.memberCardNum AS 'memberCardNum',
+					DATE_FORMAT(createCardTime,'%Y-%m-%d') AS 'createCardTime',
+					cm.createStoreId AS 'createStoreId',
+					ast.`name` AS 'createStoreName',
+					cm.limitday AS 'limitday',
+					cm.totalScore AS 'totalScore'
+				FROM
+					crm_member cm
+				LEFT JOIN 
+					acp_store  ast
+				ON ast.id = cm.createStoreId
+				LEFT JOIN 
+					dict_kv_data cmc 
+				ON cmc.field_value = cm.memberCardType_id AND cmc.dict_type = 'MEMBERCARDTYPE'
+				WHERE cm.id = :memberId
+            ]]></body>
+        </sql>
+         <sql id="load_member_addition">
+            <body><![CDATA[
+            	SELECT
+					member_id AS 'memberId',
+					carePeople AS 'carePeople',
+					CAST(characterType AS CHAR) AS 'characterType',
+					CAST(faithType AS CHAR) AS 'faithType',
+					hobby AS 'hobby',
+					idols AS 'idols',
+					jobType AS 'jobType',
+					likeBrand AS 'likeBrand',
+					CAST(likeContact AS CHAR) AS 'likeContact',
+					CAST(marryStatus AS CHAR) AS 'marryStatus',
+					specialDay AS 'specialDay',
+					CAST(zodiac AS CHAR) AS 'zodiac',
+					CAST(education AS CHAR) AS 'education',
+					CAST(likeContactTime AS CHAR) AS 'likeContactTime',
+					detailAddress AS 'detailAddress',
+					certificate AS 'certificate',
+					CAST(certificateType AS CHAR) AS 'certificateType'
+				FROM
+					member_addition_info
+				WHERE member_id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="load_member_extra">
+            <body><![CDATA[
+           SELECT
+				afterFork,
+				beforeFork,
+				chest,
+				clothingLong,
+				footLength,
+				hipline,
+				kneeCircumference,
+				onChest,
+				outseam,
+				shoulder,
+				sleeveLength,
+				thighCircumference,
+				trouserLeg,
+				underChest,
+				waistline,
+				member_id AS 'memberId'
+				FROM
+				crm_memberextrainfo
+				WHERE
+				member_id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="load_member_clothes">
+            <body><![CDATA[
+           SELECT
+				jacketSize,
+				bottomsSize,
+				braSize,
+				briefsSize,
+				shoeSize,
+				member_id AS 'memberId'
+			FROM
+			crm_memberextrainfo
+			WHERE
+				member_id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="count_assign_member" dynamic="true">
+			<body><![CDATA[
+         		SELECT
+					ae.id AS 'employeeId',
+					ae.name AS 'empName',
+					IF(cm.id IS NULL,0,COUNT(*)) AS 'count',
+					CASE
+						WHEN ae.`status` = 0 OR ae.employeeState = 0 THEN 0
+						WHEN ae.status IS NULL OR ae.status = 1 OR ae.employeeState = 1 THEN 1
+					END AS 'validFlag',
+					IF(cm.id IS NULL,0,COUNT(*)) AS 'orderDesc'
+				from
+					acp_employee ae
+				LEFT JOIN crm_member cm ON
+					cm.guide_id = ae.id
+				WHERE
+					ae.store_id = <#if storeId??>:storeId<#else>:USER_STORE_ID</#if>
+					AND ae.company_id = :USER_COMPANY_ID
+				GROUP BY ae.id, ae.name
+				UNION
+				SELECT
+					-1 AS 'employeeId',
+					'未分配' AS 'empName',
+					COUNT(*) AS 'count',
+					1 AS 'validFlag',
+					-1 AS 'orderDesc'
+				FROM
+					 crm_member cm
+				WHERE
+					FIND_IN_SET(  <#if storeId??>:storeId<#else>:USER_STORE_ID</#if> ,cm.store_ids)
+					AND cm.company_id = :USER_COMPANY_ID
+					AND cm.guide_id IS NULL
+				ORDER BY
+					orderDesc DESC
+            ]]></body>
+		</sql>
+		<sql id="loadPurchasingBehavior">
+            <body><![CDATA[
+            SELECT   DATE_FORMAT(mtb.compute_time,'%Y-%m-%d %H:%i:%s') AS 'compute_time',
+                     DATE_FORMAT(mrb.c_recent_buy_time,'%Y-%m-%d %H:%i:%s') AS 'c_recent_buy_time',
+                     cm.id AS 'member_id',
+                     cm.company_id,
+                     mrb.c_recent_buy_time_interval,
+                     mtb.c_total_buy_avg_interval,
+                     mtb.c_total_buy_goods_count,
+                     mtb.c_total_buy_amount01,
+                     mtb.c_total_buy_amount02,
+                     mtb.c_total_buy_freq,
+                     mtb.c_total_buy_avg_p_o_p,                     
+                     mtb.c_total_buy_avg_p_g_p,                     
+                     mtb.c_total_buy_avg_j_r,
+                     mtb.c_total_buy_avg_discount,
+                     mtyb.c_ty_buy_avg_interval,
+                     mtyb.c_ty_buy_goods_count,
+                     mtyb.c_ty_buy_amount01,
+                     mtyb.c_ty_buy_amount02,
+                     mtyb.c_ty_buy_freq,
+                     mtyb.c_ty_buy_avg_p_o_p,                     
+                     mtyb.c_ty_buy_avg_p_g_p,                     
+                     mtyb.c_ty_buy_avg_j_r,
+                     mtyb.c_ty_buy_avg_discount,
+                     mpyb.c_py_buy_avg_interval,
+                     mpyb.c_py_buy_goods_count,
+                     mpyb.c_py_buy_amount01,
+                     mpyb.c_py_buy_amount02,
+                     mpyb.c_py_buy_freq,
+                     mpyb.c_py_buy_avg_p_o_p,                     
+                     mpyb.c_py_buy_avg_p_g_p,                     
+                     mpyb.c_py_buy_avg_j_r,
+                     mpyb.c_py_buy_avg_discount,
+                     DATE_FORMAT(mrb.s_recent_buy_time,'%Y-%m-%d %H:%i:%s') AS 's_recent_buy_time',
+                     mrb.s_recent_buy_time_interval,
+                     mtb.s_total_buy_avg_interval,
+                     mtb.s_total_buy_goods_count,
+                     mtb.s_total_buy_amount01,
+                     mtb.s_total_buy_amount02,
+                     mtb.s_total_buy_freq,
+                     mtb.s_total_buy_avg_p_o_p,                     
+                     mtb.s_total_buy_avg_p_g_p,                   
+                     mtb.s_total_buy_avg_j_r,
+                     mtb.s_total_buy_avg_discount,
+                     mtyb.s_ty_buy_avg_interval,
+                     mtyb.s_ty_buy_goods_count,
+                     mtyb.s_ty_buy_amount01,
+                     mtyb.s_ty_buy_amount02,
+                     mtyb.s_ty_buy_freq,
+                     mtyb.s_ty_buy_avg_p_o_p,                    
+                     mtyb.s_ty_buy_avg_p_g_p,                     
+                     mtyb.s_ty_buy_avg_j_r,
+                     mtyb.s_ty_buy_avg_discount,
+                     mpyb.s_py_buy_avg_interval,
+                     mpyb.s_py_buy_goods_count,
+                     mpyb.s_py_buy_amount01,
+                     mpyb.s_py_buy_amount02,
+                     mpyb.s_py_buy_freq,
+                     mpyb.s_py_buy_avg_p_o_p,                     
+                     mpyb.s_py_buy_avg_p_g_p,                     
+                     mpyb.s_py_buy_avg_j_r,
+                     mpyb.s_py_buy_avg_discount,
+					 mrb.c_recent_buy_amount02,
+					 mrb.c_recent_buy_goods_count,
+					 mrb.c_recent_buy_store_name
+              FROM crm_member cm
+					 LEFT JOIN YG_Statistics.stat_member_recent_buy mrb ON cm.id = mrb.member_id AND mrb.company_id = cm.company_id
+					 LEFT JOIN YG_Statistics.stat_member_this_year_buy mtyb ON cm.id = mtyb.member_id AND mtyb.company_id = cm.company_id
+					 LEFT JOIN YG_Statistics.stat_member_past_year_buy mpyb ON cm.id = mpyb.member_id AND mpyb.company_id = cm.company_id
+					 LEFT JOIN YG_Statistics.stat_member_total_buy mtb ON cm.id = mtb.member_id AND mtb.company_id = cm.company_id
+             WHERE cm.id = :memberId AND cm.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="unbildwx" dynamic="true">
+        	 <params>
+                <p name="searchVal" type="str" use="required" fmt="like"/>
+            </params>
+            <body><![CDATA[
+            SELECT
+				mm.id AS 'mmId',
+				mm.birthday AS 'birthday_date',
+				DATE_FORMAT( mm.birthday,'%Y-%m-%d' ) AS 'birthday',
+				mm.calendarType AS 'calendarType',
+				mm.memberType AS 'memberType',
+				mm.name AS 'userName',
+				mm.oldMemberCode AS 'oldMemberCode',
+				mm.mobilePhone AS 'phone',
+				mm.memberCardNum AS 'memberCardNum',
+				mm.sex AS 'sex',
+				mm.memberCardType_id AS 'memberCardTypeId',
+				mm.serviceLevel AS 'serviceLevel',
+				DATE_FORMAT( mcb.lastVisitTime,'%Y-%m-%d %H:%i:%s' ) AS 'lastVisit',
+				IFNULL( mtyb.s_ty_buy_freq,0 ) AS 'consumeTotalCountCurYear',
+				IFNULL( mtyb.s_ty_buy_amount02,0 ) AS 'totalConsumeAmountCurYear',
+				mm.status AS 'status',
+				IFNULL( mtb.s_total_buy_amount02,0 ) AS 'totalConsumeAmount',
+				IFNULL( mtb.s_total_buy_freq ,0 ) AS 'consumeTotalCount',
+				CONCAT( rfm.S01_R_Level,rfm.S01_F_Level,rfm.S01_M_Level ) AS 'srfm',
+				CONCAT( rfm.C01_R_Level,rfm.C01_F_Level,rfm.C01_M_Level ) AS 'crfm',
+				mm.iconUrl AS 'iconUrl'
+			FROM
+				crm_member mm
+			INNER JOIN member_consume_behavior mcb ON
+				mm.id = mcb.member_id
+			LEFT JOIN YG_Statistics.stat_member_this_year_buy mtyb ON
+				mm.company_id = mtyb.company_id
+				AND mtyb.member_id = mm.id
+			LEFT JOIN YG_Statistics.stat_member_total_buy mtb ON
+				mm.company_id = mtb.company_id
+				AND mtb.member_id = mm.id
+			LEFT JOIN YG_Statistics.stat_member_rfm rfm ON
+				rfm.member_id = mm.id
+			WHERE
+				mm.status = 1 AND mm.effectiveFlag = 1 AND FIND_IN_SET(:storeId,store_ids )
+				AND mm.id NOT IN (
+				SELECT swm.member_id 
+				FROM acp_weixin_member swm
+				WHERE
+					swm.store_id = :storeId ) 
+				<#if searchVal??>
+				AND ( mm.name LIKE :searchVal
+				OR mm.mobilePhone LIKE :searchVal ) 
+				</#if>
+               GROUP BY mm.id
+            ]]></body>
+        </sql>
+        <sql id="findById" dynamic="true">
+            <body><![CDATA[
+            SELECT
+				mm.id AS 'mmId',
+				mm.birthday AS 'birthday_date',
+				DATE_FORMAT( mm.birthday,'%Y-%m-%d' ) AS 'birthday',
+				mm.calendarType AS 'calendarType',
+				mm.memberType AS 'memberType',
+				mm.name AS 'userName',
+				mm.oldMemberCode AS 'oldMemberCode',
+				mm.mobilePhone AS 'phone',
+				mm.memberCardNum AS 'memberCardNum',
+				mm.sex AS 'sex',
+				mm.memberCardType_id AS 'memberCardTypeId',
+				mm.serviceLevel AS 'serviceLevel',
+				DATE_FORMAT( mcb.lastVisitTime,'%Y-%m-%d %H:%i:%s' ) AS 'lastVisit',
+				IFNULL( mtyb.s_ty_buy_freq,0 ) AS 'consumeTotalCountCurYear',
+				IFNULL( mtyb.s_ty_buy_amount02,0 ) AS 'totalConsumeAmountCurYear',
+				mm.status AS 'status',
+				IFNULL( mtb.s_total_buy_amount02,0 ) AS 'totalConsumeAmount',
+				IFNULL( mtb.s_total_buy_freq ,0 ) AS 'consumeTotalCount',
+				CONCAT( rfm.S01_R_Level,rfm.S01_F_Level,rfm.S01_M_Level ) AS 'srfm',
+				CONCAT( rfm.C01_R_Level,rfm.C01_F_Level,rfm.C01_M_Level ) AS 'crfm',
+				mm.iconUrl AS 'iconUrl'
+			FROM
+				crm_member mm
+			INNER JOIN member_consume_behavior mcb ON
+				mm.id = mcb.member_id
+			LEFT JOIN YG_Statistics.stat_member_this_year_buy mtyb ON
+				mm.company_id = mtyb.company_id
+				AND mtyb.member_id = mm.id
+			LEFT JOIN YG_Statistics.stat_member_total_buy mtb ON
+				mm.company_id = mtb.company_id
+				AND mtb.member_id = mm.id
+			LEFT JOIN YG_Statistics.stat_member_rfm rfm ON
+				rfm.member_id = mm.id
+			WHERE
+				mm.status = 1 AND mm.effectiveFlag = 1 AND FIND_IN_SET(<#if storeId??>:storeId<#else>:USER_STORE_ID</#if>, mm.store_ids)
+				AND mm.id = :memberId
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

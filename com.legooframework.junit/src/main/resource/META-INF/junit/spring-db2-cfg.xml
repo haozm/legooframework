@@ -94,7 +94,7 @@
     <alias name="jobDataSource" alias="jobDataSource"/>
     <alias name="svr02DataSource" alias="dataSourceHikari"/>
     <alias name="smsDataSourced" alias="smsGateWayDataSource"/>
-    <alias name="tempDataSourced" alias="tempDataSource"/>
+    <alias name="tempDataSourced" alias="templateMgsDataSource"/>
     <alias name="regDataSource" alias="regeDataSource"/>
     <alias name="crmDataSource" alias="tokenDataSource"/>
     <alias name="transactionManager" alias="jobTransactionManager"/>

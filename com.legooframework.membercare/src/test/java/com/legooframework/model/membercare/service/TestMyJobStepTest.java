@@ -14,7 +14,7 @@ public class TestMyJobStepTest {
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/salesrecords/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/membercare/spring-model-cfg.xml");
-        app.getBean(MemerCareJobService.class).runTouchJob();
+       // app.getBean(MemberCareJobService.class).runTouchJob();
     }
 
 }

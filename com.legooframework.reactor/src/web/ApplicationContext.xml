@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:jee="http://www.springframework.org/schema/jee"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
+                           http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd">
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <!-- db for batch job -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/batchsupport/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/covariant/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/reactor/spring-model-cfg.xml"/>
+
+    <alias name="dataSource" alias="reactorDataSource"/>
+    <alias name="dataSource" alias="acpDataSource"/>
+    <alias name="dataSource" alias="jobDataSource"/>
+    <alias name="transactionManager" alias="jobTransactionManager"/>
+
+    <!-- ========================= any auto job ========================= -->
+    <task:scheduler id="reactor-scheduler-pool" pool-size="4"/>
+    <task:scheduled-tasks scheduler="reactor-scheduler-pool">
+        <task:scheduled ref="reactorService" method="runRetailSmsJob" fixed-delay="60000" initial-delay="120000"/>
+    </task:scheduled-tasks>
+
+    <beans profile="devp">
+        <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/acp"/>
+    </beans>
+    <beans profile="test">
+        <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/acp"/>
+    </beans>
+</beans>

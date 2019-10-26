@@ -1,7 +1,10 @@
 package com.csosm.module.menu;
 
+import com.csosm.commons.adapter.LoginUserContext;
+import com.csosm.module.base.BaseModelServer;
 import com.csosm.module.base.entity.OrganizationEntity;
 import com.csosm.module.base.entity.OrganizationEntityAction;
+import com.csosm.module.menu.entity.ResourceDto;
 import com.google.common.base.Optional;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,10 +37,20 @@ public class SecAccessServiceTest {
     @Test
     public void authorized() {
     }
+    
+    @Test
+	public void testLoadMenu() {
+    	LoginUserContext user = baseAction.loadByUserName(1, "dgqx050");
+		java.util.Optional<ResourceDto> resource = secAccessService.loadResByAccount(user);
+		System.out.println(resource);
+	}
 
+	@Autowired
+	private BaseModelServer baseAction;
+	
     @Autowired
     OrganizationEntityAction organizationEntityAction;
-
+    
     @Autowired
     SecAccessService secAccessService;
 }

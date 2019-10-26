@@ -46,7 +46,8 @@ public class SqlMetaParseRule extends AbstractSqlParseRule {
                 AttributesUtil.getBooleanValue(attributes, "freeze", false),
                 AttributesUtil.getBooleanValue(attributes, "sum", false),
                 AttributesUtil.getIfPresent(attributes, "sublist").orNull(),
-                MapUtils.isEmpty(params) ? null : params);
+                MapUtils.isEmpty(params) ? null : params,
+                AttributesUtil.getIfPresent(attributes, "for").orNull());
 
         if (logger.isTraceEnabled()) logger.trace(columnMeta.toString());
         getDigester().push(columnMeta);

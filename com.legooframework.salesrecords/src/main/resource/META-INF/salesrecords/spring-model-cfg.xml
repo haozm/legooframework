@@ -2,8 +2,10 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:util="http://www.springframework.org/schema/util"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:task="http://www.springframework.org/schema/task"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+                           http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
     <bean id="salesRecordsBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/salesrecords/legoo-model-cfg.xml"/>
     </bean>
@@ -16,11 +18,29 @@
             </util:list>
         </property>
     </bean>
-    <bean id="saleRecordEntityAction" class="com.legooframework.model.salesrecords.entity.SaleRecordEntityAction"
-          parent="multipleBaseEntityAction">
+    <bean id="salesRecordsQueryFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]salesrecords[\\,/].*-query-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="salesRecordsJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
+        <property name="statementFactory" ref="salesRecordsQueryFactory"/>
+        <property name="dataSource" ref="saleRecordDataSource"/>
+    </bean>
+
+    <task:executor id="sales-record-executor" pool-size="2-32" queue-capacity="64"
+                   rejection-policy="CALLER_RUNS"/>
+    <bean id="saleRecordAbsEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
         <property name="statementFactory" ref="salesRecordsStatementFactory"/>
-        <property name="executorService" ref="legoo-executor"/>
-        <property name="multipleDataSource" ref="multipleDataSource"/>
+        <property name="dataSource" ref="saleRecordDataSource"/>
+    </bean>
+    <bean id="saleRecordEntityAction" class="com.legooframework.model.salesrecords.entity.SaleRecordEntityAction"
+          parent="saleRecordAbsEntityAction">
+        <property name="executorService" ref="sales-record-executor"/>
     </bean>
     <bean id="saleRecordService" class="com.legooframework.model.salesrecords.service.SaleRecordService"/>
 </beans>

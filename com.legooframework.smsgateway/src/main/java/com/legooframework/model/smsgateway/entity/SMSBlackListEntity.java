@@ -2,6 +2,8 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.jdbc.BatchSetter;
@@ -17,34 +19,34 @@ public class SMSBlackListEntity extends BaseEntity<String> implements BatchSette
 
     private boolean effective;
     private boolean disable;
-    private final Integer companyId, memberId;
+    private final Integer companyId, storeId;
 
-    private SMSBlackListEntity(String phoneNo, boolean effective, boolean disable, Integer companyId, Integer memberId, long userId) {
-        super(phoneNo, companyId.longValue(), userId);
+    private SMSBlackListEntity(Integer companyId, Integer storeId, String phoneNo, boolean effective, boolean disable) {
+        super(phoneNo, -1L, -1L);
         this.effective = effective;
         this.companyId = companyId;
         this.disable = disable;
-        this.memberId = memberId;
+        this.storeId = storeId == null ? -1 : storeId;
     }
 
     @Override
     public void setValues(PreparedStatement ps) throws SQLException {
-        // id, company_id, is_effective, is_disable, member_id,  tenant_id, creator
+        // id, company_id, store_id,is_effective, is_disable
         ps.setObject(1, this.getId());
         ps.setObject(2, this.companyId);
-        ps.setObject(3, this.effective ? 1 : 0);
-        ps.setObject(4, this.disable ? 1 : 0);
-        ps.setObject(5, memberId);
-        ps.setObject(6, this.companyId);
-        ps.setObject(7, this.getCreator());
+        ps.setObject(3, this.storeId);
+        ps.setObject(4, this.effective ? 1 : 0);
+        ps.setObject(5, this.disable ? 1 : 0);
     }
 
     static SMSBlackListEntity effectiveInstance(String phoneNo, boolean effective, Integer memberId, LoginContext user) {
-        return new SMSBlackListEntity(phoneNo, effective, false, user.getTenantId().intValue(), memberId, user.getLoginId());
+        return null;
+        //return new SMSBlackListEntity(phoneNo, effective, false, user.getTenantId().intValue(), memberId, user.getLoginId());
     }
 
-    static SMSBlackListEntity disableInstance(String phoneNo, boolean disable, Integer companyId) {
-        return new SMSBlackListEntity(phoneNo, true, disable, companyId, -1, -1L);
+    public static SMSBlackListEntity disableInstance(Integer companyId, Integer storeId, String phoneNo) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(phoneNo), "电话号码不可以为空值..");
+        return new SMSBlackListEntity(companyId, storeId, phoneNo, true, true);
     }
 
     boolean isEffective() {
@@ -82,10 +84,15 @@ public class SMSBlackListEntity extends BaseEntity<String> implements BatchSette
             this.companyId = ResultSetUtil.getObject(res, "companyId", Integer.class);
             this.effective = ResultSetUtil.getBooleanByInt(res, "effective");
             this.disable = ResultSetUtil.getBooleanByInt(res, "disable");
-            this.memberId = ResultSetUtil.getOptObject(res, "memberId", Integer.class).orElse(null);
+            this.storeId = ResultSetUtil.getOptObject(res, "storeId", Integer.class).orElse(-1);
         } catch (SQLException e) {
             throw new RuntimeException("Restore SMSBlackListEntity has SQLException", e);
         }
+    }
+
+    public boolean isBlackPhone(SendMsg4SendEntity sendLog) {
+        return this.companyId.equals(sendLog.getCompanyId()) && this.storeId.equals(sendLog.getStoreId()) &&
+                this.getId().equals(sendLog.getSms().getPhoneNo());
     }
 
     @Override
@@ -94,7 +101,7 @@ public class SMSBlackListEntity extends BaseEntity<String> implements BatchSette
         params.put("companyId", companyId);
         params.put("effective", effective ? 1 : 0);
         params.put("disable", disable ? 1 : 0);
-        params.put("memberId", memberId);
+        params.put("storeId", storeId);
         return params;
     }
 
@@ -102,27 +109,25 @@ public class SMSBlackListEntity extends BaseEntity<String> implements BatchSette
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof SMSBlackListEntity)) return false;
-        if (!super.equals(o)) return false;
         SMSBlackListEntity that = (SMSBlackListEntity) o;
-        return effective == that.effective &&
-                disable == that.disable &&
+        return Objects.equal(this.getId(), that.getId()) &&
                 Objects.equal(companyId, that.companyId) &&
-                Objects.equal(memberId, that.memberId);
+                Objects.equal(storeId, that.storeId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(super.hashCode(), effective, disable, companyId, memberId);
+        return Objects.hashCode(this.getId(), effective, disable, companyId, storeId);
     }
 
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
+                .add("companyId", companyId)
+                .add("storeId", storeId)
                 .add("id", getId())
                 .add("effective", effective)
                 .add("disable", disable)
-                .add("companyId", companyId)
-                .add("memberId", memberId)
                 .toString();
     }
 }

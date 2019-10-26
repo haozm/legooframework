@@ -193,7 +193,7 @@ public class StoreViewService extends AbstractBaseServer {
             for (OrganizationEntity o : sub_orgs_opt.get()) allNodes.add(o.buildOrgTreeDto());
         if (strore_list_opt.isPresent()) {
             List<StoreEntity> stores = strore_list_opt.get();
-            if (userContext.getOrganization().get().isDept()) {
+            if (userContext.getOrganization().isPresent() && userContext.getOrganization().get().isDept()) {
                 List<StoreEntity> treeStores = getBean(StoreEntityAction.class).loadTreeStores(userContext.getEmployee());
                 stores = strore_list_opt.get().stream().filter(x -> treeStores.stream().map(y -> y.getId()).collect(Collectors.toList()).contains(x.getId())).collect(Collectors.toList());
             }

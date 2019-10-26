@@ -30,8 +30,8 @@ public class LoginContextHolder {
         return Optional.ofNullable(ctx);
     }
 
-    public static LoginContext getAnonymousCtx() {
-        return new AnonymousCtx();
+    public static LoginUser getAnonymousCtx() {
+        return new LoginUser(-1L, "SecureAnonymous", "*********", -1L, null);
     }
 
     public static LoginContext getAnonymousCtx(Long tenantId) {

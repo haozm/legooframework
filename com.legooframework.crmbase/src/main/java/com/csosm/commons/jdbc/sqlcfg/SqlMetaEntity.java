@@ -14,6 +14,7 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SqlMetaEntity extends BaseEntity<String> {
     private static final Logger logger = LoggerFactory.getLogger(SqlMetaEntity.class);
@@ -63,6 +64,13 @@ public class SqlMetaEntity extends BaseEntity<String> {
 
     public Optional<List<ColumnMeta>> getColumnMetas() {
         return Optional.fromNullable(CollectionUtils.isEmpty(columnMetas) ? null : columnMetas);
+    }
+    
+    public Optional<List<ColumnMeta>> getColumnMetas(String type) {
+    	List<ColumnMeta> result = Lists.newArrayListWithCapacity(this.columnMetas.size());
+    	for(ColumnMeta item : this.columnMetas) 
+    		if(null != item.get(type)) result.add(item);
+        return Optional.fromNullable(CollectionUtils.isEmpty(result) ? null : result);
     }
 
     public Optional<String> getDesc() {

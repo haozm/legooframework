@@ -1,14 +1,15 @@
 package com.legooframework.model.membercare.entity;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -27,7 +28,29 @@ public class UpcomingTaskEntityAction extends BaseEntityAction<UpcomingTaskEntit
     private static final Logger logger = LoggerFactory.getLogger(UpcomingTaskEntityAction.class);
 
     public UpcomingTaskEntityAction() {
-        super("CrmJobsCache");
+        super(null);
+    }
+
+    @Override
+    public Optional<UpcomingTaskEntity> findById(Object id) {
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("id", id);
+        params.put("sql", "findById");
+        Optional<UpcomingTaskEntity> task = super.queryForEntity("queryTasks", params, getRowMapper());
+        if (!task.isPresent()) return Optional.empty();
+        this.detailAction.initByTask(task.get());
+        return task;
+    }
+
+    public Optional<List<UpcomingTaskEntity>> loadByIds(Collection<Integer> ids) {
+        Preconditions.checkState(CollectionUtils.isNotEmpty(ids), "带查询的taskIds 不可以为空值...");
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("ids", ids);
+        params.put("sql", "loadByIds");
+        Optional<List<UpcomingTaskEntity>> tasksOpt = super.queryForEntities("queryTasks", params, getRowMapper());
+        if (logger.isDebugEnabled())
+            logger.debug("loadByIds(%s) size is %s", ids, tasksOpt.map(List::size).orElse(0));
+        return tasksOpt;
     }
 
     public void saveOrUpdateTouch90Task(Collection<Touch90TaskDto> touch90TaskDto) {
@@ -45,105 +68,34 @@ public class UpcomingTaskEntityAction extends BaseEntityAction<UpcomingTaskEntit
                 details.addAll(x.getUpdateDetail());
         });
 
-        List<CompletableFuture<int[][]>> cfs = Lists.newArrayList();
-        if (CollectionUtils.isNotEmpty(insert)) {
-            if (insert.size() > 2048) {
-                List<List<UpcomingTaskEntity>> sub_list = Lists.partition(insert, 2048);
-                sub_list.forEach(x -> cfs.add(super.asyncBatchInsert("batchInsert", x)));
-            } else {
-                cfs.add(super.asyncBatchInsert("batchInsert", insert));
-            }
-        }
+        if (CollectionUtils.isNotEmpty(insert)) super.batchInsert("batchInsertJob", insert);
         if (CollectionUtils.isNotEmpty(update)) {
-            if (update.size() > 1024) {
-                List<List<UpcomingTaskEntity>> sub_list = Lists.partition(update, 1024);
-                sub_list.forEach(x ->
-                        cfs.add(super.asyncBatchUpdate("batchUpdate", (ps, task) -> {
-                            ps.setObject(1, task.getContext());
-                            ps.setObject(2, task.getId());
-                        }, x)));
-            } else {
-                cfs.add(super.asyncBatchUpdate("batchUpdate", (ps, task) -> {
-                    ps.setObject(1, task.getContext());
-                    ps.setObject(2, task.getId());
-                }, update));
-            }
+            super.batchUpdate("batchUpdateJob", (ps, task) -> {
+                ps.setObject(1, task.parseMergeInfo());
+                ps.setObject(2, task.getId());
+            }, update);
         }
-        CompletableFuture<Void> wait_all = CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0]))
-                .whenComplete((v, th) -> {
-                    if (logger.isDebugEnabled())
-                        logger.debug(String.format("saveOrUpdateTouch90Task(2048, size is %s ) finshed", cfs.size()));
-                });
-        wait_all.join();
-
-        cfs.clear();
-        if (CollectionUtils.isNotEmpty(details)) {
-            if (details.size() > 2048) {
-                List<List<UpcomingTaskDetailEntity>> sub_list = Lists.partition(details, 2048);
-                sub_list.forEach(x -> cfs.add(super.asyncBatchInsert("saveOrUpdateDetail", x)));
-            } else {
-                cfs.add(super.asyncBatchInsert("saveOrUpdateDetail", details));
-            }
-        }
-        wait_all = CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0]))
-                .whenComplete((v, th) -> {
-                    if (logger.isDebugEnabled())
-                        logger.debug(String.format("saveOrUpdateTouch90Task(2048, size is %s ) finshed", cfs.size()));
-                });
-        wait_all.join();
+        if (CollectionUtils.isNotEmpty(details)) super.batchInsert("saveOrUpdateJobDetail", details);
     }
 
-    public Optional<List<UpcomingTaskDetailEntity>> loadTouch90DetailByStauts(TaskStatus taskStatus) {
+    public Optional<List<UpcomingTaskEntity>> loadEnabledTouch90(CrmStoreEntity store, String categories) {
         Map<String, Object> params = Maps.newHashMap();
-        params.put("taskType", TaskType.Touche90.getValue());
-        params.put("taskStatus", taskStatus.getStatus());
-        Optional<List<UpcomingTaskDetailEntity>> list = queryForEntities("loadDetailByStatus", params, new DetailRowMapperImpl());
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("loadTouch90DetailByStauts (%s) size is %s .", taskStatus,
-                    list.map(List::size).orElse(0)));
-        return list;
-    }
+        params.put("companyId", store.getCompanyId());
+        params.put("businessType", BusinessType.TOUCHED90.toString());
+        params.put("storeIds", Lists.newArrayList(store.getId()));
+        if (!StringUtils.equals("0", categories)) params.put("categories", categories);
+        params.put("sql", "loadEnabledTouch90Job");
 
-    public void updateDetailToStart(List<UpcomingTaskDetailEntity> taskStatusSupports) {
-        if (CollectionUtils.isEmpty(taskStatusSupports)) return;
-        super.batchUpdate("updateDetailToStart", (ps, t) -> ps.setObject(1, t.getId()), taskStatusSupports);
+        Optional<List<UpcomingTaskEntity>> tasks = super.queryForEntities("loadEnabledTouch90Job", params, getRowMapper());
+        tasks.ifPresent(ts -> this.detailAction.initByTasks(ts));
         if (logger.isDebugEnabled())
-            logger.debug(String.format("updateDetailToStart ( taskStatusSupports size is %s) ", taskStatusSupports.size()));
-    }
-
-    public void updateDetailToExpired(List<UpcomingTaskDetailEntity> taskStatusSupports) {
-        if (CollectionUtils.isEmpty(taskStatusSupports)) return;
-        super.batchUpdate("updateDetailToExpired", (ps, t) -> ps.setObject(1, t.getId()), taskStatusSupports);
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("updateDetailToExpired ( taskStatusSupports size is %s) ", taskStatusSupports.size()));
-    }
-
-    public Optional<List<UpcomingTaskDetailEntity>> loadDetailById(String taskId) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(taskId), "任务ID不可以为空值...");
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("id", taskId);
-        Optional<UpcomingTaskEntity> tasks = queryForEntity("findById", params, new RowMapperImpl());
-        return tasks.map(UpcomingTaskEntity::getTaskDetails);
-    }
-
-    public Optional<List<UpcomingTaskEntity>> loadEnabledTouch90(CrmOrganizationEntity company,
-                                                                 Collection<CrmStoreEntity> stores) {
-        Preconditions.checkNotNull(company);
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("companyId", company.getId());
-        if (CollectionUtils.isNotEmpty(stores)) {
-            params.put("storeIds", stores.stream().map(CrmStoreEntity::getId).collect(Collectors.toList()));
-        }
-        Optional<List<UpcomingTaskEntity>> tasks = queryForEntities("loadEnabledTouch90", params, getRowMapper());
-        // tasks.ifPresent(x -> x.sort(TOUCH90_ORDERING));
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("loadEnabledTouch90(%s,store's size:%s) has size is %s", company.getId(),
-                    stores.size(), tasks.map(List::size).orElse(0)));
+            logger.debug(String.format("loadEnabledTouch90(%s,%s,%s) has size is %s", store.getCompanyId(),
+                    store.getId(), tasks.map(List::size).orElse(0), categories));
         return tasks;
     }
 
-    public Optional<ArrayListMultimap<Integer, UpcomingTaskEntity>> loadEnabledTouch90(CrmOrganizationEntity company,
-                                                                                       CrmStoreEntity store) {
+    public Optional<Multimap<Integer, UpcomingTaskEntity>> loadEnabledTouch90ByStore(CrmOrganizationEntity company,
+                                                                                     CrmStoreEntity store) {
         Preconditions.checkNotNull(company);
         Map<String, Object> params = Maps.newHashMap();
         params.put("companyId", company.getId());
@@ -154,7 +106,7 @@ public class UpcomingTaskEntityAction extends BaseEntityAction<UpcomingTaskEntit
                     tasks.map(List::size).orElse(0)));
         if (!tasks.isPresent()) return Optional.empty();
         // tasks.get().sort(TOUCH90_ORDERING);
-        final ArrayListMultimap<Integer, UpcomingTaskEntity> multimap = ArrayListMultimap.create();
+        final Multimap<Integer, UpcomingTaskEntity> multimap = ArrayListMultimap.create();
         tasks.ifPresent(x -> x.forEach(task -> multimap.put(task.getMemberId(), task)));
         return Optional.of(multimap);
     }
@@ -164,17 +116,16 @@ public class UpcomingTaskEntityAction extends BaseEntityAction<UpcomingTaskEntit
         return new RowMapperImpl();
     }
 
+    private UpcomingTaskDetailEntityAction detailAction;
+
+    public void setDetailAction(UpcomingTaskDetailEntityAction detailAction) {
+        this.detailAction = detailAction;
+    }
+
     class RowMapperImpl implements RowMapper<UpcomingTaskEntity> {
         @Override
         public UpcomingTaskEntity mapRow(ResultSet res, int i) throws SQLException {
-            return new UpcomingTaskEntity(res.getString("id"), res);
-        }
-    }
-
-    class DetailRowMapperImpl implements RowMapper<UpcomingTaskDetailEntity> {
-        @Override
-        public UpcomingTaskDetailEntity mapRow(ResultSet res, int i) throws SQLException {
-            return new UpcomingTaskDetailEntity(res.getString("id"), res);
+            return new UpcomingTaskEntity(res.getInt("id"), res);
         }
     }
 

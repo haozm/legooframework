@@ -10,7 +10,7 @@
                     asv.tree_type AS 'treeType',
                     asv.owner_id AS 'ownerId',
                     asv.storeIds AS 'storeIds',
-                    asv.storeInfo AS 'storeInfo',
+                    asv.store_info AS 'storeInfo',
                     asv.node_desc AS 'nodeDesc',
                     asv.company_id AS 'companyId',
                     asv.createUserId AS 'createUserId'
@@ -60,7 +60,7 @@
         <sql id="updateStores">
             <body><![CDATA[
             UPDATE acp_store_view
-               SET storeIds = :storeIds,storeInfo = :storeInfo, modifyUserId = :modifyUserId, modifyTime = NOW()
+               SET storeIds = :storeIds,store_info = :storeInfo, modifyUserId = :modifyUserId, modifyTime = NOW()
              WHERE id = :id
             ]]></body>
         </sql>
@@ -127,6 +127,7 @@
             <body><![CDATA[
              SELECT asvs.node_path AS 'nodePath'
                FROM acp_store_view_structure AS asvs
+               INNER JOIN acp_store_view AS asv ON asvs.id = asv.id
               WHERE asvs.company_id = :companyId
                 AND asvs.owner_id = :ownerId
                 AND asv.tree_type = 1
@@ -165,8 +166,8 @@
                    dnc.upd_page_size AS 'updPageSize', dnc.msg_delay_time AS 'msgDelayTime',
                    dnc.keeplive_delay_time AS 'keepliveDelayTime',org.name AS 'company',store.name AS 'storeName'
               FROM yycomm.device_net_config AS dnc
-         LEFT JOIN acp.acp_organization AS org ON org.id = dnc.company_id AND org.orgType = 1
-         LEFT JOIN acp.acp_store AS store ON store.id = dnc.store_id AND store.company_id = dnc.company_id
+         LEFT JOIN acp_organization AS org ON org.id = dnc.company_id AND org.orgType = 1
+         LEFT JOIN acp_store AS store ON store.id = dnc.store_id AND store.company_id = dnc.company_id
 	            </#macro>
 	         ]]>
         </macro>

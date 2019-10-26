@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    <bean id="schedulerBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/scheduler/legoo-model-cfg.xml"/>
+    </bean>
+    <bean id="schedulerStatementFactory"
+          class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]scheduler[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="schedulerQueryFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]scheduler[\\,/].*-query-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="schedulerQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
+        <qualifier value="query"/>
+        <property name="statementFactory" ref="schedulerQueryFactory"/>
+        <property name="dataSource" ref="schedulerDataSource"/>
+    </bean>
+    <bean id="schedulerCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
+        <property name="caffeineSpecs">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="JobDetailBuilderCache" value="initialCapacity=8,maximumSize=1024,expireAfterAccess=5h"/>
+            </util:map>
+        </property>
+    </bean>
+    <bean id="schedulerAbstractAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="schedulerStatementFactory"/>
+        <property name="cacheManager" ref="schedulerCacheManager"/>
+        <property name="dataSource" ref="schedulerDataSource"/>
+    </bean>
+    <bean id="jobDetailBuilderEnityAction"
+          class="com.legooframework.model.scheduler.entity.JobDetailBuilderEnityAction"
+          parent="schedulerAbstractAction"/>
+    <bean id="jobRunTrajectoryListener" class="com.legooframework.model.scheduler.entity.JobRunTrajectoryListener"/>
+    <bean id="methodInvokingJobDetailFactory"
+          class="com.legooframework.model.scheduler.entity.MethodInvokingJobDetailFactory"/>
+    <bean id="legooschedulerJobs" class="com.legooframework.model.scheduler.service.SchedulerJobsFactoryBean"
+          destroy-method="shutdown">
+        <property name="jobRunTrajectoryListener" ref="jobRunTrajectoryListener"/>
+    </bean>
+    <bean id="scheduleJobService" class="com.legooframework.model.scheduler.service.ScheduleJobService">
+        <property name="scheduler" ref="legooschedulerJobs"/>
+        <property name="bundleRuntime" ref="bundleRuntimeFactory"/>
+        <property name="jobBuilderAction" ref="jobDetailBuilderEnityAction"/>
+    </bean>
+</beans>

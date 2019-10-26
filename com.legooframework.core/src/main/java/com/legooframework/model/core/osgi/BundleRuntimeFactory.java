@@ -11,6 +11,7 @@ import org.springframework.context.ApplicationContextAware;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class BundleRuntimeFactory implements InitializingBean, ApplicationContextAware {
 
@@ -26,14 +27,17 @@ public class BundleRuntimeFactory implements InitializingBean, ApplicationContex
         this.bundleMap = Maps.newConcurrentMap();
     }
 
+    public Collection<String> getBundleNames() {
+        return bundleMap.values().stream().map(Bundle::getName).collect(Collectors.toList());
+    }
+
     @Override
     public void afterPropertiesSet() throws Exception {
         Map<String, Bundle> bundleMap = appCtx.getBeansOfType(Bundle.class);
         if (MapUtils.isNotEmpty(bundleMap))
             bundleMap.values().forEach(x -> this.bundleMap.put(x.getName(), x));
-        if (logger.isDebugEnabled() && MapUtils.isNotEmpty(bundleMap))
-            this.bundleMap.values().forEach(x ->
-                    logger.debug(String.format("Registered Model is %s", x.getName())));
+        if (logger.isInfoEnabled() && MapUtils.isNotEmpty(bundleMap))
+            this.bundleMap.values().forEach(x -> logger.info(String.format("Registered Module is %s", x.getName())));
     }
 
     private ApplicationContext appCtx;

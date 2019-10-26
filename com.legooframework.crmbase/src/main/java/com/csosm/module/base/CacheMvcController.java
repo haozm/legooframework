@@ -75,7 +75,7 @@ public class CacheMvcController extends BaseController {
                     desc.put("desc", "优惠券相关数据资源Cache");
                     break;
                 case "tempCache":
-                    desc.put("desc", "优惠券相关数据资源Cache");
+                    desc.put("desc", "临时数据数据资源Cache");
                     break;
                 default:
                     desc.put("desc", "尚未标识的Cache");

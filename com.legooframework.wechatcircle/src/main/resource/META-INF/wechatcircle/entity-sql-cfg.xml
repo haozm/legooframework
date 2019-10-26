@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="wechatcircle_fields">
+            <![CDATA[
+             <#macro wechatcircle_fields>
+               wcc.id AS 'id',
+               wcc.weixin_id AS 'weixinId',
+               wcc.circle_id AS 'circleId',
+               wcc.circle_type AS 'circleType',
+               wcc.image_num AS 'imageNum',
+               wcc.title AS 'title',
+               wcc.url AS 'url',
+               wcc.sub_url AS 'subUrl',
+               wcc.read_status AS 'readStatus',
+               wcc.send_time AS 'sendTime',
+               wcc.message AS 'message',
+               wcc.description AS 'description',
+               wcc.sources_from AS 'sourcesFrom',
+               (CASE wcc.circle_type
+                 WHEN 1 THEN (SELECT GROUP_CONCAT(CONCAT(wci.id, '||' ,IFNULL(wci.url,'NULL'), '||', IFNULL(wci.sub_url,'NULL'))  ORDER BY wci.img_order SEPARATOR '||||')
+                                FROM WECHAT_CIRCLE_IMAGES AS wci
+                               WHERE wci.circle_id = wcc.circle_id
+                                 AND wci.owner_id = wcc.id
+                            GROUP BY wci.circle_id )
+                 ELSE null END ) AS 'imageData'
+	         </#macro>
+	         <#macro circle_comment_fields>
+               wccm.id AS 'id',
+               wccm.circle_id AS 'circleId',
+               wccm.weixin_id AS 'weixinId',
+               wccm.comment_type AS 'commentType',
+               wccm.reading_mark AS 'readingMark',
+               wccm.comment_wx_id AS 'commentWxId',
+               wccm.comment_wx_name AS 'commentWxName',
+               wccm.comment_ref_id AS 'commentRefId',
+               wccm.comment_ref_wx_id AS 'commentRefWxId',
+               wccm.message AS 'message',
+               wccm.comment_time AS 'commentTime',
+               wccm.sources_from AS 'sourcesFrom',
+               wccm.read_status AS 'readStatus'
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="WechatCircleEntity">
+        <sql id="findById" dynamic="true" macros="wechatcircle_fields">
+            <body><![CDATA[
+            SELECT <@wechatcircle_fields />
+              FROM WECHAT_CIRCLE_CONTENT AS wcc
+             WHERE wcc.id = :id
+               AND wcc.weixin_id = :weixinId
+            ]]></body>
+        </sql>
+        <sql id="loadWechatCircles" dynamic="true" macros="wechatcircle_fields">
+            <body><![CDATA[
+            SELECT <@wechatcircle_fields />
+              FROM WECHAT_CIRCLE_CONTENT AS wcc
+          <#if sql = "loadBatchWechatCircles">
+             WHERE FIND_IN_SET( :ownerId , wcc.source_wx_ids ) <> 0
+          ORDER BY wcc.send_time DESC
+          <#elseif sql = "loadSingleWechatCircles">
+             WHERE wcc.weixin_id = :weixinId
+               AND FIND_IN_SET(:ownerId , wcc.source_wx_ids ) <> 0
+          ORDER BY wcc.send_time DESC
+          <#elseif sql = "findByCircleIds">
+            WHERE wcc.id IN (${circleIds?join(",")})
+          <#else>
+             WHERE 1 <> 1
+          </#if>
+          <#if pagination??>
+             LIMIT :offset,:rows
+          </#if>
+            ]]></body>
+        </sql>
+        <sql id="findByIds" dynamic="true" macros="wechatcircle_fields">
+            <body><![CDATA[
+            SELECT <@wechatcircle_fields />
+              FROM WECHAT_CIRCLE_CONTENT AS wcc
+             WHERE (wcc.id,wcc.weixin_id) IN ( <#list pks as pk>(${pk.id},'${pk.weixinId}') <#sep>,</#list> )
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+    INSERT INTO WECHAT_CIRCLE_CONTENT
+                (id, weixin_id, circle_id, circle_type, image_num, title, url,  sub_url, send_time, message, sources_from, source_wx_ids, source_com_ids, source_sto_ids, description, read_status)
+         VALUES (:id, :weixinId,:circleId, :circleType, :imgNums,  :title,:url, :subUrl, :sendTime, :message,:sourcesFrom, :sourceWxIds, :sourceComIds, :sourceStoIds, :description, :readStatus)
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+    INSERT INTO WECHAT_CIRCLE_CONTENT
+                (id, weixin_id, circle_id, circle_type, image_num, title, url,  sub_url, send_time, message, sources_from, source_wx_ids, source_com_ids, source_sto_ids, description, read_status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
+            ]]></body>
+        </sql>
+        <sql id="updateSourcesFrom">
+            <body><![CDATA[
+     UPDATE WECHAT_CIRCLE_CONTENT
+        SET sources_from = ?, source_wx_ids = ?, source_com_ids = ? , source_sto_ids = ?, read_status = ?
+      WHERE id = ?
+        AND weixin_id = ?
+            ]]></body>
+        </sql>
+        <sql id="updatReadStatus">
+            <body><![CDATA[
+     UPDATE WECHAT_CIRCLE_CONTENT
+        SET read_status = ?
+      WHERE id = ?
+        AND weixin_id = ?
+            ]]></body>
+        </sql>
+    </model>
+    <model id="CircleCommentEntity">
+        <sql id="findByCircle" dynamic="true" macros="wechatcircle_fields">
+            <body><![CDATA[
+        SELECT <@circle_comment_fields />
+          FROM WECHAT_CIRCLE_COMMENT AS wccm
+         WHERE wccm.delete_flag = 0
+        <#if sql = "single">
+           AND wccm.weixin_id = :weixinId AND wccm.circle_id = :circleId
+        <#elseif sql = "all">
+           AND (wccm.weixin_id, wccm.circle_id) IN ( <#list circlesIds as circle>('${circle.weixinId}',${circle.id})<#sep>,</#list> )
+           AND FIND_IN_SET( :sourceWxId , wccm.source_wx_ids ) <> 0
+        <#else>
+           AND wccm.weixin_id = 'EMPTY'
+        </#if>
+      ORDER BY wccm.comment_type, wccm.comment_time DESC
+            ]]></body>
+        </sql>
+        <sql id="loadUnReadCmts" dynamic="true" macros="wechatcircle_fields">
+            <body><![CDATA[
+        SELECT <@circle_comment_fields />
+          FROM WECHAT_CIRCLE_COMMENT AS wccm
+    INNER JOIN WECHAT_CIRCLE_CONTENT wcc ON wccm.circle_id = wcc.id
+         WHERE wccm.delete_flag = 0
+           AND TIMESTAMPDIFF(DAY, FROM_UNIXTIME(wccm.comment_time), NOW()) <= 3
+           AND FIND_IN_SET( :readStatus , wccm.read_status ) <> 0
+      ORDER BY wccm.comment_time DESC
+            ]]></body>
+        </sql>
+        <sql id="findByIds" dynamic="true" macros="wechatcircle_fields">
+            <body><![CDATA[
+        SELECT <@circle_comment_fields />
+          FROM WECHAT_CIRCLE_COMMENT AS wccm
+         WHERE (wccm.id, wccm.circle_id, wccm.weixin_id ,wccm.comment_type, wccm.comment_wx_id ) IN
+               (<#list pks as pk> ( ${pk.id}, ${pk.circleId}, '${pk.weixinId}', ${pk.commentType}, '${pk.commentWxId}' ) <#sep>,</#list>)
+            ]]></body>
+        </sql>
+        <sql id="find4Ref" dynamic="true" macros="wechatcircle_fields">
+            <body><![CDATA[
+        SELECT <@circle_comment_fields />
+          FROM WECHAT_CIRCLE_COMMENT AS wccm
+         WHERE wccm.circle_id = :circleId
+           AND wccm.weixin_id = :weixinId
+           AND wccm.comment_type = 2
+           AND wccm.comment_wx_id = :commentRefWxId
+           AND wccm.message = :commentRefMsg
+         LIMIT 1
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+        INSERT INTO WECHAT_CIRCLE_COMMENT
+                    (id, circle_id, weixin_id, comment_type, comment_wx_id, comment_wx_name, comment_ref_id, comment_ref_wx_id, message, comment_time, sources_from, source_wx_ids, source_com_ids, source_sto_ids, reading_mark, read_status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? )
+            ]]></body>
+        </sql>
+        <sql id="updateSourcesFrom">
+            <body><![CDATA[
+     UPDATE WECHAT_CIRCLE_COMMENT
+        SET sources_from = ?, source_wx_ids = ?, source_com_ids = ? , source_sto_ids = ? , read_status = ?
+      WHERE id = ?
+        AND weixin_id = ?
+        AND circle_id = ?
+            ]]></body>
+        </sql>
+        <sql id="updatReadStatus">
+            <body><![CDATA[
+     UPDATE WECHAT_CIRCLE_COMMENT
+        SET read_status = ?
+      WHERE id = ?
+        AND weixin_id = ?
+        AND circle_id = ?
+            ]]></body>
+        </sql>
+    </model>
+    <model id="CirclePermissionEntity">
+        <sql id="findById">
+            <body><![CDATA[
+     SELECT weixin_id AS 'id',
+            permission AS 'permission',
+            block_list AS 'blockWxIds'
+       FROM WECHAT_CIRCLE_PERMISSION
+      WHERE weixin_id = :id
+            ]]></body>
+        </sql>
+    </model>
+    <model id="CircleSyncCycleEntity">
+        <sql id="findById">
+            <body><![CDATA[
+     SELECT wcs.id AS 'id', wcs.sync_type AS 'syncType', start_time AS 'startTime', last_time AS 'lastTime'
+       FROM WECHAT_CIRCLE_SYNCCYCLE AS wcs
+      WHERE id = :id
+        AND sync_type = :syncType
+            ]]></body>
+        </sql>
+        <sql id="findByBatchWxIds" dynamic="true">
+            <body><![CDATA[
+     SELECT wcs.id AS 'id', wcs.sync_type AS 'syncType', start_time AS 'startTime', last_time AS 'lastTime'
+       FROM WECHAT_CIRCLE_SYNCCYCLE AS wcs
+      WHERE id IN (${weixinIds?join(",")})
+        AND sync_type = :syncType
+            ]]></body>
+        </sql>
+        <sql id="updateLastTime">
+            <body><![CDATA[
+      UPDATE WECHAT_CIRCLE_SYNCCYCLE
+         SET last_time= :lastTime, last_date = :lastDate
+      WHERE id = :id
+        AND sync_type = :syncType
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+    INSERT INTO WECHAT_CIRCLE_SYNCCYCLE
+                ( id, sync_type, start_time, start_date, last_time, last_date, delete_flag, tenant_id, creator )
+         VALUES (:id, :syncType, :startTime, :startDate, :lastTime, :lastDate, 0, 0, 0 )
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    <bean id="smsProviderBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/smsprovider/legoo-model-cfg.xml"/>
+    </bean>
+    <!-- ========================= Query SQL Factory ========================= -->
+    <bean id="smsProviderStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]smsprovider[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/].*-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="smsProviderCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
+        <property name="caffeineSpecs">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="smsProviderCache" value="initialCapacity=8,maximumSize=16,expireAfterAccess=64m"/>
+            </util:map>
+        </property>
+    </bean>
+    <bean id="smsBaseProviderEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="smsProviderStatementFactory"/>
+        <property name="dataSource" ref="smsProviderDataSource"/>
+    </bean>
+    <bean id="smsProviderEntityAction"
+          class="com.legooframework.model.smsprovider.entity.SMSProviderEntityAction"
+          parent="smsBaseProviderEntityAction">
+        <property name="cacheManager" ref="smsProviderCacheManager"/>
+    </bean>
+</beans>

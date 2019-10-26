@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="DeviceWithWeixinEntity">
+        <sql id="loadAll">
+            <body><![CDATA[
+        SELECT sd.company_id AS 'companyId',
+               sd.store_id AS 'storeId',
+               sd.deviceid AS 'deviceId',
+               sd.employee_id AS 'employeeId',
+               sd.weixin AS 'weixinId'
+          FROM yycomm.store_device AS sd
+         WHERE sd.status = 1
+           AND sd.devicetype = 1
+           AND (sd.deviceid IS NOT NULL AND sd.deviceid <> '' )
+           AND (sd.weixin IS NOT NULL AND sd.weixin <> '' )
+           AND sd.deviceid IN (
+                SELECT od.DeviceID
+                  FROM yycomm.OnLine_Device AS od
+                 WHERE od.DeviceOnline = 1
+                   AND od.WeixinOnline = 1 )
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

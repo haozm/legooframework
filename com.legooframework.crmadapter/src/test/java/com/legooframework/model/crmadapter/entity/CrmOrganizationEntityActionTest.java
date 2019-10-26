@@ -1,6 +1,7 @@
 package com.legooframework.model.crmadapter.entity;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,7 +16,7 @@ import java.util.Optional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
-        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
+        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-nodb-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml"}
 )
@@ -28,12 +29,28 @@ public class CrmOrganizationEntityActionTest {
 
     @Test
     public void findCompanyById() {
-        Optional<CrmOrganizationEntity> org = organizationEntityAction.findCompanyById(1);
+        Optional<CrmOrganizationEntity> org = organizationEntityAction.findCompanyByIdWithRest(1);
+        System.out.println(org.get());
     }
 
     @Test
     public void loadOrganizations() {
-        organizationEntityAction.loadOrganizations(1);
+        //  organizationEntityAction.loadOrganizations(1);
+    }
+
+    public static void main(String[] args) {
+        String where = "where asd=asdasd";
+        if (StringUtils.isNotEmpty(where)) {
+            where = StringUtils.trim(where);
+            if (!StringUtils.startsWithIgnoreCase(where, "where")) {
+                if (StringUtils.startsWithIgnoreCase(where, "and")) {
+                    where = " WHERE " + StringUtils.substring(where, 4);
+                } else {
+                    where = " WHERE " + where;
+                }
+            }
+        }
+        System.out.println(where);
     }
 
     //    @Test

@@ -21,18 +21,23 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class LegooWebOcxRepository implements FileModifiedReload {
 
     private static final Logger logger = LoggerFactory.getLogger(LegooWebOcxRepository.class);
     private final List<WebOcx> webOcxs;
     private final RulesModule rulesModule;
-    private Collection<File> files;
+    private final Pattern pattern;
+    private final String nameMatch;
+    private Collection<File> configFiles;
 
-    LegooWebOcxRepository(RulesModule rulesModule, Collection<File> files) {
+    LegooWebOcxRepository(RulesModule rulesModule, String nameMatch, Collection<File> files) {
         this.webOcxs = Lists.newArrayList();
         this.rulesModule = rulesModule;
-        this.files = Lists.newArrayList(files);
+        this.pattern = Pattern.compile(nameMatch);
+        this.nameMatch = nameMatch;
+        this.configFiles = Lists.newArrayList(files);
     }
 
     public Optional<List<PageDefinedDto>> loadStorePages(String groupName, OrganizationEntity company, StoreEntity store) {
@@ -90,40 +95,21 @@ public class LegooWebOcxRepository implements FileModifiedReload {
         return args.length == 2 ? webOcx.findPageById(args[1]) : webOcx.findPageById(null);
     }
 
-    void init() {
-        if (CollectionUtils.isEmpty(files)) return;
-        Digester digester = DigesterLoader.newLoader(this.rulesModule).newDigester();
-        for (File file : files) {
-            try {
-                Map<String, WebOcx> _temp = Maps.newHashMap();
-                digester.push(_temp);
-                digester.parse(file);
-                List<WebOcx> ocxs = Lists.newArrayList();
-                for (Map.Entry<String, WebOcx> entry : _temp.entrySet()) ocxs.add(entry.getValue());
-                this.webOcxs.addAll(ocxs);
-                digester.clear();
-            } catch (Exception e) {
-                logger.error(String.format("parse file=%s has error", file), e);
-            } finally {
-                digester.clear();
-            }
-        }
-    }
-
     @Override
     public boolean isSupportFile(File file) {
-        if (file == null || !file.exists()) return false;
-        String file_name = file.getName();
-        return StringUtils.endsWith(file_name, "-webocx-cfg.xml");
+        boolean res = pattern.matcher(file.getAbsolutePath()).matches();
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("%s match %s  res is %s", file.getAbsolutePath(), nameMatch, res));
+        return res;
     }
 
     @Override
     public void building(Collection<File> files) {
-        if (CollectionUtils.isEmpty(files)) return;
+        if (CollectionUtils.isEmpty(configFiles)) return;
         Digester digester = DigesterLoader.newLoader(this.rulesModule).newDigester();
         List<WebOcx> all = Lists.newArrayList();
         boolean error = false;
-        for (File file : files) {
+        for (File file : configFiles) {
             try {
                 Map<String, WebOcx> _temp = Maps.newHashMap();
                 digester.push(_temp);
@@ -141,8 +127,9 @@ public class LegooWebOcxRepository implements FileModifiedReload {
             }
         }
         if (!error) {
+            if (logger.isDebugEnabled())
+                logger.debug("finisded parase file :" + configFiles);
             this.webOcxs.clear();
-            this.files = files;
             this.webOcxs.addAll(all);
         }
     }

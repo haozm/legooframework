@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="simple_member_fileds">
+            <![CDATA[
+             <#macro simple_member_fileds insuranceType>
+                mm.id AS 'id',
+                '${insuranceType}' AS 'insuranceType',
+                mm.cardId AS 'cardID',
+                mm.name AS 'memberName',
+                mm.sex_type,
+                (  SELECT kv.field_name
+                     FROM insurance_kv_data AS kv
+                    WHERE kv.dict_type = 'SEX'
+                      AND kv.field_value = mm.sex_type ) AS 'sexName',
+                DATE_FORMAT(mm.birthday ,'%Y-%m-%d') AS 'birthday',
+                (YEAR(NOW()) - YEAR(mm.birthday) + 1) AS 'memberAge',
+                mm.mobile AS 'mobile',
+                mm.education_type,
+                (  SELECT kv.field_name
+                     FROM insurance_kv_data AS kv
+                    WHERE kv.dict_type = 'EDUCATION'
+                      AND kv.field_value = mm.education_type ) AS 'educationName',
+                mm.height AS 'height',
+                mm.weight AS 'weight',
+                mm.familyAddr AS 'familyAddr',
+                mm.workAddr AS 'workAddr',
+                mm.email AS 'email'
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="InsurancePolicy">
+        <sql id="members" dynamic="true" macros="simple_member_fileds">
+            <body><![CDATA[
+            SELECT <@simple_member_fileds "投保人 "/>
+              FROM insurance_member_data mm
+             WHERE mm.id = ( SELECT b.defrayer_id FROM insurance_policy_info b WHERE b.id = :insuranceId )
+             UNION
+            SELECT <@simple_member_fileds "被保人 "/>
+              FROM insurance_member_data mm
+             WHERE mm.id = ( SELECT b.accepter_id FROM insurance_policy_info b WHERE b.id = :insuranceId )
+            ]]></body>
+        </sql>
+        <sql id="details_count" dynamic="true">
+            <body><![CDATA[
+          SELECT COUNT(a.id)
+            FROM insurance_policy_info a
+       LEFT JOIN insurance_member_data p1 ON a.defrayer_id = p1.id
+       LEFT JOIN insurance_member_data p2 ON a.accepter_id = p2.id
+           WHERE a.delete_flag = 0
+       <#if accepterName??>
+             AND p2.name LIKE :accepterName
+       </#if>
+       <#if defrayerName??>
+             AND p1.name LIKE :defrayerName
+       </#if>
+       <#if accepterBirthday??>
+             AND MONTH(p2.birthday) = :accepterBirthday
+       </#if>
+       <#if defrayerBirthday??>
+             AND MONTH(p1.birthday) = :defrayerBirthday
+       </#if>
+       <#if isSelf??>
+             AND a.is_myself = :isSelf
+       </#if>
+       <#if insuredDate??>
+             AND DATE_FORMAT(a.insured_date ,'%Y-%m-%d') BETWEEN :insuredDate_start  AND :insuredDate_end
+       </#if>
+            ]]></body>
+        </sql>
+        <sql id="details" dynamic="true">
+            <params>
+                <p name="accepterName" type="STRING" format="%{value}%"/>
+                <p name="defrayerName" type="STRING" format="%{value}%"/>
+                <p name="isSelf" type="INT"/>
+                <p name="insuredDate" type="DATERANGE"/>
+                <p name="defrayerBirthday" type="INT"/>
+                <p name="accepterBirthday" type="INT"/>
+            </params>
+            <body><![CDATA[
+          SELECT a.id AS 'id',
+                 a.insurance_no AS 'insuranceNo',
+                 a.insured_date AS 'insuredDate',
+                 DATE_FORMAT(a.insured_date ,'%Y-%m-%d') AS 'insuredDateDesc',
+                 p1.name AS 'defrayerName',
+                 DATE_FORMAT(p1.birthday ,'%Y-%m-%d') AS 'defrayerBirthday',
+                 (YEAR(NOW()) - YEAR(p1.birthday) + 1) AS 'defrayerAge',
+                 a.accepter_id AS 'accepter',
+                 p2.name AS 'accepterName',
+                 DATE_FORMAT(p2.birthday ,'%Y-%m-%d') AS 'accepterBirthday',
+                 (YEAR(NOW()) - YEAR(p2.birthday) + 1) AS 'accepterAge',
+                 a.relationship_type AS 'relationshipType',
+                 ( SELECT kv.field_name
+                     FROM insurance_kv_data AS kv
+                    WHERE kv.dict_type = 'RELATIONSHIP'
+                      AND kv.field_value = a.relationship_type ) AS 'relationshipName',
+                 a.is_myself AS 'myself',
+                 a.payment_type AS 'paymentType',
+                 a.pay_amount AS 'payAmount',
+                 ( SELECT kv.field_name
+                     FROM insurance_kv_data AS kv
+                    WHERE kv.dict_type = 'PAYMENTTYPE'
+                      AND kv.field_value = a.payment_type ) AS 'paymentTypeName',
+                 a.bankcard_id AS 'bankCardId',
+                 card.account AS 'bankCardNo',
+                 card.bank_type AS 'bankCardType',
+                 ( SELECT kv.field_name
+                     FROM insurance_kv_data AS kv
+                    WHERE kv.dict_type = 'BANK'
+                      AND kv.field_value = card.bank_type ) AS 'bankCardName',
+                 a.beneficiary_info AS 'beneficiary',
+                 a.remarks AS 'remarks'
+            FROM insurance_policy_info a
+       LEFT JOIN insurance_member_data p1 ON a.defrayer_id = p1.id
+       LEFT JOIN insurance_member_data p2 ON a.accepter_id = p2.id
+       LEFT JOIN insurance_bank_card card ON a.bankcard_id = card.id
+           WHERE a.delete_flag = 0
+       <#if accepterName??>
+             AND (p2.name LIKE :accepterName OR p2.mobile LIKE :accepterName )
+       </#if>
+       <#if defrayerName??>
+             AND (p1.name LIKE :defrayerName OR p1.mobile LIKE :defrayerName )
+       </#if>
+       <#if accepterBirthday??>
+             AND MONTH(p2.birthday) = :accepterBirthday
+       </#if>
+       <#if defrayerBirthday??>
+             AND MONTH(p1.birthday) = :defrayerBirthday
+       </#if>
+       <#if isSelf??>
+             AND a.is_myself = :isSelf
+       </#if>
+       <#if insuredDate??>
+             AND DATE_FORMAT(a.insured_date ,'%Y-%m-%d') BETWEEN :insuredDate_start  AND :insuredDate_end
+       </#if>
+       ORDER BY a.insured_date DESC
+          LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
+    <model id="InsuranceDict">
+        <sql id="typeList">
+            <body><![CDATA[
+          SELECT a.dict_type AS 'value',
+                 CASE a.dict_type
+                   WHEN 'SEX' THEN '性别'
+                   WHEN 'EDUCATION' THEN '学历'
+                   WHEN 'BANK' THEN '银行'
+                   WHEN 'RELATIONSHIP' THEN '亲属关系'
+                   WHEN 'INSURANCE' THEN '保险种类'
+                   WHEN 'PAYMENTTYPE' THEN '支付模式'
+                 ELSE '其他' END AS 'label'
+            FROM insurance_kv_data AS a
+        GROUP BY a.dict_type
+            ]]></body>
+        </sql>
+        <sql id="detailList_count" dynamic="true">
+            <body><![CDATA[
+          SELECT COUNT(a.id)
+            FROM insurance_kv_data AS a
+          <#if dictType??>
+           WHERE a.dict_type = :dictType
+        </#if>
+            ]]></body>
+        </sql>
+        <sql id="detailList" dynamic="true">
+            <params>
+                <p name="dictType" type="STRING"/>
+            </params>
+            <body><![CDATA[
+          SELECT a.dict_type AS 'dictType',
+                 a.field_value AS 'fieldValue',
+                 a.field_name AS 'fieldName',
+                 a.field_desc AS 'fieldDesc',
+                 a.id AS 'ID'
+            FROM insurance_kv_data AS a
+        <#if dictType??>
+           WHERE a.dict_type = :dictType
+        </#if>
+        ORDER BY a.dict_type
+           LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

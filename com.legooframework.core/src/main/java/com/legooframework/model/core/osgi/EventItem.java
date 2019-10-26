@@ -9,7 +9,7 @@ class EventItem {
 
     private final String event, channel;
 
-    public EventItem(String event, String channel) {
+    EventItem(String event, String channel) {
         this.event = event;
         this.channel = channel;
     }

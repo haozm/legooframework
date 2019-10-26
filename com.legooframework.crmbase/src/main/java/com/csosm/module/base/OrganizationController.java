@@ -297,11 +297,9 @@ public class OrganizationController extends BaseController {
     @RequestMapping(value = "/org-store/tree.json")
     @ResponseBody
     public Map<String, Object> loadOrgTreeWithStore(@RequestBody Map<String, String> requestBody, HttpServletRequest request) {
-        LoginUserContext loginUser = loadLoginUser(request);
         Integer companyId = MapUtils.getInteger(requestBody, "companyId");
         Preconditions.checkNotNull(companyId, "入参 companyId 不可以为空值...");
-        Optional<OrgTreeViewDto> treeDto = getBean(BaseModelServer.class, request).loadOrgTreeWithStoreByOrgId(
-                companyId, loginUser);
+        Optional<OrgTreeViewDto> treeDto = getBean(OrganizationServer.class, request).loadOgrTreeWithStoreNoPower(companyId);
         if (!treeDto.isPresent()) return wrapperResponse(new String[0]);
         return wrapperResponse(new Object[]{treeDto.get().toMap()});
     }

@@ -18,14 +18,11 @@ public class LegooWebOcxRepositoryFactory extends AbstractFactoryBean<LegooWebOc
     @Override
     protected LegooWebOcxRepository createInstance() throws Exception {
         RulesModule rulesModule = new RulesModule();
-        MonitorFileSystem monitorFileSystem = getBeanFactory().getBean(MonitorFileSystem.class);
+        MonitorFileSystem monitorFileSystem = getBeanFactory().getBean("crmMonitorFileSystem", MonitorFileSystem.class);
         Optional<List<File>> files_opt = monitorFileSystem.findFiles(patterns);
-        if (files_opt.isPresent()) {
-            LegooWebOcxRepository repository = new LegooWebOcxRepository(rulesModule, files_opt.get());
-            repository.init();
-            return repository;
-        }
-        return null;
+        LegooWebOcxRepository repository = new LegooWebOcxRepository(rulesModule, patterns, files_opt.isPresent() ? files_opt.get() : null);
+        if (files_opt.isPresent()) repository.building(files_opt.get());
+        return repository;
     }
 
     private String patterns;

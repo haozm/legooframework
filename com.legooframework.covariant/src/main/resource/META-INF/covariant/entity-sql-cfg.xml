@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="OrgEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+    SELECT id, code, createTime, `depth`, icon, logoFileName, name, oldOrgId, orgType AS 'type', parentId,
+           rootNode, shortName, sortNo, status, updateTime, createUser_id, updateUser_id,
+           smsPrice, totalSMSAmount, totalSMSCount, limitLogin, smsCount, orgShowFlag, createWeixinAccountCount,
+           orgShowLimitFlag, hiddenMemberPhoneFlag, industryType, callCount
+      FROM acp.acp_organization
+     WHERE status = 1
+     <#if (sql=="loadAllByCompanyId")>
+       AND (code = '${companyId}' OR code LIKE '${companyId}\_%')
+  ORDER BY LENGTH(code)
+     </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="StoEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+    SELECT sto.id, sto.area, sto.createTime, sto.createUserId, sto.detailAddress, sto.icon, sto.logoFile, sto.name, sto.oldStoreId, sto.phone,
+           sto.sortNo, sto.status, sto.storeState, sto.storeType, sto.updateTime, sto.updateUserId, sto.company_id, sto.organization_id,
+           smsCount, smsPrice, totalSMSAmount, totalSMSCount, performanceFlag, createWeixinAccountCount,
+           sto.hiddenMemberPhoneFlag, sto.phoneAmount, sto.callCount, sto.wxExpireTime, sto.brandCode, sto.brandName, sto.initDataTimestamp,
+           sto.companypy, sto.crc32id, sd.deviceid, sd.weixin
+      FROM acp.acp_store AS sto
+ LEFT JOIN yycomm.store_device AS sd ON sd.store_id=sto.id AND sd.company_id = sto.company_id AND sd.devicetype = 1 AND sd.status=1
+     WHERE sto.status = 1
+    <#if (sql=="findById")>
+       AND sto.id = :storeId
+    <#elseif (sql=="findByOldInfo")>
+       AND LOWER(sto.oldStoreId)  = :oldStoreId
+       AND LOWER(sto.companypy) = :companypy
+    </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="MemberEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+          SELECT cm.id, IFNULL(cm.calendarType,1) AS 'calendarType', cm.carePeople, cm.certificate, cm.certificateType, cm.characterType, cm.createCardTime, cm.createTime,
+                 cm.detailAddress, cm.email, cm.faithType, cm.hobby, cm.idols, cm.jobType, cm.likeBrand, cm.likeContact, cm.marryStatus, cm.memberType, cm.name,
+                 cm.oldMemberCode, cm.oldShoppingGuideId, cm.oldStoreId, cm.phone, cm.photoFileName, cm.qqNum, cm.rechargeAmount, cm.remark, cm.serviceLevel, cm.sex,
+                 cm.source_channel, cm.source_from, cm.specialDay, cm.status, cm.updateTime, cm.wechatNum, cm.weiboNum, cm.zodiac, cm.company_id, cm.createUser_id,
+                 cm.memberCardType_id, cm.updateUser_id, cm.firstSaleRecordAmount, cm.firstSaleRecordNo, cm.weixinUser_wx_user_id, cm.assignState, cm.telephone,
+                 cm.memberCardNum, cm.unreachable, cm.lastVisitTime, cm.rfm, cm.createStoreId, cm.awakenCount, cm.consumeTotalCount, cm.consumeTotalCountCurYear,
+                 cm.maxConsumePrice, cm.maxConsumePriceCurYear, cm.totalConsumeAmount, cm.totalConsumeAmountCurYear, cm.hasWeixinAccount, cm.education,
+                 cm.likeContactTime, cm.effectiveFlag, cm.namePinyin, cm.limitday, cm.iconUrl, cm.totalScore, cm.companypy, cm.crc32id, cm.store_id, cm.daysAgoCount,
+                 cm.has_wechat_fan, cm.totalScore02,csm.store_id AS 'real_storeId', IFNULL(cgm.shoppingguide_id,0) AS 'real_shoppingguide_id',sto.organization_id AS 'organization_id',
+                 ( CASE WHEN IFNULL(cm.calendarType,1) = 1 THEN cm.birthday ELSE cm.lunarBirthday END) AS 'birthday',
+                 ( CASE WHEN IFNULL(cm.calendarType,1) = 1 THEN CONCAT( YEAR(NOW()), DATE_FORMAT(cm.birthday,'%m%d'))
+                        ELSE (SELECT cgci.gregorian_calendar
+                                FROM YG_Statistics.calendar_g_c_index AS cgci
+                               WHERE cgci.lunar_calendar = CONCAT(YEAR(NOW()),DATE_FORMAT(cm.lunarBirthday,'%m%d')))
+                   END ) AS 'thisYearBirthday', cmc.name AS 'cardName', com.name AS 'companyName'
+            FROM acp.crm_member AS cm
+      INNER JOIN acp.crm_store_member csm ON csm.member_id = cm.id
+      INNER JOIN acp.acp_organization AS com ON com.orgType=1 AND com.id = cm.company_id
+      INNER JOIN acp.acp_store sto ON csm.store_id =sto.id
+       LEFT JOIN acp.crm_shoppingguide_member cgm ON cgm.member_id = cm.id
+       LEFT JOIN acp.crm_membercardtype cmc ON cm.memberCardType_id = cmc.id
+           WHERE cm.status = 1
+        <#if (sql=="findById")>
+             AND cm.id = :memberId
+        <#elseif (sql="findByStore")>
+             AND cm.status = 1
+             AND csm.store_id = :storeId
+        <#elseif (sql="findByShoppingGuide")>
+             AND csm.store_id = :storeId
+             AND cgm.shoppingguide_id  = :shoppingGuideId
+        <#elseif (sql="findByWxUser")>
+             AND cgm.id = ( SELECT awm.member_id
+                              FROM acp.acp_weixin_member AS awm
+                             WHERE awm.company_id = :compamyId
+                               AND awm.store_id = :storeId
+                               AND  awm.weixin_id = :userName )
+        <#elseif (sql="findByIds")>
+             AND cm.id IN (${memberIds?join(",")})
+        </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="EmpEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+    SELECT em.id AS 'id', em.loginuser_id AS 'loginId',em.name AS 'name',
+           em.company_id AS 'companyId',  em.store_id AS 'storeId',
+           em.organization_id AS 'organizationId', em.phone AS 'phone',
+           (SELECT GROUP_CONCAT(DISTINCT emr.role_id ORDER BY emr.role_id)
+              FROM acp.acp_employee_role AS emr
+             WHERE emr.employee_id = em.id) AS roleIds
+      FROM acp.acp_employee AS em
+     WHERE em.status = 1
+    <#if (sql=="findAllByStore")>
+       AND em.company_id = :companyId
+       AND em.store_id = :storeId
+       AND em.employeeState = 1
+    <#elseif (sql=="findAllByOrg")>
+       AND em.organization_id = :orgId
+       AND em.employeeState = 1
+    <#elseif (sql=="findById")>
+       AND em.id = :empId
+    </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="SmsBalanceEntity">
+        <sql id="query4Obj" dynamic="true">
+            <body><![CDATA[
+       SELECT id, smsCount, smsPrice, organization_id, store_id
+         FROM acp.acp_smsbalance
+      <#if (sql=="findByStore")>
+        WHERE store_id IS NOT NULL
+          AND store_id = :storeId
+      <#elseif (sql=="findByOrg")>
+        WHERE organization_id = :orgId
+          AND store_id IS NULL
+      <#else>
+        WHERE organization_id = -1
+      </#if>
+            ]]></body>
+        </sql>
+        <sql id="updateBalance">
+            <body><![CDATA[
+     UPDATE acp.acp_smsbalance SET smsCount = ? WHERE id = ?
+            ]]></body>
+        </sql>
+    </model>
+    <model id="UserAuthorEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+       SELECT emp.id AS 'id',emp.name AS 'empName', GROUP_CONCAT(empr.role_id) AS 'roleIds',
+              com.id AS 'comId',org.id AS 'orgId',sto.id as 'storeId',
+              ( CASE WHEN org.id IS NULL THEN NULL
+                     ELSE ( SELECT GROUP_CONCAT(_temp.id)
+                              FROM acp.acp_organization AS _temp
+                             WHERE _temp.code LIKE CONCAT(org.code,'_%') ) END
+              ) AS 'subOrgIds',
+              ( CASE WHEN org.id IS NULL THEN NULL
+                     ELSE ( SELECT GROUP_CONCAT(_sto.id)
+                              FROM  acp.acp_store AS _sto
+                             WHERE _sto.organization_id IN ( SELECT _temp.id
+                                                               FROM acp.acp_organization AS _temp
+                                                              WHERE _temp.code LIKE CONCAT(org.code,'_%'))) END
+               ) AS 'storeIds'
+         FROM acp.acp_employee AS emp
+   INNER JOIN acp.acp_employee_role AS empr ON empr.employee_id = emp.id
+   INNER JOIN acp.acp_organization AS com ON emp.company_id = com.id and com.orgType=1
+    LEFT JOIN acp.acp_organization AS org ON emp.organization_id = org.id
+    LEFT JOIN acp.acp_store AS sto ON emp.store_id = sto.id
+        WHERE emp.id = :userId
+     <#if companyId??>
+          AND emp.company_id = :companyId
+     </#if>
+     GROUP BY emp.id
+            ]]></body>
+        </sql>
+    </model>
+    <model id="SendSmsEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+    INSERT INTO acp.acp_smslog
+                (content, extFlag, feedback, `free`,          ip, mobile, `type`, loginUser_id, smsCount, smsLength, company_id, employee_id, store_id, receiverName, organization_id, smsChanel, batchAddNo, returnStatus, sendStatus )
+         VALUES (      ?,       ?,         0,     0, '127.0.0.1',      ?,      ?,            ?,        ?,         ?,          ?,           ?,        ?,            ?,               ?,         ?,          ?,            ?,          ? )
+            ]]></body>
+        </sql>
+        <sql id="findSmsPrefix">
+            <body><![CDATA[
+   (SELECT aos.smsPre, 'store' AS 'type'
+      FROM acp.acp_orgcustomsetting AS aos
+     WHERE aos.store_id=:storeId
+       AND ( aos.smsPre IS NOT NULL OR aos.smsPre <> '' )
+     LIMIT 1)
+ UNION ALL
+   (SELECT ao.name AS 'smsPre', 'company' AS 'type'
+      FROM acp.acp_organization AS ao
+     WHERE ao.id=:companyId
+     LIMIT 1)
+            ]]></body>
+        </sql>
+    </model>
+    <model id="TemplateEntity">
+        <sql id="query4list">
+            <body><![CDATA[
+    SELECT id, company_id AS 'companyId', org_id, store_id AS 'storeId', classifies, use_scopes, expire_date, is_default, temp_title, temp_context, enabled,
+           delete_flag, tenant_id AS 'tenantId', creator, createTime, editor, editTime
+      FROM acp.MSG_TEMPLATE_CONTEXT
+     WHERE delete_flag = 0
+            ]]></body>
+        </sql>
+    </model>
+    <model id="SendWechatEntity">
+        <sql id="insert">
+            <body><![CDATA[
+    INSERT INTO acp.acp_weixin_msgs
+                ( id, msg_type, business_type, msg_num, image_url, weixin_ids, msg_text, store_id, weixin_num, company_id, msg_temp_id, createUserId, createTime)
+         VALUES (:id, :msgType, :businessType, :msgNum, :imageUrl, :weixinIds,  :msgTxt, :storeId, :weixinNum, :companyId,  :msgTempId, :createUserId, NOW())
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+    INSERT INTO acp.acp_weixin_msgs
+                ( id, msg_type, business_type, msg_num, image_url, weixin_ids, msg_text, store_id, weixin_num, company_id, msg_temp_id, createUserId, createTime)
+         VALUES (  ?,        ?,             ?,       ?,         ?,          ?,        ?,        ?,          ?,          ?,           ?,            ?, NOW())
+            ]]></body>
+        </sql>
+        <sql id="batch_insert_details">
+            <body><![CDATA[
+    INSERT INTO yycomm.Send_MSG_List
+                ( content,  touser, `type`, isgroup, todeviceid, store_id, company_id, UUID,fromuser, recieveTime ,sendFlag, IDGroup, IDSort)
+         VALUES ( ?,        ?,       ?,     ?,       ?,          ?,        ?,          ?,    ?,  NOW() ,     0,?,?)
+            ]]></body>
+        </sql>
+    </model>
+    <model id="WxUserEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+        SELECT wt.conRemark, wt.iconUrl, wt.nickName, wt.userName, wt.`type`, wt.fromDevicesId, wt.toDevicesId, wt.page, wt.curpage,
+               wt.contactLabelIds, wt.crc32id, wt.bindWxUserName, wt.remark, wt.`work`, wt.updatetime, wt.un_msg_count
+          FROM yycomm.${TABLE_NAME} AS wt
+     LEFT JOIN acp.acp_weixin_member AS awm ON awm.company_id=${companyId} AND awm.store_id=${storeId} AND awm.weixin_id = wt.userName
+         WHERE wt.`work` = 1
+     <#if (sql=="findById")>
+           AND wt.userName = :userName
+     <#elseif (sql=="findByMember")>
+           AND awm.member_id = :memberId
+     </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="EWeiShopMemberEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+         SELECT iesm.id AS 'id', iesm.uniacid, iesm.uid, iesm.agentid, iesm.openid,
+                iesm.realname, iesm.mobile, iesm.status, iesm.isagent, iesm.nickname
+           FROM DB_WEIQIN.ims_ewei_shop_member iesm
+        <#if sql=="findByOpenid">
+          WHERE iesm.openid = :openId
+        <#elseif (sql=="findByMember")>
+          WHERE iesm.openid = (SELECT wmc.wcp_string_val
+                                 FROM acp.WCP_MAPPING_CRM AS wmc
+                                WHERE wmc.mapping_type = 4
+                                  AND wmc.company_id = :companyId
+                                  AND wmc.member_id= :memberId)
+        <#else>
+          WHERE iesm.uniacid = -1
+        </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="MsgTemplateEnity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+      SELECT cmt.id, cmt.content, cmt.name, IFNULL(cmt.sortNo,0) AS 'sortNo' ,
+             IFNULL(cmt.subUseType,0) AS 'subUseType',
+             (CASE WHEN IFNULL(cmt.templetState,1) = 1 THEN 1  ELSE 2 END ) AS 'templetState',
+             (CASE WHEN  cmt.defaultState = 1 THEN 1  ELSE 2 END ) AS 'defaultState',
+             IFNULL(cmt.messageTempletType,1) AS 'messageTempletType',
+             IFNULL(cmt.templetType,0) AS 'templetType',
+             IFNULL(cmt.useRange,0) AS 'useRange', cmt.useType,
+             cmt.holidayId, cmt.usedCount, cmt.company_id, IFNULL(cmt.store_id,0) AS 'store_id'
+        FROM acp.crm_messagetemplet AS cmt
+       WHERE cmt.status = 1
+    <#if (sql="findAllBirthCareTemplet4Store")>
+         AND cmt.useType = :useType
+         AND cmt.company_id = :companyId
+         AND (cmt.store_id = :storeId OR cmt.store_id IS NULL)
+    ORDER BY cmt.defaultState, cmt.store_id
+    <#elseif (sql=="findById")>
+         AND cmt.id = :msgTemplateId
+    </#if>
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

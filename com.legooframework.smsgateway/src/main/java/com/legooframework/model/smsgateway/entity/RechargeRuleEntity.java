@@ -36,7 +36,7 @@ public class RechargeRuleEntity extends BaseEntity<String> {
 
     private RechargeRuleEntity(Long min, Long max, double unitPrice, Integer companyId, boolean temporary,
                                String remarks, LocalDate expiredDate) {
-        super(CommonsUtils.randomId(16), 1000000L, -1L);
+        super(CommonsUtils.randomId(16), companyId.longValue(), -1L);
         if (min == null) min = 0L;
         if (max == null) max = 999999999900L;
         Preconditions.checkArgument(min > 0 && max > min, "(%s,%s) 取值异常....", min, max);

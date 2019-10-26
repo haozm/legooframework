@@ -1,0 +1,454 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="WxMsgWhiteListEntity">
+        <sql id="findByStore">
+            <body><![CDATA[
+      SELECT id AS 'id', prohibit_tag AS 'prohibitTag', inclouds_ids AS 'incloudIds', exclouds_ids AS 'excloudIds',
+             store_id AS 'storeId', company_id AS 'companyId', createUserId AS 'createUserId',
+             createTime AS 'createTime'
+        FROM acp_wxmsg_whitelist
+       WHERE store_id = :storeId
+         AND company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+      INSERT INTO acp_wxmsg_whitelist
+                  (prohibit_tag, inclouds_ids, exclouds_ids, store_id, company_id, createUserId, createTime)
+           VALUES (:prohibitTag, :incloudIds,  :excloudIds,  :storeId, :companyId, :LOGIN_ID, NOW())
+            ]]></body>
+        </sql>
+        <sql id="updateWhiteList">
+            <body><![CDATA[
+     UPDATE acp_wxmsg_whitelist
+        SET inclouds_ids= :incloudIds, modifyUserId= :LOGIN_ID, modifyTime= NOW()
+      WHERE store_id = :storeId
+        AND company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="updateSwitch">
+            <body><![CDATA[
+     UPDATE acp_wxmsg_whitelist
+        SET prohibit_tag = :prohibitTag, modifyUserId= :LOGIN_ID, modifyTime= NOW()
+      WHERE store_id = :storeId
+        AND company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="findWhitListByStore" dynamic="true">
+            <body><![CDATA[
+        SELECT
+            aem.id AS 'id',
+            aem.remark AS 'remark',
+            aem.sex AS 'sex',
+            aem.name AS 'userName',
+            aem.phone AS 'phone',
+            ( SELECT ao.name
+                FROM acp_organization ao
+               WHERE ao.id = aem.organization_id ) AS 'orgName',
+            aem.login_name AS 'accountNo'
+         FROM acp_employee aem
+        WHERE aem.id IN ( ${employIds?join(", ")})
+            ]]></body>
+        </sql>
+    </model>
+    <model id="RemoteCmdEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+      INSERT INTO yycomm.Send_Order_List
+                  (tag, fromdeviceid, todeviceid, orderMSG, uuid, sendFlag, success, remark, createtime)
+           VALUES (?, ?, ?, ?, ?, 0, 0, ?, CURRENT_TIMESTAMP)
+            ]]></body>
+        </sql>
+        <sql id="findCmdListByDevice">
+            <body><![CDATA[
+         SELECT ID AS 'id',
+                tag AS 'tag',
+                fromdeviceid AS 'fromDeviceId',
+                todeviceid AS 'toDeviceId',
+                orderMSG AS 'command',
+                uuid AS 'batchNo',
+                sendFlag AS 'sendFlag',
+                success AS 'successFlag',
+                remark AS 'remark',
+                createtime AS 'createTime'
+           FROM yycomm.Send_Order_List
+          WHERE todeviceid = :deviceId
+       ORDER BY ID DESC
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="webchat_any_macro">
+            <![CDATA[
+	            <#macro webchat_dy_user_fields>
+                    wx.conRemark AS 'conRemark',
+                    wx.iconUrl AS 'iconUrl',
+                    ( CASE WHEN IFNULL(awm.member_id,0) <> 0 THEN (SELECT acm.name FROM crm_member acm WHERE acm.id = awm.member_id)
+                        WHEN LENGTH(wx.conRemark) > 0 THEN wx.conRemark
+                        WHEN LENGTH(wx.nickName) > 1 THEN wx.nickName
+                        ELSE wx.userName END ) AS 'nickName',
+                    wx.userName AS 'userName',
+                    wx.`type` AS 'wxType',
+                    ${companyId} AS 'companyId',
+                    ${storeId} AS 'storeId',
+                    wx.bindWxUserName AS 'ownerUserName',
+                    awm.member_id AS 'memberId',
+                    wx.fromDevicesId AS 'deviceId'
+	            </#macro>
+	         ]]>
+        </macro>
+        <macro id="webchat_base_macro">
+            <![CDATA[
+		        <#macro webchat_base_fields>
+                    wx.conRemark AS 'conRemark',
+                    wx.iconUrl AS 'iconUrl',
+                    CASE WHEN LENGTH(wx.nickName)>1 THEN wx.nickName ELSE wx.userName END AS 'nickName',
+                    wx.userName AS 'userName',
+                    wx.`type` AS 'wxType'
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="webchat">
+        <sql id="loadSyncWechat">
+            <body><![CDATA[
+		     SELECT uhc.ID AS 'id',
+		            uhc.weixin AS 'username',
+		            uhc.company_id AS 'companyId',
+		            uhc.store_id AS 'storeId'
+               FROM yycomm.Update_His_Contact uhc
+              WHERE uhc.ID NOT IN ( SELECT aws.id
+                                      FROM acp_wxuser_sync aws
+                                     WHERE aws.sync_res = 1 )
+            ]]></body>
+        </sql>
+        <sql id="batchUpdateSyncWechat">
+            <body><![CDATA[
+		INSERT INTO acp_wxuser_sync
+                    (id, wxuser_id, sync_res, store_id, company_id,  createTime)
+             VALUES (?, ?,          ?,        ?,        ?,     NOW())
+            ]]></body>
+        </sql>
+        <sql id="load_deviceId_bystore">
+            <body><![CDATA[
+		      SELECT sd.DeviceId AS 'deviceId'
+		        FROM yycomm.store_device sd
+		       WHERE sd.devicetype = '1'
+		         AND sd.store_id = :storeId
+		         AND sd.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="findByMember" macros="webchat_any_macro">
+            <body><![CDATA[
+      SELECT DISTINCT <@webchat_dy_user_fields />
+        FROM yycomm.${tablename} wx
+   LEFT JOIN acp_weixin_member awm 
+   		ON wx.type <> 4 AND INSTR(wx.userName,'@chatroom') = 0 AND awm.company_id =:companyId AND awm.store_id = :storeId AND awm.weixin_id = wx.userName
+   		WHERE awm.member_id = :memberId AND wx.work = 1
+            ]]></body>
+        </sql>
+        <sql id="load_weixins_store" dynamic="true" macros="webchat_any_macro">
+            <body><![CDATA[
+      SELECT <@webchat_dy_user_fields />
+        FROM yycomm.${tablename} wx
+   LEFT JOIN acp_weixin_member awm ON awm.company_id = ${companyId} AND awm.store_id = ${storeId} AND awm.weixin_id = wx.userName
+       WHERE wx.type <> 4
+         AND INSTR(wx.userName,'@chatroom') = 0
+         AND wx.work = 1
+       <#if groupIds??>
+         AND wx.userName IN ( SELECT DISTINCT a.friend_id
+                                FROM acp_group_friend a
+                               WHERE a.group_id IN ( <#list groupIds as id>'${id}'<#if id_has_next>,</#if></#list> ) )
+       </#if>
+       <#if excludes??>
+         AND wx.userName NOT IN (<#list excludes as id>'${id}'<#if id_has_next>,</#if></#list>)
+       </#if>
+       <#if weixinIds??>
+         AND wx.userName IN (<#list weixinIds as id>'${id}'<#if id_has_next>, </#if></#list>)
+       </#if>
+       <#if searchs??>
+         AND ( wx.nickName LIKE :searchs OR wx.conRemark LIKE :searchs )
+       </#if>
+    ORDER BY wx.userName
+            ]]></body>
+        </sql>
+        <sql id="load_all_weixins_store" dynamic="true" macros="webchat_any_macro">
+            <body><![CDATA[
+      SELECT <@webchat_dy_user_fields />
+        FROM yycomm.${tablename} wx
+   LEFT JOIN acp_weixin_member awm ON awm.company_id = ${companyId} AND awm.store_id = ${storeId} AND awm.weixin_id = wx.userName
+       WHERE wx.type <> 4
+         AND wx.work = 1
+         AND INSTR(wx.userName,'@chatroom') = 0
+       <#if weixinIds??>
+         AND wx.userName IN (<#list weixinIds as id>'${id}'<#if id_has_next>, </#if></#list>)
+       </#if>
+    ORDER BY wx.userName
+            ]]></body>
+        </sql>
+        <sql id="findById" dynamic="true" macros="webchat_any_macro">
+            <body><![CDATA[
+      SELECT <@webchat_dy_user_fields />
+        FROM yycomm.${tablename} wx
+   LEFT JOIN acp_weixin_member awm ON awm.company_id = ${companyId} AND awm.store_id = ${storeId} AND awm.weixin_id = wx.userName
+       WHERE wx.type <> 4
+         AND INSTR(wx.userName,'@chatroom') = 0
+         AND wx.userName = :wenxinId
+        	 AND wx.work = 1
+       LIMIT 1
+            ]]></body>
+        </sql>
+        <sql id="findOrginById" dynamic="true" macros="webchat_any_macro">
+            <body><![CDATA[
+	      SELECT  wx.conRemark AS 'conRemark',
+	                    wx.iconUrl AS 'iconUrl',
+	                    wx.nickName AS 'nickName',
+	                    wx.userName AS 'userName',
+	                    wx.`type` AS 'wxType',
+	                    ${companyId} AS 'companyId',
+	                    ${storeId} AS 'storeId',
+	                    wx.bindWxUserName AS 'ownerUserName',
+	                    awm.member_id AS 'memberId',
+	                    wx.fromDevicesId AS 'deviceId'
+	        FROM yycomm.${tablename} wx
+	   LEFT JOIN acp_weixin_member awm ON awm.company_id = ${companyId} AND awm.store_id = ${storeId} AND awm.weixin_id = wx.userName
+	       WHERE wx.type <> 4
+	         AND INSTR(wx.userName,'@chatroom') = 0
+	         AND wx.userName = :wenxinId
+        	 AND wx.work = 1
+	       LIMIT 1
+            ]]></body>
+        </sql>
+        <sql id="load_mapping_bystore">
+            <body><![CDATA[
+      SELECT awm.id AS 'id', awm.weixin_id AS 'weixinId', awm.member_id AS 'memberId',
+             awm.store_id AS 'storeId', awm.company_id AS 'companyId', awm.createUserId AS 'createUserId'
+        FROM acp_weixin_member awm
+       WHERE awm.store_id = :storeId
+         AND awm.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="clear_mapping_byweixinids" dynamic="true">
+            <body><![CDATA[
+         DELETE FROM acp_weixin_member
+               WHERE store_id = :storeId
+                 AND company_id = :companyId
+                 AND (weixin_id IN (<#list weixinIds as id>'${id}'<#if id_has_next>, </#if></#list>)
+                   OR  member_id IN (<#list memberIds as id>'${id}'<#if id_has_next>, </#if></#list>))
+            ]]></body>
+        </sql>
+        <sql id="batch_bild_member" dynamic="true">
+            <body><![CDATA[
+        INSERT INTO acp_weixin_member
+                    (id, weixin_id, member_id, store_id, company_id, createUserId, createTime)
+             VALUES (?, ?, ?, ?, ?, ?,NOW())
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="devices_any_macro">
+            <![CDATA[
+        <#macro devices_fields>
+            sd.createtime AS 'createtime', sd.company_id AS 'companyId', sd.store_id AS 'storeId',
+            sd.DeviceId AS 'deviceId', sd.employee_id AS 'employeeId', sd.employee_name AS 'employeeName',
+            sd.weixin AS 'weixinId', sd.status AS 'status', sd.devicetype AS 'type',
+            sd.status AS 'status'
+        </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="devices">
+        <sql id="findAllByStore" macros="devices_any_macro">
+            <body><![CDATA[
+             SELECT <@devices_fields />
+               FROM yycomm.store_device sd
+              WHERE sd.company_id = :companyId
+              	AND sd.devicetype = '1'
+                AND sd.store_id = :storeId
+                AND sd.status <> 0
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+        REPLACE INTO yycomm.store_device
+                    (createtime, company_id, store_id, deviceid,  employee_id, employee_name, weixin, status, devicetype)
+             VALUES (NOW(),      :companyId, :storeId, :deviceId, 0,           :employeeName, NULL,   1,      :deviceType)
+            ]]></body>
+        </sql>
+        <sql id="disabledDevice">
+            <body><![CDATA[
+             UPDATE yycomm.store_device
+                SET status = 0
+              WHERE deviceid = :deviceId
+            ]]></body>
+        </sql>
+        <sql id="changeDevice">
+            <body><![CDATA[
+             UPDATE yycomm.store_device
+                SET company_id = :companyId, store_id = :storeId, employee_id = 0 , employee_name = null, status = 1, devicetype =1
+              WHERE deviceid = :deviceId
+            ]]></body>
+        </sql>
+        <sql id="addNewVDevice">
+            <body><![CDATA[
+        INSERT INTO yycomm.store_device
+                    (createtime, company_id, store_id, deviceid,  employee_id, employee_name, weixin, status, devicetype)
+             VALUES (NOW(),      :companyId, :storeId, :deviceId, 0,           NULL,          NULL,   1,      1)
+            ]]></body>
+        </sql>
+        <sql id="findAllGodByStores" macros="devices_any_macro">
+            <body><![CDATA[
+             SELECT <@devices_fields />
+               FROM yycomm.store_device sd
+              WHERE sd.company_id = :companyId
+                AND sd.store_id IN (<#list storeIds as cur>'${cur}'<#if cur_has_next>,</#if></#list>)
+                AND sd.devicetype = '1'
+                AND sd.status <> 0
+            ]]></body>
+        </sql>
+        <sql id="findGodDeviceByStore" macros="devices_any_macro">
+            <body><![CDATA[
+             SELECT <@devices_fields />
+               FROM yycomm.store_device sd
+              WHERE sd.company_id = :companyId
+                AND sd.store_id = :storeId
+                AND sd.devicetype = '1'
+                AND sd.status <> 0
+            ]]></body>
+        </sql>
+        <sql id="findGodDeviceByIds" macros="devices_any_macro">
+            <body><![CDATA[
+             SELECT <@devices_fields />
+               FROM yycomm.store_device sd
+              WHERE sd.company_id = :companyId
+                AND sd.devicetype = '1'
+                AND sd.status <> 0
+                AND sd.deviceid IN (<#list deviceIds as cur>'${cur}'<#if cur_has_next>,</#if></#list>)
+            ]]></body>
+        </sql>
+        <sql id="findByDeviceId" macros="devices_any_macro">
+            <body><![CDATA[
+             SELECT <@devices_fields />
+               FROM yycomm.store_device sd
+              WHERE sd.deviceid = :deviceId
+              	AND sd.devicetype = '1'
+                AND sd.status <> 0
+            ]]></body>
+        </sql>
+        <sql id="findByDeviceIdWithAll" macros="devices_any_macro">
+            <body><![CDATA[
+             SELECT <@devices_fields />
+               FROM yycomm.store_device sd
+              WHERE sd.deviceid = :deviceId
+            ]]></body>
+        </sql>
+        <sql id="findByWeixinId" macros="devices_any_macro">
+            <body><![CDATA[
+             SELECT <@devices_fields />
+               FROM yycomm.store_device sd
+              WHERE sd.weixin = :weixinId
+                AND sd.status <> 0 AND sd.devicetype = '1'
+            ]]></body>
+        </sql>
+        <sql id="findById" macros="devices_any_macro">
+            <body><![CDATA[
+             SELECT <@devices_fields />
+               FROM yycomm.store_device sd
+              WHERE sd.DeviceId = :id
+              	AND sd.devicetype = '1'
+                AND sd.status <> 0
+            ]]></body>
+        </sql>
+    </model>
+    <model id="webchatlog">
+        <sql id="insert">
+            <body><![CDATA[
+        INSERT INTO acp_weixin_msgs
+                    (id, msg_type, msg_num, image_url, weixin_ids, msg_text,
+                     store_id, weixin_num,company_id, msg_temp_id, createUserId, createTime)
+             VALUES (:id, :msgType, :msgNum, :imageUrl, :weixinIds, :msgTxt,
+                     :storeId, :weixinNum, :companyId, :msgTempId, :createUserId, NOW())
+            ]]></body>
+        </sql>
+        <sql id="findById">
+            <body><![CDATA[
+        SELECT awm.id AS 'id', awm.msg_type AS 'msgType', awm.msg_num AS 'msgNum', awm.image_url AS 'imageUrl',
+               awm.weixin_ids AS 'weixinIds', awm.store_id AS 'storeId',awm.weixin_num AS 'weixinNum', awm.msg_temp_id AS 'msgTempId',
+               awm.company_id AS 'companyId', awm.createUserId AS 'createUserId', awm.createTime AS 'createTime',
+               awm.msg_text AS 'msgText',sd.deviceid AS 'deviceId'
+          FROM acp_weixin_msgs awm
+          LEFT JOIN yycomm.store_device sd
+          ON sd.devicetype = 1 AND sd.status = 1 AND sd.store_id = awm.store_id AND awm.company_id = sd.company_id
+         WHERE awm.id = :id
+            ]]></body>
+        </sql>
+        <sql id="batch_insert_details">
+            <body><![CDATA[
+        INSERT INTO yycomm.Send_MSG_List
+                    ( content,  touser, `type`, isgroup, todeviceid, store_id, company_id, UUID,fromuser,
+                      recieveTime ,sendFlag, IDGroup, IDSort)
+             VALUES ( ?,        ?,       ?,     ?,       ?,          ?,        ?,          ?,    ?,
+                      NOW() ,     0,?,?)
+            ]]></body>
+        </sql>
+        <sql id="sendByFailsInToday">
+            <body><![CDATA[
+        UPDATE yycomm.Send_MSG_List
+           SET sendflag = '0'
+         WHERE store_id = :storeId
+           AND company_id = :companyId
+           AND recievetime > DATE_FORMAT(CURDATE(),'%Y-%m-%d')
+           AND ack IS NULL
+            ]]></body>
+        </sql>
+    </model>
+    <model id="wechatSign">
+        <sql id="insert">
+            <body><![CDATA[
+	       INSERT INTO 
+	      		acp_weixin_sign(employee_id,weixin_id,store_id,company_id,signTime,createUserId,createTime)
+		   VALUES
+		   		(:employeeId,:weixinId,:storeId,:companyId,NOW(),:createUserId,NOW())
+            ]]></body>
+        </sql>
+        <sql id="batch_insert">
+            <body><![CDATA[
+	       INSERT INTO 
+	      		acp_weixin_sign(employee_id,weixin_id,store_id,company_id,createUserId,signTime,createTime)
+		   VALUES
+		   		(?,?,?,?,?,NOW(),NOW())
+            ]]></body>
+        </sql>
+        <sql id="update">
+            <body><![CDATA[
+	       	UPDATE acp_weixin_sign 
+	       	SET employee_id = :employeeId,signTime = NOW() 
+	       	WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="find_by_weixin">
+            <body><![CDATA[
+	       SELECT 
+				id AS 'id',
+				employee_id AS 'employeeId',
+				weixin_id AS 'weixinId',
+				store_id AS 'storeId',
+				company_id AS 'companyId'
+			FROM acp_weixin_sign
+			WHERE 
+				weixin_id = :weixinId
+				AND store_id = :storeId
+				AND company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="batch_insert_details">
+            <body><![CDATA[
+        INSERT INTO yycomm.Send_MSG_List
+                    ( content,  touser, `type`, isgroup, todeviceid, store_id, company_id, UUID,fromuser,
+                      recieveTime ,sendFlag, IDGroup, IDSort)
+             VALUES ( ?,        ?,       ?,     ?,       ?,          ?,        ?,          ?,    ?,
+                      NOW() ,     0,?,?)
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

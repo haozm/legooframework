@@ -6,6 +6,4 @@ abstract class BaseParseRule extends Rule {
 
     public abstract String[] getPatterns();
 
-    static String STK_TENANTS = "tenants";
-
 }

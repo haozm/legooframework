@@ -9,10 +9,12 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.springframework.util.Assert;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -61,11 +63,16 @@ public abstract class ResultSetUtil {
         return value == null ? null : LocalDate.fromDateFields(value);
     }
 
+    public static LocalDateTime getLocalDateTime(ResultSet res, String columnLabel) throws SQLException {
+        Timestamp value = res.getTimestamp(columnLabel);
+        return value == null ? null : LocalDateTime.fromDateFields(value);
+    }
+
     @SuppressWarnings("unchecked")
     public static <T> Optional<T> getOptObject(ResultSet res, String columnLabel, Class<T> clazz) throws SQLException {
         Object value = res.getObject(columnLabel);
         if (value == null) return Optional.empty();
-        Assert.isInstanceOf(clazz, value, String.format("参数类型不匹配 %s", clazz));
+        Assert.isInstanceOf(clazz, value, String.format("参数类型不匹配 %s not %s", clazz, value.getClass()));
         return Optional.ofNullable((T) value);
     }
 
@@ -73,7 +80,7 @@ public abstract class ResultSetUtil {
     public static <T> T getObject(ResultSet res, String columnLabel, Class<T> clazz) throws SQLException {
         Object value = res.getObject(columnLabel);
         Preconditions.checkNotNull(value, "数据列%s对应的数值为null,与期望值不符.", columnLabel);
-        Assert.isInstanceOf(clazz, value, "参数类型不匹配");
+        Assert.isInstanceOf(clazz, value, String.format("参数类型不匹配%s not %s", clazz, value.getClass()));
         return (T) value;
     }
 

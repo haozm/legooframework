@@ -1,0 +1,564 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>    
+    <model id="memberRFM_R">
+        <sql id="member_r_summary" dynamic="true">
+            <body><![CDATA[
+				 SELECT
+				 	<#if companyId??>
+						'1' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif orgIds?? && orgIds?size != 0>
+						'2' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif storeIds?? && storeIds?size != 0>
+						'3' AS 'fix_org_type',
+						aas.id AS 'fix_org_id',
+						aas.name AS 'fix_org_name',
+					</#if>
+					<#if rfmType?? && rfmType=="S">
+						SUM(IF(yssmr.S_R_Level = 5 OR yssmr.S_R_Level = 4,1,0)) AS 'active_num',
+						SUM(IF(yssmr.S_R_Level = 5 OR yssmr.S_R_Level = 4,1,0))/COUNT(acsm.member_id) AS 'active_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'active_num_desc',
+						SUM(IF(yssmr.S_R_Level = 3,1,0)) AS 'qiuet_num',
+						SUM(IF(yssmr.S_R_Level = 3,1,0))/COUNT(acsm.member_id) AS 'qiuet_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 3) AS 'qiuet_num_desc',
+						SUM(IF(yssmr.S_R_Level = 2,1,0)) AS 'sleep_num',
+						SUM(IF(yssmr.S_R_Level = 2,1,0))/COUNT(acsm.member_id) AS 'sleep_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 2) AS 'sleep_num_desc',
+						SUM(IF(yssmr.S_R_Level = 1,1,0)) AS 'lost_num',
+						SUM(IF(yssmr.S_R_Level = 1,1,0))/COUNT(acsm.member_id) AS 'lost_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 1) AS 'lost_num_desc'
+					<#else>
+						SUM(IF(yssmr.C_R_Level = 5 OR yssmr.C_R_Level = 4,1,0)) AS 'active_num',
+						SUM(IF(yssmr.C_R_Level = 5 OR yssmr.C_R_Level = 4,1,0))/COUNT(acsm.member_id) AS 'active_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'active_num_desc',
+						SUM(IF(yssmr.C_R_Level = 3,1,0)) AS 'qiuet_num',
+						SUM(IF(yssmr.C_R_Level = 3,1,0))/COUNT(acsm.member_id) AS 'qiuet_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 3) AS 'qiuet_num_desc',
+						SUM(IF(yssmr.C_R_Level = 2,1,0)) AS 'sleep_num',
+						SUM(IF(yssmr.C_R_Level = 2,1,0))/COUNT(acsm.member_id) AS 'sleep_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 2) AS 'sleep_num_desc',
+						SUM(IF(yssmr.C_R_Level = 1,1,0)) AS 'lost_num',
+						SUM(IF(yssmr.C_R_Level = 1,1,0))/COUNT(acsm.member_id) AS 'lost_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 1) AS 'lost_num_desc'
+					</#if>
+				FROM acp.crm_store_member acsm
+				INNER JOIN acp.acp_store aas ON acsm.store_id = aas.id
+				LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON  yssmr.company_id = :USER_COMPANY_ID AND yssmr.member_id = acsm.member_id
+				<#if companyId??>
+					LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+				<#elseif orgIds?? && orgIds?size != 0>
+					LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+				</#if>
+				WHERE aas.company_id = :USER_COMPANY_ID
+				<#if companyId??>
+					AND aas.company_id = :companyId
+				<#elseif orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (${orgIds?join(",")})
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+				</#if>
+				GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="detail" dynamic="true">
+            <body><![CDATA[
+			 SELECT
+				 	<#if companyId??>
+						'1' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif orgIds?? && orgIds?size != 0>
+						'2' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif storeIds?? && storeIds?size != 0>
+						'3' AS 'fix_org_type',
+						aas.id AS 'fix_org_id',
+						aas.name AS 'fix_org_name',
+					</#if>
+					<#if rfmType?? && rfmType=="S">
+						SUM(IF(yssmr.S_R_Level = 5 OR yssmr.S_R_Level = 4,1,0)) AS 'active_num',
+						SUM(IF(yssmr.S_R_Level = 5 OR yssmr.S_R_Level = 4,1,0))/COUNT(acsm.member_id) AS 'active_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'active_num_desc',
+						SUM(IF(yssmr.S_R_Level = 3,1,0)) AS 'qiuet_num',
+						SUM(IF(yssmr.S_R_Level = 3,1,0))/COUNT(acsm.member_id) AS 'qiuet_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 3) AS 'qiuet_num_desc',
+						SUM(IF(yssmr.S_R_Level = 2,1,0)) AS 'sleep_num',
+						SUM(IF(yssmr.S_R_Level = 2,1,0))/COUNT(acsm.member_id) AS 'sleep_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 2) AS 'sleep_num_desc',
+						SUM(IF(yssmr.S_R_Level = 1,1,0)) AS 'lost_num',
+						SUM(IF(yssmr.S_R_Level = 1,1,0))/COUNT(acsm.member_id) AS 'lost_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 1) AS 'lost_num_desc'
+					<#else>
+						SUM(IF(yssmr.C_R_Level = 5 OR yssmr.C_R_Level = 4,1,0)) AS 'active_num',
+						SUM(IF(yssmr.C_R_Level = 5 OR yssmr.C_R_Level = 4,1,0))/COUNT(acsm.member_id) AS 'active_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'active_num_desc',
+						SUM(IF(yssmr.C_R_Level = 3,1,0)) AS 'qiuet_num',
+						SUM(IF(yssmr.C_R_Level = 3,1,0))/COUNT(acsm.member_id) AS 'qiuet_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 3) AS 'qiuet_num_desc',
+						SUM(IF(yssmr.C_R_Level = 2,1,0)) AS 'sleep_num',
+						SUM(IF(yssmr.C_R_Level = 2,1,0))/COUNT(acsm.member_id) AS 'sleep_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 2) AS 'sleep_num_desc',
+						SUM(IF(yssmr.C_R_Level = 1,1,0)) AS 'lost_num',
+						SUM(IF(yssmr.C_R_Level = 1,1,0))/COUNT(acsm.member_id) AS 'lost_num_rio',
+						(SELECT CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 1) AS 'lost_num_desc'
+					</#if>
+				<#if companyId??>
+					FROM acp.acp_organization aao
+					LEFT JOIN acp.acp_store aas ON aao.id = aas.company_id
+				<#elseif orgIds?? && orgIds?size != 0>
+					FROM acp.acp_organization aao
+					LEFT JOIN acp.acp_store aas ON aao.id = aas.organization_id
+				<#else>
+					FROM acp.acp_store aas
+				</#if>				
+                LEFT JOIN acp.crm_store_member acsm ON aas.id = acsm.store_id
+                LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON yssmr.company_id = :USER_COMPANY_ID AND yssmr.member_id = acsm.member_id				
+				WHERE aas.company_id = :USER_COMPANY_ID
+				<#if companyId??>
+					AND aas.company_id = :companyId
+					GROUP BY aas.company_id
+				<#elseif orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (${orgIds?join(",")})
+					GROUP BY aas.organization_id
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+					GROUP BY aas.id
+				</#if>
+				<#if order?? && order!="">
+				ORDER BY ${order}
+				</#if>
+            ]]></body>
+        </sql>
+        <sql id="echart" dynamic="true">
+            <body><![CDATA[
+            SELECT
+              0 AS 'level',
+              COUNT(DISTINCT acsm.member_id) AS 'count',
+              '未定义' AS 'desc'
+              FROM acp.acp_store aas
+			  INNER JOIN acp.crm_store_member acsm ON acsm.store_id = aas.id
+              LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON yssmr.company_id = :USER_COMPANY_ID AND yssmr.member_id = acsm.member_id
+              WHERE (yssmr.C_R_Level = 0 OR yssmr.C_R_Level IS NULL) 
+			<#if companyId??>
+					AND aas.company_id = :companyId
+				<#elseif orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (${orgIds?join(",")})
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+				</#if>
+			UNION
+			SELECT 
+				acrp.rfmLevel AS 'level',
+				COUNT(DISTINCT acsm.member_id) AS 'count',
+				CONCAT(MIN(reccencyStartDays),'-',MAX(reccencyEndDays),'天未消费') AS 'desc'
+			FROM acp.crm_rfmparameter acrp
+            LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON yssmr.company_id = :USER_COMPANY_ID AND acrp.rfmLevel = yssmr.C_R_Level
+            LEFT JOIN acp.crm_store_member acsm ON yssmr.member_id = acsm.member_id AND acsm.store_id = acrp.store_id
+			LEFT JOIN acp.acp_store aas ON acsm.store_id = aas.id
+			WHERE 
+			<#if companyId??>
+					aas.company_id = :companyId
+				<#elseif orgIds?? && orgIds?size != 0>
+					aas.organization_id IN (${orgIds?join(",")})
+				<#elseif storeIds?? && storeIds?size != 0>
+					aas.id IN (${storeIds?join(",")})
+				</#if>
+			GROUP BY acrp.rfmLevel
+            ]]></body>
+        </sql>         
+    </model>
+    <model id="memberRFM_F">
+        <sql id="member_f_summary" dynamic="true">
+            <body><![CDATA[
+				 SELECT
+				 	<#if companyId??>
+						'1' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif orgIds?? && orgIds?size != 0>
+						'2' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif storeIds?? && storeIds?size != 0>
+						'3' AS 'fix_org_type',
+						aas.id AS 'fix_org_id',
+						aas.name AS 'fix_org_name',
+					</#if>
+					<#if rfmType?? && rfmType=="S">
+						SUM(IF(yssmr.S_F_Level = 5 OR yssmr.S_F_Level = 4,1,0)) AS 'fans_num',
+						SUM(IF(yssmr.S_F_Level = 5 OR yssmr.S_F_Level = 4,1,0))/COUNT(acsm.member_id) AS 'fans_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次')  
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'fans_num_desc',
+						SUM(IF(yssmr.S_F_Level = 3,1,0)) AS 'olded_num',
+						SUM(IF(yssmr.S_F_Level = 3,1,0))/COUNT(acsm.member_id) AS 'olded_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 3) AS 'olded_num_desc',
+						SUM(IF(yssmr.S_F_Level = 2,1,0)) AS 'old_num',
+						SUM(IF(yssmr.S_F_Level = 2,1,0))/COUNT(acsm.member_id) AS 'old_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 2) AS 'old_num_desc',
+						SUM(IF(yssmr.S_F_Level = 1,1,0)) AS 'new_num',
+						SUM(IF(yssmr.S_F_Level = 1,1,0))/COUNT(acsm.member_id) AS 'new_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 1) AS 'new_num_desc'
+					<#else>
+						SUM(IF(yssmr.C_F_Level = 5 OR yssmr.C_F_Level = 4,1,0)) AS 'fans_num',
+						SUM(IF(yssmr.C_F_Level = 5 OR yssmr.C_F_Level = 4,1,0))/COUNT(acsm.member_id) AS 'fans_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'fans_num_desc',
+						SUM(IF(yssmr.C_F_Level = 3,1,0)) AS 'olded_num',
+						SUM(IF(yssmr.C_F_Level = 3,1,0))/COUNT(acsm.member_id) AS 'olded_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 3) AS 'olded_num_desc',
+						SUM(IF(yssmr.C_F_Level = 2,1,0)) AS 'old_num',
+						SUM(IF(yssmr.C_F_Level = 2,1,0))/COUNT(acsm.member_id) AS 'old_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 2) AS 'old_num_desc',
+						SUM(IF(yssmr.C_F_Level = 1,1,0)) AS 'new_num',
+						SUM(IF(yssmr.C_F_Level = 1,1,0))/COUNT(acsm.member_id) AS 'new_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 1) AS 'new_num_desc'
+					</#if>
+				FROM acp.crm_store_member acsm
+				INNER JOIN acp.acp_store aas ON acsm.store_id = aas.id
+				LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON yssmr.company_id = :USER_COMPANY_ID AND yssmr.member_id = acsm.member_id
+				<#if companyId??>
+					LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+				<#elseif orgIds?? && orgIds?size != 0>
+					LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+				</#if>
+				WHERE aas.company_id = :USER_COMPANY_ID
+				<#if companyId??>
+					AND aas.company_id = :companyId
+				<#elseif orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (${orgIds?join(",")})
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+				</#if>
+				GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="detail" dynamic="true">
+            <body><![CDATA[
+			 SELECT
+				 	<#if companyId??>
+						'1' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif orgIds?? && orgIds?size != 0>
+						'2' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif storeIds?? && storeIds?size != 0>
+						'3' AS 'fix_org_type',
+						aas.id AS 'fix_org_id',
+						aas.name AS 'fix_org_name',
+					</#if>
+					<#if rfmType?? && rfmType=="S">
+						SUM(IF(yssmr.S_F_Level = 5 OR yssmr.S_F_Level = 4,1,0)) AS 'fans_num',
+						SUM(IF(yssmr.S_F_Level = 5 OR yssmr.S_F_Level = 4,1,0))/COUNT(acsm.member_id) AS 'fans_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次')  
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'fans_num_desc',
+						SUM(IF(yssmr.S_F_Level = 3,1,0)) AS 'olded_num',
+						SUM(IF(yssmr.S_F_Level = 3,1,0))/COUNT(acsm.member_id) AS 'olded_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 3) AS 'olded_num_desc',
+						SUM(IF(yssmr.S_F_Level = 2,1,0)) AS 'old_num',
+						SUM(IF(yssmr.S_F_Level = 2,1,0))/COUNT(acsm.member_id) AS 'old_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 2) AS 'old_num_desc',
+						SUM(IF(yssmr.S_F_Level = 1,1,0)) AS 'new_num',
+						SUM(IF(yssmr.S_F_Level = 1,1,0))/COUNT(acsm.member_id) AS 'new_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 1) AS 'new_num_desc'
+					<#else>
+						SUM(IF(yssmr.C_F_Level = 5 OR yssmr.C_F_Level = 4,1,0)) AS 'fans_num',
+						SUM(IF(yssmr.C_F_Level = 5 OR yssmr.C_F_Level = 4,1,0))/COUNT(acsm.member_id) AS 'fans_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'fans_num_desc',
+						SUM(IF(yssmr.C_F_Level = 3,1,0)) AS 'olded_num',
+						SUM(IF(yssmr.C_F_Level = 3,1,0))/COUNT(acsm.member_id) AS 'olded_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 3) AS 'olded_num_desc',
+						SUM(IF(yssmr.C_F_Level = 2,1,0)) AS 'old_num',
+						SUM(IF(yssmr.C_F_Level = 2,1,0))/COUNT(acsm.member_id) AS 'old_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 2) AS 'old_num_desc',
+						SUM(IF(yssmr.C_F_Level = 1,1,0)) AS 'new_num',
+						SUM(IF(yssmr.C_F_Level = 1,1,0))/COUNT(acsm.member_id) AS 'new_num_rio',
+						(SELECT CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 1) AS 'new_num_desc'
+					</#if>
+				<#if companyId??>
+					FROM acp.acp_organization aao
+					LEFT JOIN acp.acp_store aas ON aao.id = aas.company_id
+				<#elseif orgIds?? && orgIds?size != 0>
+					FROM acp.acp_organization aao
+					LEFT JOIN acp.acp_store aas ON aao.id = aas.organization_id
+				<#else>
+					FROM acp.acp_store aas
+				</#if>				
+                LEFT JOIN acp.crm_store_member acsm ON aas.id = acsm.store_id
+                LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON yssmr.company_id = :USER_COMPANY_ID AND yssmr.member_id = acsm.member_id				
+				WHERE aas.company_id = :USER_COMPANY_ID
+				<#if companyId??>
+					AND aas.company_id = :companyId
+					GROUP BY aas.company_id
+				<#elseif orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (${orgIds?join(",")})
+					GROUP BY aas.organization_id
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+					GROUP BY aas.id
+				</#if>
+				<#if order?? && order!="">
+				ORDER BY ${order}
+				</#if>
+            ]]></body>
+        </sql>
+        <sql id="echart" dynamic="true">
+            <body><![CDATA[
+            SELECT
+              0 AS 'level',
+              COUNT(DISTINCT acsm.member_id) AS 'count',
+              '未定义' AS 'desc'
+              FROM acp.acp_store aas
+			  INNER JOIN acp.crm_store_member acsm ON acsm.store_id = aas.id
+              LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON yssmr.company_id = :USER_COMPANY_ID AND yssmr.member_id = acsm.member_id
+              WHERE (yssmr.C_R_Level = 0 OR yssmr.C_R_Level IS NULL) 
+			<#if companyId??>
+					AND aas.company_id = :companyId
+				<#elseif orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (${orgIds?join(",")})
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+				</#if>
+			UNION
+			SELECT 
+				acrp.rfmLevel AS 'level',
+				COUNT(DISTINCT acsm.member_id) AS 'count',
+				CONCAT('消费',MIN(frenquencyStartDays),'-',MAX(frenquencyEndDays),'次')  AS 'desc'
+			FROM acp.crm_rfmparameter acrp
+            LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON yssmr.company_id = :USER_COMPANY_ID AND acrp.rfmLevel = yssmr.C_F_Level
+            LEFT JOIN acp.crm_store_member acsm ON yssmr.member_id = acsm.member_id AND acsm.store_id = acrp.store_id
+			LEFT JOIN acp.acp_store aas ON acsm.store_id = aas.id
+			WHERE 
+			<#if companyId??>
+					aas.company_id = :companyId
+				<#elseif orgIds?? && orgIds?size != 0>
+					aas.organization_id IN (${orgIds?join(",")})
+				<#elseif storeIds?? && storeIds?size != 0>
+					aas.id IN (${storeIds?join(",")})
+				</#if>
+			GROUP BY acrp.rfmLevel
+            ]]></body>
+        </sql>       
+    </model>
+    <model id="memberRFM_M">
+        <sql id="member_m_summary" dynamic="true">
+            <body><![CDATA[
+				 SELECT
+				 	<#if companyId??>
+						'1' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif orgIds?? && orgIds?size != 0>
+						'2' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif storeIds?? && storeIds?size != 0>
+						'3' AS 'fix_org_type',
+						aas.id AS 'fix_org_id',
+						aas.name AS 'fix_org_name',
+					</#if>
+					<#if rfmType?? && rfmType=="S">
+						SUM(IF(yssmr.S_M_Level = 5 OR yssmr.S_M_Level = 4,1,0)) AS 'top_num',
+						SUM(IF(yssmr.S_M_Level = 5 OR yssmr.S_M_Level = 4,1,0))/COUNT(acsm.member_id) AS 'top_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'top_num_desc',
+						SUM(IF(yssmr.S_M_Level = 3,1,0)) AS 'high_num',
+						SUM(IF(yssmr.S_M_Level = 3,1,0))/COUNT(acsm.member_id) AS 'high_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 3) AS 'high_num_desc',
+						SUM(IF(yssmr.S_M_Level = 2,1,0)) AS 'nor_num',
+						SUM(IF(yssmr.S_M_Level = 2,1,0))/COUNT(acsm.member_id) AS 'nor_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 2) AS 'nor_num_desc',
+						SUM(IF(yssmr.S_M_Level = 1,1,0)) AS 'low_num',
+						SUM(IF(yssmr.S_M_Level = 1,1,0))/COUNT(acsm.member_id) AS 'low_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 1) AS 'low_num_desc'
+					<#else>
+						SUM(IF(yssmr.C_M_Level = 5 OR yssmr.C_M_Level = 4,1,0)) AS 'top_num',
+						SUM(IF(yssmr.C_M_Level = 5 OR yssmr.C_M_Level = 4,1,0))/COUNT(acsm.member_id) AS 'top_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'top_num_desc',
+						SUM(IF(yssmr.C_M_Level = 3,1,0)) AS 'high_num',
+						SUM(IF(yssmr.C_M_Level = 3,1,0))/COUNT(acsm.member_id) AS 'high_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 3) AS 'high_num_desc',
+						SUM(IF(yssmr.C_M_Level = 2,1,0)) AS 'nor_num',
+						SUM(IF(yssmr.C_M_Level = 2,1,0))/COUNT(acsm.member_id) AS 'nor_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 2) AS 'nor_num_desc',
+						SUM(IF(yssmr.C_M_Level = 1,1,0)) AS 'low_num',
+						SUM(IF(yssmr.C_M_Level = 1,1,0))/COUNT(acsm.member_id) AS 'low_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 1) AS 'low_num_desc'
+					</#if>
+				FROM acp.crm_store_member acsm
+				INNER JOIN acp.acp_store aas ON acsm.store_id = aas.id
+				LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON  yssmr.company_id = :USER_COMPANY_ID AND yssmr.member_id = acsm.member_id
+				<#if companyId??>
+					LEFT JOIN acp.acp_organization aao ON aao.id = aas.company_id AND aao.orgType = 1
+				<#elseif orgIds?? && orgIds?size != 0>
+					LEFT JOIN acp.acp_organization aao ON aas.organization_id = aao.id AND aao.orgType <> 1
+				</#if>
+				WHERE aas.company_id = :USER_COMPANY_ID
+				<#if companyId??>
+					AND aas.company_id = :companyId
+				<#elseif orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (${orgIds?join(",")})
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+				</#if>
+				GROUP BY aas.company_id	
+            ]]></body>
+        </sql>
+        <sql id="detail" dynamic="true">
+            <body><![CDATA[
+			 SELECT
+				 	<#if companyId??>
+						'1' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif orgIds?? && orgIds?size != 0>
+						'2' AS 'fix_org_type',
+						aao.id AS 'fix_org_id',
+						aao.name AS 'fix_org_name',
+					<#elseif storeIds?? && storeIds?size != 0>
+						'3' AS 'fix_org_type',
+						aas.id AS 'fix_org_id',
+						aas.name AS 'fix_org_name',
+					</#if>
+					<#if rfmType?? && rfmType=="S">
+						SUM(IF(yssmr.S_M_Level = 5 OR yssmr.S_M_Level = 4,1,0)) AS 'top_num',
+						SUM(IF(yssmr.S_M_Level = 5 OR yssmr.S_M_Level = 4,1,0))/COUNT(acsm.member_id) AS 'top_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'top_num_desc',
+						SUM(IF(yssmr.S_M_Level = 3,1,0)) AS 'high_num',
+						SUM(IF(yssmr.S_M_Level = 3,1,0))/COUNT(acsm.member_id) AS 'high_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 3) AS 'high_num_desc',
+						SUM(IF(yssmr.S_M_Level = 2,1,0)) AS 'nor_num',
+						SUM(IF(yssmr.S_M_Level = 2,1,0))/COUNT(acsm.member_id) AS 'nor_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 2) AS 'nor_num_desc',
+						SUM(IF(yssmr.S_M_Level = 1,1,0)) AS 'low_num',
+						SUM(IF(yssmr.S_M_Level = 1,1,0))/COUNT(acsm.member_id) AS 'low_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE store_id = acsm.store_id AND rfmLevel = 1) AS 'low_num_desc'
+					<#else>
+						SUM(IF(yssmr.C_M_Level = 5 OR yssmr.C_M_Level = 4,1,0)) AS 'top_num',
+						SUM(IF(yssmr.C_M_Level = 5 OR yssmr.C_M_Level = 4,1,0))/COUNT(acsm.member_id) AS 'top_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND (rfmLevel = 4 OR rfmLevel = 5)) AS 'top_num_desc',
+						SUM(IF(yssmr.C_M_Level = 3,1,0)) AS 'high_num',
+						SUM(IF(yssmr.C_M_Level = 3,1,0))/COUNT(acsm.member_id) AS 'high_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 3) AS 'high_num_desc',
+						SUM(IF(yssmr.C_M_Level = 2,1,0)) AS 'nor_num',
+						SUM(IF(yssmr.C_M_Level = 2,1,0))/COUNT(acsm.member_id) AS 'nor_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 2) AS 'nor_num_desc',
+						SUM(IF(yssmr.C_M_Level = 1,1,0)) AS 'low_num',
+						SUM(IF(yssmr.C_M_Level = 1,1,0))/COUNT(acsm.member_id) AS 'low_num_rio',
+						(SELECT CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元') 
+						FROM acp.crm_rfmparameter WHERE organization_id = :USER_COMPANY_ID AND rfmLevel = 1) AS 'low_num_desc'
+					</#if>
+				<#if companyId??>
+					FROM acp.acp_organization aao
+					LEFT JOIN acp.acp_store aas ON aao.id = aas.company_id
+				<#elseif orgIds?? && orgIds?size != 0>
+					FROM acp.acp_organization aao
+					LEFT JOIN acp.acp_store aas ON aao.id = aas.organization_id
+				<#else>
+					FROM acp.acp_store aas
+				</#if>				
+                LEFT JOIN acp.crm_store_member acsm ON aas.id = acsm.store_id
+                LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON  yssmr.company_id = :USER_COMPANY_ID AND yssmr.member_id = acsm.member_id				
+				WHERE aas.company_id = :USER_COMPANY_ID
+				<#if companyId??>
+					AND aas.company_id = :companyId
+					GROUP BY aas.company_id
+				<#elseif orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (${orgIds?join(",")})
+					GROUP BY aas.organization_id
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+					GROUP BY aas.id
+				</#if>
+				<#if order?? && order!="">
+				ORDER BY ${order}
+				</#if>
+            ]]></body>
+        </sql>
+        <sql id="echart" dynamic="true">
+            <body><![CDATA[
+            SELECT
+              0 AS 'level',
+              COUNT(DISTINCT acsm.member_id) AS 'count',
+              '未定义' AS 'desc'
+              FROM acp.acp_store aas
+			  INNER JOIN acp.crm_store_member acsm ON acsm.store_id = aas.id
+              LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON yssmr.company_id = :USER_COMPANY_ID AND yssmr.member_id = acsm.member_id
+              WHERE (yssmr.C_R_Level = 0 OR yssmr.C_R_Level IS NULL) 
+			<#if companyId??>
+					AND aas.company_id = :companyId
+				<#elseif orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (${orgIds?join(",")})
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+				</#if>
+			UNION
+			SELECT 
+				acrp.rfmLevel AS 'level',
+				COUNT(DISTINCT acsm.member_id) AS 'count',
+				CONCAT(MIN(monetaryStartAmount),'-',MAX(monetaryEndAmount),'元')   AS 'desc'
+			FROM acp.crm_rfmparameter acrp
+            LEFT JOIN YG_Statistics.stat_member_rfm yssmr ON yssmr.company_id = :USER_COMPANY_ID AND acrp.rfmLevel = yssmr.C_M_Level
+            LEFT JOIN acp.crm_store_member acsm ON yssmr.member_id = acsm.member_id AND acsm.store_id = acrp.store_id
+			LEFT JOIN acp.acp_store aas ON acsm.store_id = aas.id
+			WHERE 
+			<#if companyId??>
+					aas.company_id = :companyId
+				<#elseif orgIds?? && orgIds?size != 0>
+					aas.organization_id IN (${orgIds?join(",")})
+				<#elseif storeIds?? && storeIds?size != 0>
+					aas.id IN (${storeIds?join(",")})
+				</#if>
+			GROUP BY acrp.rfmLevel			          
+            ]]></body>
+        </sql>        
+    </model>
+</sqls>

@@ -13,6 +13,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
 
+import java.util.List;
 import java.util.Optional;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -34,15 +35,8 @@ public class UpcomingTaskEntityActionTest {
     public void groupByMemberTouchFrist() {
         Optional<CrmOrganizationEntity> com = organizationAction.findCompanyById(1);
         Preconditions.checkState(com.isPresent());
-//        Optional<List<UpcomingTaskEntity>> as = upcomingTaskAction.groupByMemberTouchFrist(com.get(), null);
-//        System.out.println(as.isPresent());
-    }
-
-    @Test
-    public void loadDetailById() {
-        upcomingTaskAction.loadTouch90DetailByStauts(TaskStatus.Create);
-//        Optional<List<UpcomingTaskEntity>> as = upcomingTaskAction.groupByMemberTouchFrist(com.get(), null);
-//        System.out.println(as.isPresent());
+        // Optional<List<UpcomingTaskEntity>> as = upcomingTaskAction.groupByMemberTouchFrist(com.get(), null);
+        // System.out.println(as.isPresent());
     }
 
     @Test

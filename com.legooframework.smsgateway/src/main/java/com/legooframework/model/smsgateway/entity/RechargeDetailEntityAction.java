@@ -114,10 +114,10 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
     /**
      * 免费赠送
      *
-     * @param company
-     * @param store
-     * @param totalQuantity
-     * @return
+     * @param company       公司
+     * @param store         么门店
+     * @param totalQuantity 数量
+     * @return RechargeRes 充值结果
      */
     public RechargeRes freecharge(CrmOrganizationEntity company, CrmStoreEntity store, String storeGroupId,
                                   int totalQuantity) {
@@ -143,8 +143,8 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
         Optional<List<RechargeDetailEntity>> rechargeDetails =
                 super.queryForEntities("loadUnDeductionRecharge", params, new RowMapperImpl());
         if (logger.isDebugEnabled())
-            logger.debug(String.format("loadUnDeductionRecharge(%s) res is %s", rechargeDetail, rechargeDetails.isPresent() ?
-                    rechargeDetails.get().size() : 0));
+            logger.debug(String.format("loadUnDeductionRecharge(%s) res is %s", rechargeDetail,
+                    rechargeDetails.map(List::size).orElse(0)));
         return rechargeDetails;
     }
 
@@ -164,6 +164,11 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
             logger.debug(String.format("loadStoreBalance(%s) return %s", store.getId(), res.orElse(null)));
         res.ifPresent(x -> x.sort(STORE_FST));
         return res;
+    }
+
+    public void batchWriteOff(Collection<RechargeDetailEntity> rechargeDetails) {
+        Preconditions.checkArgument(CollectionUtils.isNotEmpty(rechargeDetails));
+        super.batchInsert("batchInsert", rechargeDetails);
     }
 
     /**

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="group">
+    	 <sql id="query_group_guides">
+            <body><![CDATA[
+             	SELECT 
+					'0000' AS 'groupId',
+					'所有好友' AS 'groupName',
+					guide_id AS 'guideId'
+					FROM acp_group_guide
+				WHERE store_id =:storeId AND company_id =:companyId AND group_id = '0000'
+				UNION
+				SELECT
+					gi.id AS 'groupId',
+					gi.group_name AS 'groupName',
+					gg.guide_id AS 'guideId'
+					FROM acp_group_instance gi
+					LEFT JOIN acp_group_guide gg
+					ON gi.id = gg.group_id
+				WHERE gi.store_id =:storeId AND gi.company_id =:companyId 
+            ]]></body>
+        </sql>
+        <sql id="query_nomember_groups" dynamic="true">
+            <body><![CDATA[
+             	SELECT 
+					agg.guide_id AS 'guideId',
+					agg.group_id AS 'groupId',
+					CASE TRIM(agg.group_id)
+					WHEN '0000' THEN '所有好友'
+					ELSE agi.group_name
+					END AS 'groupName',
+					CASE TRIM(agg.group_id)
+					WHEN '0000' THEN 
+					(SELECT 
+					COUNT(DISTINCT device.userName) 
+					FROM yycomm.T_${deviceId} device
+					LEFT JOIN yycomm.Update_His_Contact hc ON device.userName = hc.userName AND hc.store_id = :storeId
+					WHERE device.type <> 4 AND SUBSTRING_INDEX(device.userName,'@',-1)!='chatroom'
+					AND IFNULL(hc.flag,'init') IN ('init','add','add_chatroom_member','rm_chatroom_member'))				
+					ELSE 
+					(SELECT COUNT(*) FROM acp_group_friend agf 
+					WHERE agf.group_id = agg.group_id 
+					AND agg.store_id = :storeId 
+					AND agg.company_id = :companyId )
+					END AS 'size'
+				FROM acp_group_guide agg
+				LEFT JOIN acp_group_instance agi
+				ON agi.id = agg.group_id AND agi.store_id = :storeId
+				WHERE guide_id = :guideId AND agg.store_id = :storeId AND agg.company_id = :companyId
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

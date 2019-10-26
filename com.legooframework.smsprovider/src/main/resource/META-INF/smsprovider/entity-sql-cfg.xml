@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="SMSProviderEntity">
+        <sql id="loadAllSubAccounts" macros="crud_fixed">
+            <body><![CDATA[
+          SELECT sssa.id AS 'id', sssa.supplier_id AS 'supplierId', sssa.username AS 'username',
+                 sssa.password AS 'password', sssa.apikey AS 'apikey', sssa.sms_channel AS 'smsChannel',
+                 sssa.http_send_url AS 'httpSendUrl', sssa.http_status_url AS 'httpStatusUrl',
+                 sssa.http_replay_url AS 'httpReplayUrl', sssa.enabled AS 'enabled', sssa.sms_suffix AS 'smsSuffix',
+                 <@crud_fixed_select "sssa" />
+            FROM SMS_SUPPLIER_SUB_ACCOUNT sssa
+            ]]></body>
+        </sql>
+        <sql id="loadAllProviders" macros="crud_fixed">
+            <body><![CDATA[
+          SELECT ssi.id AS 'id', ssi.supplier_name AS 'name', ssi.enabled AS 'enabled',
+                 <@crud_fixed_select "ssi" />
+            FROM SMS_SUPPLIER_INFO ssi
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="SMSSendAndReceiveEntity">
+        <sql id="insert">
+            <body><![CDATA[
+          INSERT INTO SMS_SENDING_LOG
+                      (id, company_id, store_id, sms_channel, send_status,  phone_no, sms_count, word_count, sms_context, sms_ext, tenant_id, final_state, creator, createTime)
+               VALUES (:id,:companyId, :storeId, :smsChannel, :sendStatus, :phoneNo,  :smsCount, :wordCount, :smsContext, :smsExt, :tenantId,           0,      -1, CURRENT_TIMESTAMP)
+            ]]></body>
+        </sql>
+        <sql id="loadByIds" macros="crud_fixed">
+            <body><![CDATA[
+          SELECT sslt.id AS 'id',
+                 sslt.phone_no AS 'mobileNo',
+                 sslt.store_id AS 'storeId',
+                 sslt.company_id AS 'companyId',
+                 sslt.sms_channel AS 'smsChannel',
+                 sslt.send_status AS 'sendStatus',
+                 sslt.send_msg_id AS 'sendMsgId',
+                 sslt.sms_channel AS 'smsChannle',
+                 sslt.sms_ext AS 'smsExt',
+                 sslt.send_date AS 'sendDate',
+                 sslt.final_state AS 'finalState',
+                 sslt.final_state_date AS 'finalStateDate',
+                 sslt.final_state_desc AS 'finalStateDesc',
+                 sslt.remarks AS 'remarks',
+                 sslt.phone_no AS 'phoneNo',
+                 sslt.sms_count AS 'smsCount',
+                 sslt.word_count AS 'wordCount',
+                 sslt.sms_context AS 'smsContext',
+                 <@crud_fixed_select "sslt" />
+            FROM SMS_SENDING_LOG AS sslt
+           WHERE sslt.id IN ( ${smsIds?join(",")} )
+            ]]></body>
+        </sql>
+    </model>
+    <model id="SMSReplayEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+        INSERT INTO SMS_REPLAY_LOG
+                    (phone_no, sms_ext, send_msg_id, sms_context,  sms_replay_date)
+             VALUES (       ?,       ?,           ?,           ?,                ?)
+            ]]></body>
+        </sql>
+        <sql id="load4TDEntities" macros="crud_fixed">
+            <body><![CDATA[
+         SELECT srl.phone_no AS 'mobile',
+                sslt.company_id AS 'companyId',
+                sslt.store_id AS 'storeId'
+           FROM SMS_REPLAY_LOG AS srl
+      LEFT JOIN SMS_SENDING_LOG sslt ON sslt.send_msg_id = srl.send_msg_id
+          WHERE srl.createTime BETWEEN :start AND :end
+            AND srl.sms_context REGEXP 'TD|T|退'
+          UNION
+         SELECT sslt.phone_no AS 'mobile',
+                sslt.company_id AS 'companyId',
+                sslt.store_id AS 'storeId'
+           FROM SMS_SENDING_LOG AS sslt
+          WHERE sslt.final_state = 4
+            AND sslt.final_state_date BETWEEN :start AND :end
+            ]]></body>
+        </sql>
+    </model>
+    <model id="SMSBlackListEntity">
+        <sql id="batchReplace">
+            <body><![CDATA[
+       REPLACE INTO SMS_ALL_BLACKLIST
+                    (company_id, store_id, phone_no, send_msg_id, sms_context,  sms_replay_date)
+             VALUES (         ?,        ?,        ?,           ?,            ?,               ?)
+            ]]></body>
+        </sql>
+        <sql id="loadByInterval" dynamic="true">
+            <body><![CDATA[
+      SELECT company_id AS 'companyId', store_id AS 'storeId', phone_no AS 'mobile', send_msg_id AS 'sendMsgId',
+             sms_context AS 'content', sms_replay_date AS 'replayDate', '' AS 'id'
+        FROM SMS_ALL_BLACKLIST
+       WHERE editTime BETWEEN :date_start AND :date_end
+         AND company_id IN (${companyIds?join(",")})
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

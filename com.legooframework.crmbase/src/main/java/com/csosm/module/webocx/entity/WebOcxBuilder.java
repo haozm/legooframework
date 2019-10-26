@@ -14,7 +14,10 @@ public class WebOcxBuilder {
     private boolean paged, showCount, reject;
     private List<PageDefined> pageDefineds;
     private int index;
-
+    private String width;
+    private String display;
+    private String position;
+    
     private WebOcxBuilder(String webocxId, String url, String stmtId, boolean paged, boolean showCount, String title,
                           int index, String group, boolean reject, String desc) {
         this.webocxId = webocxId;
@@ -53,9 +56,32 @@ public class WebOcxBuilder {
     private String dsCtx;
     private boolean isAll;
     private List<String> datas;
+    private List<Map<String, String>> lables;
+    private OcxItem ocxSubItem;
+
+    private WebOcxBuilder(String type, String field, String placeholder, String defvalue, boolean required,
+                          String dataType, List<Map<String, String>> maps) {
+        this.type = type;
+        this.field = field;
+        this.name = "";
+        this.placeholder = placeholder;
+        this.defvalue = defvalue;
+        this.required = required;
+        this.dataType = dataType;
+        this.isAll = false;
+        this.datas = Lists.newArrayList();
+        this.lables = Lists.newArrayList(maps);
+    }
+
+    public OcxItem buildOcxSubItem() {
+        DataSource ds = null;
+        if (dsType != null)
+            ds = new DataSource(dsType, dsCtx, datas);
+        return new OcxItem(type, field, name, placeholder, required, defvalue, dataType, ds, lables);
+    }
 
     private WebOcxBuilder(String type, String field, String name, String placeholder, String defvalue, boolean required,
-                          String dataType, boolean isAll) {
+                          String dataType, boolean isAll,String width,String display,String position) {
         this.type = type;
         this.field = field;
         this.name = name;
@@ -65,11 +91,19 @@ public class WebOcxBuilder {
         this.dataType = dataType;
         this.isAll = isAll;
         this.datas = Lists.newArrayList();
+        this.lables = Lists.newArrayList();
+        this.width = width;
+        this.display = display;
+        this.position = position;
     }
 
-    public void setDatas(String label, String value, String checked) {
-        String res = String.format("%s:%s:%s", label, value, checked == null ? "null" : checked);
+    public void setDatas(String label, String value, String checked,String unit) {
+        String res = String.format("%s:%s:%s:%s", label, value, checked == null ? "null" : checked,null == unit?"null":unit);
         this.datas.add(res);
+    }
+
+    public void setOcxSubItem(OcxItem ocxItem) {
+        this.ocxSubItem = ocxItem;
     }
 
     public void setDataSource(String dsType, String context) {
@@ -78,24 +112,33 @@ public class WebOcxBuilder {
     }
 
     public static WebOcxBuilder createOcxItemBuilder(String type, String field, String name, String placeholder,
-                                                     String defvalue, boolean required, String dataType, boolean isAll) {
-        return new WebOcxBuilder(type, field, name, placeholder, defvalue, required, dataType, isAll);
+                                                     String defvalue, boolean required, String dataType, boolean isAll,String width,
+                                                     String display,String position) {
+        return new WebOcxBuilder(type, field, name, placeholder, defvalue, required, dataType, isAll,width,display,position);
+    }
+
+    public static WebOcxBuilder createOcxSubItemBuilder(String type, String field, String placeholder,
+                                                        String defvalue, boolean required, String dataType,
+                                                        List<Map<String, String>> maps) {
+        return new WebOcxBuilder(type, field, placeholder, defvalue, required, dataType, maps);
     }
 
 
     public OcxItem buildOcxItem() {
         DataSource ds = null;
-        if (dsType != null)
-            ds = new DataSource(dsType, dsCtx, datas);
-        return new OcxItem(type, field, name, placeholder, required, defvalue, dataType, ds, isAll);
+        if (dsType != null) ds = new DataSource(dsType, dsCtx, datas);
+        return new OcxItem(type, field, name, placeholder, required, defvalue, dataType, ds, isAll, ocxSubItem,width,display,position);
     }
 
     public static ColumMeta buildMeta(String id, String name, String type, boolean fixed) {
         return new ColumMeta(id, name, type, fixed);
     }
 
-    public static Operate buildOperate(String name, String title, String type, String url, String keys) {
-        return new Operate(name, title, type, url, Strings.isNullOrEmpty(keys) ? null : StringUtils.split(keys, ','));
+    public static Operate buildOperate(String name, String title, String type, String url, String keys,String roles) {
+    	Operate operate = new Operate(name, title, type, url, 
+        		Strings.isNullOrEmpty(keys) ? null : StringUtils.split(keys, ','));
+    	if(!Strings.isNullOrEmpty(roles))operate.addRoles(StringUtils.split(roles, ','));
+    	return operate;
     }
 
     private WebOcxBuilder(String name, String defvalue) {

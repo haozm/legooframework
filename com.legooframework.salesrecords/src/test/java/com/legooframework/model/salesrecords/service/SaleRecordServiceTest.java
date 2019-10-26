@@ -29,7 +29,7 @@ public class SaleRecordServiceTest {
     public void loadMergeSaleRecords() {
         LocalDateTime start = DateTimeUtils.parseDef("2018-09-15 00:00:00");
         LocalDateTime end = DateTimeUtils.parseDef("2018-12-14 23:59:59");
-        saleRecordService.loadSaleRecordByStore(67, null, start.toDate(), end.toDate(), true);
+  //      saleRecordService.loadSaleRecordByStore(67, null, start.toDate(), end.toDate(), true);
 //        System.out.println(res);
     }
 

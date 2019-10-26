@@ -84,7 +84,7 @@ public class WebOcx {
         return Optional.fromNullable(pg);
     }
 
-    Optional<List<PageDefinedDto>> loadCompanyPages(OrganizationEntity company) {
+    public Optional<List<PageDefinedDto>> loadCompanyPages(OrganizationEntity company) {
         if (isReject()) {
             Optional<List<PageDefinedDto>> _pages = loadComPagesDto(company, true);
             if (_pages.isPresent()) return _pages;

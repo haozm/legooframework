@@ -31,7 +31,9 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping(value = "/rechargerule")
 public class RechargeRuleController extends BaseController {
+
     private static final Logger logger = LoggerFactory.getLogger(RechargeRuleController.class);
+
     private static Comparator<RechargeRuleEntity> order = Comparator
             .comparingInt((ToIntFunction<RechargeRuleEntity>) o -> o.isEnabled() ? 0 : 1)
             .thenComparingInt(o -> o.isGlobalRule() ? 1 : 0)
@@ -52,7 +54,6 @@ public class RechargeRuleController extends BaseController {
         LoginContextHolder.setCtx(getLoginContext());
         Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
         CrmOrganizationEntity company = null;
-        LoginContextHolder.setCtx(getLoginContext());
         if (companyId != -1) {
             Optional<CrmOrganizationEntity> companyOpt = getBean(CrmOrganizationEntityAction.class, request)
                     .findCompanyById(companyId);

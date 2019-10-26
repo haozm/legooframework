@@ -1,22 +1,25 @@
 package com.legooframework.model.smsgateway.service;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
+import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import com.legooframework.model.smsgateway.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.integration.support.MessageBuilder;
+import org.springframework.messaging.Message;
 
+import java.util.List;
 import java.util.Optional;
 
-public class SMSRechargeService extends SMSService {
+public class SMSRechargeService extends BundleService {
 
     private static final Logger logger = LoggerFactory.getLogger(SMSRechargeService.class);
 
     /**
-     * 公司充值
+     * 公司充值 巴拉巴拉
      *
      * @param companyId      公司ID
      * @param rechargeAmount 充值金额
@@ -30,7 +33,15 @@ public class SMSRechargeService extends SMSService {
         addBalance(rechargeRes);
     }
 
-    public void freecharge(Integer companyId, String storeGroupId, Integer storId, int totalQuantity) {
+    /**
+     * 免费充值
+     *
+     * @param companyId     公司ID
+     * @param storeGroupId  组织中间ID
+     * @param storId        门店ID
+     * @param totalQuantity 总量
+     */
+    void freecharge(Integer companyId, String storeGroupId, Integer storId, int totalQuantity) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("freecharge(%s,%s,%s,%s)", companyId, storeGroupId, storId, totalQuantity));
         CrmOrganizationEntity company = getCompany(companyId);
@@ -172,7 +183,6 @@ public class SMSRechargeService extends SMSService {
         addBalance(rechargeRes);
     }
 
-
     private RechargeRuleEntity getRechargeRule(CrmOrganizationEntity company, long rechargeAmount) {
         RechargeRuleSet ruleSet = getBean(RechargeRuleEntityAction.class).loadAllRuleSet();
         Optional<RechargeRuleEntity> rule = ruleSet.getSuitableRule(company, rechargeAmount);
@@ -208,5 +218,23 @@ public class SMSRechargeService extends SMSService {
         }
         return rechargeRes;
     }
+
+    /**
+     * 退款服务
+     */
+    public void batchWriteOffService() {
+//        Optional<List<SMSTransportLogEntity>> optional = getBean(SMSTransportLogEntityAction.class).loadSms4WriteOff();
+//        optional.ifPresent(xs -> {
+//            Message<List<SMSTransportLogEntity>> msg_request = MessageBuilder.withPayload(optional.get())
+//                    .setHeader("user", LoginContextHolder.getAnonymousCtx())
+//                    .setHeader("action", "writeOff")
+//                    .build();
+//            Message<?> message_rsp = getMessagingTemplate().sendAndReceive("channel_sms_balance", msg_request);
+//            if (message_rsp.getPayload() instanceof Exception) {
+//                logger.error(String.format("batchWriteOffService() has error...", (Exception) message_rsp.getPayload()));
+//            }
+//        });
+    }
+
 
 }

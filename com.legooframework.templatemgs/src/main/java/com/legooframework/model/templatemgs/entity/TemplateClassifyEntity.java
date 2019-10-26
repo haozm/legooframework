@@ -5,8 +5,10 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
+import com.legooframework.model.core.utils.CommonsUtils;
 import com.legooframework.model.core.web.TreeNode;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -19,12 +21,33 @@ public class TemplateClassifyEntity extends BaseEntity<String> {
     private final String deepPath;
     private Integer companyId;
 
-    TemplateClassifyEntity(String id, TemplateClassifyEntity parent, String classify, CrmOrganizationEntity company) {
-        super(id, company.getCompanyId().longValue(), -1L);
+    TemplateClassifyEntity(TemplateClassifyEntity parent, String classify, CrmOrganizationEntity company) {
+        super(CommonsUtils.randomId(10), company.getCompanyId().longValue(), -1L);
         this.pId = parent.getId();
         this.classify = classify;
         this.deepPath = String.format("%s-%s", parent.getDeepPath(), this.getId());
         this.companyId = company.getCompanyId();
+    }
+
+    TemplateClassifyEntity(TemplateClassifyEntity parent, String classify) {
+        super(CommonsUtils.randomId(10), -1L, -1L);
+        this.pId = parent.getId();
+        this.classify = classify;
+        this.deepPath = String.format("%s-%s", parent.getDeepPath(), this.getId());
+        this.companyId = -1;
+    }
+
+    private TemplateClassifyEntity(String id, String pId, String classify, String deepPath, Integer companyId) {
+        super(id);
+        this.pId = pId;
+        this.classify = classify;
+        this.deepPath = deepPath;
+        this.companyId = companyId;
+    }
+
+    public static TemplateClassifyEntity createClassify4Holiday(TemplateClassifyEntity parent, HolidayEntity holiday) {
+        return new TemplateClassifyEntity(holiday.getId(), parent.getId(), holiday.getName(),
+                String.format("%s-%s", parent.getDeepPath(), holiday.getId()), holiday.getCompanyId());
     }
 
     TemplateClassifyEntity(String id, ResultSet res) {
@@ -48,6 +71,10 @@ public class TemplateClassifyEntity extends BaseEntity<String> {
         Map<String, Object> params = Maps.newHashMap();
         params.put("deepPath", this.deepPath);
         return params;
+    }
+
+    boolean isMyFather(TemplateClassifyEntity node) {
+        return StringUtils.equals(this.pId, node.getId());
     }
 
     TreeNode treeNode() {
@@ -80,5 +107,16 @@ public class TemplateClassifyEntity extends BaseEntity<String> {
                 .add("classify", classify)
                 .add("deepPath", deepPath)
                 .toString();
+    }
+    
+    
+    public Map<String,Object> toMap(){
+    	Map<String,Object> params = Maps.newHashMap();
+    	params.put("id", this.getId());
+    	params.put("pId", this.pId);
+    	params.put("classify", this.classify);
+    	params.put("companyId", this.companyId);
+    	params.put("deepPath", this.deepPath);
+    	return params;
     }
 }

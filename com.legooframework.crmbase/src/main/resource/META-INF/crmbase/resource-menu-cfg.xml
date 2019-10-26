@@ -1,39 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
     <menus tenantId="1">
-        <!--
-        <menu id="00101" name="会员管理" desc="会员管理">
-            <page id="00101_page001" name="会员管理" desc="会员管理" icon="" url="/wxfrn/frnGroup"/>
-            <page id="00101_page002" name="查询测试" desc="查询测试" icon="" url="/search"/>
-        </menu>
         <menu id="00103" name="微信管理" desc="微信后台管理与信息统计">
-            <page id="00103_page003" name="门店设备查看" desc="设备查看" icon="" url="/device/deviceCheck"/>
-            <page id="00103_page004" name="微信好友统计" desc="微信好友统计" icon="" url="/wxfrn/frnStatistics"/>
-            <page id="00103_page005" name="好友明细统计" desc="好友明细统计" icon="" url="/wxfrn/statisticDetail"/>
-            <page id="00103_page006" name="微信群发管理" desc="微信群发管理" icon="" url="/chat/chatSendMsg"/>
-            <page id="00103_page007" name="微信消息查询" desc="消息查询" icon="" url="/info/chatCheckView"/>
-            <page id="00103_page008" name="微信消息统计" desc="消息统计" icon="" url="/info/infoStatistics"/>
-            <page id="00103_page009" name="微信消息监测" desc="消息监测" icon="" url="/info/infoMonitor"/>
+            <page id="00103_page001" name="好友分组管理" desc="好友分组管理" icon="" url="/wxfrn/groupmanage"/>
+            <page id="00103_page002" name="好友明细管理" desc="好友明细管理" icon="" url="/wxfrn/detail"/>
+            <page id="00103_page003" name="会员匹配管理" desc="会员匹配管理" icon="" url="/wxfrn/relation"/>
+            <page id="00103_page004" name="会员分组权限" desc="会员分组权限" icon="" url="/wxfrn/permission"/>
+            <page id="00103_page005" name="消息群发管理" desc="消息群发管理" icon="" url="/wxfrn/sendmsg"/>
+            <page id="00103_page006" name="微信消息权限" desc="微信消息权限" icon="" url="/wxfrn/whitelist"/>
+            <page id="00103_page007" name="群发历史查询" desc="群发历史查询" icon="" url="/wxfrn/sendlog"/>
+            <page id="00103_page008" name="聊天消息查询" desc="聊天消息查询" icon="" url="/wxfrn/chatlog"/>
+            <page id="00103_page009" name="素材管理" desc="素材管理" icon="" url="/wxfrn/material"/>
+            <page id="00103_page010" name="微信好友统计" desc="微信好友统计" icon="" url="/wxfrn/statistics"/>
+            <page id="00103_page011" name="微信好友统计详细" desc="微信好友统计详细" icon="" url="/wxfrn/statisticDetail"/>
         </menu>
-        -->
-        <menu id="00106" name="短息管理" desc="短信管理">
+        <menu id="00105" name="会员管理" desc="会员管理">
+            <page id="00105_page010" name="会员明细" desc="会员明细" icon="" url="/member/list"/>
+            <page id="00105_page011" name="导购分配" desc="导购分配" icon="" url="/system/assign"/>
+        </menu>
+        <menu id="00106" name="短信管理" desc="短信管理">
             <page id="00106_page001" name="短信充值明细" desc="短信充值明细" icon="" url="/operation/rechargelist"/>
+            <page id="00106_page002" name="短信模板管理" desc="短信模板管理" icon="" url="/operation/templatemanage"/>
+            <page id="00106_page003" name="模板标签设置" desc="模板替换字段" icon="" url="/operation/templatetag"/>
         </menu>
-        <menu id="00104" name="系统管理" desc="统一设置系统资源信息">
+        <menu id="00104" name="系统管理" desc="系统管理">
             <page id="00104_page010" name="组织管理" desc="组织管理" icon="" url="/system/organization"/>
             <page id="00104_page011" name="职员管理" desc="职员管理" icon="" url="/system/employee"/>
             <page id="00104_page012" name="门店透视图" desc="门店透视图" icon="" url="/system/storeview"/>
             <page id="00104_page013" name="角色授权" desc="角色授权资源" icon="" url="/role/list"/>
             <page id="00104_page015" name="RFM设置" desc="RFM设置" icon="" url="/system/rfm"/>
+            <page id="00104_page016" name="缓存管理" desc="缓存管理" icon="" url="/system/cache"/>
+            <page id="00104_page017" name="模板管理" desc="模板管理" icon="" url="/operation/templatemanage"/>
         </menu>
-        <!--
-        <menu id="00106" name="报表管理" desc="报表相关资源信息">
-            <page id="00106_page001" name="报表管理" desc="报表管理" icon="" url="/system/orgList"/>
+        <menu id="00107" name="90服务管理" desc="90服务管理">
+        	<page id="00107_page001" name="90服务" desc="90服务" icon="" url="/membercare/ninety"/>
+        	<page id="00107_page002" name="90服务列表" desc="90服务列表" icon="" url="/membercare/ninetylist"/>
+        	<page id="00107_page003" name="90初始化设置" desc="90初始化设置" icon="" url="/membercare/ninetyInit"/>
+        	<page id="00107_page004" name="90服务（运维）" desc="90服务（运维）" icon="" url="/membercare/ninetydefault"/>
+        	<page id="00107_page005" name="90模板管理" desc="90模板管理" icon="" url="/membercare/ninetytemplate"/>
         </menu>
-        <menu id="00105" name="运营管理" desc="统一设置系统资源信息">
-            <page id="00105_page001" name="报表管理" desc="组织管理" icon="" url="/system/orgList"/>
+        <menu id="00101" name="商品管理" desc="商品管理">
+            <page id="00101_page001" name="商品库" desc="商品库" icon="" url="/sale/goodlist"/>
         </menu>
-        -->
+        <menu id="00102" name="销售管理" desc="销售管理">
+            <page id="00102_page001" name="销售明细" desc="销售明细" icon="" url="/sale/salesrecord"/>
+        </menu>
     </menus>
     <menus tenantId="-1">
         <menu id="00200" name="公司管理" desc="运维管理">
@@ -46,6 +57,7 @@
             <page id="00300_page002" name="短信充值" desc="短信充值" icon="" url="/operation/recharge"/>
             <page id="00300_page003" name="短信充值明细" desc="短信充值明细" icon="" url="/operation/rechargelist"/>
             <page id="00300_page004" name="充值规则设定" desc="充值规则设定" icon="" url="/operation/smssetting"/>
-        </menu>
+            <page id="00300_page005" name="短信模板管理" desc="短信模板管理" icon="" url="/operation/templatemanage"/>
+        </menu>    
     </menus>
 </resources>

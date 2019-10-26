@@ -3,59 +3,72 @@ package com.legooframework.model.smsgateway.entity;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
-import org.apache.commons.lang3.StringUtils;
+import com.legooframework.model.membercare.entity.BusinessType;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Stream;
 
 public class ChargeSummaryEntity extends BaseEntity<String> {
 
     private final Integer companyId, storeId;
-    private final long smsQuantity;
-    private final String businessRuleId, smsBatchNo, businessType, smsContext, operatorName, storeName, companyName;
+    private final long smsQuantity, wxQuantity;
+    private final String smsBatchNo, smsContext, storeName, companyName;
+    private final boolean freeSend;
     private final SendMode sendMode;
+    private final BusinessType businessType;
     private boolean finishSend;
-    private List<SendStatus> sendStatuses;
 
-    private ChargeSummaryEntity(CrmStoreEntity store, SMSSendRuleEntity businessRule, String smsBatchNo,
-                                long smsQuantity, long cteater, SendMode sendMode, String smsContext, String operatorName) {
-        super(UUID.randomUUID().toString().toUpperCase(), store.getCompanyId().longValue(), cteater);
-        Preconditions.checkState(smsQuantity > 0, "短信数量不可以为负数或者为0....");
+    private ChargeSummaryEntity(CrmStoreEntity store, BusinessType businessType, boolean freeSend, String smsBatchNo,
+                                long smsQuantity, long wxQuantity, long cteator, SendMode sendMode, String smsContext) {
+        super(UUID.randomUUID().toString().toUpperCase(), store.getCompanyId().longValue(), cteator);
         this.companyId = store.getCompanyId();
         this.companyName = store.getCompanyName();
         this.storeId = store.getId();
         this.storeName = store.getName();
         this.smsQuantity = smsQuantity;
-        this.businessRuleId = businessRule.getId();
+        this.freeSend = freeSend;
         this.smsBatchNo = smsBatchNo;
         this.sendMode = sendMode;
-        this.operatorName = operatorName;
-        this.businessType = businessRule.getBusinessType();
+        this.wxQuantity = wxQuantity;
+        this.businessType = businessType;
         this.smsContext = smsContext;
         this.finishSend = false;
     }
 
-    static ChargeSummaryEntity manual(CrmStoreEntity store, SMSSendRuleEntity businessRule, String smsBatchNo,
-                                      long smsQuantity, String smsContext, LoginContext user) {
-        SendMode sendMode = smsQuantity == 1 ? SendMode.ManualSingle : SendMode.ManualBatch;
-        return new ChargeSummaryEntity(store, businessRule, smsBatchNo, smsQuantity, user.getLoginId(),
-                sendMode, smsContext, user.getLoginName());
+    private ChargeSummaryEntity(CrmStoreEntity store, BusinessType businessType, String smsBatchNo,
+                                long smsQuantity, long wxQuantity, long cteator, SendMode sendMode, String smsContext) {
+        super(UUID.randomUUID().toString(), store.getCompanyId().longValue(), cteator);
+        this.companyId = store.getCompanyId();
+        this.companyName = store.getCompanyName();
+        this.storeId = store.getId();
+        this.storeName = store.getName();
+        this.smsQuantity = smsQuantity;
+        this.freeSend = true;
+        this.smsBatchNo = smsBatchNo;
+        this.sendMode = sendMode;
+        this.wxQuantity = wxQuantity;
+        this.businessType = businessType;
+        this.smsContext = smsContext;
+        this.finishSend = false;
     }
 
-    static ChargeSummaryEntity autoJob(CrmStoreEntity store, SMSSendRuleEntity businessRule, String smsBatchNo,
-                                       long smsQuantity, String smsContext) {
-        return new ChargeSummaryEntity(store, businessRule, smsBatchNo, smsQuantity, -1L, SendMode.AutoJob,
-                smsContext, null);
+    static ChargeSummaryEntity createInstance(CrmStoreEntity store, SMSSendRuleEntity businessRule, BusinessType businessType,
+                                              String smsBatchNo, boolean isAuto, long smsQuantity, long wxQuantity, String smsContext) {
+        Preconditions.checkArgument(!(smsQuantity <= 0 && wxQuantity <= 0), "本次发送短信或者微信数量不可都为0");
+        LoginContext user = isAuto ? null : LoginContextHolder.get();
+        SendMode sendMode = (smsQuantity == 1L || wxQuantity == 1L) ? SendMode.ManualSingle : SendMode.ManualBatch;
+        if (businessRule == null)
+            return new ChargeSummaryEntity(store, businessType, smsBatchNo, smsQuantity, wxQuantity, isAuto ? -1 : user.getLoginId(),
+                    sendMode, smsContext);
+        return new ChargeSummaryEntity(store, businessRule.getBusinessType(), businessRule.isFreeSend(), smsBatchNo,
+                smsQuantity, wxQuantity, isAuto ? -1 : user.getLoginId(), sendMode, smsContext);
     }
 
     ChargeSummaryEntity(String id, ResultSet res) {
@@ -64,25 +77,21 @@ public class ChargeSummaryEntity extends BaseEntity<String> {
             this.companyId = ResultSetUtil.getObject(res, "companyId", Integer.class);
             this.storeId = ResultSetUtil.getObject(res, "storeId", Integer.class);
             this.smsQuantity = ResultSetUtil.getObject(res, "smsQuantity", Long.class);
-            this.businessRuleId = ResultSetUtil.getObject(res, "businessRuleId", String.class);
+            this.wxQuantity = ResultSetUtil.getObject(res, "wxQuantity", Long.class);
+            this.freeSend = ResultSetUtil.getBooleanByInt(res, "freeSend");
             this.smsBatchNo = ResultSetUtil.getObject(res, "smsBatchNo", String.class);
-            this.smsContext = ResultSetUtil.getObject(res, "smsContext", String.class);
+            this.smsContext = ResultSetUtil.getOptString(res, "smsContext", null);
             this.storeName = ResultSetUtil.getOptString(res, "storeName", null);
             this.companyName = ResultSetUtil.getOptString(res, "companyName", null);
-            this.operatorName = ResultSetUtil.getOptString(res, "operatorName", null);
-            this.businessType = ResultSetUtil.getObject(res, "businessType", String.class);
+            this.businessType = BusinessType.parse(ResultSetUtil.getObject(res, "businessType", String.class));
             this.sendMode = SendMode.paras(ResultSetUtil.getObject(res, "sendMode", Integer.class));
             this.finishSend = ResultSetUtil.getBooleanByInt(res, "finishSend");
-            String _statuses = ResultSetUtil.getString(res, "detailStatus");
-            this.sendStatuses = Lists.newArrayList();
-            Stream.of(StringUtils.split(_statuses, ',')).mapToInt(Integer::valueOf)
-                    .forEach(val -> this.sendStatuses.add(SendStatus.paras(val)));
         } catch (SQLException e) {
             throw new RuntimeException("Restore ChargeSummaryEntity has SQLException", e);
         }
     }
 
-    String getSmsBatchNo() {
+    public String getSmsBatchNo() {
         return smsBatchNo;
     }
 
@@ -96,15 +105,15 @@ public class ChargeSummaryEntity extends BaseEntity<String> {
         params.put("companyId", companyId);
         params.put("storeId", storeId);
         params.put("smsBatchNo", smsBatchNo);
-        params.put("smsQuantity", smsQuantity);
-        params.put("businessRuleId", businessRuleId);
+        params.put("smsQuantity", smsQuantity < 0 ? 0 : smsQuantity);
+        params.put("freeSend", freeSend ? 1 : 0);
         params.put("sendMode", sendMode.getMode());
-        params.put("businessType", businessType);
+        params.put("businessType", businessType.toString());
         params.put("smsContext", smsContext);
         params.put("companyName", companyName);
         params.put("storeName", storeName);
-        params.put("operatorName", operatorName);
         params.put("finishSend", finishSend ? 1 : 0);
+        params.put("wxQuantity", wxQuantity < 0 ? 0 : wxQuantity);
         return params;
     }
 
@@ -114,17 +123,18 @@ public class ChargeSummaryEntity extends BaseEntity<String> {
         if (!(o instanceof ChargeSummaryEntity)) return false;
         ChargeSummaryEntity that = (ChargeSummaryEntity) o;
         return smsQuantity == that.smsQuantity &&
+                wxQuantity == that.wxQuantity &&
                 finishSend == that.finishSend &&
+                freeSend == that.freeSend &&
                 Objects.equal(companyId, that.companyId) &&
                 Objects.equal(smsContext, that.smsContext) &&
                 Objects.equal(storeId, that.storeId) &&
-                Objects.equal(businessRuleId, that.businessRuleId) &&
                 Objects.equal(smsBatchNo, that.smsBatchNo);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(companyId, storeId, smsQuantity, finishSend, businessRuleId, smsBatchNo,
+        return Objects.hashCode(companyId, storeId, smsQuantity, wxQuantity, finishSend, freeSend, smsBatchNo,
                 smsContext);
     }
 
@@ -135,14 +145,14 @@ public class ChargeSummaryEntity extends BaseEntity<String> {
                 .add("companyId", companyId)
                 .add("storeId", storeId)
                 .add("smsQuantity", smsQuantity)
-                .add("businessRuleId", businessRuleId)
+                .add("wxQuantity", wxQuantity)
+                .add("freeSend", freeSend)
                 .add("smsBatchNo", smsBatchNo)
                 .add("sendMode", sendMode)
                 .add("finishSend", finishSend)
                 .add("businessType", businessType)
                 .add("smsContext", smsContext)
                 .add("create", getCreator())
-                .add("operatorName", operatorName)
                 .toString();
     }
 }

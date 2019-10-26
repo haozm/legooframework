@@ -26,7 +26,7 @@ public class SMSBusinessRuleEntityActionTest {
     @Test
     public void findByType() {
         LoginContextHolder.setAnonymousCtx();
-//        Optional<SMSSendRuleEntity> res = ruleEntityAction.findByType("90");
+//        Optional<SMSSendRuleEntity> res = ruleEntityAction.loadByType("90");
 //        res.ifPresent(System.out::println);
     }
 

@@ -24,7 +24,7 @@ public class DataSource {
             List<LabelName> list = Lists.newArrayList();
             for (String $it : labelNames) {
                 String[] res = StringUtils.split($it, ':');
-                list.add(new LabelName(res[0], res[1], "true".equals(res[2])));
+                list.add(new LabelName(res[0], res[1], "true".equals(res[2]),res[3]));
             }
             this.labelNames = Lists.newArrayList(list);
         }
@@ -89,12 +89,14 @@ public class DataSource {
 
     class LabelName {
         private String label, value;
+        private String unit;
         private boolean checked;
 
-        LabelName(String label, String value, boolean checked) {
+        LabelName(String label, String value, boolean checked,String unit) {
             this.label = label;
             this.value = value;
             this.checked = checked;
+            this.unit = unit;
         }
 
         Map<String, Object> toViewMap() {
@@ -102,6 +104,7 @@ public class DataSource {
             data.put("label", label);
             data.put("value", value);
             if (checked) data.put("checked", true);
+            if(!Strings.isNullOrEmpty(unit)) data.put("unit", unit);
             return data;
         }
 

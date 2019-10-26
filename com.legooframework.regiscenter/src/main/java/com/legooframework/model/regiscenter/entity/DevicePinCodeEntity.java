@@ -11,6 +11,7 @@ import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.core.web.ViewBean;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.util.Strings;
 import org.joda.time.LocalDate;
 
@@ -77,6 +78,10 @@ public class DevicePinCodeEntity extends BaseEntity<Long> implements BatchSetter
         data.put("bindingDate", bindingDate == null ? null : bindingDate.toDate());
         data.put("pinCodeStatus", stauts.getStatus());
         return data;
+    }
+
+    public boolean hasDeviceId(String deviceId) {
+        return this.deviceId != null && StringUtils.equals(this.deviceId, deviceId);
     }
 
     public PinCodeStauts getStauts() {

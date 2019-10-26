@@ -1,0 +1,699 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<statisticals>
+	<statistical id="communication01" title="销售总额">
+        <meta>
+            <field title="环比" id="relativeRatio" type="percent"/>
+            <field title="同比" id="yoyRatio" type="percent"/>
+            <field title="微信收发比" id="wx_send_receive_ratio" type="int"/>
+            <field title="收发总数" id="total_send_receive" type="int"/>
+            <field title="统计时间" id="statisticTime" type="str"/>
+            <field title="接收消息" id="total_receive" type="int"/>
+            <field title="发送消息" id="total_send" type="int"/>
+            <field title="名称" id="fix_org_name" type="str" drill_type="2"/>
+        </meta>
+        <summary title="微信收发比" id="summary" sql="communication01.summary">
+            <field refId="wx_send_receive_ratio" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+        <subsummary title="二级汇总" id="subsummary" sql="communication01.subsummary">
+        	<field refId="wx_send_receive_ratio"/>
+            <field refId="total_send_receive"/>
+            <field refId="total_receive"/>
+            <field refId="total_send"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="communication01.detail">
+            <header>
+            	<field refId="fix_org_name" drill="true"/>
+                <field refId="statisticTime" order="true"/>
+                <field refId="wx_send_receive_ratio" order="true"/>
+                <field refId="total_send_receive" order="true"/>
+                <field refId="total_receive" order="true"/>
+                <field refId="total_send" order="true"/>
+            </header>
+        </table>
+        <echarts>
+            <echart id="001" type="bar" axisY1Title="消息数量" axisY2Title="收发比率" title="沟通统计"
+                    sql="communication01.detail">
+                <field refId="total_receive" serieType="bar" axisY="y1"/>
+                <field refId="total_send" serieType="bar" axisY="y1"/>
+                <field refId="wx_send_receive_ratio" serieType="bar" axisY="y2"/>
+            </echart>
+        </echarts>
+    </statistical>
+	<statistical id="communication04" title="销售总额">
+        <meta>
+            <field title="环比" id="relativeRatio" type="percent"/>
+            <field title="同比" id="yoyRatio" type="percent"/>
+            <field title="收发总数" id="total_send_receive" type="int"/>
+            <field title="统计时间" id="statisticTime" type="str"/>
+            <field title="微信收发比" id="total_receive" type="int"/>
+            <field title="发送消息" id="total_send" type="int"/>
+        </meta>
+        <summary title="微信收发比" id="summary" sql="communication04.summary">
+            <field refId="total_send_receive" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+    </statistical>
+    <statistical id="communication05" title="销售总额">
+        <meta>
+            <field title="接收消息" id="total_receive" type="int"/>
+            <field title="环比" id="relativeRatio" type="percent"/>
+            <field title="同比" id="yoyRatio" type="percent"/>
+             <field title="统计时间" id="statisticTime" type="str"/>
+        </meta>
+        <summary title="接收总数" id="summary" sql="communication05.summary">
+            <field refId="total_receive" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+    </statistical>
+   <statistical id="communication06" title="销售总额">
+        <meta>
+            <field title="环比" id="relativeRatio" type="percent"/>
+            <field title="同比" id="yoyRatio" type="percent"/>
+            <field title="发送消息" id="total_send" type="int"/>
+            <field title="统计时间" id="statisticTime" type="str"/>
+        </meta>
+        <summary title="发送信息" id="summary" sql="communication06.summary">
+            <field refId="total_send" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+    </statistical>
+    <statistical id="memberRFM_R" title="RFM_R分析报表">
+        <meta>
+            <field title="活跃会员" id="active_num" type="int"/>
+            <field title="沉默会员" id="qiuet_num" type="int"/>
+            <field title="睡眠会员" id="sleep_num" type="int"/>
+            <field title="流失会员" id="lost_num" type="int"/>
+
+            <field title="描述" id="active_num_desc" type="str"/>
+            <field title="描述" id="qiuet_num_desc" type="str"/>
+            <field title="描述" id="sleep_num_desc" type="str"/>
+            <field title="描述" id="lost_num_desc" type="str"/>
+
+            <field title="活跃会员占比" id="active_num_rio" type="percent"/>
+            <field title="沉默会员占比" id="qiuet_num_rio" type="percent"/>
+            <field title="睡眠会员占比" id="sleep_num_rio" type="percent"/>
+            <field title="流失会员占比" id="lost_num_rio" type="percent"/>
+            
+             <field title="级别" id="level" type="int"/>
+            <field title="数目" id="count" type="int"/>
+            <field title="描述" id="desc" type="str"/>
+           
+            <field title="名称" id="fix_org_name" type="str" drill_type="2"/>
+        </meta>
+        <summary title="活跃占比" id="activeArea" sql="memberRFM_R.member_r_summary">
+            <field refId="active_num" primary="true"/>
+            <field refId="active_num_rio"/>
+            <field refId="active_num_desc"/>
+        </summary>
+        <summary title="沉默占比" id="qiuetArea" sql="memberRFM_R.member_r_summary">
+            <field refId="qiuet_num" primary="true"/>
+            <field refId="qiuet_num_rio"/>
+            <field refId="qiuet_num_desc"/>
+        </summary>
+        <summary title="睡眠占比" id="sleepArea" sql="memberRFM_R.member_r_summary">
+            <field refId="sleep_num" primary="true"/>
+            <field refId="sleep_num_rio"/>
+            <field refId="sleep_num_desc"/>
+        </summary>
+        <summary title="流失占比" id="lostArea" sql="memberRFM_R.member_r_summary">
+            <field refId="lost_num" primary="true"/>
+            <field refId="lost_num_rio"/>
+            <field refId="lost_num_desc"/>
+        </summary>
+        <subsummary title="二级汇总" id="subsummary" sql="memberRFM_R.member_r_summary">
+            <field refId="active_num" group="active_num"/>
+            <field refId="active_num_rio" group="active_num"/>
+            <field refId="active_num_desc" group="active_num"/>
+            <field refId="qiuet_num" group="qiuet_num"/>
+            <field refId="qiuet_num_rio" group="qiuet_num"/>
+            <field refId="qiuet_num_desc" group="qiuet_num"/>
+            <field refId="sleep_num" group="sleep_num"/>
+            <field refId="sleep_num_rio" group="sleep_num"/>
+            <field refId="sleep_num_desc" group="sleep_num"/>
+            <field refId="lost_num" group="lost_num"/>
+            <field refId="lost_num_rio" group="lost_num"/>
+            <field refId="lost_num_desc" group="lost_num"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="memberRFM_R.detail">
+            <header>
+            	<field refId="fix_org_name" drill="true"/>
+                <field refId="active_num"/>
+	            <field refId="active_num_rio"/>
+	            <field refId="qiuet_num"/>
+	            <field refId="qiuet_num_rio"/>
+	            <field refId="sleep_num"/>
+	            <field refId="sleep_num_rio"/>
+	            <field refId="lost_num"/>
+	            <field refId="lost_num_rio"/>
+            </header>
+        </table>
+        <echarts>
+            <echart id="001" type="pie" axisY1Title="会员比率" axisY2Title="会销比" title="最近一次消费分布图"
+                    sql="memberRFM_R.echart">
+                <field refId="desc" serieType="pie" axisY="y1"/>
+                <field refId="count" serieType="pie" axisY="y1"/>
+            </echart>
+        </echarts>
+    </statistical>
+   <statistical id="memberRFM_F" title="RFM_F分析报表">
+        <meta>
+            <field title="新会员" id="new_num" type="int"/>
+            <field title="老会员" id="old_num" type="int"/>
+            <field title="成熟会员" id="olded_num" type="int"/>
+            <field title="忠实会员" id="fans_num" type="int"/>
+
+            <field title="新会员占比" id="new_num_rio" type="percent"/>
+            <field title="老会员占比" id="old_num_rio" type="percent"/>
+            <field title="成熟会员占比" id="olded_num_rio" type="percent"/>
+            <field title="忠实会员占比" id="fans_num_rio" type="percent"/>
+
+            <field title="描述" id="fans_num_desc" type="str"/>
+            <field title="描述" id="olded_num_desc" type="str"/>
+            <field title="描述" id="old_num_desc" type="str"/>
+            <field title="描述" id="new_num_desc" type="str"/>
+            
+            <field title="级别" id="level" type="int"/>
+            <field title="数目" id="count" type="int"/>
+            <field title="描述" id="desc" type="str"/>
+            <field title="名称" id="fix_org_name" type="str" drill_type="2"/>
+        </meta>
+        <summary title="活跃占比" id="newArea" sql="memberRFM_F.member_f_summary">
+            <field refId="fans_num" primary="true"/>
+            <field refId="fans_num_rio"/>
+            <field refId="fans_num_desc"/>
+        </summary>
+        <summary title="沉默占比" id="oldArea" sql="memberRFM_F.member_f_summary">
+            <field refId="olded_num" primary="true"/>
+            <field refId="olded_num_rio"/>
+            <field refId="olded_num_desc"/>
+        </summary>
+        <summary title="睡眠占比" id="oldedArea" sql="memberRFM_F.member_f_summary">
+            <field refId="old_num" primary="true"/>
+            <field refId="old_num_rio"/>
+            <field refId="old_num_desc"/>
+        </summary>
+        <summary title="流失占比" id="fansArea" sql="memberRFM_F.member_f_summary">
+            <field refId="new_num" primary="true"/>
+            <field refId="new_num_rio"/>
+            <field refId="new_num_desc"/>
+        </summary>
+        <subsummary title="二级汇总" id="subsummary" sql="memberRFM_F.member_f_summary">
+            <field refId="fans_num" group="fans_num"/>
+            <field refId="fans_num_rio" group="fans_num"/>
+            <field refId="fans_num_desc" group="fans_num"/>
+            <field refId="olded_num" group="olded_num"/>
+            <field refId="olded_num_rio" group="olded_num"/>
+            <field refId="olded_num_desc" group="olded_num"/>
+            <field refId="old_num" group="old_num"/>
+            <field refId="old_num_rio" group="old_num"/>
+            <field refId="old_num_desc" group="old_num"/>
+            <field refId="new_num" group="new_num"/>
+            <field refId="new_num_rio" group="new_num"/>
+            <field refId="new_num_desc" group="new_num"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="memberRFM_F.detail">
+            <header>
+            	<field refId="fix_org_name" drill="true"/>
+                <field refId="fans_num"/>
+	            <field refId="fans_num_rio"/>
+	            <field refId="olded_num"/>
+	            <field refId="olded_num_rio"/>
+	            <field refId="old_num"/>
+	            <field refId="old_num_rio"/>
+	            <field refId="new_num"/>
+	            <field refId="new_num_rio"/>
+            </header>
+        </table>
+        <echarts>
+            <echart id="001" type="pie" axisY1Title="会员比率" axisY2Title="会销比" title="会员消费批次分布图"
+                    sql="memberRFM_F.echart">
+                <field refId="desc" serieType="pie" axisY="y1"/>
+                <field refId="count" serieType="pie" axisY="y1"/>
+            </echart>
+        </echarts>
+    </statistical>
+    <statistical id="memberRFM_M" title="RFM_M分析报表">
+        <meta>
+            <field title="低消费会员" id="low_num" type="int"/>
+            <field title="中消费会员" id="nor_num" type="int"/>
+            <field title="中高消费会员" id="high_num" type="int"/>
+            <field title="高消费会员" id="top_num" type="int"/>
+
+            <field title="低消费占比" id="low_num_rio" type="percent"/>
+            <field title="中消费占比" id="nor_num_rio" type="percent"/>
+            <field title="中高消费占比" id="high_num_rio" type="percent"/>
+            <field title="高消费占比" id="top_num_rio" type="percent"/>
+
+            <field title="描述" id="low_num_desc" type="str"/>
+            <field title="描述" id="nor_num_desc" type="str"/>
+            <field title="描述" id="high_num_desc" type="str"/>
+            <field title="描述" id="top_num_desc" type="str"/>
+            
+            <field title="级别" id="level" type="int"/>
+            <field title="数目" id="count" type="int"/>
+            <field title="描述" id="desc" type="str"/>
+            <field title="名称" id="fix_org_name" type="str" drill_type="2"/>
+        </meta>
+        <summary title="活跃占比" id="lowArea" sql="memberRFM_M.member_m_summary">
+            <field refId="top_num" primary="true"/>
+            <field refId="top_num_rio"/>
+            <field refId="top_num_desc"/>
+        </summary>
+        <summary title="沉默占比" id="norArea" sql="memberRFM_M.member_m_summary">
+            <field refId="high_num" primary="true"/>
+            <field refId="high_num_rio"/>
+            <field refId="high_num_desc"/>
+        </summary>
+        <summary title="睡眠占比" id="highArea" sql="memberRFM_M.member_m_summary">
+            <field refId="nor_num" primary="true"/>
+            <field refId="nor_num_rio"/>
+            <field refId="nor_num_desc"/>
+        </summary>
+        <summary title="流失占比" id="topArea" sql="memberRFM_M.member_m_summary">
+            <field refId="low_num" primary="true"/>
+            <field refId="low_num_rio"/>
+            <field refId="low_num_desc"/>
+        </summary>
+        <subsummary title="二级汇总" id="subsummary" sql="memberRFM_M.member_m_summary">
+            <field refId="top_num" group="top_num"/>
+            <field refId="top_num_rio" group="top_num"/>
+            <field refId="top_num_desc" group="top_num"/>
+            <field refId="high_num" group="high_num"/>
+            <field refId="high_num_rio" group="high_num"/>
+            <field refId="high_num_desc" group="high_num"/>
+            <field refId="nor_num" group="nor_num"/>
+            <field refId="nor_num_rio" group="nor_num"/>
+            <field refId="nor_num_desc" group="nor_num"/>
+            <field refId="low_num" group="low_num"/>
+            <field refId="low_num_rio" group="low_num"/>
+            <field refId="low_num_desc" group="low_num"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="memberRFM_M.detail">
+            <header>
+            <field refId="fix_org_name" drill="true"/>
+            <field refId="top_num"/>
+            <field refId="top_num_rio"/>
+            <field refId="high_num"/>
+            <field refId="high_num_rio"/>
+            <field refId="nor_num"/>
+            <field refId="nor_num_rio"/>
+            <field refId="low_num"/>
+            <field refId="low_num_rio"/>
+            </header>
+        </table>
+        <echarts>
+            <echart id="001" type="pie" axisY1Title="会员比率" axisY2Title="会销比" title="会员消费金额分布图"
+                    sql="memberRFM_M.echart">
+                <field refId="desc" serieType="pie" axisY="y1"/>
+                <field refId="count" serieType="pie" axisY="y1"/>
+            </echart>
+        </echarts>
+    </statistical>
+    <statistical id="saleRecord01" title="销售总额">
+        <meta>
+            <field title="销售总额" id="saleTotalAmount" type="money"/>
+            <field title="环比" id="relativeRatio" type="percent"/>
+            <field title="同比" id="yoyRatio" type="percent"/>
+            <field title="销售额" id="salesAmount" type="money"/>
+            <field title="会员销售" id="memberSalesAmout" type="money"/>
+            <field title="会销比" id="memberSalesPercent" type="percent"/>
+            <field title="统计时间" id="statisticTime" type="str"/>
+            <field title="名称" id="fix_org_name" type="str" drill_type="3"/>
+        </meta>
+        <summary title="销售比例" id="summary" sql="saleRecord01.summary">
+            <field refId="saleTotalAmount" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+        <subsummary title="二级汇总" id="subsummary" sql="saleRecord01.subsummary">
+            <field refId="salesAmount"/>
+            <field refId="memberSalesAmout"/>
+            <field refId="memberSalesPercent"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="saleRecord01.detail">
+            <header>
+            	<field refId="fix_org_name" drill="true"/>
+                <field refId="statisticTime" order="true"/>
+                <field refId="salesAmount" order="true"/>
+                <field refId="memberSalesAmout" order="true"/>
+                <field refId="memberSalesPercent" order="true"/>
+            </header>
+        </table>
+        <echarts>
+            <echart id="001" type="bar" axisY1Title="销售额/元" axisY2Title="会销比(%)" title="业绩统计"
+                    sql="saleRecord01.detail">
+                <field refId="salesAmount" serieType="bar" axisY="y1"/>
+                <field refId="memberSalesAmout" serieType="bar" axisY="y1"/>
+                <field refId="memberSalesPercent" serieType="line" axisY="y2"/>
+            </echart>
+        </echarts>
+    </statistical>
+    <statistical id="saleRecord02" title="销售订单">
+        <meta>
+            <field title="销售订单" id="salesOrders" type="str"/>
+            <field title="环比" id="relativeRatio" type="percent"/>
+            <field title="同比" id="yoyRatio" type="percent"/>
+            <field title="销售件数" id="salesGoods" type="str"/>
+            <field title="客单价" id="perCustomerPrice" type="money"/>
+            <field title="件单价" id="perGoodsPrice" type="money"/>
+            <field title="统计时间" id="statisticTime" type="str"/>
+            <field title="名称" id="fix_org_name" type="str" drill_type="3"/>
+        </meta>
+        <summary title="销售比例" id="summary" sql="saleRecord02.summary">
+            <field refId="salesOrders" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+        <subsummary title="二级汇总" id="subsummary" sql="saleRecord02.subsummary">
+            <field refId="salesOrders"/>
+            <field refId="salesGoods"/>
+            <field refId="perCustomerPrice"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="saleRecord02.detail">
+            <header>
+            	<field refId="fix_org_name" drill="true"/>
+                <field refId="statisticTime" order="true"/>
+                <field refId="salesOrders" order="true"/>
+                <field refId="salesGoods" order="true"/>
+                <field refId="perCustomerPrice"/>
+                <field refId="perGoodsPrice"/>
+            </header>
+        </table>
+        <echarts>
+            <echart id="001" type="bar" axisY1Title="销售单(件)" axisY2Title="金额(元)" title="销售单统计"
+                    sql="saleRecord02.detail">
+                <field refId="salesOrders" serieType="bar" axisY="y1"/>
+                <field refId="salesGoods" serieType="bar" axisY="y1"/>
+                <field refId="perCustomerPrice" serieType="line" axisY="y2"/>
+                <field refId="perGoodsPrice" serieType="line" axisY="y2"/>
+            </echart>
+        </echarts>
+    </statistical>
+    <statistical id="saleRecord03" title="返单金额">
+        <meta>
+            <field title="返单金额" id="returnAmount" type="money"/>
+            <field title="环比" id="relativeRatio" type="percent"/>
+            <field title="同比" id="yoyRatio" type="percent"/>
+            <field title="返单人数" id="returnPersons" type="str"/>
+            <field title="返单单数" id="returnOrders" type="str"/>
+            <field title="客单价" id="perCustomerPrice" type="money"/>
+            <field title="连带率" id="liandaiRatio" type="float"/>
+            <field title="统计时间" id="statisticTime" type="str"/>
+            <field title="名称" id="fix_org_name" type="str" drill_type="3"/>
+        </meta>
+        <summary title="返单金额" id="summary" sql="saleRecord03.summary">
+            <field refId="returnAmount" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+        <subsummary title="二级汇总" id="subsummary" sql="saleRecord03.subsummary">
+            <field refId="returnAmount"/>
+            <field refId="returnPersons"/>
+            <field refId="returnOrders"/>
+            <field refId="perCustomerPrice"/>
+            <field refId="liandaiRatio"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="saleRecord03.detail">
+            <header>
+            	<field refId="fix_org_name" drill="true"/>
+                <field refId="statisticTime" order="true"/>
+                <field refId="returnAmount" order="true"/>
+                <field refId="returnPersons" order="true"/>
+                <field refId="returnOrders" order="true"/>
+                <field refId="perCustomerPrice"/>
+                <field refId="liandaiRatio"/>
+            </header>
+        </table>
+        <echarts>
+            <echart id="001" type="bar" axisY1Title="返单金额" axisY2Title="数量" title="返单统计"
+                    sql="saleRecord03.detail">
+                <field refId="returnAmount" serieType="bar" axisY="y1"/>
+                <field refId="returnPersons" serieType="line" axisY="y2"/>
+                <field refId="perCustomerPrice" serieType="line" axisY="y2"/>
+            </echart>
+        </echarts>
+    </statistical>
+    <statistical id="memberDetail" title="会员统计相关报表">
+        <meta>
+            <field title="新增会员" id="addNums" type="int"/>
+            <field title="环比" id="addHbRatio" type="percent"/>
+            <field title="同比" id="addTbRatio" type="percent"/>
+
+            <field title="全部会员" id="allNums" type="int"/>
+            <field title="环比" id="allHbRatio" type="percent"/>
+            <field title="同比" id="allTbRatio" type="percent"/>
+
+            <field title="沉睡会员" id="sleepNums" type="int"/>
+            <field title="环比" id="sleepHbRatio" type="percent"/>
+            <field title="同比" id="sleepTbRatio" type="percent"/>
+
+            <field title="返单会员" id="returnNums" type="int"/>
+            <field title="环比" id="returnHbRatio" type="percent"/>
+            <field title="同比" id="returnTbRatio" type="percent"/>
+
+            <field title="激活会员" id="activeNums" type="int"/>
+            <field title="环比" id="activeHbRatio" type="percent"/>
+            <field title="同比" id="activeTbRatio" type="percent"/>
+
+            <field title="实际新增" id="realAddNums" type="int"/>
+            <field title="环比" id="realAddHbRatio" type="percent"/>
+            <field title="同比" id="realAddTbRatio" type="percent"/>
+			
+            <field title="会员总数" id="totalMembers" type="str"/>
+            <field title="新增会员" id="addMembers" type="str"/>
+            <field title="沉睡会员" id="sleepMembers" type="str"/>
+            <field title="返单会员" id="reOrderMembers" type="str"/>
+            <field title="激活会员" id="avticeMembers" type="str"/>
+            <field title="实际新增" id="actualAddMembers" type="str"/>
+            <field title="统计时间" id="statisticTime" type="str"/>
+            <field title="名称" id="fix_org_name" type="str" drill_type="3"/>
+            
+        </meta>
+        <summary title="全部人员统计" id="allNumTotal" sql="memberDetail.allNumTotal">
+            <field refId="allNums" primary="true"/>
+            <field refId="allHbRatio"/>
+            <field refId="allTbRatio"/>
+        </summary>
+        <summary title="新增人员统计" id="addNumTotal" sql="memberDetail.addNumTotal">
+            <field refId="addNums" primary="true"/>
+            <field refId="addHbRatio"/>
+            <field refId="addTbRatio"/>
+        </summary>
+        <summary title="沉睡人员统计" id="sleepNumTotal" sql="memberDetail.sleepNumTotal">
+            <field refId="sleepNums" primary="true"/>
+            <field refId="sleepHbRatio"/>
+            <field refId="sleepTbRatio"/>
+        </summary>
+        <summary title="返单人员统计" id="returnNumTotal" sql="memberDetail.returnNumTotal">
+            <field refId="returnNums" primary="true"/>
+            <field refId="returnHbRatio"/>
+            <field refId="returnTbRatio"/>
+        </summary>
+        <summary title="激活人员统计" id="activeNumTotal" sql="memberDetail.activeNumTotal">
+            <field refId="activeNums" primary="true"/>
+            <field refId="activeHbRatio"/>
+            <field refId="activeTbRatio"/>
+        </summary>
+        <summary title="实际新增人员统计" id="realAddNumTotal" sql="memberDetail.realAddNumTotal">
+            <field refId="realAddNums" primary="true"/>
+            <field refId="realAddHbRatio"/>
+            <field refId="realAddTbRatio"/>
+        </summary>
+        <subsummary title="二级汇总" id="subsummary" sql="memberDetail.subsummary">        
+            <field refId="totalMembers"/>
+            <field refId="addMembers"/>
+            <field refId="sleepMembers"/>
+            <field refId="reOrderMembers"/>
+            <field refId="avticeMembers"/>
+            <field refId="actualAddMembers"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="memberDetail.detail">
+            <header>
+            	<field refId="fix_org_name" drill="true"/>
+            	<field refId="statisticTime"/>
+                <field refId="totalMembers"/>
+                <field refId="addMembers"/>
+                <field refId="sleepMembers"/>
+                <field refId="reOrderMembers"/>
+                <field refId="avticeMembers"/>
+                <field refId="actualAddMembers"/>
+            </header>
+        </table>
+        <echarts>
+            <echart id="001" type="bar" axisY1Title="数量(人)" axisY2Title="总会员" title="会员人数变化统计" sql="memberDetail.detail">
+                <field refId="addMembers" serieType="bar" axisY="y1"/>
+                <field refId="sleepMembers" serieType="bar" axisY="y1"/>
+                <field refId="avticeMembers" serieType="bar" axisY="y1"/>
+                <field refId="actualAddMembers" serieType="bar" axisY="y1"/>
+            </echart>
+        </echarts>
+    </statistical>
+    <statistical id="empSales01" title="导购业绩统计报表">
+        <meta>
+            <field title="导购数目" id="employeeCount" type="int" fmt="1"/>
+            <field title="最终业绩" id="finalAmount" type="money" fmt="2" desc="销售业绩-跨减业绩+跨加业绩"/>
+            <field title="销售业绩" id="saleAmout" type="money" fmt="1,2" desc="门店所有销售订单的业绩总和"/>
+            <field title="跨减业绩" id="decrAmount" type="money" fmt="2" desc="跨店会员在本店消费分成给其他门店的业绩"/>
+            <field title="跨加业绩" id="incrAmount" type="money" fmt="2" desc="本门店会员跨店消费分成给本门店的业绩"/>
+            <field title="门店数目" id="storeCount" type="int" fmt="1"/>
+            <field title="TOP10销售占比" id="top10SalesRatio" type="percent"/>
+            <field title="导购名称" id="employeeName" type="str" drill_type="4"/>
+            <field title="门店" id="storeName" type="str"/>
+            <field title="客单价" id="perCustomerPrice" type="str"/>
+            <field title="件单价" id="perGoodsPrice" type="str"/>
+            <field title="连带率" id="purchaseRate" type="str"/>
+            <field title="公司总业绩" id="c_totalSaleAmount" type="str"/>
+            <field title="公司销量" id="c_totalSaleGoods" type="str"/>
+            <field title="公司单数" id="c_saleOrders" type="str"/>
+            <field title="门店总业绩" id="s_totalSaleAmount" type="str"/>
+            <field title="门店销量" id="s_totalSaleGoods" type="str"/>
+            <field title="门店单数" id="s_saleOrders" type="str"/>
+        </meta>
+        <subsummary title="导购统计" id="summary" sql="empSales01.summary">
+            <field refId="finalAmount"/>
+            <field refId="saleAmout"/>
+            <field refId="decrAmount"/>
+            <field refId="incrAmount"/>
+            <field refId="storeCount"/>
+            <field refId="employeeCount"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="empSales01.detail">
+            <header>
+                <field refId="employeeName"/>
+                <field refId="storeName" drill="true"/>                
+                <field refId="perCustomerPrice"/>
+                <field refId="perGoodsPrice"/>
+                <field refId="purchaseRate"/>
+                <field refId="c_totalSaleAmount"/>
+                <field refId="c_totalSaleGoods"/>
+                <field refId="c_saleOrders"/>
+                <field refId="s_totalSaleAmount"/>
+                <field refId="s_totalSaleGoods"/>
+                <field refId="s_saleOrders"/>
+            </header>
+        </table>         
+    </statistical>
+    <statistical id="empSales02" title="导购业绩统计报表">
+        <meta>
+            <field title="导购名称" id="fix_org_name" type="str" drill_type="4"/>
+            <field title="门店" id="storeName" type="str"/>
+            <field title="客单价" id="perCustomerPrice" type="str"/>
+            <field title="件单价" id="perGoodsPrice" type="str"/>
+            <field title="连带率" id="purchaseRate" type="str"/>
+            <field title="总业绩" id="totalAmount" type="str"/>
+            <field title="销量" id="totalSaleGoods" type="str"/>
+            <field title="销售单数" id="saleOrders" type="str"/>
+            <field title="直接业绩" id="directAmount" type="str"/>
+            <field title="分成业绩" id="divideAmount" type="str"/>
+            <field title="统计时间" id="statisticTime" type="str"/>
+        </meta>
+        <subsummary title="导购统计" id="summary" sql="empSales01.detail">
+                <field refId="storeName"/>
+                <field refId="perCustomerPrice"/>
+                <field refId="perGoodsPrice"/>
+                <field refId="purchaseRate"/>
+                <field refId="totalAmount"/>
+                <field refId="totalSaleGoods"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="empSales02.detail">
+            <header>
+            	<field refId="fix_org_name" drill="true"/>
+                <field refId="statisticTime"/>
+                <field refId="totalAmount"/>
+                <field refId="directAmount"/>
+                <field refId="divideAmount"/>
+                <field refId="totalSaleGoods"/>
+                <field refId="saleOrders"/>
+                <field refId="purchaseRate"/>
+            </header>
+        </table> 
+        <echarts>
+            <echart id="001" type="bar" axisY1Title="总业绩" axisY2Title="分成(元)" title="导购业绩统计"
+                    sql="empSales01.detail">
+                <field refId="totalAmount" serieType="bar" axisY="y1"/>
+                <field refId="directAmount" serieType="bar" axisY="y1"/>
+                <field refId="divideAmount" serieType="bar" axisY="y1"/>
+            </echart>
+        </echarts>      
+    </statistical>
+    <statistical id="wxFriend01" title="微信好友统计">
+        <meta>
+            <field title="好友总数" id="totalWxFriend" type="int"/>
+            <field title="已关联" id="bindWxFriend" type="int"/>
+            <field title="新增好友" id="newWxFriend" type="str"/>
+            <field title="实际新增" id="actualNewWxFriend" type="str"/>
+            <field title="新增关联" id="newBindWxFriend" type="str"/>
+            <field title="被拉黑" id="blackWxFriend" type="str"/>
+            <field title="主动删" id="initiativeDelWxFriend" type="str"/>
+            <field title="被删除" id="passivityDelWxFriend" type="str"/>
+           	<field title="环比" id="relativeRatio" type="percent"/>
+            <field title="同比" id="yoyRatio" type="percent"/>
+            <field title="统计时间" id="statisticTime" type="str"/>
+            <field title="名称" id="fix_org_name" type="str" drill_type="2"/>
+        </meta>
+        <summary title="好友统计" id="wxFriend01_summary" sql="wxFriend01.summary">
+            <field refId="totalWxFriend" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+         <summary title="好友统计" id="wxFriend02_summary" sql="wxFriend02.summary">
+            <field refId="bindWxFriend" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+         <summary title="好友统计" id="wxFriend03_summary" sql="wxFriend03.summary">
+            <field refId="newWxFriend" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+        <summary title="好友统计" id="wxFriend04_summary" sql="wxFriend04.summary">
+            <field refId="actualNewWxFriend" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+        <summary title="好友统计" id="wxFriend05_summary" sql="wxFriend05.summary">
+            <field refId="newBindWxFriend" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+        <summary title="好友统计" id="wxFriend06_summary" sql="wxFriend06.summary">
+            <field refId="blackWxFriend" primary="true"/>
+            <field refId="relativeRatio"/>
+            <field refId="yoyRatio"/>
+        </summary>
+        <subsummary title="好友统计" id="subsummary" sql="wxFriend01.subsummary">
+	            <field refId="totalWxFriend"/>
+	            <field refId="actualNewWxFriend"/>
+	            <field refId="newWxFriend"/>
+	            <field refId="bindWxFriend"/>
+	            <field refId="newBindWxFriend"/>
+	            <field refId="blackWxFriend"/>
+        </subsummary>
+        <table title="销售记录汇总统计" id="table001" sql="wxFriend01.detail">
+            <header>
+            	<field refId="fix_org_name" drill="true"/>
+	            <field refId="statisticTime"/>
+	            <field refId="totalWxFriend"/>
+	            <field refId="actualNewWxFriend"/>
+	            <field refId="newWxFriend"/>
+	            <field refId="bindWxFriend"/>
+	            <field refId="newBindWxFriend"/>
+	            <field refId="blackWxFriend"/>
+	            <field refId="initiativeDelWxFriend"/>
+	            <field refId="passivityDelWxFriend"/>
+            </header>
+        </table>
+          <echarts>
+            <echart id="001" type="bar" axisY1Title="好友数目" title="好友人数变化统计"
+                    sql="wxFriend01.detail">
+                <field refId="newWxFriend" serieType="bar" axisY="y1"/>
+                <field refId="newBindWxFriend" serieType="bar" axisY="y1"/>
+            </echart>
+        </echarts>     
+    </statistical>
+</statisticals>

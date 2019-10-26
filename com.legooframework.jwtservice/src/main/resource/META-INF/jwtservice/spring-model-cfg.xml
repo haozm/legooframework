@@ -15,13 +15,12 @@
             </util:list>
         </property>
     </bean>
-    <bean id="jwtokenEntityAction" class="com.legooframework.model.jwtservice.entity.JWTokenEntityAction"
-          parent="baseEntityAction" destroy-method="destroy">
+    <bean id="tokenSvrEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
         <property name="statementFactory" ref="jwtTokenStatementFactory"/>
-        <property name="cacheManager">
-            <null/>
-        </property>
         <property name="dataSource" ref="tokenDataSource"/>
     </bean>
+    <bean id="jwtokenEntityAction" class="com.legooframework.model.jwtservice.entity.JWTokenEntityAction"
+          parent="tokenSvrEntityAction" destroy-method="destroy"/>
     <bean id="loginTokenService" class="com.legooframework.model.jwtservice.service.LoginTokenService"/>
 </beans>

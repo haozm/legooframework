@@ -1,0 +1,1516 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="webchat">
+        <sql id="unReadMsgTotal" dynamic="true">
+            <body><![CDATA[
+        SELECT a.userName as 'weixinId', IFNULL(a.un_msg_count,0) AS 'unReadMsgCount'
+          FROM yycomm.${tableName} AS a
+         WHERE a.bindWxUserName = :weixinId
+           AND a.work = 1
+           AND IFNULL(a.un_msg_count,0) <> 0
+		]]></body>
+        </sql>
+    	<sql id="count_unbind_unsign" dynamic="true">
+            <body><![CDATA[
+		   SELECT
+				SUM( IF( aws.id IS NULL, 1, 0 )) AS 'unSignCount',
+				SUM( IF( axm.id IS NULL, 1, 0 )) AS 'unBindCount'
+			FROM
+				yycomm.${STORE_DEVICEID} t
+			LEFT JOIN yycomm.UPDATE_${STORE_DEVICEID} hc ON
+				hc.userName = t.userName
+			LEFT JOIN acp_weixin_sign aws ON
+				t.userName = aws.weixin_id
+			LEFT JOIN acp_weixin_member axm ON
+				axm.weixin_id = t.userName
+				AND axm.store_id = :USER_STORE_ID
+				AND axm.company_id = :USER_COMPANY_ID
+			LEFT JOIN crm_member cm ON
+				cm.id = axm.member_id
+				AND cm.company_id = :USER_COMPANY_ID
+			WHERE
+				t.work = 1
+				AND IFNULL( hc.flag,
+				'init' ) IN ('add')
+				AND t.type <> 4
+				AND SUBSTRING_INDEX( t.userName, '@',-1 )!= 'chatroom'
+				AND hc.createtime >= DATE_SUB( NOW(),
+				INTERVAL (IF((SELECT before_days FROM acp_store_ext WHERE id = :USER_STORE_ID GROUP BY company_id,id) IS NULL ,2 ,(SELECT before_days FROM acp_store_ext WHERE id = :USER_STORE_ID GROUP BY company_id,id))) DAY )            
+	]]></body>
+        </sql>
+        <sql id="load_unbild_store_count" dynamic="true">
+            <body><![CDATA[
+          SELECT COUNT(DISTINCT wx.userName) AS 'total'
+            FROM yycomm.${table_name} wx
+       LEFT JOIN acp_weixin_member awm ON awm.company_id = :companyId AND awm.store_id = :storeId AND awm.weixin_id = wx.userName
+           WHERE wx.type <> 4
+             AND INSTR(wx.userName,'@chatroom') = 0
+             AND awm.member_id IS NULL
+             AND wx.work = 1
+           <#if searchs??>
+             AND ( wx.nickName LIKE :searchs OR wx.conRemark LIKE :searchs OR wx.userName LIKE :searchs )
+           </#if>
+            ]]></body>
+        </sql>
+        <sql id="load_unbild_store" dynamic="true">
+            <body><![CDATA[
+          SELECT DISTINCT wx.userName AS 'weixinId'
+            FROM yycomm.${table_name} wx
+       LEFT JOIN acp_weixin_member awm ON awm.company_id = :companyId AND awm.store_id = :storeId AND awm.weixin_id = wx.userName
+           WHERE wx.type <> 4
+             AND INSTR(wx.userName,'@chatroom') = 0
+             AND awm.member_id IS NULL
+             AND wx.work = 1
+           <#if searchs??>
+             AND ( wx.nickName LIKE :searchs OR wx.conRemark LIKE :searchs OR wx.userName LIKE :searchs)
+           </#if>
+        ORDER BY wx.userName
+        LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+        <sql id="amount_manage" dynamic="true">
+            <body><![CDATA[
+        	SELECT 'weixin' AS 'type',COUNT(1) AS 'amount' FROM (
+						<#if tableNames?? && (tableNames?size > 0)>
+							<#list tableNames as tableName>
+							<#if tableName_index == 0>
+							SELECT t.* FROM yycomm.${tableName} t
+									LEFT JOIN yycomm.Update_His_Contact hc
+                                    ON hc.userName = t.userName
+                                    WHERE t.work = 1  AND t.type <> 4
+                                    AND AND SUBSTRING_INDEX(t.userName,'@',-1)!='chatroom' AND LOCATE('gh_',t.userName) = 0 AND IFNULL(hc.flag,'init') IN ('init','add','add_chatroom_member','rm_chatroom_member')
+									GROUP BY t.userName
+							<#else>
+								UNION ALL 
+							SELECT t.* FROM yycomm.${tableName} t
+									LEFT JOIN yycomm.Update_His_Contact hc
+                                    ON hc.userName = t.userName
+                                    WHERE t.work = 1  AND t.type <> 4
+                                    AND AND SUBSTRING_INDEX(t.userName,'@',-1)!='chatroom' AND LOCATE('gh_',t.userName) = 0 AND IFNULL(hc.flag,'init') IN ('init','add','add_chatroom_member','rm_chatroom_member')
+									GROUP BY t.userName
+								</#if>
+							</#list>
+						</#if>) wx				  
+    UNION ALL
+       SELECT 'member' AS 'type',COUNT(acm.id)  AS 'amount'
+         FROM crm_member acm
+        WHERE IFNULL(acm.effectiveFlag,1) <> 2
+          AND acm.id IN (
+                SELECT csm.member_id
+                  FROM crm_store_member csm
+                 WHERE csm.store_id IN (<#if storeIds??>${storeIds?join(", ")} <#else> ${SUB_STORES?join(", ")} </#if> ))
+    UNION ALL
+       SELECT 'bilds' AS 'type', COUNT(awm.member_id) AS 'amount'
+         FROM acp_weixin_member awm
+        WHERE awm.store_id IN (<#if storeIds??> ${storeIds?join(", ")} <#else> ${SUB_STORES?join(", ")} </#if> )
+    UNION ALL
+       SELECT 'delete' AS 'type',COUNT( DISTINCT uhc.userName ) AS 'amount'
+         FROM yycomm.Update_His_Contact uhc
+        WHERE uhc.flag IN ('passive_delete_contact','black_contact','delete_contact')
+          AND uhc.type <> 4
+          AND INSTR(uhc.userName,'@chatroom') = 0
+          AND uhc.store_id IN ( <#if storeIds??>${storeIds?join(", ")}<#else>${SUB_STORES?join(", ")}</#if> )
+            ]]></body>
+        </sql>
+        <sql id="loadipmapping">
+            <body><![CDATA[
+        SELECT cim.company_id AS 'companyId',cim.ipaddress AS 'domain', cim.port AS 'port',cim.baseurl AS 'baseUrl'
+          FROM yycomm.Company_IP_Map cim
+         WHERE cim.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="contacts" dynamic="true">
+            <params>
+                <p name="storeId" type="str" use="required"/>
+                <p name="tablename" type="str" use="required"/>
+            </params>
+            <body><![CDATA[
+        SELECT emm.id AS 'userName',
+               IFNULL(emm.name,'') AS 'nickName',
+               IFNULL(emm.name,'') AS 'conRemark',
+               '' AS 'iconUrl',
+               -1 AS 'type',
+               -1 AS 'memberId'
+          FROM acp_employee emm
+         WHERE (FIND_IN_SET(5,role_ids) OR FIND_IN_SET(7,role_ids))
+           AND emm.store_id = :storeId
+     <#if tablename??>
+     UNION ALL
+       SELECT cmm.userName AS 'userName',
+              ( CASE WHEN IFNULL(awm.member_id,0) <> 0 THEN (SELECT IFNULL(acm.name,'') FROM crm_member acm WHERE acm.id = awm.member_id)
+                WHEN LENGTH(IFNULL(cmm.conRemark,'')) >0 THEN cmm.conRemark
+                WHEN LENGTH(IFNULL(cmm.nickName,''))>1 THEN cmm.nickName
+                ELSE cmm.userName END ) AS 'nickName',
+              ( CASE WHEN IFNULL(awm.member_id,0) <> 0 THEN (SELECT IFNULL(acm.name,'') FROM crm_member acm WHERE acm.id = awm.member_id)
+                     ELSE IFNULL(cmm.conRemark,'') END ) AS 'conRemark',
+              IFNULL(cmm.iconUrl,'') AS 'iconUrl',
+              cmm.type AS 'type',
+              IFNULL(awm.member_id,-1) AS 'memberId'
+         FROM yycomm.${tablename} cmm
+    LEFT JOIN acp_weixin_member awm ON awm.weixin_id = cmm.userName AND awm.store_id = :storeId
+        WHERE cmm.type <> 4
+          AND INSTR(cmm.userName,'@chatroom') = 0
+          AND cmm.work = 1
+     </#if>
+     ORDER BY type,userName
+            ]]></body>
+        </sql>
+        <sql id="contactsTable">
+            <body><![CDATA[
+      SELECT sd.DeviceId
+        FROM yycomm.store_device sd
+       WHERE sd.devicetype = 1
+         AND sd.store_id = :storeId
+            ]]></body>
+        </sql>
+        <sql id="chathistory_count" dynamic="true">
+            <params>
+                <p name="date_time" type="str" use="required"/>
+                <p name="shoppingGuide" type="int" use="required"/>
+                <p name="weixinId" type="str" use="required"/>
+            </params>
+            <body><![CDATA[
+              SELECT COUNT(A.recieveTime)
+                FROM ( SELECT msg.recieveTime
+                         FROM yycomm.${MSG_COM_STORE} msg
+                        WHERE msg.createtime < ${date_time}
+                          AND msg.company_id = :USER_COMPANY_ID
+                          AND msg.tag <>'repeat_msg'
+                          AND msg.store_id= :USER_STORE_ID
+                          AND msg.weixinuser= :weixinId
+                          AND !(msg.type = 49 AND msg.MsgId = 'Nan')
+                     GROUP BY msg.recieveTime ) AS A
+            ]]></body>
+        </sql>
+        <sql id="chathistory" dynamic="true">
+            <params>
+                <p name="date_time" type="str" use="required"/>
+                <p name="shoppingGuide" type="int" use="required"/>
+                <p name="weixinId" type="str" use="required"/>
+            </params>
+            <body><![CDATA[
+      SELECT temp.* FROM (
+          SELECT DISTINCT msg.content AS 'content',
+                (CASE WHEN (msg.fromuser REGEXP '[^0-9.]' AND msg.issend = 0 )
+                      THEN msg.fromuser
+                      ELSE '${USER_ID}' END ) AS 'fromUser',
+                 (CASE WHEN msg.issend=0 THEN '${USER_ID}' ELSE msg.toUser END ) AS 'toUser',
+                 msg.createtime AS 'time' ,
+                 msg.issend AS 'isSend',
+                 msg.type AS 'type',
+                 msg.recieveTime AS 'recieveTime'
+            FROM yycomm.${MSG_COM_STORE} msg
+           WHERE msg.createtime < ${date_time}
+             AND msg.company_id = :USER_COMPANY_ID
+             AND msg.tag <> 'repeat_msg'
+             AND msg.store_id= :USER_STORE_ID
+             AND msg.weixinuser= :weixinId
+             AND !(msg.type = 49 AND msg.MsgId = 'Nan')
+        GROUP BY msg.recieveTime ,msg.content,msg.fromuser, msg.touser,msg.createtime,msg.issend,msg.type
+        ORDER BY msg.recieveTime DESC
+           LIMIT :offset,:rows
+       ) AS temp
+       ORDER BY temp.recieveTime
+            ]]></body>
+        </sql>
+        <sql id="lastchatrecord" dynamic="true">
+            <params>
+                <p name="deviceId" type="str" use="required"/>
+            </params>
+            <body><![CDATA[
+      SELECT DATE_FORMAT(A.recieveTime,'%Y-%m-%d %H:%i:%s') AS 'recieveTime',
+             A.content,
+             A.fromuser,
+             A.`type` AS 'msgType',
+             A.action AS 'action',
+             A.pushflag AS 'pushflag'
+        FROM yycomm.Trans_MSG_List A,
+             ( SELECT T.fromuser, MAX(T.ID) AS msgId
+                 FROM yycomm.Trans_MSG_List T
+                WHERE T.fromdeviceid = :deviceId
+                  AND T.tag <> 'repeat_msg'
+                  AND T.action = 1
+             GROUP BY T.fromuser) B
+       WHERE A.fromuser = B.fromuser AND A.ID = B.msgId
+         AND A.fromuser IN ('java is ghost' <#if weixinIds?? && (weixinIds?size > 0)>,<#list weixinIds as id>'${id}'<#if id_has_next>,</#if> </#list></#if>)
+    ORDER BY A.ID DESC
+            ]]></body>
+        </sql>
+        <sql id="loaduser">
+            <params>
+                <p name="search" type="str" use="required" fmt="like"/>
+            </params>
+            <body><![CDATA[
+    SELECT mm.id AS 'memberId',mm.name AS 'memberName',mm.mobilePhone AS 'memberPhone',
+           WHEN
+               CASE mm.sex = 2 THEN '女'
+               CASE mm.sex = 1 THEN '男'
+               ELSE '保密'
+           END AS 'sex'
+      FROM crm_member AS mm
+     WHERE FIND_IN_SET(:USER_STORE_ID,store_ids)
+       AND ( mm.name LIKE :search OR mm.phone LIKE :search )
+     ORDER BY mm.id
+            ]]></body>
+        </sql>
+        <sql id="batchmsglogs" dynamic="true">
+            <params>
+                <p name="msgtext" type="str" fmt="LIKE"/>
+            </params>
+            <body><![CDATA[
+            SELECT
+				awm.id AS 'batchId',
+				awm.msg_type AS 'msgType',
+				awm.msg_num AS 'msgNum',
+				awm.image_url AS 'imageUrl',
+				awm.store_id AS 'storeId',
+				awm.company_id AS 'companyId',
+				awm.createUserId AS 'senderId',
+				aem.name AS 'senderName',
+				IFNULL( sml.isEnd,
+				'0' ) AS 'isEnd',
+				DATE_FORMAT( awm.createTime, '%Y-%m-%d %H:%m:%s' ) AS 'sendTime',
+				DATE_FORMAT( sml.endTime, '%Y-%m-%d %H:%m:%s' ) AS 'endTime',
+				awm.msg_text AS 'msgText',
+				st.name AS 'storeName',
+				sml.sendedNum AS 'sendedNum',
+				sml.erroredNum AS 'erroredNum',
+				awm.weixin_num AS 'weixinNumber'
+			FROM
+				acp_weixin_msgs awm
+			INNER JOIN (
+				SELECT
+					st.id,
+					st.name
+				FROM
+					acp_store st
+				WHERE
+					st.id = :storeId ) AS st ON
+				st.id = awm.store_id
+			LEFT JOIN acp_employee aem ON
+				aem.id = awm.createUserId
+			LEFT JOIN (
+				SELECT
+					sml.IDGroup,
+					SUM( IF( sml.sendFlag = 1 AND sml.ack = 1, 1, 0 )) AS 'sendedNum',
+					SUM( IF( sml.sendFlag = 1 AND ( sml.ack = -2 OR sml.ack IS NULL ) , 1, 0 )) AS 'erroredNum',
+					SUM( IF( sml.sendFlag = 0, 1, 0 )) AS 'isEnd',
+					MAX( sml.acktime ) AS 'endTime'
+				FROM
+					yycomm.Send_MSG_List sml
+				WHERE
+					sml.store_id = :storeId
+				GROUP BY
+					sml.IDGroup ) AS sml ON
+				sml.IDGroup = awm.id
+			WHERE
+				awm.company_id = :USER_COMPANY_ID
+				AND awm.store_id = :storeId
+					  <#if shoppingGuide??>
+			               AND awm.createUserId = :shoppingGuide
+			          </#if>
+			          <#if msgtext??>
+			               AND awm.msg_text LIKE :msgtext
+			          </#if>
+				ORDER BY
+					awm.createTime DESC
+            ]]></body>
+        </sql>
+        <sql id="batchmsglogs_count" dynamic="true">
+            <params>
+                <p name="msgtext" type="str" fmt="LIKE"/>
+            </params>
+            <body><![CDATA[
+            SELECT COUNT(awm.id)
+              FROM acp_weixin_msgs awm
+             WHERE awm.company_id = :USER_COMPANY_ID
+          <#if storeId??>
+              AND awm.store_id = :storeId
+          <#else>
+              AND awm.store_id IN (${SUB_STORES?join(", ")})
+          </#if>
+          <#if shoppingGuide??>
+               AND awm.createUserId = :shoppingGuide
+          </#if>
+          <#if msgtext??>
+               AND awm.msg_text LIKE :msgtext
+          </#if>
+            ]]></body>
+        </sql>
+         <sql id="contactslist" dynamic="true">
+            <params>
+                <p name="search" type="str" fmt="LIKE"/>
+            </params>
+            <body><![CDATA[
+          SELECT userName,weixinId,iconUrl,nickName,conRemark,operTime,MAX(memberId) AS 'memberId',MAX(sex) AS 'sex',MAX(memberName) AS 'memberName',MAX(memberPhone) AS 'memberPhone',groupNames,labelNames,labelIds,remarkNames,flag,storeId
+            FROM 
+        ((SELECT DISTINCT 
+         		t.userName AS 'userName',
+                t.userName AS 'weixinId',
+                t.iconUrl AS 'iconUrl',
+                t.nickName AS 'nickName',
+                t.conRemark AS 'conRemark',
+                if( t.flag = 'add',	DATE_FORMAT( t.createtime, '%Y-%m-%d %H:%i:%s' ), '' ) AS 'operTime',
+                cm.id AS 'memberId',
+                cm.sex AS 'sex',
+                cm.name AS 'memberName',
+                cm.mobilePhone AS 'memberPhone',
+                '-' AS 'groupNames',
+                t.labelNames AS 'labelNames',
+                t.labelIds AS 'labelIds',
+                t.remarkNames AS 'remarkNames',
+                ( CASE  TRIM(t.flag)
+                        WHEN 'init' THEN '正常'
+                        WHEN 'add' THEN '正常'
+                        WHEN 'delete_contact' THEN '已删除'
+                        WHEN 'passive_delete_contact' THEN '被删除'
+                        WHEN 'black_contact' THEN '被拉黑'
+                        ELSE '正常' END ) AS 'status',
+                t.flag AS 'flag',
+                t.storeId              
+            FROM
+            	  (SELECT device.*,hc.flag,hc.createtime,'${storeId}' AS 'storeId','${USER_COMPANY_ID}' AS 'companyId',
+            	  				<#if deviceIds??>
+									(SELECT GROUP_CONCAT(name) FROM (
+									<#list deviceIds as deviceId>
+													<#if deviceId_index ==0>
+														SELECT 
+														id AS 'labelId',
+														'${deviceId}' AS 'deviceId',
+														Name AS 'name' 
+														FROM yycomm.Label_${deviceId}
+													<#else>
+														UNION
+														SELECT 
+														id AS 'labelId',
+														'${deviceId}' AS 'deviceId',
+														Name AS 'name' 
+														FROM yycomm.Label_${deviceId}
+													</#if>
+												</#list>
+									) l WHERE device.fromDevicesId = l.deviceId AND FIND_IN_SET(l.labelId,device.contactLabelIds)) AS 'weixinLabelNames',
+								</#if>
+								ln.labelNames,li.labelIds,rn.remarkNames            	  				
+								FROM yycomm.${tablename} device 
+								LEFT JOIN (
+	            				SELECT GROUP_CONCAT(DISTINCT ult.label_name) AS 'labelNames',t.weixin_id
+								FROM user_label_remark t 
+								LEFT JOIN user_label_tree AS ult ON t.label_id = ult.id AND ult.company_id = t.company_id
+								WHERE t.store_id =:storeId and t.company_id = :USER_COMPANY_ID AND ult.store_id IN (:storeId,-1) GROUP BY t.weixin_id
+								) ln ON ln.weixin_id = device.userName
+								LEFT JOIN (
+								SELECT GROUP_CONCAT(DISTINCT ult.id) AS 'labelIds',t.weixin_id FROM user_label_remark  t
+								LEFT JOIN user_label_tree AS ult ON t.label_id = ult.id AND ult.company_id = t.company_id
+								WHERE t.store_id =:storeId and t.company_id = :USER_COMPANY_ID AND ult.store_id IN (:storeId,-1) GROUP BY t.weixin_id 
+								) li ON li.weixin_id = device.userName
+								LEFT JOIN (
+								SELECT GROUP_CONCAT(DISTINCT url.remarks) AS 'remarkNames',url.weixin_id FROM user_remarks_list url
+								WHERE url.delete_flag = 0  AND url.company_id =:USER_COMPANY_ID and store_id = :storeId GROUP BY url.weixin_id
+								) rn ON rn.weixin_id = device.userName								
+								LEFT JOIN yycomm.UPDATE_${tablename} hc ON device.userName = hc.userName AND hc.store_id = :storeId AND hc.company_id = :USER_COMPANY_ID
+								WHERE device.work = 1 AND device.type <> 4 
+								AND SUBSTRING_INDEX(device.userName,'@',-1)!='chatroom'
+								<#if operFlags??>
+					                AND hc.store_id =:storeId AND hc.company_id = :USER_COMPANY_ID AND IF(hc.flag IS NULL,'init',hc.flag) IN (<#list operFlags as flag>'${flag}'<#if flag_has_next>, </#if></#list>)
+					            </#if>
+					            <#if newAddFriendGroupId>
+					            	AND hc.createtime >= DATE_SUB(NOW(),INTERVAL :beforeDays DAY) AND IF(hc.flag IS NULL,'init',hc.flag) = 'add'
+					            </#if>
+					            <#if beginTime?? && endTime??>
+					               AND hc.createtime BETWEEN :beginTime AND date_add(:endTime,interval 1 day)
+					            </#if>
+					             <#if commonGroupId??>
+					               AND device.userName IN ( SELECT DISTINCT(_temp.friend_id) FROM acp_group_friend _temp WHERE _temp.group_id = :commonGroupId )
+					            </#if>
+					            <#if labelGroupId??>
+					              AND device.fromDevicesId = :labelDeviceId AND (FIND_IN_SET(:labelId,device.contactLabelIds) <> 0)
+					            </#if>
+					            <#if labelIds??>
+					              AND device.userName IN (
+					              	SELECT DISTINCT weixin_id 
+					              	FROM user_label_remark 
+					              	WHERE store_id = :storeId 
+					              	AND company_id = :USER_COMPANY_ID 
+					              	AND weixin_id IS NOT NULL 
+					              	AND label_id IN (${labelIds?join(", ")}))
+					            </#if>
+					            <#if commonGroupIds??>
+					              AND device.userName NOT IN (
+					                    SELECT DISTINCT(_temp.friend_id)
+					                      FROM acp_group_friend _temp
+					                     WHERE _temp.group_id IN (<#list commonGroupIds as gid>'${gid}'<#if gid_has_next>, </#if></#list>))
+					            </#if>
+					            <#if !all>
+					            	<#if !operFlags>																
+										AND IFNULL(hc.flag,'init') IN ('init','add','add_chatroom_member','rm_chatroom_member')
+									</#if>			            
+					            </#if>
+								GROUP BY device.userName) t													
+            INNER JOIN acp_weixin_member awm ON t.userName = awm.weixin_id AND awm.store_id = :storeId AND awm.company_id = :USER_COMPANY_ID
+            INNER JOIN crm_member cm ON cm.id = awm.member_id AND cm.company_id = :USER_COMPANY_ID                                
+            <#if search??>
+              WHERE ( t.conRemark LIKE :search 
+              OR cm.name LIKE :search 
+              OR cm.mobilePhone LIKE :search 
+              OR t.nickName LIKE :search
+              OR t.remarkNames LIKE :search
+              OR t.labelNames LIKE :search
+              OR t.weixinLabelNames LIKE :search)
+            </#if> )
+        UNION
+        (
+        	SELECT DISTINCT 
+         		t.userName AS 'userName',
+                t.userName AS 'weixinId',
+                t.iconUrl AS 'iconUrl',
+                t.nickName AS 'nickName',
+                t.conRemark AS 'conRemark',
+                if( t.flag = 'add',	DATE_FORMAT( t.createtime, '%Y-%m-%d %H:%i:%s' ), '' ) AS 'operTime',
+                NULL AS 'memberId',
+                '' AS 'sex',
+                '' AS 'memberName',
+                '' AS 'memberPhone',
+                '-' AS 'groupNames',
+                t.labelNames AS 'labelNames',
+                t.labelIds AS 'labelIds',
+                t.remarkNames AS 'remarkNames',
+                ( CASE  TRIM(t.flag)
+                        WHEN 'init' THEN '正常'
+                        WHEN 'add' THEN '正常'
+                        WHEN 'delete_contact' THEN '已删除'
+                        WHEN 'passive_delete_contact' THEN '被删除'
+                        WHEN 'black_contact' THEN '被拉黑'
+                        ELSE '正常' END ) AS 'status',
+                t.flag AS 'flag',
+                t.storeId              
+            FROM
+            	  (SELECT device.*,hc.flag,hc.createtime,'${storeId}' AS 'storeId','${USER_COMPANY_ID}' AS 'companyId',
+            	  				<#if deviceIds??>
+									(SELECT GROUP_CONCAT(name) FROM (
+									<#list deviceIds as deviceId>
+													<#if deviceId_index ==0>
+														SELECT 
+														id AS 'labelId',
+														'${deviceId}' AS 'deviceId',
+														Name AS 'name' 
+														FROM yycomm.Label_${deviceId}
+													<#else>
+														UNION
+														SELECT 
+														id AS 'labelId',
+														'${deviceId}' AS 'deviceId',
+														Name AS 'name' 
+														FROM yycomm.Label_${deviceId}
+													</#if>
+												</#list>
+									) l WHERE device.fromDevicesId = l.deviceId AND FIND_IN_SET(l.labelId,device.contactLabelIds)) AS 'weixinLabelNames',
+								</#if>
+								ln.labelNames,li.labelIds,rn.remarkNames            	  				
+								FROM yycomm.${tablename} device 
+								LEFT JOIN (
+	            				SELECT GROUP_CONCAT(DISTINCT ult.label_name) AS 'labelNames',t.weixin_id
+								FROM user_label_remark t 
+								LEFT JOIN user_label_tree AS ult ON t.label_id = ult.id AND ult.company_id = t.company_id
+								WHERE t.store_id =:storeId and t.company_id = :USER_COMPANY_ID AND ult.store_id IN (:storeId,-1) GROUP BY t.weixin_id
+								) ln ON ln.weixin_id = device.userName
+								LEFT JOIN (
+								SELECT GROUP_CONCAT(DISTINCT ult.id) AS 'labelIds',t.weixin_id FROM user_label_remark  t
+								LEFT JOIN user_label_tree AS ult ON t.label_id = ult.id AND ult.company_id = t.company_id
+								WHERE t.store_id =:storeId and t.company_id = :USER_COMPANY_ID AND ult.store_id IN (:storeId,-1) GROUP BY t.weixin_id 
+								) li ON li.weixin_id = device.userName
+								LEFT JOIN (
+								SELECT GROUP_CONCAT(DISTINCT url.remarks) AS 'remarkNames',url.weixin_id FROM user_remarks_list url
+								WHERE url.delete_flag = 0  AND url.company_id =:USER_COMPANY_ID and store_id = :storeId GROUP BY url.weixin_id
+								) rn ON rn.weixin_id = device.userName								
+								LEFT JOIN yycomm.UPDATE_${tablename} hc ON device.userName = hc.userName AND hc.store_id = :storeId AND hc.company_id = :USER_COMPANY_ID
+								WHERE device.work = 1 AND device.type <> 4 
+								AND SUBSTRING_INDEX(device.userName,'@',-1)!='chatroom'
+								<#if operFlags??>
+					                AND hc.store_id =:storeId AND hc.company_id = :USER_COMPANY_ID AND IF(hc.flag IS NULL,'init',hc.flag) IN (<#list operFlags as flag>'${flag}'<#if flag_has_next>, </#if></#list>)
+					            </#if>
+					            <#if newAddFriendGroupId>
+					            	AND hc.createtime >= DATE_SUB(NOW(),INTERVAL :beforeDays DAY) AND IF(hc.flag IS NULL,'init',hc.flag) = 'add'
+					            </#if>
+					            <#if beginTime?? && endTime??>
+					               AND hc.createtime BETWEEN :beginTime AND date_add(:endTime,interval 1 day)
+					            </#if>
+					             <#if commonGroupId??>
+					               AND device.userName IN ( SELECT DISTINCT(_temp.friend_id) FROM acp_group_friend _temp WHERE _temp.group_id = :commonGroupId )
+					            </#if>
+					            <#if labelGroupId??>
+					              AND device.fromDevicesId = :labelDeviceId AND (FIND_IN_SET(:labelId,device.contactLabelIds) <> 0)
+					            </#if>
+					            <#if labelIds??>
+					              AND device.userName IN (
+					              	SELECT DISTINCT weixin_id 
+					              	FROM user_label_remark 
+					              	WHERE store_id = :storeId 
+					              	AND company_id = :USER_COMPANY_ID 
+					              	AND weixin_id IS NOT NULL 
+					              	AND label_id IN (${labelIds?join(", ")}))
+					            </#if>
+					            <#if commonGroupIds??>
+					              AND device.userName NOT IN (
+					                    SELECT DISTINCT(_temp.friend_id)
+					                      FROM acp_group_friend _temp
+					                     WHERE _temp.group_id IN (<#list commonGroupIds as gid>'${gid}'<#if gid_has_next>, </#if></#list>))
+					            </#if>
+					             <#if !all>																
+									<#if !operFlags>																
+										AND IFNULL(hc.flag,'init') IN ('init','add','add_chatroom_member','rm_chatroom_member')
+									</#if>			            
+					            </#if>
+								GROUP BY device.userName) t													
+            <#if search??>
+              WHERE ( t.conRemark LIKE :search 
+              OR t.nickName LIKE :search
+              OR t.remarkNames LIKE :search
+              OR t.labelNames LIKE :search
+              OR t.weixinLabelNames LIKE :search)
+            </#if>
+        )) AS list        
+        GROUP BY list.userName,list.weixinId,list.iconUrl,list.nickName,list.conRemark,list.operTime,list.groupNames,list.labelNames,list.labelIds,list.remarkNames,list.flag,list.storeId
+        <#if bildFlag??>
+               HAVING memberId <#if (bildFlag == 1)> IS NOT NULL <#else> IS NULL </#if>
+        </#if>                  
+        ORDER BY list.operTime DESC
+        LIMIT :offset,:rows
+        ]]></body>
+        </sql>
+        <sql id="contactslist_count" dynamic="true">
+            <params>
+                <p name="search" type="str" fmt="LIKE"/>
+            </params>
+            <body><![CDATA[
+          SELECT count(DISTINCT wxm.userName)
+                        FROM 
+        ( SELECT userName,weixinId,iconUrl,nickName,conRemark,operTime,MAX(memberId) AS 'memberId',MAX(sex) AS 'sex',MAX(memberName) AS 'memberName',MAX(memberPhone) AS 'memberPhone',groupNames,labelNames,labelIds,remarkNames,flag,storeId
+            FROM 
+        ((SELECT DISTINCT 
+         		t.userName AS 'userName',
+                t.userName AS 'weixinId',
+                t.iconUrl AS 'iconUrl',
+                t.nickName AS 'nickName',
+                t.conRemark AS 'conRemark',
+                if( t.flag = 'add',	DATE_FORMAT( t.createtime, '%Y-%m-%d %H:%i:%s' ), '' ) AS 'operTime',
+                cm.id AS 'memberId',
+                cm.sex AS 'sex',
+                cm.name AS 'memberName',
+                cm.mobilePhone AS 'memberPhone',
+                '-' AS 'groupNames',
+                t.labelNames AS 'labelNames',
+                t.labelIds AS 'labelIds',
+                t.remarkNames AS 'remarkNames',
+                ( CASE  TRIM(t.flag)
+                        WHEN 'init' THEN '正常'
+                        WHEN 'add' THEN '正常'
+                        WHEN 'delete_contact' THEN '已删除'
+                        WHEN 'passive_delete_contact' THEN '被删除'
+                        WHEN 'black_contact' THEN '被拉黑'
+                        ELSE '正常' END ) AS 'status',
+                t.flag AS 'flag',
+                t.storeId              
+            FROM
+            	  (SELECT device.*,hc.flag,hc.createtime,'${storeId}' AS 'storeId','${USER_COMPANY_ID}' AS 'companyId',
+            	  				<#if deviceIds??>
+									(SELECT GROUP_CONCAT(name) FROM (
+									<#list deviceIds as deviceId>
+													<#if deviceId_index ==0>
+														SELECT 
+														id AS 'labelId',
+														'${deviceId}' AS 'deviceId',
+														Name AS 'name' 
+														FROM yycomm.Label_${deviceId}
+													<#else>
+														UNION
+														SELECT 
+														id AS 'labelId',
+														'${deviceId}' AS 'deviceId',
+														Name AS 'name' 
+														FROM yycomm.Label_${deviceId}
+													</#if>
+												</#list>
+									) l WHERE device.fromDevicesId = l.deviceId AND FIND_IN_SET(l.labelId,device.contactLabelIds)) AS 'weixinLabelNames',
+								</#if>
+								ln.labelNames,li.labelIds,rn.remarkNames            	  				
+								FROM yycomm.${tablename} device 
+								LEFT JOIN (
+	            				SELECT GROUP_CONCAT(DISTINCT ult.label_name) AS 'labelNames',t.weixin_id
+								FROM user_label_remark t 
+								LEFT JOIN user_label_tree AS ult ON t.label_id = ult.id AND ult.company_id = t.company_id
+								WHERE t.store_id =:storeId and t.company_id = :USER_COMPANY_ID AND ult.store_id IN (:storeId,-1) GROUP BY t.weixin_id
+								) ln ON ln.weixin_id = device.userName
+								LEFT JOIN (
+								SELECT GROUP_CONCAT(DISTINCT ult.id) AS 'labelIds',t.weixin_id FROM user_label_remark  t
+								LEFT JOIN user_label_tree AS ult ON t.label_id = ult.id AND ult.company_id = t.company_id
+								WHERE t.store_id =:storeId and t.company_id = :USER_COMPANY_ID AND ult.store_id IN (:storeId,-1) GROUP BY t.weixin_id 
+								) li ON li.weixin_id = device.userName
+								LEFT JOIN (
+								SELECT GROUP_CONCAT(DISTINCT url.remarks) AS 'remarkNames',url.weixin_id FROM user_remarks_list url
+								WHERE url.delete_flag = 0  AND url.company_id =:USER_COMPANY_ID and store_id = :storeId GROUP BY url.weixin_id
+								) rn ON rn.weixin_id = device.userName								
+								LEFT JOIN yycomm.UPDATE_${tablename} hc ON device.userName = hc.userName AND hc.store_id = :storeId AND hc.company_id = :USER_COMPANY_ID
+								WHERE device.work = 1 AND device.type <> 4 
+								AND SUBSTRING_INDEX(device.userName,'@',-1)!='chatroom'
+								<#if operFlags??>
+					                AND hc.store_id =:storeId AND hc.company_id = :USER_COMPANY_ID AND IF(hc.flag IS NULL,'init',hc.flag) IN (<#list operFlags as flag>'${flag}'<#if flag_has_next>, </#if></#list>)
+					            </#if>
+					            <#if newAddFriendGroupId>
+					            	AND hc.createtime >= DATE_SUB(NOW(),INTERVAL :beforeDays DAY) AND IF(hc.flag IS NULL,'init',hc.flag) = 'add'
+					            </#if>
+					            <#if beginTime?? && endTime??>
+					               AND hc.createtime BETWEEN :beginTime AND date_add(:endTime,interval 1 day)
+					            </#if>
+					             <#if commonGroupId??>
+					               AND device.userName IN ( SELECT DISTINCT(_temp.friend_id) FROM acp_group_friend _temp WHERE _temp.group_id = :commonGroupId )
+					            </#if>
+					            <#if labelGroupId??>
+					              AND device.fromDevicesId = :labelDeviceId AND (FIND_IN_SET(:labelId,device.contactLabelIds) <> 0)
+					            </#if>
+					            <#if labelIds??>
+					              AND device.userName IN (
+					              	SELECT DISTINCT weixin_id 
+					              	FROM user_label_remark 
+					              	WHERE store_id = :storeId 
+					              	AND company_id = :USER_COMPANY_ID 
+					              	AND weixin_id IS NOT NULL 
+					              	AND label_id IN (${labelIds?join(", ")}))
+					            </#if>
+					            <#if commonGroupIds??>
+					              AND device.userName NOT IN (
+					                    SELECT DISTINCT(_temp.friend_id)
+					                      FROM acp_group_friend _temp
+					                     WHERE _temp.group_id IN (<#list commonGroupIds as gid>'${gid}'<#if gid_has_next>, </#if></#list>))
+					            </#if>
+					            <#if !all>																
+									<#if !operFlags>																
+										AND IFNULL(hc.flag,'init') IN ('init','add','add_chatroom_member','rm_chatroom_member')
+									</#if>			            
+					            </#if>
+								GROUP BY device.userName) t													
+            INNER JOIN acp_weixin_member awm ON t.userName = awm.weixin_id AND awm.store_id = :storeId AND awm.company_id = :USER_COMPANY_ID
+            INNER JOIN crm_member cm ON cm.id = awm.member_id AND cm.company_id = :USER_COMPANY_ID                                
+            <#if search??>
+              WHERE ( t.conRemark LIKE :search 
+              OR cm.name LIKE :search 
+              OR cm.mobilePhone LIKE :search 
+              OR t.nickName LIKE :search
+              OR t.remarkNames LIKE :search
+              OR t.labelNames LIKE :search
+              OR t.weixinLabelNames LIKE :search)
+            </#if> )
+        UNION
+        (
+        	SELECT DISTINCT 
+         		t.userName AS 'userName',
+                t.userName AS 'weixinId',
+                t.iconUrl AS 'iconUrl',
+                t.nickName AS 'nickName',
+                t.conRemark AS 'conRemark',
+                if( t.flag = 'add',	DATE_FORMAT( t.createtime, '%Y-%m-%d %H:%i:%s' ), '' ) AS 'operTime',
+                NULL AS 'memberId',
+                '' AS 'sex',
+                '' AS 'memberName',
+                '' AS 'memberPhone',
+                '-' AS 'groupNames',
+                t.labelNames AS 'labelNames',
+                t.labelIds AS 'labelIds',
+                t.remarkNames AS 'remarkNames',
+                ( CASE  TRIM(t.flag)
+                        WHEN 'init' THEN '正常'
+                        WHEN 'add' THEN '正常'
+                        WHEN 'delete_contact' THEN '已删除'
+                        WHEN 'passive_delete_contact' THEN '被删除'
+                        WHEN 'black_contact' THEN '被拉黑'
+                        ELSE '正常' END ) AS 'status',
+                t.flag AS 'flag',
+                t.storeId              
+            FROM
+            	  (SELECT device.*,hc.flag,hc.createtime,'${storeId}' AS 'storeId','${USER_COMPANY_ID}' AS 'companyId',
+            	  				<#if deviceIds??>
+									(SELECT GROUP_CONCAT(name) FROM (
+									<#list deviceIds as deviceId>
+													<#if deviceId_index ==0>
+														SELECT 
+														id AS 'labelId',
+														'${deviceId}' AS 'deviceId',
+														Name AS 'name' 
+														FROM yycomm.Label_${deviceId}
+													<#else>
+														UNION
+														SELECT 
+														id AS 'labelId',
+														'${deviceId}' AS 'deviceId',
+														Name AS 'name' 
+														FROM yycomm.Label_${deviceId}
+													</#if>
+												</#list>
+									) l WHERE device.fromDevicesId = l.deviceId AND FIND_IN_SET(l.labelId,device.contactLabelIds)) AS 'weixinLabelNames',
+								</#if>
+								ln.labelNames,li.labelIds,rn.remarkNames            	  				
+								FROM yycomm.${tablename} device 
+								LEFT JOIN (
+	            				SELECT GROUP_CONCAT(DISTINCT ult.label_name) AS 'labelNames',t.weixin_id
+								FROM user_label_remark t 
+								LEFT JOIN user_label_tree AS ult ON t.label_id = ult.id AND ult.company_id = t.company_id
+								WHERE t.store_id =:storeId and t.company_id = :USER_COMPANY_ID AND ult.store_id IN (:storeId,-1) GROUP BY t.weixin_id
+								) ln ON ln.weixin_id = device.userName
+								LEFT JOIN (
+								SELECT GROUP_CONCAT(DISTINCT ult.id) AS 'labelIds',t.weixin_id FROM user_label_remark  t
+								LEFT JOIN user_label_tree AS ult ON t.label_id = ult.id AND ult.company_id = t.company_id
+								WHERE t.store_id =:storeId and t.company_id = :USER_COMPANY_ID AND ult.store_id IN (:storeId,-1) GROUP BY t.weixin_id 
+								) li ON li.weixin_id = device.userName
+								LEFT JOIN (
+								SELECT GROUP_CONCAT(DISTINCT url.remarks) AS 'remarkNames',url.weixin_id FROM user_remarks_list url
+								WHERE url.delete_flag = 0  AND url.company_id =:USER_COMPANY_ID and store_id = :storeId GROUP BY url.weixin_id
+								) rn ON rn.weixin_id = device.userName								
+								LEFT JOIN yycomm.UPDATE_${tablename} hc ON device.userName = hc.userName AND hc.store_id = :storeId AND hc.company_id = :USER_COMPANY_ID
+								WHERE device.work = 1 AND device.type <> 4 
+								AND SUBSTRING_INDEX(device.userName,'@',-1)!='chatroom'
+								<#if operFlags??>
+					                AND hc.store_id =:storeId AND hc.company_id = :USER_COMPANY_ID AND IF(hc.flag IS NULL,'init',hc.flag) IN (<#list operFlags as flag>'${flag}'<#if flag_has_next>, </#if></#list>)
+					            </#if>
+					            <#if newAddFriendGroupId>
+					            	AND hc.createtime >= DATE_SUB(NOW(),INTERVAL :beforeDays DAY) AND IF(hc.flag IS NULL,'init',hc.flag) = 'add'
+					            </#if>
+					            <#if beginTime?? && endTime??>
+					               AND hc.createtime BETWEEN :beginTime AND date_add(:endTime,interval 1 day)
+					            </#if>
+					             <#if commonGroupId??>
+					               AND device.userName IN ( SELECT DISTINCT(_temp.friend_id) FROM acp_group_friend _temp WHERE _temp.group_id = :commonGroupId )
+					            </#if>
+					            <#if labelGroupId??>
+					              AND device.fromDevicesId = :labelDeviceId AND (FIND_IN_SET(:labelId,device.contactLabelIds) <> 0)
+					            </#if>
+					            <#if labelIds??>
+					              AND device.userName IN (
+					              	SELECT DISTINCT weixin_id 
+					              	FROM user_label_remark 
+					              	WHERE store_id = :storeId 
+					              	AND company_id = :USER_COMPANY_ID 
+					              	AND weixin_id IS NOT NULL 
+					              	AND label_id IN (${labelIds?join(", ")}))
+					            </#if>
+					            <#if commonGroupIds??>
+					              AND device.userName NOT IN (
+					                    SELECT DISTINCT(_temp.friend_id)
+					                      FROM acp_group_friend _temp
+					                     WHERE _temp.group_id IN (<#list commonGroupIds as gid>'${gid}'<#if gid_has_next>, </#if></#list>))
+					            </#if>
+					             <#if !all>																
+									<#if !operFlags>																
+										AND IFNULL(hc.flag,'init') IN ('init','add','add_chatroom_member','rm_chatroom_member')
+									</#if>			            
+					            </#if>
+								GROUP BY device.userName) t													
+            <#if search??>
+              WHERE ( t.conRemark LIKE :search 
+              OR t.nickName LIKE :search
+              OR t.remarkNames LIKE :search
+              OR t.labelNames LIKE :search
+              OR t.weixinLabelNames LIKE :search)
+            </#if>
+        )) AS list        
+        GROUP BY list.userName,list.weixinId,list.iconUrl,list.nickName,list.conRemark,list.operTime,list.groupNames,list.labelNames,list.labelIds,list.remarkNames,list.flag,list.storeId
+        <#if bildFlag??>
+               HAVING memberId <#if (bildFlag == 1)> IS NOT NULL <#else> IS NULL </#if>
+        </#if>
+        ) wxm        
+        ]]></body>
+        </sql>
+        <sql id="msgdetail" dynamic="true">
+            <body><![CDATA[
+            SELECT
+                T1.*,
+                ( CASE WHEN tml.ID IS NULL  THEN 0 ELSE 1 END ) AS 'receiveFlag'
+            FROM
+                (
+                SELECT
+                    DISTINCT sml.ID AS 'id',
+                    sml.content AS 'content',
+                    sml.fromuser AS 'fromUser',
+                    sml.touser AS 'toUser',
+                    ( CASE WHEN LENGTH(cmm.nickName) >=1
+                           THEN cmm.nickName
+                           ELSE cmm.userName
+                           END ) AS 'nickName',
+                    sml.issend AS 'isSend',
+                    sml.`type` AS 'msgType',
+                    DATE_FORMAT( sml.createtime, '%Y-%m-%d %H:%i:%s' ) AS 'createtime',
+                    sml.fromdeviceid AS 'fromDeviceId',
+                    sml.todeviceid AS 'toDeviceId',
+                    sml.pushflag AS 'pushFlag',
+                    sml.store_id AS 'storeId',
+                    sml.company_id AS 'companyId',
+                    DATE_FORMAT( sml.recieveTime, '%Y-%m-%d %H:%i:%s' ) AS 'recieveTime',
+                    DATE_FORMAT( sml.acktime, '%Y-%m-%d %H:%i:%s' ) AS 'acktime',
+                    sml.sendFlag AS 'sendFlag',
+                    sml.IDGroup AS 'batchNo'
+                FROM
+                    yycomm.Send_MSG_List sml
+                    LEFT JOIN yycomm.His_Contact cmm ON sml.touser = cmm.userName
+                WHERE
+                    cmm.type <> 4 AND sml.sendFlag = 1
+                 AND
+                    <#if flag == 1 > sml.ack = 1 <#else> (sml.ack = -2 OR sml.ack IS NULL) </#if>
+                 AND
+                    sml.IDGroup  = :batchNo
+                ORDER BY
+                    sml.ID
+                LIMIT  :offset,:rows
+                ) AS T1
+                LEFT JOIN yycomm.Trans_MSG_List tml ON T1.batchNo = tml.clientid AND tml.ack=1
+            ]]></body>
+        </sql>
+        <sql id="msgdetail_count" dynamic="true">
+            <body><![CDATA[
+            SELECT COUNT(sml.ID)
+              FROM yycomm.Send_MSG_List sml
+             WHERE sml.IDGroup = :batchNo AND sml.sendFlag = 1
+               AND <#if flag == 1 > sml.ack = 1 <#else> (sml.ack = -2 OR sml.ack IS NULL) </#if>
+            ]]></body>
+        </sql>
+        <sql id="search_unbild" dynamic="true">
+            <params>
+                <p name="search" type="str" fmt="LIKE"/>
+            </params>
+            <body><![CDATA[
+            SELECT  temp.* FROM (
+            SELECT  CASE WHEN LENGTH(wx.nickName)>1 THEN wx.nickName ELSE wx.userName END AS 'nickName',
+                    wx.conRemark AS 'conRemark',
+                    wx.userName AS 'weixinId',
+                    awm.member_id AS 'memberId'
+              FROM  yycomm.${tablename} wx
+         LEFT JOIN acp_weixin_member awm ON wx.userName = awm.weixin_id AND awm.store_id = :storeId ) AS temp
+        WHERE temp.memberId IS NOT NULL AND wx.type <> 4
+        AND wx.work = 1
+         <#if search??>
+              AND (temp.conRemark LIKE :search OR
+                   temp.memberName LIKE :search OR
+                   temp.weixinId LIKE :search)
+         </#if>
+         ORDER BY temp.weixinId DESC
+            ]]></body>
+        </sql>
+        <sql id="friend_all_count" dynamic="true">
+            <body><![CDATA[
+	        		SELECT
+	        			sd.deviceid AS 'deviceId',
+						st.id AS 'storeId',
+						st.name AS 'storeName',
+						'${beginTime} 至 ${endTime}' AS 'date',
+						SUM( CASE WHEN hc.flag = 'add' THEN 1 ELSE 0 END) AS 'addNum',
+						SUM( CASE WHEN hc.flag = 'black_contact' THEN 1 ELSE 0 END) AS 'blackNum',
+						SUM( CASE WHEN hc.flag = 'delete_contact' THEN 1 ELSE 0 END ) AS 'activeRemoveNum',
+						SUM( CASE WHEN hc.flag = 'passive_delete_contact' THEN 1 ELSE 0 END) AS 'passiveRemoveNum'
+					FROM
+						yycomm.Update_His_Contact hc
+					LEFT JOIN
+						acp_store st
+					ON st.id = hc.store_id
+					LEFT JOIN yycomm.store_device sd
+					ON st.id = sd.store_id
+					WHERE
+					sd.devicetype = 1
+					AND sd.status = 1
+					AND hc.type <> 4
+					AND hc.createtime BETWEEN :beginTime AND date_add(:endTime,interval 1 day)
+					AND substring_index(IFNULL(hc.userName,''), '@',-1) <> 'chatroom'
+			        <#if storeIds>
+			         AND st.id IN (${storeIds?join(", ")})
+			      	<#else>
+			         AND st.id IN (${SUB_STORES?join(", ")})
+			     	</#if>
+			     	GROUP BY hc.store_id,st.name,sd.deviceid
+				]]></body>
+        </sql>
+        <sql id="friend_all" dynamic="true">
+            <body><![CDATA[
+	        		SELECT
+	        			sd.deviceid AS 'deviceId',
+						st.id AS 'storeId',
+						st.name AS 'storeName',
+						'${beginTime} 至 ${endTime}' AS 'date',
+						SUM( CASE WHEN hc.flag = 'add' THEN 1 ELSE 0 END) AS 'addNum',
+						SUM( CASE WHEN hc.flag = 'black_contact' THEN 1 ELSE 0 END) AS 'blackNum',
+						SUM( CASE WHEN hc.flag = 'delete_contact' THEN 1 ELSE 0 END ) AS 'activeRemoveNum',
+						SUM( CASE WHEN hc.flag = 'passive_delete_contact' THEN 1 ELSE 0 END) AS 'passiveRemoveNum'
+					FROM
+						yycomm.Update_His_Contact hc
+					LEFT JOIN
+						acp_store st
+					ON st.id = hc.store_id
+					LEFT JOIN yycomm.store_device sd
+					ON st.id = sd.store_id
+					WHERE
+					sd.devicetype = 1
+					AND sd.status = 1
+					AND hc.createtime BETWEEN :beginTime AND date_add(:endTime,interval 1 day)
+					AND substring_index(IFNULL(hc.userName,''), '@',-1) <> 'chatroom'
+			        <#if storeIds>
+			         AND st.id IN (${storeIds?join(", ")})
+			      	<#else>
+			         AND st.id IN (${SUB_STORES?join(", ")})
+			     	</#if>
+			     	GROUP BY hc.store_id,st.name,sd.deviceid
+				]]></body>
+        </sql>
+        <sql id="friend_detail_count" dynamic="true">
+            <body><![CDATA[
+        		SELECT
+					sd.deviceid AS 'deviceId',
+					st.id AS 'storeId',
+					st.name AS 'storeName',
+					DATE_FORMAT( hc.createtime, '%Y-%m-%d' ) AS 'date',
+					SUM( CASE WHEN hc.flag = 'add' THEN 1 ELSE 0 END) AS 'addNum',
+					SUM( CASE WHEN hc.flag = 'black_contact' THEN 1 ELSE 0 END) AS 'blackNum',
+					SUM( CASE WHEN hc.flag = 'delete_contact' THEN 1 ELSE 0 END ) AS 'activeRemoveNum',
+					SUM( CASE WHEN hc.flag = 'passive_delete_contact' THEN 1 ELSE 0 END) AS 'passiveRemoveNum'
+				FROM
+					yycomm.Update_His_Contact hc
+				LEFT JOIN acp_store st
+					ON st.id = hc.store_id
+				LEFT JOIN yycomm.store_device sd
+					ON st.id = sd.store_id
+				WHERE
+					sd.devicetype = 1
+					AND sd.status = 1
+					AND hc.createtime BETWEEN :beginTime AND date_add(:endTime,interval 1 day)
+					AND substring_index(IFNULL(hc.userName,''), '@',-1) <> 'chatroom'
+				<#if storeIds>
+			        AND st.id IN (${storeIds?join(", ")})
+			    <#else>
+			        AND st.id IN (${SUB_STORES?join(", ")})
+			    </#if>
+				GROUP BY DATE_FORMAT( hc.createtime ,'%Y-%m-%d' )
+					]]></body>
+        </sql>
+        <sql id="friend_detail" dynamic="true">
+            <body><![CDATA[
+        		SELECT
+					sd.deviceid AS 'deviceId',
+					st.id AS 'storeId',
+					st.name AS 'storeName',
+					DATE_FORMAT( hc.createtime, '%Y-%m-%d' ) AS 'date',
+					SUM( CASE WHEN hc.flag = 'add' THEN 1 ELSE 0 END) AS 'addNum',
+					SUM( CASE WHEN hc.flag = 'black_contact' THEN 1 ELSE 0 END) AS 'blackNum',
+					SUM( CASE WHEN hc.flag = 'delete_contact' THEN 1 ELSE 0 END ) AS 'activeRemoveNum',
+					SUM( CASE WHEN hc.flag = 'passive_delete_contact' THEN 1 ELSE 0 END) AS 'passiveRemoveNum'
+				FROM
+					yycomm.Update_His_Contact hc
+				LEFT JOIN acp_store st
+					ON st.id = hc.store_id
+				LEFT JOIN yycomm.store_device sd
+					ON st.id = sd.store_id
+				WHERE
+					sd.devicetype = 1
+					AND sd.status = 1
+					AND hc.createtime BETWEEN :beginTime AND date_add(:endTime,interval 1 day)
+					AND substring_index(IFNULL(hc.userName,''), '@',-1) <> 'chatroom'
+				<#if storeIds>
+			        AND st.id IN (${storeIds?join(", ")})
+			    <#else>
+			        AND st.id IN (${SUB_STORES?join(", ")})
+			    </#if>
+				GROUP BY DATE_FORMAT( hc.createtime ,'%Y-%m-%d' )
+					]]></body>
+        </sql>
+    </model>
+    <model id="hischat">
+        <sql id="detail_count" dynamic="true">
+            <body><![CDATA[
+    <#if (keywords??) || (strDate??) || (actionTag??)>
+            SELECT COUNT(DISTINCT tml.createtime)
+              FROM yycomm.${MSG_COM_STORE} AS tml
+        INNER JOIN yycomm.${STORE_DEVICEID} AS dev ON tml.weixinuser=dev.userName
+         LEFT JOIN acp_store AS st ON tml.store_id = st.id
+             WHERE tml.company_id= :companyId
+               AND tml.tag <> 'repeat_msg'
+               AND tml.store_id IN ( ${storeIds?join(", ")})
+         <#if keywords??>
+               AND tml.content LIKE :keywords
+         </#if>
+         <#if (chatType == 1)>
+               AND IFNULL(LENGTH(tml.chatroomuser),0) = 0
+         <#elseif (chatType == 2)>
+               AND IFNULL(LENGTH(tml.chatroomuser),0) > 0
+         </#if>
+         <#if actionTag??>
+               AND tml.tag= :actionTag
+         </#if>
+         <#if strDate??>
+               AND FROM_UNIXTIME(tml.createtime/1000) BETWEEN STR_TO_DATE('${strDate} 00:00:00', '%Y-%m-%d %H:%i:%s')
+                                       AND STR_TO_DATE('${endDate} 23:59:59', '%Y-%m-%d %H:%i:%s')
+         </#if>
+    <#else>
+           SELECT COUNT(DISTINCT tml.weixinuser,tml.store_id)
+             FROM yycomm.${MSG_COM_STORE} AS tml
+             INNER JOIN (SELECT store_id, weixinuser , MAX(createtime) val
+                      FROM yycomm.${MSG_COM_STORE}
+                  GROUP BY store_id, weixinuser ) b  ON tml.weixinuser = b.weixinuser AND tml.createtime = b.val AND tml.store_id = b.store_id
+  		LEFT OUTER JOIN yycomm.${STORE_DEVICEID} AS hc ON hc.userName=tml.weixinuser
+            WHERE tml.company_id= :companyId
+              AND tml.store_id IN ( ${storeIds?join(", ")})
+              AND tml.tag<>'repeat_msg'
+              AND LENGTH(tml.weixinuser)>0
+         <#if (chatType == 1)>
+               AND IFNULL(LENGTH(tml.chatroomuser),0) = 0
+         <#elseif (chatType == 2)>
+               AND IFNULL(LENGTH(tml.chatroomuser),0) > 0
+         </#if>
+    </#if>
+            ]]></body>
+        </sql>
+        <sql id="detail" dynamic="true">
+            <body><![CDATA[
+    <#if (keywords??) || (strDate??) || (actionTag??)>
+                SELECT DISTINCT FROM_UNIXTIME(tml.createtime/1000,'%Y-%m-%d %H:%i:%s') AS 'chatTime',
+                           IFNULL(( SELECT hc.nickName
+                             FROM yycomm.${STORE_DEVICEID} hc
+                            WHERE hc.type <> 4 AND hc.userName = tml.weixinuser LIMIT 1 ), tml.weixinuser) AS 'nickName',
+                         IFNULL(( SELECT hc.conRemark
+                             FROM yycomm.${STORE_DEVICEID} hc
+                            WHERE hc.type <> 4 AND hc.userName = tml.weixinuser LIMIT 1 ), tml.weixinuser) AS 'conRemark',
+                           IF(tml.issend=0,'->','<-') AS 'redirect',
+                           tml.weixinuser AS 'weixinId',
+                           tml.type AS 'contentType',
+                           tml.createtime AS 'chatTimeUnix',
+                           tml.store_id AS 'storeId',
+                     <#if chatType == 1>
+                           tml.content AS 'content',
+                     <#elseif chatType == 2>
+                           REPLACE (tml.content,CONCAT (tml.chatroomuser,':'),(SELECT DISTINCT hc.nickName FROM yycomm.${STORE_DEVICEID} hc WHERE  hc.username = tml.chatroomuser LIMIT 1)) AS 'content',
+                     </#if>
+                           tml.tag AS 'actionTag',
+                           st.name AS 'shoppingGuide',
+                           st.name AS 'storeName',
+                           ${chatType} AS 'chatType'
+                      FROM yycomm.${MSG_COM_STORE} AS tml
+                 LEFT JOIN acp_store AS st ON tml.store_id = st.id
+                     WHERE tml.company_id= :companyId
+                       AND tml.tag <> 'repeat_msg'
+                       AND tml.store_id IN ( ${storeIds?join(",")} )
+                 <#if chatType == 1>
+                       AND IFNULL(LENGTH(tml.chatroomuser),0) = 0
+                 <#elseif chatType == 2>
+                       AND IFNULL(LENGTH(tml.chatroomuser),0) > 0
+                 </#if>
+                 <#if keywords??>
+                       AND tml.content LIKE :keywords
+                 </#if>
+                 <#if actionTag??>
+                       AND tml.tag= :actionTag
+                 </#if>
+                 <#if strDate??>
+                       AND FROM_UNIXTIME(tml.createtime/1000) BETWEEN STR_TO_DATE('${strDate} 00:00:00', '%Y-%m-%d %H:%i:%s')
+                                               AND STR_TO_DATE('${endDate} 23:59:59', '%Y-%m-%d %H:%i:%s')
+                 </#if>
+                  ORDER BY tml.id DESC
+                     LIMIT :offset,:rows
+    <#else>
+            SELECT DISTINCT FROM_UNIXTIME(a.createtime/1000,'%Y-%m-%d %H:%i:%s') AS 'chatTime',
+                   IFNULL(( SELECT hc.nickName
+                             FROM yycomm.${STORE_DEVICEID} hc
+                            WHERE hc.type <> 4 AND hc.userName = a.weixinuser LIMIT 1 ), a.weixinuser) AS 'nickName',
+                   IFNULL(( SELECT hc.conRemark
+                             FROM yycomm.${STORE_DEVICEID} hc
+                            WHERE hc.type <> 4 AND hc.userName = a.weixinuser LIMIT 1 ), '') AS 'conRemark',
+                    IF(a.issend=0,'->','<-') AS 'redirect',
+                    a.weixinuser AS 'weixinId',
+                    a.type AS 'contentType',
+                    a.createtime AS 'chatTimeUnix',
+                    a.store_id AS 'storeId',
+                 <#if chatType == 1>
+                       a.content AS 'content',
+                 <#elseif chatType == 2>
+                       replace (a.content,CONCAT (a.chatroomuser,':'),(SELECT DISTINCT hc.nickName  FROM yycomm.${STORE_DEVICEID} hc WHERE  hc.username = a.chatroomuser LIMIT 1)) AS 'content',
+                 </#if>
+                    a.tag AS 'actionTag',
+                    st.name AS 'shoppingGuide',
+                    st.name  AS 'storeName',
+                    ${chatType} AS 'chatType'
+              FROM yycomm.${MSG_COM_STORE} a
+        INNER JOIN (SELECT store_id, weixinuser , MAX(createtime) val
+                      FROM yycomm.${MSG_COM_STORE}
+                  GROUP BY store_id, weixinuser ) b  ON a.weixinuser = b.weixinuser AND a.createtime = b.val AND a.store_id = b.store_id
+         LEFT JOIN acp_store AS st ON a.store_id = st.id
+            WHERE a.tag <>'repeat_msg'
+        <#if chatType == 1>
+               AND IFNULL(LENGTH(a.chatroomuser),0) = 0
+         <#elseif chatType == 2>
+               AND IFNULL(LENGTH(a.chatroomuser),0) > 0
+         </#if>
+              AND a.store_id IN ( ${storeIds?join(",")} )
+              AND a.company_id = :companyId
+         ORDER BY a.createtime DESC
+           LIMIT :offset,:rows
+    </#if>
+            ]]></body>
+        </sql>
+        <sql id="signlehismsg" dynamic="true">
+            <params>
+                <p name="weixinId" type="str" required="true"/>
+                <p name="storeId" type="int" required="true"/>
+                <p name="chatTimeUnix" type="long" required="true"/>
+            </params>
+            <body><![CDATA[
+        <#if chatType == 1 >
+         SELECT DISTINCT FROM_UNIXTIME(tml.createtime/1000,'%Y-%m-%d %H:%i:%s') AS 'chatTime',
+                FROM_UNIXTIME(tml.createtime/1000,'%Y-%m-%d %H:%i:%s') AS 'time',
+                tml.fromuser AS 'fromUser',
+                ( CASE WHEN tml.issend=0
+                       THEN (SELECT  hc.iconUrl FROM yycomm.His_Contact hc  WHERE hc.type <> 4 AND hc.username = tml.weixinuser LIMIT 1)
+                       ELSE '' END  )  AS 'avatar',
+                ( CASE WHEN tml.issend=0
+                       THEN (SELECT DISTINCT hc.nickName  FROM yycomm.His_Contact hc WHERE hc.type <> 4 AND hc.username = tml.weixinuser LIMIT 1)
+                       ELSE (CASE WHEN tml.issend=1 AND tml.pushflag=1
+                       THEN (SELECT ae.name  FROM acp_employee ae WHERE ae.id  = tml.employeeid)
+                       ELSE (SELECT ae.name  FROM acp_store ae WHERE ae.id  = tml.store_id) END) END )  AS 'userName',
+                tml.createtime AS 'createtime',
+                tml.issend AS 'chatType',
+                tml.type AS 'contentType',
+                tml.store_id AS 'storeId',
+                CRC32(CONCAT(tml.content,tml.createtime)) AS 'id',
+                tml.content AS 'content'
+           FROM yycomm.${MSG_COM_STORE} tml
+          WHERE tml.weixinuser= :weixinId
+            AND tml.store_id = :storeId
+            AND tml.tag <> 'repeat_msg'
+            AND tml.createtime <= :chatTimeUnix
+       ORDER BY tml.createtime ASC
+       <#elseif chatType == 2>
+            SELECT DISTINCT FROM_UNIXTIME(tml.createtime/1000,'%Y-%m-%d %H:%i:%s') AS 'chatTime',
+                FROM_UNIXTIME(tml.createtime/1000,'%Y-%m-%d %H:%i:%s') AS 'time',
+                tml.fromuser AS 'fromUser',
+                ( CASE WHEN tml.issend=0
+                       THEN (SELECT  hc.iconUrl FROM yycomm.His_Contact hc  WHERE hc.type <> 4 AND hc.username = tml.chatroomuser LIMIT 1)
+                       ELSE '' END  )  AS 'avatar',
+                ( CASE WHEN tml.issend=0
+                       THEN (SELECT DISTINCT hc.nickName  FROM yycomm.His_Contact hc WHERE hc.type <> 4 AND hc.username = tml.chatroomuser LIMIT 1)
+                       ELSE (CASE WHEN tml.issend=1 AND tml.pushflag=1
+                       THEN (SELECT ae.name  FROM acp_employee ae WHERE ae.id  = tml.employeeid)
+                       ELSE (SELECT ae.name  FROM acp_store ae WHERE ae.id  = tml.store_id) END) END )  AS 'userName',
+                tml.createtime AS 'createtime',
+                tml.issend AS 'chatType',
+                tml.type AS 'contentType',
+                CRC32(CONCAT(tml.content,tml.createtime)) AS 'id',
+                tml.store_id AS 'storeId',
+                replace (tml.content,CONCAT (tml.chatroomuser,':\n'),'') AS 'content'
+           FROM yycomm.${MSG_COM_STORE} tml
+          WHERE tml.weixinuser= :weixinId
+            AND tml.store_id = :storeId
+            AND tml.tag <> 'repeat_msg'
+            AND tml.createtime <= :chatTimeUnix
+       ORDER BY tml.createtime ASC
+       </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <!-- 微信绑定会员查询输出相关SQL编写 -->
+    <model id="wxwithmb">
+        <sql id="amcount" dynamic="true">
+            <body><![CDATA[
+            SELECT COUNT(mm.id) AS amcount
+              FROM crm_member mm
+             WHERE mm.company_id = :USER_COMPANY_ID
+               AND (mm.effectiveFlag <> 2 OR mm.effectiveFlag IS NULL)
+               AND mm.id IN (
+                    SELECT awm.member_id
+                      FROM acp_weixin_member awm
+                     WHERE awm.store_id = :USER_STORE_ID)
+               AND mm.id IN (
+                    SELECT csm.member_id
+                      FROM crm_store_member csm
+                     WHERE csm.store_id = :USER_STORE_ID )
+         <#if shoppingguideId??>
+               AND mm.id IN (
+                    SELECT csm.member_id
+                      FROM crm_shoppingguide_member csm
+                     WHERE csm.shoppingguide_id = :shoppingguideId )
+         </#if>
+         <#if rfm??>
+               AND mm.id IN (
+                    SELECT csm.member_id
+                      FROM crm_memberrfm csf
+                     WHERE csf.store_id = :USER_STORE_ID
+               <#if (rfm?size == 3) >
+                       AND ( rfm.rLevel = ${rfm[0]} AND rfm.fLevel = ${rfm[1]} AND rfm.mLevel = ${rfm[2]} )
+              <#elseif (rfm?size == 6) >
+                       AND ( rfm.rLevel BETWEEN ${rfm[0]} AND ${rfm[1]}
+                             AND rfm.fLevel BETWEEN ${rfm[2]} AND ${rfm[3]}
+                             AND rfm.mLevel BETWEEN ${rfm[4]} AND ${rfm[5]} )
+              </#if>)
+         </#if>
+         <#if memberCardType??>
+               AND mm.memberCardType_id = :memberCardType
+         </#if>
+         <#if searchValue??>
+               AND ( mm.name = :searchValue OR mm.phone = :searchValue OR mm.memberCardNum = :searchValue )
+         </#if>
+         <#if liveness??>
+               <#if liveness == "week">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 7
+               <#elseif liveness == "month">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 30
+               <#elseif liveness == "jidu">
+                AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 120
+               <#elseif liveness == "half">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 185
+               <#elseif liveness == "year">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) <= 365
+               <#elseif liveness == "sleep">
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) > 365
+               <#else>
+               AND TIMESTAMPDIFF(DAY,mm.lastVisitTime,NOW()) > 9999999
+               </#if>
+         </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="devices">
+        <sql id="onlines">
+            <body><![CDATA[
+        SELECT od.DeviceOnline AS 'deviceOnline',
+               od.WeixinOnline AS 'weixinOnline'
+          FROM yycomm.OnLine_Device od
+         WHERE od.DeviceID IN ( SELECT sd.deviceid
+                                  FROM yycomm.store_device sd
+                                 WHERE sd.devicetype = 1
+                                   AND sd.status = 1
+                                   AND sd.store_id = :storeId )
+         LIMIT 1
+            ]]></body>
+        </sql>
+        <sql id="findCmdListByDevice">
+            <body><![CDATA[
+         SELECT ID AS 'id',
+                tag AS 'tag',
+                fromdeviceid AS 'fromDeviceId',
+                todeviceid AS 'toDeviceId',
+                orderMSG AS 'command',
+                uuid AS 'batchNo',
+                sendFlag AS 'sendFlag',
+                success AS 'successFlag',
+                remark AS 'remark',
+                DATE_FORMAT(createtime,'%Y-%m-%d %H:%i:%s') AS 'createTime'
+           FROM yycomm.Send_Order_List
+          WHERE todeviceid = :deviceId
+       ORDER BY ID DESC
+          LIMIT 50
+            ]]></body>
+        </sql>
+        <sql id="mnglist" dynamic="true">
+            <body><![CDATA[
+        SELECT aas.name AS 'storeName',
+               ysd.deviceid AS 'deviceId',
+               ysd.store_id AS 'storeId',
+               ysd.devicetype AS 'deviceType',
+               yod.DeviceOnline AS 'deviceOnline',
+               yod.HeartTime AS 'deviceHeartTime',
+               (SELECT COUNT(yssd.devicetype)
+                  FROM yycomm.store_device yssd
+                  WHERE yssd.store_id = ysd.store_id
+                    AND yssd.devicetype = 2) AS 'subDeviceAmount',
+               (SELECT FROM_UNIXTIME(MIN(tml.createtime)/1000,'%Y-%m-%d %H:%i:%s')
+                  FROM yycomm.Trans_MSG_List tml
+                 WHERE tml.tag ='msg'
+                   AND tml.store_id = ysd.store_id
+                   AND FROM_UNIXTIME(tml.createtime/1000) >=  CURDATE() ) AS 'deviceFristActiveTime',
+                 ysd.weixin AS 'weixinId' ,
+                 yod.WeixinOnline AS 'weixinOnline'
+           FROM yycomm.store_device ysd
+      LEFT JOIN yycomm.OnLine_Device yod ON ysd.deviceid = yod.DeviceID
+      LEFT JOIN acp_store aas ON aas.id = ysd.store_id
+          WHERE ysd.devicetype = 1
+            AND ysd.status = 1
+            AND ysd.store_id IN (<#if storeIds??>${storeIds?join(", ")} <#else> ${SUB_STORES?join(", ")} </#if>)
+      <#if deviceOnline??>
+            AND yod.DeviceOnline = :deviceOnline
+      </#if>
+      <#if weixinOnline??>
+            AND yod.WeixinOnline = :weixinOnline
+      </#if>
+            ]]></body>
+        </sql>
+        <sql id="sub_mnglist" dynamic="true">
+            <body><![CDATA[
+       SELECT aas.name AS 'storeName',
+              ysd.deviceid AS 'deviceId',
+              ysd.store_id AS 'storeId',
+              ysd.devicetype AS 'deviceType',
+              yod.DeviceOnline AS 'deviceOnline',
+              yod.HeartTime AS 'deviceHeartTime'
+         FROM yycomm.store_device ysd
+    LEFT JOIN yycomm.OnLine_Device yod ON ysd.deviceid = yod.DeviceID
+    LEFT JOIN acp_store aas ON aas.id = ysd.store_id
+        WHERE ysd.devicetype = 2
+          AND ysd.status = 1
+          AND ysd.store_id = :storeId
+            ]]></body>
+        </sql>
+        <sql id="amount_manage" dynamic="true">
+            <body><![CDATA[
+        SELECT 'device' AS 'subType', yod.DeviceOnline AS 'status',COUNT(yod.DeviceOnline) AS 'amount'
+          FROM yycomm.OnLine_Device yod
+     LEFT JOIN yycomm.store_device ysd ON ysd.deviceid = yod.DeviceID
+         WHERE ysd.devicetype = 1
+           AND ysd.status = 1
+           AND ysd.store_id IN (<#if storeIds??>${storeIds?join(", ")} <#else> ${SUB_STORES?join(", ")} </#if>)
+      GROUP BY yod.DeviceOnline
+     UNION ALL
+        SELECT 'weixin' AS 'subType', yod.WeixinOnline AS 'status',COUNT(yod.WeixinOnline) AS 'amount'
+          FROM yycomm.OnLine_Device yod
+     LEFT JOIN yycomm.store_device ysd ON ysd.deviceid = yod.DeviceID
+         WHERE ysd.devicetype = 1
+           AND ysd.status = 1
+           AND ysd.store_id IN (<#if storeIds??>${storeIds?join(", ")} <#else> ${SUB_STORES?join(", ")} </#if>)
+      GROUP BY yod.WeixinOnline
+     UNION ALL
+        SELECT 'subDevice' AS 'subType', yod.DeviceOnline AS 'status',COUNT(yod.DeviceOnline) AS 'amount'
+          FROM yycomm.OnLine_Device yod
+     LEFT JOIN yycomm.store_device ysd ON ysd.deviceid = yod.DeviceID
+         WHERE ysd.devicetype = 2
+           AND ysd.status = 1
+           AND ysd.store_id IN (<#if storeIds??>${storeIds?join(", ")} <#else> ${SUB_STORES?join(", ")} </#if>)
+      GROUP BY yod.DeviceOnline
+            ]]></body>
+        </sql>
+    </model>
+    <model id="communication">
+        <sql id="sendmsg_sum_now" dynamic="true">
+            <body><![CDATA[
+		      SELECT
+				SUM(WX_S_R_Total) AS 'WX_S_R_Total',
+				SUM(WX_S_Total) AS 'WX_S_Total',
+				SUM(WX_R_Total) AS 'WX_R_Total',
+				CASE
+						WHEN SUM(WX_R_Total)=0 THEN
+									0.00
+						ELSE
+								SUM(WX_S_Total)/SUM(WX_R_Total)
+        		END AS 'WX_SR_Percent_Total',
+				SUM(WX_S_R_PrivateChat) AS 'WX_SR_PrivateChat',
+				SUM(WX_S_PrivateChat) AS 'WX_S_PrivateChat',
+				SUM(WX_R_PrivateChat) AS 'WX_R_PrivateChat',
+				CASE
+						WHEN SUM(WX_R_PrivateChat)=0 THEN
+									0.00
+						ELSE
+								SUM(WX_S_PrivateChat)/SUM(WX_R_PrivateChat)
+				END AS 'WX_SR_Percent_PrivateChat',
+				SUM(WX_S_R_ChatRoom) AS 'WX_ChatRoom_SR_Total',
+				SUM(WX_S_ChatRoom) AS 'WX_ChatRoom_S_Total',
+				SUM(WX_R_ChatRoom) AS 'WX_ChatRoom_R_Total',
+				CASE
+						WHEN SUM(WX_R_ChatRoom)=0 THEN
+									0.00
+						ELSE
+								SUM(WX_S_ChatRoom)/SUM(WX_R_ChatRoom)
+				END AS 'WX_SR_Percent_ChatRoom'
+
+			FROM
+				count_wx_comm_info T2
+			WHERE
+			T2.company_id IS NOT NULL AND (DATE_FORMAT(T2.count_date,'%Y-%m-%d') = DATE_FORMAT(NOW(),'%Y-%m-%d'))
+				AND store_id IN (${storeIds?join(", ")})
+            ]]></body>
+        </sql>
+        <sql id="sendmsg_sum" dynamic="true">
+            <body><![CDATA[
+            SELECT
+				store_id AS 'storeId',
+				acs.`name` AS 'storeName',
+				SUM(WX_S_R_Total) AS 'WX_S_R_Total',
+				SUM(WX_S_Total) AS 'WX_S_Total',
+				SUM(WX_R_Total) AS 'WX_R_Total',
+				CASE
+						WHEN SUM(WX_R_Total)=0 THEN
+									0.00
+						ELSE
+								SUM(WX_S_Total)/SUM(WX_R_Total)
+       			END AS 'WX_SR_Percent_Total',
+				SUM(WX_S_R_PrivateChat) AS 'WX_SR_PrivateChat',
+				SUM(WX_S_PrivateChat) AS 'WX_S_PrivateChat',
+				SUM(WX_R_PrivateChat) AS 'WX_R_PrivateChat',
+				CASE
+						WHEN SUM(WX_R_PrivateChat)=0 THEN
+									0.00
+						ELSE
+								SUM(WX_S_PrivateChat)/SUM(WX_R_PrivateChat)
+				END AS 'WX_SR_Percent_PrivateChat',
+				SUM(WX_S_R_ChatRoom) AS 'WX_ChatRoom_SR_Total',
+				SUM(WX_S_ChatRoom) AS 'WX_ChatRoom_S_Total',
+				SUM(WX_R_ChatRoom) AS 'WX_ChatRoom_R_Total',
+				CASE
+						WHEN SUM(WX_R_ChatRoom)=0 THEN
+									0.00
+						ELSE
+								SUM(WX_S_ChatRoom)/SUM(WX_R_ChatRoom)
+				END AS 'WX_SR_Percent_ChatRoom'
+
+			FROM
+				count_wx_comm_info T2
+			LEFT JOIN
+				acp_store acs
+			ON T2.store_id = acs.id
+			WHERE
+			T2.company_id IS NOT NULL AND (T2.count_date BETWEEN :beginTime AND :endTime)
+				AND store_id IN (${storeIds?join(", ")})
+				GROUP BY
+			T2.company_id,T2.store_id
+            ]]></body>
+        </sql>
+        <sql id="sendmsg_items" dynamic="true">
+            <body><![CDATA[
+            SELECT
+				DATE_FORMAT(count_date,'%Y-%m-%d') AS 'count_date',
+				SUM(WX_S_R_Total) AS 'WX_S_R_Total',
+				SUM(WX_S_Total) AS 'WX_S_Total',
+				SUM(WX_R_Total) AS 'WX_R_Total',
+				CASE
+						WHEN SUM(WX_R_Total)=0 THEN
+									0.00
+						ELSE
+								SUM(WX_S_Total)/SUM(WX_R_Total)
+        		END AS 'WX_SR_Percent_Total',
+				SUM(WX_S_R_PrivateChat) AS 'WX_SR_PrivateChat',
+				SUM(WX_S_PrivateChat) AS 'WX_S_PrivateChat',
+				SUM(WX_R_PrivateChat) AS 'WX_R_PrivateChat',
+				CASE
+						WHEN SUM(WX_R_PrivateChat)=0 THEN
+									0.00
+						ELSE
+								SUM(WX_S_PrivateChat)/SUM(WX_R_PrivateChat)
+				END AS 'WX_SR_Percent_PrivateChat',
+				SUM(WX_S_R_ChatRoom) AS 'WX_ChatRoom_SR_Total',
+				SUM(WX_S_ChatRoom) AS 'WX_ChatRoom_S_Total',
+				SUM(WX_R_ChatRoom) AS 'WX_ChatRoom_R_Total',
+				CASE
+						WHEN SUM(WX_R_ChatRoom)=0 THEN
+									0.00
+						ELSE
+								SUM(WX_S_ChatRoom)/SUM(WX_R_ChatRoom)
+				END AS 'WX_SR_Percent_ChatRoom'
+				FROM
+					count_wx_comm_info T2
+				WHERE
+				T2.company_id IS NOT NULL AND (T2.count_date BETWEEN :beginTime AND :endTime)
+					AND store_id = :storeId
+					GROUP BY
+				T2.company_id,T2.store_id,DATE_FORMAT(count_date,'%Y-%m-%d')
+				LIMIT :offset,:rows
+               ]]></body>
+        </sql>
+        <sql id="sendmsg_items_count" dynamic="true">
+            <body><![CDATA[
+		     SELECT
+				COUNT(*)
+				FROM
+					count_wx_comm_info T2
+				WHERE
+				T2.company_id IS NOT NULL AND (T2.count_date BETWEEN :beginTime AND :endTime)
+					AND store_id =:storeId
+            ]]></body>
+        </sql>       
+    </model>
+</sqls>

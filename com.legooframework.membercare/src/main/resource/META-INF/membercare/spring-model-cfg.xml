@@ -4,13 +4,17 @@
        xmlns:util="http://www.springframework.org/schema/util"
        xmlns:batch="http://www.springframework.org/schema/batch"
        xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:int="http://www.springframework.org/schema/integration"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
                            http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
-                           http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
+                           http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd
+                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd">
     <bean id="memberCareBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/membercare/legoo-model-cfg.xml"/>
     </bean>
+    <task:executor id="care-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>
+    <task:scheduler id="care-scheduler" pool-size="8"/>
     <!-- ========================= Query SQL Factory ========================= -->
     <bean id="memberCareStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
         <property name="patterns">
@@ -24,14 +28,14 @@
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]membercare[\\,/].*-query-cfg.xml$</value>
-                <value>.*[\\,/]base[\\,/]macro-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
             </util:list>
         </property>
     </bean>
     <bean id="careJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
         <qualifier value="query"/>
         <property name="statementFactory" ref="careQueryStatementFactory"/>
-        <property name="dataSource" ref="jobDataSource"/>
+        <property name="dataSource" ref="memberCareDataSource"/>
     </bean>
     <bean id="careCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
         <property name="caffeineSpecs">
@@ -40,71 +44,86 @@
             </util:map>
         </property>
     </bean>
+    <bean id="taskAbsEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="memberCareStatementFactory"/>
+        <property name="cacheManager" ref="careCacheManager"/>
+        <property name="dataSource" ref="memberCareDataSource"/>
+    </bean>
     <bean id="taskSwitchEntityAction" class="com.legooframework.model.membercare.entity.TaskSwitchEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="memberCareStatementFactory"/>
-        <property name="cacheManager" ref="careCacheManager"/>
-        <property name="dataSource" ref="jobDataSource"/>
+          parent="taskAbsEntityAction"/>
+    <bean id="careRuleEntityAction" class="com.legooframework.model.membercare.entity.TaskCareRuleEntityAction"
+          parent="taskAbsEntityAction"/>
+    <bean id="taskCareRule4Touch90EntityAction"
+          class="com.legooframework.model.membercare.entity.TaskCareRule4Touch90EntityAction"
+          parent="taskAbsEntityAction">
+        <constructor-arg name="taskCareRuleEntityAction" ref="careRuleEntityAction"/>
+        <constructor-arg name="messagingTemplate" ref="memberCareMessagingTemplate"/>
     </bean>
-    <bean id="careRuleEntityAction" class="com.legooframework.model.membercare.entity.CareRuleEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="memberCareStatementFactory"/>
-        <property name="cacheManager" ref="careCacheManager"/>
-        <property name="dataSource" ref="jobDataSource"/>
-    </bean>
+    <bean id="upcomingTaskDetailEntityAction"
+          class="com.legooframework.model.membercare.entity.UpcomingTaskDetailEntityAction"
+          parent="taskAbsEntityAction"/>
     <bean id="upcomingTaskEntityAction" class="com.legooframework.model.membercare.entity.UpcomingTaskEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="memberCareStatementFactory"/>
-        <property name="cacheManager" ref="careCacheManager"/>
-        <property name="executorService" ref="legoo-executor"/>
-        <property name="dataSource" ref="jobDataSource"/>
+          parent="taskAbsEntityAction">
+        <property name="detailAction" ref="upcomingTaskDetailEntityAction"/>
     </bean>
     <bean id="touch90CareLogEntityAction" class="com.legooframework.model.membercare.entity.Touch90CareLogEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="memberCareStatementFactory"/>
-        <property name="cacheManager" ref="careCacheManager"/>
-        <property name="executorService" ref="legoo-executor"/>
-        <property name="dataSource" ref="jobDataSource"/>
+          parent="taskAbsEntityAction">
+        <property name="executorService" ref="care-executor"/>
     </bean>
-    <bean id="touch90ItemReader"
-          class="com.legooframework.model.membercare.jobs.Touch90ItemReader" scope="step">
+    <bean id="touch90TemplateEntityAction"
+          class="com.legooframework.model.membercare.entity.Touch90TemplateEntityAction"
+          parent="taskAbsEntityAction"/>
+
+    <bean id="touch90ItemReader" class="com.legooframework.model.membercare.jobs.touch90.Touch90ItemReader"
+          scope="step">
         <property name="params">
             <util:list>
-                <value>#{jobParameters['companyId']}</value>
+                <value>#{jobParameters['job.params']}</value>
                 <value>#{jobParameters['start.time']}</value>
                 <value>#{jobParameters['end.time']}</value>
             </util:list>
         </property>
     </bean>
-    <bean id="touch90ItemWriter" class="com.legooframework.model.membercare.jobs.Touch90ItemWriter">
+    <bean id="touch90ItemWriter" class="com.legooframework.model.membercare.jobs.touch90.Touch90ItemWriter">
         <property name="upcomingTaskAction" ref="upcomingTaskEntityAction"/>
     </bean>
-    <bean id="touch90ItemProcessor" class="com.legooframework.model.membercare.jobs.Touch90ItemProcessor">
-        <property name="careRuleEntityAction" ref="careRuleEntityAction"/>
+    <bean id="touch90ItemProcessor" class="com.legooframework.model.membercare.jobs.touch90.Touch90ItemProcessor">
+        <property name="careRuleEntityAction" ref="taskCareRule4Touch90EntityAction"/>
         <property name="upcomingTaskAction" ref="upcomingTaskEntityAction"/>
     </bean>
-    <bean id="touch90ItemListener" class="com.legooframework.model.membercare.jobs.Touch90ItemListener">
+    <bean id="touch90ItemListener" class="com.legooframework.model.membercare.jobs.touch90.Touch90ItemListener">
         <property name="touch90CareLogAction" ref="touch90CareLogEntityAction"/>
+        <property name="saleRecordEntityAction" ref="saleRecordEntityAction"/>
     </bean>
 
-    <batch:job id="touch90Job">
+    <batch:job id="touch90Job" job-repository="jobRepository">
         <batch:step id="step4touch90">
-            <batch:tasklet transaction-manager="jobTransactionManager" start-limit="1">
+            <batch:tasklet start-limit="1">
                 <batch:chunk reader="touch90ItemReader"
                              processor="touch90ItemProcessor"
                              writer="touch90ItemWriter"
-                             commit-interval="50"/>
-                <batch:transaction-attributes propagation="REQUIRED" isolation="READ_COMMITTED" timeout="60"/>
+                             commit-interval="1"/>
+                <batch:listeners>
+                    <batch:listener ref="touch90ItemListener"/>
+                </batch:listeners>
             </batch:tasklet>
-            <batch:listeners>
-                <batch:listener ref="touch90ItemListener"/>
-            </batch:listeners>
         </batch:step>
     </batch:job>
-    <bean id="memerCareJobService" class="com.legooframework.model.membercare.service.MemerCareJobService"/>
-    <task:scheduled-tasks scheduler="legoo-scheduler">
-        <task:scheduled ref="memerCareJobService" method="runTouchJob" cron="0 0/2 * * * ?"/>
+
+    <bean id="memerCareJobService" class="com.legooframework.model.membercare.service.MemberCareJobService"/>
+    <bean id="taskCare4Touch90Service" class="com.legooframework.model.membercare.service.TaskCare4Touch90Service"/>
+    <bean id="luncherCareJobService" class="com.legooframework.model.membercare.service.LuncherCareJobService"/>
+
+    <task:scheduled-tasks scheduler="care-scheduler">
+        <task:scheduled ref="taskCare4Touch90Service" method="runTouch90Job" cron="0 0/2 * * * ?"/>
         <task:scheduled ref="memerCareJobService" method="automaticStartingTask" cron="0 0/5 * * * ?"/>
-        <task:scheduled ref="memerCareJobService" method="automaticExpiredTask" cron="0 0/30 * * * ?"/>
+        <task:scheduled ref="memerCareJobService" method="automaticExpiredTask" cron="0 0/5 * * * ?"/>
+        <task:scheduled ref="memerCareJobService" method="automaticExtensionedTask" cron="0 0/5 * * * ?"/>
     </task:scheduled-tasks>
+
+    <int:publish-subscribe-channel id="membercare_innser_busevent"/>
+    <bean id="memberCareMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
+    <int:outbound-channel-adapter channel="membercare_innser_busevent" ref="memerCareJobService"
+                                  method="subscribeBusEvent"/>
 </beans>

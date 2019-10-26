@@ -1,10 +1,10 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
-import com.legooframework.model.dict.entity.KvDictEntity;
+import com.legooframework.model.membercare.entity.BusinessType;
+import com.legooframework.model.smsprovider.entity.SMSChannel;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +24,11 @@ public class SMSSendRuleEntityAction extends BaseEntityAction<SMSSendRuleEntity>
         super("smsGateWayCache");
     }
 
-    public String addRule(KvDictEntity businessType, String businessDesc, SMSChannel smsChannel, boolean freeSend) {
+    public String addRule(BusinessType businessType, String businessDesc, SMSChannel smsChannel, boolean freeSend) {
         Optional<List<SMSSendRuleEntity>> rules = loadAllRules();
         Optional<SMSSendRuleEntity> rule = rules.flatMap(r -> r.stream()
                 .filter(x -> x.getBusinessType().equals(businessType)).findFirst());
         Preconditions.checkState(!rule.isPresent(), "businessType = %s 对应的规则已经存在..", businessType);
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(businessDesc), "入参 businessDesc 不可以为空..");
         SMSSendRuleEntity instance = new SMSSendRuleEntity(businessType, smsChannel, freeSend);
         super.updateAction(instance, "insert");
         final String cache_key = String.format("%s_all_rules", getModelName());
@@ -37,18 +36,18 @@ public class SMSSendRuleEntityAction extends BaseEntityAction<SMSSendRuleEntity>
         return instance.getId();
     }
 
-    public SMSSendRuleEntity findByType(KvDictEntity businessType) {
+    public SMSSendRuleEntity loadByType(BusinessType businessType) {
         Optional<List<SMSSendRuleEntity>> rules = loadAllRules();
         Optional<SMSSendRuleEntity> rule = rules.flatMap(r -> r.stream()
-                .filter(x -> x.getBusinessType().equals(businessType.getValue())).findFirst());
+                .filter(x -> x.getBusinessType() == businessType).findFirst());
         if (logger.isDebugEnabled())
-            logger.debug(String.format("findByType(%s) return %s", businessType, rule.orElse(null)));
+            logger.debug(String.format("loadByType(%s) return %s", businessType, rule.orElse(null)));
         Preconditions.checkState(rule.isPresent(), "%s 对应的规则定义不存在...", businessType);
         return rule.get();
     }
 
-    public void modify(KvDictEntity businessType, SMSChannel smsChannel, boolean freeSend) {
-        SMSSendRuleEntity exits = findByType(businessType);
+    public void modify(BusinessType businessType, SMSChannel smsChannel, boolean freeSend) {
+        SMSSendRuleEntity exits = loadByType(businessType);
         Optional<SMSSendRuleEntity> clone = exits.modify(smsChannel, freeSend);
         if (!clone.isPresent()) return;
         final String cache_key = String.format("%s_all_rules", getModelName());

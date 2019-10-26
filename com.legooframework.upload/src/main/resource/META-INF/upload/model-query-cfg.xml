@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+	<model id="qiniu_upload_query">
+		<sql id="loadAllNamespace">
+			<body><![CDATA[
+             	SELECT 			
+						DISTINCT ao.id AS 'companyId',
+						CASE 
+						WHEN qcn.company_id = -1 THEN '羿元科技'
+						ELSE ao.name
+						END AS 'companyName',
+						qcn.name_short AS 'nameShort',
+						qcn.domain AS 'domain',
+						qcn.namespace AS 'namespace',
+						qcn.channel_ids AS 'channelIds',
+						IF(qcn.namespace IS NULL,'0','1') AS 'binded'
+				FROM acp.acp_organization ao
+				LEFT JOIN
+						yyfilestore.qiniu_company_namespace qcn
+				ON qcn.company_id = ao.id 
+				WHERE ao.orgType = 1
+            ]]></body>
+		</sql>
+	</model>
+</sqls>

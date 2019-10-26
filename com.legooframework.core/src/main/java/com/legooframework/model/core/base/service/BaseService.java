@@ -53,5 +53,5 @@ public abstract class BaseService implements ApplicationContextAware {
         return getBean(MessageGateWay.class);
     }
 
-    private ApplicationContext appCtx;
+    protected ApplicationContext appCtx;
 }

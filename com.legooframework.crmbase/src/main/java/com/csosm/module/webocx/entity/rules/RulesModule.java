@@ -18,6 +18,7 @@ public class RulesModule extends AbstractRulesModule {
         rules.add(new WebOcxItemDataItemParseRule());
         rules.add(new WebOcxItemDataParseRule());
         rules.add(new WebOcxItemParseRule());
+        rules.add(new WebOcxItemItemParseRule());
         rules.add(new WebOcxCdnItemParseRule());
         rules.add(new WebOcxMetaParseRule());
         rules.add(new WebOcxSubPageParseRule());

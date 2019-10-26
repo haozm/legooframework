@@ -1,19 +1,22 @@
 package com.legooframework.model.core.config;
 
-import com.google.common.base.Preconditions;
-import com.legooframework.model.core.event.LegooEvent;
-import org.apache.commons.lang3.StringUtils;
+import com.google.common.base.MoreObjects;
 import org.apache.commons.vfs2.FileChangeEvent;
+import org.springframework.context.ApplicationEvent;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
-import java.util.Optional;
+import java.util.Objects;
 
-public class FileMonitorEvent extends LegooEvent {
+public class FileMonitorEvent extends ApplicationEvent {
 
-    public FileMonitorEvent(String eventName, File file) {
-        super("core", eventName);
-        super.putPayload("file", file);
+    private File file;
+    private final long timetamp;
+
+    private FileMonitorEvent(String eventName, File file) {
+        super(eventName);
+        this.file = file;
+        this.timetamp = System.currentTimeMillis();
     }
 
     static FileMonitorEvent fileCreatedEvent(FileChangeEvent changeEvent) throws Exception {
@@ -32,22 +35,27 @@ public class FileMonitorEvent extends LegooEvent {
     }
 
     public File getFile() {
-        Optional<File> file = getValue("file", File.class);
-        Preconditions.checkState(file.isPresent(), "系统异常:监听文件事件中，修改的文件不存在。");
-        return file.get();
+        return file;
     }
 
-
     public boolean isFileCreatedEvent() {
-        return StringUtils.equals("fileCreatedEvent", getEventName());
+        return Objects.equals("fileCreatedEvent", getSource());
     }
 
     public boolean isFileDeletedEvent() {
-        return StringUtils.equals("fileDeletedEvent", getEventName());
+        return Objects.equals("fileDeletedEvent", getSource());
     }
 
     public boolean isFileChangedEvent() {
-        return StringUtils.equals("fileChangedEvent", getEventName());
+        return Objects.equals("fileChangedEvent", getSource());
     }
 
+    @Override
+    public String toString() {
+        return MoreObjects.toStringHelper(this)
+                .add("source", source)
+                .add("timetamp", timetamp)
+                .add("file", file.getAbsolutePath())
+                .toString();
+    }
 }

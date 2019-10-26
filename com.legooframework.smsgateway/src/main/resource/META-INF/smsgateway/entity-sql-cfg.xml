@@ -21,53 +21,67 @@
 	         <#macro black_list_fields>
                 sb.id AS 'id',
                 sb.company_id AS 'companyId',
+                sb.store_id AS 'storeId',
                 sb.is_effective AS 'effective',
                 sb.is_disable AS 'disable',
-                sb.member_id AS 'memberId',
 	         </#macro>
 	          ]]>
         </macro>
     </macros>
     <model id="SMSSettingEntity">
-        <sql id="loadAllByCompany" macros="crud_fixed">
+        <sql id="loadAllByCompany">
             <body><![CDATA[
-          SELECT scs.id AS 'id', scs.company_id AS 'companyId', scs.store_id AS 'storeId',
-                 scs.sms_prefix AS 'smsPrefix',
-                 <@crud_fixed_select "scs" />
-            FROM SMS_CONFIG_SETTING AS scs
+          SELECT sto.company_id AS 'companyId', sto.id AS 'storeId',
+                 IFNULL((SELECT scs.sms_prefix
+                           FROM SMS_CONFIG_SETTING scs
+                          WHERE sto.id =scs.store_id
+                            AND sto.company_id = scs.company_id ), sto.name ) AS 'smsPrefix',
+                 -1 AS 'tenantId',-1 AS 'creator',NOW() AS 'createTime',-1 AS 'editor', NOW() AS 'editTime'
+            FROM acp_store AS sto
+           WHERE sto.status = 1
+            ]]></body>
+        </sql>
+        <sql id="findBySMSPrefix">
+            <body><![CDATA[
+          SELECT A.*
+            FROM (  SELECT sto.company_id AS 'companyId', sto.id AS 'storeId',
+                             IFNULL((SELECT scs.sms_prefix
+                                       FROM SMS_CONFIG_SETTING scs
+                                      WHERE sto.id =scs.store_id
+                                        AND sto.company_id = scs.company_id ), sto.name ) AS 'smsPrefix',
+                            -1 AS 'tenantId',-1 AS 'creator',NOW() AS 'createTime',-1 AS 'editor', NOW() AS 'editTime'
+                       FROM acp_store AS sto
+                      WHERE sto.status = 1 ) AS A
+             WHERE  A.smsPrefix = :smsPrefix
+            ]]></body>
+        </sql>
+        <sql id="updateSmsPrefix">
+            <body><![CDATA[
+         REPLACE INTO SMS_CONFIG_SETTING (company_id, store_id, sms_prefix, tenant_id, creator )
+               VALUES (:companyId, :storeId, :smsPrefix, :companyId, :editor )
             ]]></body>
         </sql>
     </model>
     <model id="SMSBlackListEntity">
-        <sql id="loadAllByCompany" macros="black_list_fields,crud_fixed">
+        <sql id="loadAll" macros="black_list_fields,crud_fixed">
             <body><![CDATA[
           SELECT <@black_list_fields />
                  <@crud_fixed_select "sb" />
             FROM SMS_BLACKLIST AS sb
-           WHERE sb.company_id = :companyId
-            ]]></body>
-        </sql>
-        <sql id="findById" macros="black_list_fields,crud_fixed">
-            <body><![CDATA[
-          SELECT <@black_list_fields />
-                 <@crud_fixed_select "sb" />
-            FROM SMS_BLACKLIST AS sb
-           WHERE sb.company_id = :companyId
-             AND sb.id = :id
             ]]></body>
         </sql>
         <sql id="insert">
             <body><![CDATA[
     INSERT INTO SMS_BLACKLIST
-                (id, company_id, is_effective, is_disable, member_id,  tenant_id, creator)
-         VALUES (:id,:companyId, :effective,    :disable,  :memberId,  :tenantId, :creator)
+                (id, company_id, is_effective, is_disable, store_id,  tenant_id, creator)
+         VALUES (:id,:companyId, :effective,    :disable,  :storeId,  :tenantId, :creator)
             ]]></body>
         </sql>
         <sql id="batchInsert">
             <body><![CDATA[
-    INSERT INTO SMS_BLACKLIST
-                (id, company_id, is_effective, is_disable, member_id,  tenant_id, creator )
-         VALUES (?,           ?,            ?,          ?,          ?,         ?,       ? )
+   REPLACE INTO SMS_BLACKLIST
+                (id, company_id, store_id,is_effective, is_disable,  tenant_id, creator )
+         VALUES (?,           ?,         ?,          ?,         ?,         -1,       1 )
             ]]></body>
         </sql>
         <sql id="disabled">
@@ -279,7 +293,7 @@
                  smb.recharge_scope AS 'rechargeScope',
                  ( CASE smb.recharge_scope
                    WHEN 2 THEN (SELECT asv.storeIds
-                                  FROM csosm_crm.acp_store_view asv
+                                  FROM acp_store_view asv
                                  WHERE asv.tree_type = 2
                                    AND asv.id = smb.store_group_id )
                    ELSE NULL END ) AS 'storeIds',
@@ -294,6 +308,14 @@
                  <@crud_fixed_select "smb"/>
             FROM SMS_RECHARGE_BALANCE AS smb
            WHERE smb.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="loadByIds" macros="sms_balance_fields,crud_fixed">
+            <body><![CDATA[
+          SELECT <@sms_balance_fields />
+                 <@crud_fixed_select "smb"/>
+            FROM SMS_RECHARGE_BALANCE AS smb
+           WHERE smb.id IN (<#list balanceIds as id>'${id}'<#sep>,</#list>)
             ]]></body>
         </sql>
         <sql id="findByInstance" macros="sms_balance_fields,crud_fixed">
@@ -329,39 +351,6 @@
             ]]></body>
         </sql>
     </model>
-    <macros>
-        <macro id="charge_info_fields">
-            <![CDATA[
-             <#macro charge_detail_fields>
-               scd.id AS 'id',
-               scd.company_id AS 'companyId',
-               scd.store_id AS 'storeId',
-               scd.sms_batchno AS 'smsBatchNo',
-               scd.blance_id AS 'blanceId',
-               scd.blance_num AS 'blanceNum',
-               scd.deduction_num AS 'deductionNum',
-	         </#macro>
-	         <#macro charge_summary_fields>
-                scs.id AS 'id',
-                scs.company_id AS 'companyId',
-                scs.store_id AS 'storeId',
-                scs.sms_batchno AS 'smsBatchNo',
-                scs.operator_name AS 'operatorName',
-                scs.business_ruleid AS 'businessRuleId',
-                scs.business_type AS 'businessType',
-                scs.send_mode AS 'sendMode',
-                scs.finish_send AS 'finishSend',
-                scs.sms_quantity AS 'smsQuantity',
-                scs.sms_context AS 'smsContext',
-                scs.store_name AS 'storeName',
-                scs.company_name AS 'companyName',
-                ( SELECT GROUP_CONCAT(DISTINCT stl.send_status ORDER BY stl.send_status SEPARATOR  ',' )
-                    FROM SMS_TRANSPORT_LOG stl
-                   WHERE stl.sms_batchno = scs.sms_batchno ) AS 'detailStatus',
-	         </#macro>
-	          ]]>
-        </macro>
-    </macros>
     <model id="ChargeDetailEntity">
         <sql id="batchInsert">
             <body><![CDATA[
@@ -370,80 +359,164 @@
                VALUES ( ?,          ?,        ?,           ?,         ?,          ?,             ?,         ?)
             ]]></body>
         </sql>
+        <sql id="batchWriteOff">
+            <body><![CDATA[
+          UPDATE SMS_CHARGE_DETAIL
+             SET reimburse_num = ?
+           WHERE id = ?
+            ]]></body>
+        </sql>
+        <sql id="loadBySmsBatchNos" macros="crud_fixed">
+            <body><![CDATA[
+        SELECT scd.id AS 'id',
+               scd.company_id AS 'companyId',
+               scd.store_id AS 'storeId',
+               scd.sms_batchno AS 'smsBatchNo',
+               scd.blance_id AS 'blanceId',
+               scd.blance_num AS 'balanceNum',
+               scd.deduction_num AS 'deductionNum',
+               scd.reimburse_num AS 'reimburseNum',
+               smb.recharge_scope AS 'rechargeScope',
+               <@crud_fixed_select "scd" />
+          FROM SMS_CHARGE_DETAIL AS scd
+     LEFT JOIN SMS_RECHARGE_BALANCE AS smb ON scd.blance_id = smb.id
+         WHERE scd.sms_batchno IN (<#list smsBatchNos as batchNo>'${batchNo}'<#sep>,</#list>)
+      ORDER BY scd.sms_batchno DESC
+            ]]></body>
+        </sql>
     </model>
     <model id="ChargeSummaryEntity">
         <sql id="insert">
             <body><![CDATA[
           INSERT INTO SMS_CHARGE_SUMMARY
-                      ( id, company_id, store_id, sms_batchno, business_type, business_ruleid, company_name, sms_quantity, store_name, send_mode, sms_context, operator_name, finish_send, tenant_id, createTime )
-               VALUES (:id, :companyId, :storeId, :smsBatchNo, :businessType, :businessRuleId, :companyName, :smsQuantity, :storeName, :sendMode, :smsContext, :operatorName, :finishSend, :tenantId, CURRENT_TIMESTAMP )
+                      ( id, company_id, store_id, sms_batchno, business_type, free_send, company_name, sms_quantity, wx_quantity, store_name, send_mode, sms_context, finish_send, tenant_id, createTime )
+               VALUES (:id, :companyId, :storeId, :smsBatchNo, :businessType, :freeSend, :companyName, :smsQuantity, :wxQuantity, :storeName, :sendMode, :smsContext, :finishSend, :tenantId, CURRENT_TIMESTAMP )
             ]]></body>
         </sql>
-        <sql id="findById" macros="charge_info_fields,crud_fixed">
+        <sql id="findById" macros="crud_fixed">
             <body><![CDATA[
-         SELECT <@charge_summary_fields />
+         SELECT scs.id AS 'id',
+                scs.company_id AS 'companyId',
+                scs.store_id AS 'storeId',
+                scs.sms_batchno AS 'smsBatchNo',
+                scs.wx_quantity AS 'wxQuantity',
+                scs.free_send AS 'freeSend',
+                scs.business_type AS 'businessType',
+                scs.send_mode AS 'sendMode',
+                scs.finish_send AS 'finishSend',
+                scs.sms_quantity AS 'smsQuantity',
+                scs.sms_context AS 'smsContext',
+                scs.store_name AS 'storeName',
+                scs.company_name AS 'companyName',
                 <@crud_fixed_select "scs" />
            FROM SMS_CHARGE_SUMMARY AS scs
           WHERE scs.id = :id
             ]]></body>
         </sql>
     </model>
-    <macros>
-        <macro id="sms_transpor_fields">
-            <![CDATA[
-             <#macro sms_transpor_fields>
-              stl.id AS 'id',
-              stl.company_id AS 'companyId',
-              stl.store_id AS 'storeId',
-              stl.member_id AS 'memberId',
-              stl.free_send AS 'freeSend',
-              stl.sms_channel AS 'smsChannel',
-              stl.businsess_type AS 'businessType',
-              stl.sms_batchno AS 'smsBatchNo',
-              stl.send_status AS 'sendStatus',
-              stl.phone_no AS 'phoneNum',
-              stl.sms_count AS 'smsCount',
-              stl.word_count AS 'wordCount',
-              stl.member_name AS 'memberName',
-              stl.sms_context AS 'smsContext',
-              stl.res_code AS 'resCode',
-              stl.remarks AS 'remarks',
-	         </#macro>
-	          ]]>
-        </macro>
-    </macros>
-    <model id="SMSTransportLogEntity">
-        <sql id="batchInsert">
+    <model id="SendMsg4SendEntity">
+        <sql id="load4Sending" macros="crud_fixed">
             <body><![CDATA[
-          INSERT INTO SMS_TRANSPORT_LOG
-                      (id, company_id, store_id, member_id, sms_batchno,  phone_no, sms_count, word_count, member_name,
-                       sms_context, tenant_id, creator, free_send, sms_channel, businsess_type, send_status, createTime)
-               VALUES ( ?,          ?,        ?,         ?,           ?,         ?,         ?,           ?,          ?,
-                                 ?,         ?,        ?,        ?,           ?,              ?,           0, CURRENT_TIMESTAMP )
-            ]]></body>
-        </sql>
-        <sql id="load4Sending" macros="sms_transpor_fields,crud_fixed">
-            <body><![CDATA[
-          SELECT <@sms_transpor_fields />
+          SELECT stl.id AS 'id',
+                  stl.company_id AS 'companyId',
+                  stl.store_id AS 'storeId',
+                  stl.communication_channel AS 'communicationChannel',
+                  stl.weixin_id AS 'weixinId',
+                  stl.device_id AS 'deviceId',
+                  stl.job_id AS 'jobId',
+                  stl.member_id AS 'memberId',
+                  stl.free_send AS 'freeSend',
+                  stl.sms_enabled AS 'enabled',
+                  stl.sms_channel AS 'smsChannel',
+                  stl.businsess_type AS 'businessType',
+                  stl.send_batchno AS 'sendBatchNo',
+                  stl.send_status AS 'sendStatus',
+                  stl.phone_no AS 'phoneNum',
+                  stl.sms_count AS 'smsCount',
+                  stl.word_count AS 'wordCount',
+                  stl.member_name AS 'memberName',
+                  stl.sms_context AS 'smsContext',
+                  stl.send_res_code AS 'sendResCode',
+                  stl.send_local_date AS 'sendLocalDate',
+                  stl.remarks AS 'remarks',
                  <@crud_fixed_select "stl" />
             FROM SMS_TRANSPORT_LOG AS stl
            WHERE stl.send_status = 1
-             AND stl.sms_batchno = :smsBatchNo
+             AND stl.send_batchno = :sendBatchNo
+             AND stl.communication_channel = :communicationChannel
             ]]></body>
         </sql>
-        <sql id="update4Sending" dynamic="true">
+    </model>
+    <model id="SendMsg4FinalEntity">
+        <sql id="load4Final">
             <body><![CDATA[
-          UPDATE SMS_TRANSPORT_LOG
-             SET send_status = 2
-           WHERE id IN (<#list ids as id>'${id}'<#sep>,</#list>)
+          SELECT stl.id AS 'id',
+                 stl.send_status AS 'sendStatus',
+                 stl.final_state AS 'finalState',
+                 stl.final_state_date AS 'finalStateDate',
+                 stl.final_state_desc AS 'finalStateDesc'
+            FROM SMS_TRANSPORT_LOG AS stl
+           WHERE stl.send_status = 3
+             AND stl.final_state = 0
+        ORDER BY stl.createTime
+           LIMIT :limit
             ]]></body>
         </sql>
-        <sql id="update4Storage">
+    </model>
+    <model id="SendMsg4ReimburseEntity">
+        <sql id="load4Reimburse" macros="crud_fixed">
+            <body><![CDATA[
+          SELECT stl.id AS 'id',
+                 stl.sms_count AS 'smsCount',
+                 stl.send_batchno AS 'sendBatchNo',
+                 stl.reimburse_state AS 'reimburseState',
+                 stl.reimburse_state_date AS 'reimburseDate',
+                 <@crud_fixed_select "stl" />
+            FROM SMS_TRANSPORT_LOG AS stl
+           WHERE stl.send_status = 4
+             AND stl.free_send = 0
+             AND stl.communication_channel = 1
+             AND stl.reimburse_state = 0
+             AND stl.send_batchno = :sendBatchNo
+            ]]></body>
+        </sql>
+        <sql id="update4Reimburse" dynamic="true">
             <body><![CDATA[
           UPDATE SMS_TRANSPORT_LOG
-             SET send_status = 1
-           WHERE sms_batchno = :smsBatchNo
-             AND send_status = 0
+             SET reimburse_state = 1, reimburse_state_date = NOW()
+           WHERE id IN (${ids?join(",")})
+            ]]></body>
+        </sql>
+    </model>
+    <model id="WechatMessageEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+        INSERT INTO yycomm.Send_MSG_List
+                    ( content,  touser, `type`, isgroup, todeviceid, store_id, company_id, UUID,fromuser, recieveTime ,sendFlag, IDGroup, IDSort)
+             VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0, ?, ?)
+            ]]></body>
+        </sql>
+    </model>
+    <model id="SMSKeywordEntity">
+        <sql id="findByAll" macros="crud_fixed">
+            <body><![CDATA[
+     SELECT skw.id AS 'id', skw.key_word AS 'keyword', skw.enabled AS 'enabled',
+            <@crud_fixed_select "skw" />
+       FROM SMS_KEY_WORDS AS skw
+            ]]></body>
+        </sql>
+        <sql id="update">
+            <body><![CDATA[
+        UPDATE SMS_KEY_WORDS
+           SET enabled = :enabled
+         WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+      INSERT INTO SMS_KEY_WORDS
+                  (key_word, enabled, delete_flag, tenant_id, creator)
+           VALUES (:keyword, :enabled, 0,           0,         0);
             ]]></body>
         </sql>
     </model>

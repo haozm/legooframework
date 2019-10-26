@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="JobDetailBuilderEnity">
+        <sql id="loadAll" macros="crud_fixed">
+            <body><![CDATA[
+          SELECT sjd.id AS 'id',
+                 sjd.job_name AS 'jobName',
+                 sjd.job_desc AS 'jobDesc',
+                 sjd.group_name AS 'groupName',
+                 sjd.target_beanname AS 'targetBeanName',
+                 sjd.fixed_params AS 'fixedParams',
+                 sjd.company_id AS 'companyId',
+                 sjd.store_id AS 'storeId',
+                 sjd.target_method AS 'targetMethod',
+                 sjd.owner_bundle AS 'ownerBundle',
+                 sjd.enabled AS 'enabled',
+                 sjd.start_delay AS 'startDelay',
+                 sjd.repeat_interval AS 'repeatInterval',
+                 sjd.cron_expression AS 'cronExpression',
+                 sjd.trigger_type AS 'triggerType',
+                 <@crud_fixed_select "sjd" />
+            FROM SCHEDULE_JOB_DETAIL AS sjd
+           WHERE sjd.delete_flag = 0
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+    INSERT INTO SCHEDULE_JOB_DETAIL
+                (job_name, company_id, store_id, job_desc, group_name, target_beanname, target_method,  enabled, owner_bundle, trigger_type, start_delay, repeat_interval, cron_expression, delete_flag, tenant_id  )
+         VALUES (:jobName, :companyId, :storeId, :jobDesc, :groupName, :targetBeanName, :targetMethod, :enabled, :ownerBundle, :triggerType, :startDelay, :repeatInterval, :cronExpression, 0,           0 )
+            ]]></body>
+        </sql>
+        <sql id="disabledOrEnabled">
+            <body><![CDATA[
+    UPDATE SCHEDULE_JOB_DETAIL
+       SET enabled = :enabled
+     WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="changeTrige">
+            <body><![CDATA[
+    UPDATE SCHEDULE_JOB_DETAIL
+       SET trigger_type = :triggerType, repeat_interval = :repeatInterval, cron_expression = :cronExpression
+     WHERE id = :id
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

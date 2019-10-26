@@ -15,4 +15,16 @@
             </util:list>
         </property>
     </bean>
+    <bean id="pictureLabelAction" class="com.legooframework.model.picturemgn.entity.PictureLabelAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="picturemgnStatementFactory"/>
+        <property name="dataSource" ref="pictureDataSource"/>
+    </bean>
+    <bean id="memberPictureAction" class="com.legooframework.model.picturemgn.entity.MemberPictureAction"
+          parent="baseEntityAction">
+        <property name="statementFactory" ref="picturemgnStatementFactory"/>
+        <property name="dataSource" ref="pictureDataSource"/>
+    </bean>
+     <bean id="pictureMgnService" class="com.legooframework.model.picturemgn.service.PictureMgnService">
+    </bean>
 </beans>

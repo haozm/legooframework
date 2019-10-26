@@ -72,7 +72,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
     private RechargeDetailEntity(Integer companyId, Integer storeId, String storeGroupId, RechargeScope rechargeScope,
                                  RechargeRuleEntity rechargeRule, long rechargeAmount, RechargeType rechargeType,
                                  int totalQuantity, LoginContext user) {
-        super(CommonsUtils.randomId(16).toUpperCase(), companyId.longValue(), user.getLoginId());
+        super(CommonsUtils.randomId(16), companyId.longValue(), user.getLoginId());
         Preconditions.checkArgument(rechargeAmount >= 0, "充值金额必须大于或者等于0");
         this.companyId = companyId;
         this.rechargeType = rechargeType;
@@ -95,9 +95,42 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
                 this.totalQuantity = totalQuantity;
                 this.amount = 0L;
                 break;
+            case Reimburse:
+                this.ruleId = "writeoff";
+                this.totalQuantity = totalQuantity;
+                this.amount = 0L;
+                break;
             default:
                 throw new IllegalArgumentException(String.format("非法的充值类型..%s", rechargeType));
         }
+    }
+
+    /**
+     * 退款动作
+     *
+     * @param balanceEntity
+     * @param smsNum
+     * @return
+     */
+    public static RechargeDetailEntity writeOff(RechargeBalanceEntity balanceEntity, int smsNum) {
+        RechargeDetailEntity res;
+        switch (balanceEntity.getRechargeScope()) {
+            case Store:
+                res = new RechargeDetailEntity(balanceEntity.getCompanyId(), balanceEntity.getStoreId(), null,
+                        RechargeScope.Store, null, 0, RechargeType.Reimburse, smsNum, LoginContextHolder.getAnonymousCtx());
+                break;
+            case Company:
+                res = new RechargeDetailEntity(balanceEntity.getCompanyId(), -1, null,
+                        RechargeScope.Company, null, 0, RechargeType.Reimburse, smsNum, LoginContextHolder.getAnonymousCtx());
+                break;
+            case StoreGroup:
+                res = new RechargeDetailEntity(balanceEntity.getCompanyId(), -1, balanceEntity.getStoreGroupId(),
+                        RechargeScope.StoreGroup, null, 0, RechargeType.Reimburse, smsNum, LoginContextHolder.getAnonymousCtx());
+                break;
+            default:
+                throw new RuntimeException("异常的充值范围...");
+        }
+        return res;
     }
 
     static RechargeDetailEntity rechargeByStore(CrmStoreEntity store, RechargeRuleEntity rechargeRule, long rechargeAmount) {

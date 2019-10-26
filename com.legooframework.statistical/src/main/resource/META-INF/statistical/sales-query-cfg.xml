@@ -1,0 +1,406 @@
+<sqls>
+	<model id="empSales01">
+		<sql id="summary" dynamic="true">
+			<body><![CDATA[
+			   <#if storeIds?? && storeIds?size == 1>
+			   	SELECT 
+				IFNULL(store_amount-decr_amount+incr_amount,0) AS 'finalAmount',
+                IFNULL(store_amount,0) AS 'saleAmout',
+                IFNULL(-decr_amount,0) AS 'decrAmount',
+                IFNULL(incr_amount,0) AS 'incrAmount'
+				FROM 
+				(SELECT 
+					SUM(aaesar.amount) AS store_amount,
+					SUM(IF(aaesar.store_id <> acsm.store_id,aaesar.amount,0)) AS decr_amount 
+				FROM acp.acp_employee_sales_allot_result aaesar
+				LEFT JOIN acp.crm_store_member acsm ON aaesar.member_id = acsm.member_id
+				WHERE aaesar.store_id IN (${storeIds?join(",")})) T1
+				LEFT JOIN 
+				(SELECT IFNULL(SUM(amount),0) AS incr_amount FROM 
+				acp.acp_employee_sales_allot_result aaesar
+				INNER JOIN 
+				(SELECT acsm.member_id AS 'id'
+				FROM acp.crm_store_member acsm 
+				LEFT JOIN acp.acp_employee_sales_allot_result aaesar 
+				ON acsm.member_id = aaesar.member_id 
+				WHERE acsm.store_id IN (${storeIds?join(",")}) AND aaesar.id IS NULL) mem
+				ON mem.id = aaesar.member_id) T2
+				ON TRUE				
+				<#else>
+				SELECT * FROM 
+				(SELECT 
+				IFNULL(SUM(record.total_amount),0) AS 'saleAmout'
+				FROM (
+				SELECT total_amount FROM acp.acp_employee_sales_allot_result aaesar
+				INNER JOIN acp.acp_store aas ON aaesar.store_id = aas.id
+				INNER JOIN acp.crm_salerecord acsr ON aaesar.sale_record_id = acsr.id
+				WHERE acsr.createTime BETWEEN '${startDate}' AND '${endDate}'
+				<#if orgIds?? && orgIds?size != 0>
+				AND aas.organization_id IN (SELECT id FROM acp.acp_organization WHERE id IN (${orgIds?join(",")}) OR parentId IN (${orgIds?join(",")}))
+				<#elseif storeIds?? && storeIds?size != 0>
+				AND aas.id IN (${storeIds?join(",")})
+				<#else>
+				AND aas.company_id = :USER_COMPANY_ID
+				</#if>
+				GROUP BY sale_record_id) record) T1
+				LEFT JOIN
+				(SELECT 
+				IFNULL(COUNT(DISTINCT aae.id),0) AS 'employeeCount',
+				IFNULL(COUNT(DISTINCT aas.id),0) AS 'storeCount'
+				FROM 
+				acp.acp_store aas 
+				INNER JOIN 
+				acp.acp_employee aae ON aas.id = aae.store_id
+				WHERE <#if orgIds?? && orgIds?size != 0>
+				aas.organization_id IN (SELECT id FROM acp.acp_organization WHERE id IN (${orgIds?join(",")}) OR parentId IN (${orgIds?join(",")}))
+				<#elseif storeIds?? && storeIds?size != 0>
+				aas.id IN (${storeIds?join(",")})
+				<#else>
+				aas.company_id = :USER_COMPANY_ID
+				</#if>) T2 ON TRUE
+				</#if>
+		       
+          ]]></body>
+		</sql>
+		<sql id="detail" dynamic="true">
+			<body><![CDATA[
+			SELECT * FROM (
+				SELECT 
+				T.fix_org_type,
+				T.fix_org_id,
+				T.fix_org_name,
+				T.fix_org_id AS 'employeeId',
+				T.fix_org_name AS 'employeeName',
+                T.storeName AS 'storeName',
+				T.fix_start_date,
+				T.fix_end_date,
+				T.statisticTime,
+				IFNULL(SUM(totalSaleAmount)/SUM(saleOrders),0) AS 'perCustomerPrice',
+				IFNULL(SUM(totalSaleAmount)/SUM(totalSaleGoods),0) AS 'perGoodsPrice',
+				IFNULL(SUM(totalSaleAmount)/SUM(totalSaleAmount),0)  AS 'avgDiscount',																
+                SUM(totalAmount) AS 'c_totalSaleAmount',
+				SUM(s_totalAmount) AS 's_totalSaleAmount',
+                SUM(totalSaleGoods) AS 'c_totalSaleGoods',
+				SUM(s_totalSaleGoods) AS 's_totalSaleGoods',
+                SUM(saleOrders) AS 'c_saleOrders',
+				SUM(s_saleOrders) AS 's_saleOrders',
+                FORMAT(SUM(totalSaleGoods)/SUM(saleOrders),2) AS 'avgPurchaseRatio'
+				FROM
+		       (SELECT 
+		       		'4' AS 'fix_org_type',
+					aae.id AS 'fix_org_id',
+					aae.name AS 'fix_org_name',
+					aas.name AS 'storeName',
+					DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+					DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+					IF('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+					IFNULL(SUM(IFNULL(aaesar.total_amount,0)),0) AS 'totalSaleAmount',																				
+					IFNULL(SUM(IFNULL(aaesar.amount,0)),0) AS 'totalAmount',
+					SUM(IF(aae.store_id = acsr.store_id,aaesar.amount,0)) AS 's_totalAmount',																				
+                    (SELECT SUM(goodsCount) FROM acp.crm_salesubrecord WHERE saleRecord_id = acsr.id) AS 'totalSaleGoods',
+					(SELECT SUM(IF(aae.store_id = acsr.store_id,goodsCount,0)) FROM acp.crm_salesubrecord WHERE saleRecord_id = acsr.id) AS 's_totalSaleGoods',
+                    COUNT(DISTINCT acsr.id) AS 'saleOrders',
+					COUNT(DISTINCT IF(aae.store_id = acsr.store_id, acsr.id,NULL)) AS 's_saleOrders'
+				FROM 
+					acp.acp_employee aae
+				INNER JOIN acp.acp_store aas ON aae.store_id = aas.id AND aae.company_id = aas.company_id
+				LEFT JOIN acp.acp_employee_sales_allot_result aaesar ON aaesar.employee_id = aae.id AND aaesar.store_id = aae.store_id
+				LEFT JOIN acp.crm_salerecord acsr ON aaesar.sale_record_id = acsr.id
+				WHERE aas.company_id = :USER_COMPANY_ID 
+				AND acsr.createTime BETWEEN DATE_FORMAT('${startDate}','%Y-%m-%d 00:00:00') AND DATE_FORMAT('${endDate}','%Y-%m-%d 23:59:59')
+				<#if orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (SELECT id FROM acp.acp_organization WHERE id IN (${orgIds?join(",")}) OR parentId IN (${orgIds?join(",")}))
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+				<#elseif employeeIds?? && employeeIds?size != 0>
+					AND aae.id IN (${employeeIds?join(",")})
+				</#if>
+				GROUP BY aae.id,acsr.id) T GROUP BY  T.fix_org_id		
+			UNION
+			  SELECT 
+		       		'4' AS 'fix_org_type',
+					aae.id AS 'fix_org_id',
+					aae.name AS 'fix_org_name',
+					aae.id AS 'employeeId',
+					aae.name AS 'employeeName',
+					aas.name AS 'storeName',
+					'${startDate}' AS 'fix_start_date',
+					'${endDate}' AS 'fix_end_date',
+					CONCAT('${startDate}','至','${endDate}') AS 'statisticTime',				
+					 0 AS 'perCustomerPrice',
+                     0 AS 'perGoodsPrice',
+                     0 AS 'avgDiscount',
+                     0 AS 'avgPurchaseRatio',
+                     0 AS 'c_totalSaleAmount',
+					 0 AS 'c_totalSaleGoods',
+                     0 AS 'c_saleOrders',
+					 0 AS 's_totalSaleAmount',
+					 0 AS 's_totalSaleGoods',
+                     0 AS 's_saleOrders'
+				FROM acp.acp_employee aae 
+				INNER JOIN acp.acp_store aas ON aae.store_id = aas.id
+				WHERE aas.company_id = :USER_COMPANY_ID
+				<#if orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (${orgIds?join(",")})
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+				<#elseif employeeIds?? && employeeIds?size != 0>
+					AND aae.id IN (${employeeIds?join(",")})
+				</#if>
+				GROUP BY aae.id
+				) T GROUP BY fix_org_id ORDER BY c_totalSaleAmount DESC LIMIT 100
+          ]]></body>
+		</sql>
+	</model>
+	<model id="empSales02">
+		<sql id="detail" dynamic="true">
+			<body><![CDATA[
+				SELECT 
+				T.fix_org_type,
+				T.fix_org_id,
+				T.fix_org_name,
+				T.fix_start_date,
+				T.fix_end_date,
+				T.statisticTime,
+				SUM(totalSaleAmount) AS 'totalSaleAmount',
+				SUM(totalAmount) AS 'totalAmount',
+				SUM(directAmount) AS 'directAmount',
+				SUM(divideAmount) AS 'divideAmount',
+				SUM(totalSaleGoods) AS 'totalSaleGoods',
+				SUM(saleOrders) AS 'saleOrders',
+				FORMAT(SUM(totalSaleGoods)/SUM(saleOrders),2) AS 'purchaseRate'
+				FROM
+		       (SELECT 
+		       		'4' AS 'fix_org_type',
+					aae.id AS 'fix_org_id',
+					aae.name AS 'fix_org_name',
+					<#if returnType?? && returnType == "detail" && searchTimeType??>
+						<#if searchTimeType=="week">
+							DATE_FORMAT(SUBDATE(acsr.createTime,DATE_FORMAT(acsr.createTime,'%w')-1),'%Y-%m-%d') AS 'fix_start_date',
+							DATE_FORMAT(SUBDATE(acsr.createTime,DATE_FORMAT(acsr.createTime,'%w')-7),'%Y-%m-%d') AS 'fix_end_date',
+							CONCAT(DATE_FORMAT(SUBDATE(acsr.createTime,DATE_FORMAT(acsr.createTime,'%w')-1),'%m-%d'),'至',DATE_FORMAT(SUBDATE(acsr.createTime,DATE_FORMAT(acsr.createTime,'%w')-7),'%m-%d')) AS 'statisticTime',
+						<#elseif searchTimeType =="month">
+							DATE_FORMAT(acsr.createTime,'%Y-%m-01') AS 'fix_start_date',
+							DATE_FORMAT(LAST_DAY(acsr.createTime),'%Y-%m-%d') AS 'fix_end_date',
+							CONCAT(DATE_FORMAT(acsr.createTime,'%m-01'),'至',DATE_FORMAT(LAST_DAY(acsr.createTime),'%m-%d')) AS 'statisticTime',
+						<#elseif searchTimeType =="day">
+							DATE_FORMAT(acsr.createTime,'%Y-%m-%d') AS 'fix_start_date',
+							DATE_FORMAT(acsr.createTime,'%Y-%m-%d') AS 'fix_end_date',
+							DATE_FORMAT(acsr.createTime,'%m-%d') AS 'statisticTime',
+						</#if>
+					<#else>
+						DATE_FORMAT('${startDate}','%Y-%m-%d') AS 'fix_start_date',
+						DATE_FORMAT('${endDate}','%Y-%m-%d') AS 'fix_end_date',
+						IF('${startDate}' = '${endDate}','${startDate}',CONCAT(DATE_FORMAT('${startDate}','%m-%d'),'至',DATE_FORMAT('${endDate}','%m-%d'))) AS 'statisticTime',
+					</#if>
+					IFNULL(SUM(IFNULL(acsr.saleTotalAmount,0)),0) AS 'totalSaleAmount',
+                    IFNULL(SUM(IFNULL(aaesar.amount,0)),0) AS 'totalAmount',
+                    IFNULL(SUM(IF(aaesar.scale = 1,IFNULL(aaesar.amount,0),0)),0) AS 'directAmount',
+					IFNULL(SUM(IF(aaesar.scale < 1,IFNULL(aaesar.amount,0),0)),0) AS 'divideAmount',
+					(SELECT SUM(goodsCount) FROM acp.crm_salesubrecord WHERE saleRecord_id = acsr.id) AS 'totalSaleGoods',
+					COUNT(DISTINCT acsr.id) AS 'saleOrders',
+					acsr.createTime
+				FROM 
+					acp.acp_employee aae
+				INNER JOIN acp.acp_store aas ON aae.store_id = aas.id AND aae.company_id = aas.company_id
+				LEFT JOIN acp.acp_employee_sales_allot_result aaesar ON aaesar.employee_id = aae.id AND aaesar.store_id = aae.store_id
+				LEFT JOIN acp.crm_salerecord acsr ON aaesar.sale_record_id = acsr.id
+				WHERE aas.company_id = :USER_COMPANY_ID 
+				AND acsr.createTime BETWEEN DATE_FORMAT('${startDate}','%Y-%m-%d 00:00:00') AND DATE_FORMAT('${endDate}','%Y-%m-%d 23:59:59')
+				<#if orgIds?? && orgIds?size != 0>
+					AND aas.organization_id IN (SELECT id FROM acp.acp_organization WHERE id IN (${orgIds?join(",")}) OR parentId IN (${orgIds?join(",")}))
+				<#elseif storeIds?? && storeIds?size != 0>
+					AND aas.id IN (${storeIds?join(",")})
+				<#elseif employeeIds?? && employeeIds?size != 0>
+					AND aae.id IN (${employeeIds?join(",")})
+				</#if>
+				GROUP BY aae.id,acsr.id) T
+				<#if returnType?? && returnType == "detail" && searchTimeType??>
+					<#if searchTimeType=="week">
+						GROUP BY DATE_FORMAT(T.createTime,'%Y-%u')
+					<#elseif searchTimeType =="month">
+						GROUP BY DATE_FORMAT(T.createTime,'%Y-%m')
+					<#elseif searchTimeType =="day">
+						GROUP BY DATE_FORMAT(T.createTime,'%Y-%m-%d')
+					</#if>
+				</#if>
+          ]]></body>
+		</sql>
+	</model>
+	<model id="empSales">
+		<sql id="sales_count" dynamic="true">
+			<body><![CDATA[
+		       SELECT COUNT(*) 
+		       FROM (SELECT 
+		       		aaesar.sale_record_id AS 'saleRecordId', 					
+					(SELECT IF(aaesar.member_id IS NULL,1,COUNT(DISTINCT acm.id )) FROM acp.crm_member acm 
+						INNER JOIN acp.crm_store_member acsm 
+					 ON acsm.member_id = acsm.member_id WHERE acm.id = aaesar.member_id AND acsm.store_id = aaesar.store_id)
+					AS 'nocross'
+				FROM acp.acp_employee_sales_allot_result aaesar
+				INNER JOIN acp.crm_salerecord acsr ON aaesar.sale_record_id = acsr.id
+				LEFT JOIN acp.crm_member acm ON aaesar.member_id = acm.id
+				WHERE 
+				aaesar.company_id = :USER_COMPANY_ID
+				<#if employeeId?? && employeeId != "">
+					AND aaesar.employee_id = :employeeId
+				</#if>
+				<#if (startDate?? && startDate != "") && (endDate?? && endDate != "")>
+					AND acsr.createTime BETWEEN DATE_FORMAT('${startDate}','%Y-%m-%d 00:00:00') AND DATE_FORMAT('${endDate}','%Y-%m-%d 23:59:59')
+				</#if>
+				<#if keywords?? && keywords!="">
+				AND (acm.`name` LIKE '%${keywords}%' OR acsr.oldSaleRecordId LIKE '%${keywords}%' OR acm.phone LIKE '%${keywords}%')
+				</#if>
+				<#if saleType?? && saleType != "">
+					<#if saleType == "one">
+						AND aaesar.scale = 1
+					<#else>
+						AND aaesar.scale < 1
+					</#if>
+				</#if>
+				GROUP BY acsr.id
+				) T 
+				<#if nocross?? &&(nocross = 0 || nocross = 1) && nocross !="">
+				WHERE T.nocross = ${nocross}
+				</#if>			
+          ]]></body>
+		</sql>
+		<sql id="sales" dynamic="true">
+			<body><![CDATA[
+		       SELECT * FROM (SELECT 
+		       		aaesar.sale_record_id AS 'saleRecordId', 
+					acsr.oldSaleRecordId AS 'saleRecordNo',
+					IFNULL(aaesar.total_amount,0) AS 'totalAmout',
+					CONCAT(DATE_FORMAT(acsr.createTime,'%Y-%m-%d %H:%i:%s'),IF(acsr.source = 3,'(线上)','(线下)')) AS 'saleTime',
+					IFNULL(aaesar.scale,0) AS 'dividePercent',
+					IFNULL(aaesar.amount,0) AS 'divideAmount',
+					(SELECT IF(aaesar.member_id IS NULL,1,COUNT(DISTINCT acm.id )) FROM acp.crm_member acm 
+						INNER JOIN acp.crm_store_member acsm 
+					 ON acsm.member_id = acsm.member_id WHERE acm.id = aaesar.member_id AND acsm.store_id = aaesar.store_id)
+					AS 'nocross'
+				FROM acp.acp_employee_sales_allot_result aaesar
+				INNER JOIN acp.crm_salerecord acsr ON aaesar.sale_record_id = acsr.id
+				LEFT JOIN acp.crm_member acm ON aaesar.member_id = acm.id
+				WHERE 
+				aaesar.company_id = :USER_COMPANY_ID
+				<#if employeeId?? && employeeId != "">
+					AND aaesar.employee_id = :employeeId
+				</#if>
+				<#if (startDate?? && startDate != "") && (endDate?? && endDate != "")>
+					AND acsr.createTime BETWEEN DATE_FORMAT('${startDate}','%Y-%m-%d 00:00:00') AND DATE_FORMAT('${endDate}','%Y-%m-%d 23:59:59')
+				</#if>
+				<#if keywords?? && keywords!="">
+				AND (acm.`name` LIKE '%${keywords}%' OR acsr.oldSaleRecordId LIKE '%${keywords}%' OR acm.phone LIKE '%${keywords}%')
+				</#if>
+				<#if saleType?? && saleType != "">
+					<#if saleType == "one">
+						AND aaesar.scale = 1
+					<#else>
+						AND aaesar.scale < 1
+					</#if>
+				</#if>
+				GROUP BY acsr.id
+				) T 
+				<#if nocross?? &&(nocross = 0 || nocross = 1) && nocross !="">
+				WHERE T.nocross = ${nocross}
+				</#if>
+				LIMIT :offset,:rows
+          ]]></body>
+		</sql>
+		<sql id="sales_total" dynamic="true">
+			<body><![CDATA[
+		       SELECT 
+		       		IFNULL(SUM(T.derectAmount),0)+IFNULL(SUM(T.divideAmount),0) AS 'totalAmout',
+		       		IFNULL(SUM(T.derectAmount),0) AS 'derectAmount',
+		       		IFNULL(SUM(T.divideAmount),0) AS 'divideAmount' 
+		       		FROM (SELECT 
+		       		aaesar.amount AS 'totalAmout',
+					IF(aaesar.scale = 1,aaesar.amount,0) AS 'derectAmount',
+					IF(aaesar.scale < 1,aaesar.amount,0) AS 'divideAmount',
+					(SELECT IF(aaesar.member_id IS NULL,1,COUNT(DISTINCT acm.id )) FROM acp.crm_member acm 
+						INNER JOIN acp.crm_store_member acsm 
+					 ON acsm.member_id = acsm.member_id WHERE acm.id = aaesar.member_id AND acsm.store_id = aaesar.store_id)
+					AS 'nocross'
+				FROM acp.acp_employee_sales_allot_result aaesar
+				INNER JOIN acp.crm_salerecord acsr ON aaesar.sale_record_id = acsr.id
+				LEFT JOIN acp.crm_member acm ON aaesar.member_id = acm.id
+				WHERE 
+				aaesar.company_id = :USER_COMPANY_ID
+				<#if employeeId??&& employeeId != "">
+					AND aaesar.employee_id = :employeeId
+				</#if>
+				<#if (startDate?? && startDate != "") && (endDate?? && endDate != "")>
+					AND acsr.createTime BETWEEN DATE_FORMAT('${startDate}','%Y-%m-%d 00:00:00') AND DATE_FORMAT('${endDate}','%Y-%m-%d 23:59:59')
+				</#if>
+				<#if keywords?? && keywords != "">
+				AND (acm.`name` LIKE '%${keywords}%' OR acsr.oldSaleRecordId LIKE '%${keywords}%' OR acm.phone LIKE '%${keywords}%')
+				</#if>
+				<#if saleType?? && saleType != "">
+					<#if saleType == "one">
+						AND aaesar.scale = 1
+					<#else>
+						AND aaesar.scale < 1
+					</#if>
+				</#if>	
+				) T 
+				<#if nocross?? &&(nocross = 0 || nocross = 1) && nocross !="">
+				WHERE T.nocross = ${nocross}
+				</#if>
+          ]]></body>
+		</sql>
+		<sql id="salesDetail" dynamic="true">
+			<body><![CDATA[
+		       SELECT T.*,IF(T.nocross = 1,'否','是') AS 'crossStore' FROM (SELECT 
+					acsr.oldSaleRecordId AS 'saleRecordNo',
+					IFNULL(aaesar.scale,0)+IFNULL(aaesar.amount,0) AS 'totalAmout',
+					CONCAT(DATE_FORMAT(acsr.createTime,'%Y-%m-%d %H:%i:%s'),IF(acsr.source = 3,'(线上)','(线下)')) AS 'saleTime',
+					IFNULL(aaesar.scale,0) AS 'dividePercent',
+					IFNULL(aaesar.amount,0) AS 'divideAmount',
+					IF(aaesar.scale = 1,'独立销售','多人销售') AS 'saleType',
+					IFNULL(acm.name,'--') AS 'memberName',
+                    IFNULL((SELECT name FROM acp.acp_employee WHERE id = aaesar.employee_id),'--') AS 'orderEmpName',
+                    IFNULL((SELECT aae.name FROM acp.sales_employee_allot asea
+                    INNER JOIN acp.acp_employee aae ON asea.service_emp_id = aae.id
+                    WHERE sale_record_id = :saleRecordId),'--') AS 'serviceEmpName',
+                    IFNULL((SELECT IFNULL(GROUP_CONCAT(aae.name),'--')  FROM acp.sales_employee_allot asea
+                    INNER JOIN acp.acp_employee aae ON (asea.sales_emp01_id = aae.id OR asea.sales_emp02_id = aae.id OR asea.sales_emp03_id = aae.id)
+                    WHERE sale_record_id = :saleRecordId),0) AS 'saleEmpName',		
+					IF(acsr.source =3 ,'线上','线下') AS 'saleChannel',
+					aas.name AS 'storeName',
+					(SELECT IF(aaesar.member_id IS NULL,1,COUNT(DISTINCT acm.id )) FROM acp.crm_member acm 
+						INNER JOIN acp.crm_store_member acsm 
+					 ON acsm.member_id = acsm.member_id WHERE acm.id = aaesar.member_id AND acsm.store_id = aaesar.store_id)
+					AS 'nocross'
+				FROM acp.acp_employee_sales_allot_result aaesar
+				INNER JOIN acp.crm_salerecord acsr ON aaesar.sale_record_id = acsr.id	
+				LEFT JOIN acp.acp_store aas ON aas.id = aaesar.store_id
+				LEFT JOIN acp.crm_member acm ON acm.id = aaesar.member_id
+				LEFT JOIN acp.crm_shoppingguide_member acsgm ON acm.id = acsgm.member_id
+				LEFT JOIN acp.acp_employee aae ON aae.id = acsgm.shoppingguide_id
+				WHERE aaesar.company_id = :USER_COMPANY_ID
+				<#if saleRecordId?? && saleRecordId != "">
+				AND aaesar.sale_record_id =:saleRecordId
+				</#if>
+				<#if employeeId?? && employeeId != "">
+				AND aaesar.employee_id =:employeeId
+				</#if>
+				GROUP BY acsr.id
+				) T 
+          ]]></body>
+		</sql>
+		<sql id="salesGoods" dynamic="true">
+			<body><![CDATA[
+		      SELECT 
+		       	acssr.goodsCount,
+				acg.name AS goodName,
+		       	acssr.color,
+		       	acssr.modelSize,
+		       	acssr.salePrice,
+		       	acssr.goodsPrice
+		       	FROM acp.crm_salesubrecord acssr 
+			LEFT JOIN acp.crm_goods acg ON acssr.goods_id = acg.id
+			WHERE saleRecord_id = :saleRecordId
+          		]]></body>
+		</sql>
+	</model>
+</sqls>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+    <bean id="insuranceBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/insurance/legoo-model-cfg.xml"/>
+    </bean>
+    <!-- ========================= Query SQL Factory ========================= -->
+    <bean id="insuranceCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
+        <property name="caffeineSpecs">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="insuranceCache" value="initialCapacity=8,maximumSize=1024,expireAfterAccess=5m"/>
+            </util:map>
+        </property>
+    </bean>
+    <bean id="insuranceStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]insurance[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]dict[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="insuranceQueryFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]insurance[\\,/].*-query-cfg.xml$</value>
+                <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="insuranceEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="insuranceStatementFactory"/>
+        <property name="dataSource" ref="insuranceDataSource"/>
+    </bean>
+    <bean id="insuranceJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
+        <property name="statementFactory" ref="insuranceQueryFactory"/>
+        <property name="dataSource" ref="insuranceDataSource"/>
+    </bean>
+    <bean id="insuranceDictEntityAction"
+          class="com.legooframework.model.dict.entity.KvDictEntityAction"
+          parent="insuranceEntityAction">
+        <constructor-arg name="cacheName" value="insuranceCache"/>
+        <constructor-arg name="tableName" value="insurance_kv_data"/>
+        <property name="cacheManager" ref="insuranceCacheManager"/>
+    </bean>
+    <bean id="insuranceMemberEntityAction"
+          class="com.legooframework.model.insurance.entity.MemberEntityAction"
+          parent="insuranceEntityAction"/>
+    <bean id="insuranceBankCardEntityAction"
+          class="com.legooframework.model.insurance.entity.BankCardEntityAction"
+          parent="insuranceEntityAction"/>
+    <bean id="insuranceInfoEntityAction"
+          class="com.legooframework.model.insurance.entity.InsuranceInfoEntityAction"
+          parent="insuranceEntityAction"/>
+    <bean id="insurancePolicyEntityAction"
+          class="com.legooframework.model.insurance.entity.InsurancePolicyEntityAction"
+          parent="insuranceEntityAction"/>
+    <bean id="insurancePolicyService" class="com.legooframework.model.insurance.service.InsurancePolicyService"/>
+</beans>

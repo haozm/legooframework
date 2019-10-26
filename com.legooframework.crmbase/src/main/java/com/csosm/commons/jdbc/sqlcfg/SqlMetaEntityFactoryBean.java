@@ -32,7 +32,7 @@ public class SqlMetaEntityFactoryBean extends AbstractFactoryBean<SqlMetaEntityF
     @Override
     protected SqlMetaEntityFactory createInstance() throws Exception {
         SqlConfigRulesModule rulesModule = new SqlConfigRulesModule();
-        MonitorFileSystem monitorFileSystem = getBeanFactory().getBean(MonitorFileSystem.class);
+        MonitorFileSystem monitorFileSystem = getBeanFactory().getBean("crmMonitorFileSystem", MonitorFileSystem.class);
         SqlMetaEntityFactory factory = new SqlMetaEntityFactory(initConfiguration(), rulesModule, nameMatch,
                 monitorFileSystem);
         Optional<List<File>> files = monitorFileSystem.findFiles(nameMatch);

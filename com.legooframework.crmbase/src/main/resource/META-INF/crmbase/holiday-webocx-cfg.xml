@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<webocxs>
+   <webocx id="holiday" paged="true" stmtId="mymember.detail:holiday"
+            url="/api/webocx/mymember/detail:holiday/pages.json"
+            desc="节日关怀查询配置">
+        <group company="*">
+            <queries>
+            	<item type="store" field="storeId" dataType="int" name="选择门店" position="top"></item>
+            	<item type="range" field="consumeAmount" dataType="ints" name="消费总额" display="inline" position="top"></item>
+            	<item type="radio" field="consumePeriod" name="统计时间" display="inline" position="top">
+                    <data type="ENUM">
+                        <item label="近一年" value="pastyear"/>
+                        <item label="本年度" value="curyear"/>
+                        <item label="累计" value="total" checked="true"/>
+                    </data>
+                </item>
+                <item type="range" field="consumeTimes" dataType="ints" name="消费次数" display="inline" position="top"></item>
+            	<item type="radio" field="consumeTimesPeriod" name="统计时间" display="inline" position="top">
+                    <data type="ENUM">
+                        <item label="近一年" value="pastyear"/>
+                        <item label="本年度" value="curyear"/>
+                        <item label="累计" value="total" checked="true"/>
+                    </data>
+                </item>
+                <item type="date" field="cusomeRange" name="消费时间" isAll="true"/>
+                <item type="date" field="visitTimeRange" name="到店时间" isAll="true"/>
+                <item field="storeRFM" name="门店RFM" type="RFM"/>
+                <item type="radio" field="enable" name="会员类型" isAll="true">
+                    <data type="ENUM">
+                        <item label="有效" value="1"/>
+                        <item label="无效" value="0"/>
+                    </data>
+                </item>
+                <item type="date" field="addDaysRange" name="新增时间">
+                	<data type="ENUM">
+                        <item label="今天" value="1" unit="day"/>
+                        <item label="本周" value="3" unit="thisWeek"/>
+                        <item label="本月" value="4" unit="thisMonth"/>
+                        <item label="本季" value="5" unit="thisQuarter"/>
+                        <item label="本年" value="6" unit="thisYear"/>
+                    </data>
+                </item>
+                <item type="radio" field="liveness" name="活跃度" isAll="true">
+                    <data type="ENUM">
+                        <item label="周" value="week"/>
+                        <item label="月" value="month"/>
+                        <item label="季度" value="jidu"/>
+                        <item label="半年" value="half"/>
+                        <item label="整年" value="year"/>
+                        <item label="沉睡" value="sleep"/>
+                    </data>
+                </item>
+                <item type="radio" field="assginFlag" name="分配情况" isAll="true">
+                    <data type="ENUM">
+                        <item label="已分配" value="1"/>
+                        <item label="未分配" value="0"/>
+                    </data>
+                </item>
+                 <item type="radio" field="consumeFlag" name="消费情况" isAll="true">
+                    <data type="ENUM">
+                        <item label="已消费" value="1"/>
+                        <item label="无消费" value="0"/>
+                    </data>
+                </item>
+                <item type="select" field="shoppingguide" name="服务导购" width="350px">
+                    <data type="QUERY" contxt="employee.loadBildedMemberShoping"/>
+                </item>
+                <item type="select" field="memberCardType" name="会员卡" width="350px">
+                    <data type="DICT" contxt="MEMBERCARDTYPE"/>
+                </item>               
+                <item type="text" field="keyWords" name="搜索关键字" placeholder="姓名,备注,电话号码" width="350px"/>
+            </queries>
+            <batchOperate>
+                <operate name="batch_follow" title="批量跟进"  type="follow" keys="memberId" roles="AreaManagerRole,BossRole,AdminRole,ManagerRole,StoreManagerRole,ShoppingGuideRole"/>
+            </batchOperate>
+            <operates>
+                <operate name="follow" title="跟进" type="openurl" keys="memberId"
+                         url="#/member/info" roles="AreaManagerRole,BossRole,AdminRole,ManagerRole,StoreManagerRole,ShoppingGuideRole"/>
+                <operate name="cancel" title="取消" type="openurl" keys="memberId"
+                         url="#/member/info" roles="AreaManagerRole,BossRole,AdminRole,ManagerRole,StoreManagerRole,ShoppingGuideRole"/>
+                 <operate name="message" title="短信" type="openurl" keys="memberId"
+                         url="#/member/info" roles="AreaManagerRole,BossRole,AdminRole,ManagerRole,StoreManagerRole,ShoppingGuideRole"/>
+            </operates> 
+            <subpage active="salerecode">
+                <table paged="true" id="salerecode" name="消费记录" keys="memberId"
+                       stmtId="mymember.salerecode" url="/api/webocx/mymember/salerecode/pages.json"/>               
+            </subpage>
+             <!-- <table paged="true" id="membercare" name="关怀记录" keys="memberId"
+                       stmtId="mymember.membercare" url="/api/webocx/mymember/membercare/pages.json"/>
+                <table paged="true" id="visitback" name="回访记录" keys="memberId"
+                       stmtId="mymember.visitback" url="/api/webocx/mymember/visitback/pages.json"/>
+
+                <table paged="true" id="shopreservation" name="到店服务" keys="memberId"
+                       stmtId="mymember.shopreservation" url="/api/webocx/mymember/shopreservation/pages.json"/>
+                        -->
+        </group>
+    </webocx>     
+</webocxs>

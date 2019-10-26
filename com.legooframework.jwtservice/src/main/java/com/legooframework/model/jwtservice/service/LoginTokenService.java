@@ -2,8 +2,6 @@ package com.legooframework.model.jwtservice.service;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.legooframework.model.core.base.service.BaseService;
-import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.jwtservice.entity.JWToken;
 import com.legooframework.model.jwtservice.entity.JWTokenEntity;
 import com.legooframework.model.jwtservice.entity.JWTokenEntityAction;
@@ -11,12 +9,7 @@ import com.legooframework.model.jwtservice.entity.JWTokenEntityAction;
 import java.util.List;
 import java.util.Optional;
 
-public class LoginTokenService extends BaseService {
-
-    @Override
-    protected Bundle getLocalBundle() {
-        return getBean("jwtserviceBundle", Bundle.class);
-    }
+public class LoginTokenService extends BundleService {
 
     public String applyToken(String loginName, String host, int channel) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(loginName), "登陆信息不可以为空值....");

@@ -1,0 +1,517 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="member_field_list">
+            <![CDATA[
+		        <#macro member_base_field>
+                    cm.id,
+					cm.birthday,
+					cm.calendarType,
+					cm.createTime,
+					cm.email,
+					cm.memberType,
+					cm.name,
+					cm.oldMemberCode,
+					cm.oldShoppingGuideId,
+					cm.oldStoreId,
+					cm.mobilePhone,
+					cm.qqNum,
+					cm.remarkIds,
+					cm.labelIds,
+					cm.serviceLevel,
+					cm.sex,
+					cm.source_channel AS 'sourceChannel',
+					cm.source_from AS 'sourceFrom',
+					cm.status,
+					cm.updateTime,
+					cm.weiboNum,
+					cm.company_id AS 'companyId',
+					cm.company_id1 AS 'companyId1',
+					cm.company_id2 AS 'companyId2',
+					cm.createUser_id AS 'createUserId',
+					cm.updateUser_id AS 'updateUserId',
+					cm.weixin_id AS 'weixinId',
+					cm.guide_id AS 'guideId',
+					cm.telephone,
+					cm.effectiveFlag,
+					cm.namePinyin,
+					cm.lunarBirthday,
+					cm.iconUrl,
+					cm.companypy,
+					cm.reachable,
+					cm.awakenCount,
+					cm.crc32id,
+					cm.store_ids AS 'storeIds'
+	            </#macro>
+	             <#macro member_addition_field>
+                  	mai.member_id AS 'addMemberId',
+                  	mai.certificate,
+					mai.certificateType,
+					mai.detailAddress,
+					mai.carePeople,
+					mai.characterType,
+					mai.faithType,
+					mai.hobby,
+					mai.idols,
+					mai.jobType,
+					mai.likeBrand,
+					mai.likeContact,
+					mai.marryStatus,
+					mai.specialDay,
+					mai.zodiac,
+					mai.education,
+					mai.likeContactTime
+	            </#macro>
+	            <#macro member_card_field>
+                    cm.id AS 'cardMemberId',
+					cm.memberCardType_id AS 'memberCardType',
+					cm.memberCardNum,
+					cm.createCardTime,
+					cm.createStoreId,
+					cm.limitday,
+					cm.totalScore
+	            </#macro>
+	            <#macro member_consume_field>
+                    mcb.member_id AS 'consumeMemberId',
+					mcb.rechargeAmount,
+					mcb.lastVisitTime,
+					mcb.rfm,
+					mcb.firstSaleRecordAmount,
+					mcb.firstSaleRecordNo,
+					mcb.consumeTotalCount,
+					mcb.consumeTotalCountCurYear,
+					mcb.maxConsumePrice,
+					mcb.maxConsumePriceCurYear,
+					mcb.totalConsumeAmount,
+					mcb.totalConsumeAmountCurYear
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="MemberEntity">
+        <sql id="select_members" macros="member_field_list">
+            <body><![CDATA[
+           		SELECT <@member_base_field />,<@member_addition_field />,<@member_card_field />,<@member_consume_field /> 
+		        FROM crm_member cm
+				INNER JOIN member_addition_info mai ON mai.member_id = cm.id
+				INNER JOIN member_consume_behavior mcb ON mcb.member_id = cm.id
+				WHERE cm.status = 1 AND FIND_IN_SET(:storeId,cm.store_ids) AND cm.company_id = :companyId
+				<#if memberIds??> 
+					AND cm.id IN (${memberIds?join(",")})
+				</#if>
+				<#if needPhone>
+                  	AND IFNULL(LENGTH(cm.mobilePhone),0) = 11
+	             </#if>
+	             <#if effective>
+	                AND cm.effectiveFlag = 1
+	             </#if>
+	             <#if mobilePhone??>
+	             	AND cm.mobilePhone = :mobilePhone
+	             </#if>
+            ]]></body>
+        </sql>
+        <sql id="load_unallocate_members" macros="member_field_list">
+            <body><![CDATA[
+           		SELECT <@member_base_field />,<@member_addition_field />,<@member_card_field />,<@member_consume_field /> 
+		        FROM crm_member cm
+				INNER JOIN member_addition_info mai ON mai.member_id = cm.id
+				INNER JOIN member_consume_behavior mcb ON mcb.member_id = cm.id
+				WHERE cm.status = 1 AND FIND_IN_SET(:storeId,cm.store_ids) AND cm.company_id = :companyId 
+				AND cm.guide_id IS NULL
+            ]]></body>
+        </sql>
+         <sql id="load_members_4Emp" macros="member_field_list">
+            <body><![CDATA[
+           		SELECT <@member_base_field />,<@member_addition_field />,<@member_card_field />,<@member_consume_field /> 
+		        FROM crm_member cm
+				INNER JOIN member_addition_info mai ON mai.member_id = cm.id
+				INNER JOIN member_consume_behavior mcb ON mcb.member_id = cm.id
+				WHERE cm.status = 1 AND FIND_IN_SET(:storeId,cm.store_ids) AND cm.company_id = :companyId 
+				AND cm.guide_id = :employeeId AND cm.id IN (${memberIds?join(",")})
+            ]]></body>
+        </sql>
+        <sql id="find_matchwebchat_bystore" dynamic="true">
+            <body><![CDATA[
+               SELECT  cm.id AS 'id',
+                       cm.name AS 'name',
+                       cm.mobilePhone AS 'phone',
+                       cm.sex AS 'sex',
+                       cm.memberCardNum AS 'memberCardNum',
+                       mcb.lastVisitTime AS 'lastVisitTime',
+                       IF(rfm.member_id IS NULL,'',CONCAT(rfm.S01_R_Level,rfm.S01_F_Level,rfm.S01_M_Level)) AS 'srfm',
+                       IF(rfm.member_id IS NULL,'',CONCAT(rfm.C01_R_Level,rfm.C01_F_Level,rfm.C01_M_Level)) AS 'crfm'
+				FROM crm_member cm
+				INNER JOIN member_consume_behavior mcb ON mcb.member_id = cm.id
+				LEFT JOIN YG_Statistics.stat_member_rfm rfm ON 
+				rfm.member_id = cm.id
+				WHERE FIND_IN_SET(:storeId,cm.store_ids)
+				AND cm.id NOT IN ( SELECT awm.member_id
+                                      FROM acp_weixin_member awm
+                                     WHERE awm.store_id = :storeId )
+              	ORDER BY cm.id
+            ]]></body>
+        </sql>
+         <sql id="select_member_maxId">
+            <body><![CDATA[
+            	SELECT MAX(id) FROM crm_member
+            ]]></body>
+        </sql>
+         <sql id="insert_simple_member">
+            <body><![CDATA[
+           		INSERT
+					INTO
+						crm_member( id,
+						name,
+						sex,
+						mobilePhone,
+						serviceLevel,
+						guide_id,
+						store_ids,
+						company_id,
+						createUser_id,
+						createTime )
+					VALUES(:id,
+					:name,
+					:sex,
+					:mobilePhone,
+					:serviceLevel,
+					:guideId,
+					:storeIds,
+					:companyId,
+					:createUserId,
+					NOW())
+            ]]></body>
+        </sql>
+         <sql id="insert_member">
+            <body><![CDATA[
+           		INSERT
+					INTO
+						crm_member ( id,
+						birthday,
+						calendarType,
+						certificate,
+						certificateType,
+						createTime,
+						detailAddress,
+						email,
+						memberType,
+						name,
+						mobilePhone,
+						qqNum,
+						serviceLevel,
+						sex,
+						weiboNum,
+						company_id,
+						createUser_id,
+						weixin_id,
+						guide_id,
+						telephone,
+						lunarBirthday,
+						iconUrl,
+						store_ids )
+					VALUES (:id,
+					:birthday,
+					:calendarType,
+					:certificate,
+					:certificateType,
+					NOW(),
+					:detailAddress,
+					:email,
+					:memberType,
+					:name,
+					:mobilePhone,
+					:qqNum,
+					:serviceLevel,
+					:sex,
+					:weiboNum,
+					:companyId,
+					:createUserId,
+					:weixinId,
+					:guideId,
+					:telephone,
+					:lunarBirthday,
+					:iconUrl,
+					:storeIds)
+            ]]></body>
+        </sql>
+        <sql id="update_simple_memberCard">
+            <body><![CDATA[
+           		UPDATE crm_member SET createStoreId =:createStoreId WHERE id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="update_memberCard">
+            <body><![CDATA[
+            	UPDATE crm_member
+            	SET memberCardType_id =:memberCardType,
+            	memberCardNum =:memberCardNum,
+            	createCardTime =:createCardTime,
+            	createStoreId =:createStoreId,
+            	limitday =:limitday
+            	WHERE id =:memberId
+            ]]></body>
+        </sql>
+        <sql id="insert_simple_memberAddition">
+            <body><![CDATA[
+           		INSERT INTO member_addition_info(member_id) VALUES (:memberId)
+            ]]></body>
+        </sql>
+        <sql id="insert_memberAddition">
+            <body><![CDATA[
+           		INSERT
+					INTO
+						member_addition_info ( member_id,
+						carePeople,
+						characterType,
+						faithType,
+						hobby,
+						idols,
+						jobType,
+						likeBrand,
+						likeContact,
+						marryStatus,
+						specialDay,
+						zodiac,
+						education,
+						likeContactTime )
+					VALUES(:memberId,
+					:carePeople,
+					:characterType,
+					:faithType,
+					:hobby,
+					:idols,
+					:jobType,
+					:likeBrand,
+					:likeContact,
+					:marryStatus,
+					:specialDay,
+					:zodiac,
+					:education,
+					:likeContactTime )
+            ]]></body>
+        </sql>
+        <sql id="insert_simple_memberConsume">
+            <body><![CDATA[
+           		INSERT INTO member_consume_behavior(member_id) VALUES (:memberId)
+            ]]></body>
+        </sql>
+        <sql id="update_effective" dynamic="true">
+            <body><![CDATA[
+           		update crm_member SET effectiveFlag = :effectFlag WHERE id IN (${memberIds?join(",")}) 
+            ]]></body>
+        </sql>
+        <sql id="allot_members_to_employee" dynamic="true">
+            <body><![CDATA[
+           		update crm_member SET guide_id = :guideId WHERE id IN (${memberIds?join(",")}) 
+            ]]></body>
+        </sql>
+        <sql id="allot_members_to_employee" dynamic="true">
+            <body><![CDATA[
+           		update crm_member SET guide_id = :employeeId WHERE id IN (${memberIds?join(",")}) 
+            ]]></body>
+        </sql>
+        <sql id="deallocate_members" dynamic="true">
+            <body><![CDATA[
+           		update crm_member SET guide_id = null WHERE id IN (${memberIds?join(",")}) 
+            ]]></body>
+        </sql>
+        <sql id="transform_lunar" dynamic="true">
+            <body><![CDATA[
+           		update crm_member SET calendarType = 2 WHERE id IN (${memberIds?join(",")}) 
+            ]]></body>
+        </sql>
+        <sql id="update_reachable" dynamic="true">
+            <body><![CDATA[
+           		update crm_member SET reachable = 1 WHERE id IN (${memberIds?join(",")}) 
+            ]]></body>
+        </sql>
+         <sql id="to_lunar" dynamic="true">
+            <body><![CDATA[
+           		UPDATE crm_member AS cm1,
+				(SELECT id,birthday FROM crm_member WHERE id IN (${memberIds?join(",")})) AS cm2 
+				SET cm1.calendarType = 2,cm1.birthday = null,cm1.lunarBirthday = cm2.birthday 
+				WHERE cm1.id = cm2.id
+            ]]></body>
+        </sql>
+        <sql id="transfer_members">
+            <body><![CDATA[
+           		UPDATE crm_member SET guide_id = :destEmpId WHERE guide_id = :scourceEmpId
+            ]]></body>
+        </sql>
+        <sql id="count_mobilePhone">
+            <body><![CDATA[
+           		SELECT COUNT(*) FROM crm_member WHERE mobilePhone = :mobilePhone
+            ]]></body>
+        </sql>
+        <sql id="update_member_base">
+            <body><![CDATA[
+           		UPDATE
+					crm_member SET
+						birthday =:birthday,
+						calendarType =:calendarType,
+						email =:email,
+						memberType =:memberType,
+						name =:name,
+						mobilePhone =:mobilePhone,
+						qqNum =:qqNum,
+						serviceLevel =:serviceLevel,
+						sex =:sex,
+						updateTime = NOW(),
+						weiboNum =:weiboNum,
+						updateUser_id =:modifyUserId,
+						weixin_id =:weixinId,
+						telephone =:telephone,
+						namePinyin =:namePinyin,
+						lunarBirthday =:lunarBirthday,
+						iconUrl =:iconUrl
+					WHERE
+						id =:id
+            ]]></body>
+        </sql>
+        <sql id="update_member_addition">
+            <body><![CDATA[
+           		UPDATE
+					member_addition_info SET
+						certificate =:certificate,
+						certificateType =:certificateType,
+						detailAddress =:detailAddress,
+						carePeople =:carePeople,
+						characterType =:characterType,
+						faithType =:faithType,
+						hobby =:hobby,
+						idols =:idols,
+						jobType =:jobType,
+						likeBrand =:likeBrand,
+						likeContact =:likeContact,
+						marryStatus =:marryStatus,
+						specialDay =:specialDay,
+						zodiac =:zodiac,
+						education =:education,
+						likeContactTime =:likeContactTime
+					WHERE
+						member_id =:memberId
+            ]]></body>
+        </sql>
+        <sql id="update_member_card">
+            <body><![CDATA[
+           		UPDATE
+					crm_member SET
+						memberCardType_id =:memberCardType,
+						memberCardNum =:memberCardNum,
+						createCardTime =:createCardTime,
+						createStoreId =:createStoreId,
+						limitday =:limitday
+					WHERE
+						id =:memberId
+            ]]></body>
+        </sql>
+        <sql id="findMemberExtraById">
+            <body><![CDATA[
+          SELECT
+				afterFork,beforeFork,bottomsSize,braSize,briefsSize,chest,clothingLong,footLength,
+				hipline,jacketSize,kneeCircumference,onChest,outseam,shoeSize,shoulder,sleeveLength,
+				status,thighCircumference,trouserLeg,underChest,waistline,member_id AS 'memberId'
+			FROM
+				crm_memberextrainfo
+             WHERE member_id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="insert_simple_memberExtra">
+            <body><![CDATA[
+	        INSERT INTO crm_memberextrainfo (member_id) VALUES(:memberId)
+            ]]></body>
+        </sql>
+        <sql id="insertMemberExtra">
+            <body><![CDATA[
+	       INSERT INTO crm_memberextrainfo
+				(afterFork, beforeFork, bottomsSize, braSize, briefsSize, chest, clothingLong, footLength, hipline,
+				jacketSize, kneeCircumference, onChest, outseam, shoeSize, shoulder, sleeveLength,  thighCircumference,
+				 trouserLeg, underChest, waistline, member_id)
+			VALUES(:afterFork, :beforeFork, :bottomsSize, :braSize, :briefsSize, :chest, :clothingLong, :footLength, :hipline,
+					:jacketSize, :kneeCircumference, :onChest, :outseam, :shoeSize, :shoulder, :sleeveLength, :thighCircumference,
+					:trouserLeg, :underChest, :waistline, :memberId);
+            ]]></body>
+        </sql>
+        <sql id="updateMemberExtra">
+            <body><![CDATA[
+	         UPDATE
+				crm_memberextrainfo SET
+					afterFork = :afterFork,
+					beforeFork = :beforeFork,
+					bottomsSize = :bottomsSize,
+					braSize = :braSize,
+					briefsSize = :briefsSize,
+					chest = :chest,
+					clothingLong = :clothingLong,
+					footLength = :footLength,
+					hipline = :hipline,
+					jacketSize = :jacketSize,
+					kneeCircumference = :kneeCircumference,
+					onChest = :onChest,
+					outseam = :outseam,
+					shoeSize = :shoeSize,
+					shoulder = :shoulder,
+					sleeveLength = :sleeveLength,
+					thighCircumference = :thighCircumference,
+					trouserLeg = :trouserLeg,
+					underChest = :underChest,
+					waistline = :waistline
+				WHERE
+					member_id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="insert_assgin_record">
+            <body><![CDATA[
+         		INSERT
+					INTO
+						crm_assignmemberrecord ( createTime,
+						employeeId,
+						memberId,
+						storeId )
+					VALUES (:time,
+					:employeeId,
+					:memberId,
+					:storeId )
+            ]]></body>
+        </sql>
+        <sql id="update_employee_member">
+            <body><![CDATA[
+         		UPDATE crm_member 
+         		SET guide_id =:employeeId 
+         		WHERE id = :memberId
+         		AND FIND_IN_SET(:storeId,store_ids)
+            ]]></body>
+        </sql>
+        <sql id="clear_guide_4onekey">
+            <body><![CDATA[
+         		UPDATE crm_member SET guide_id = NULL
+         		WHERE id IN 
+					(SELECT T0.memberId FROM (SELECT memberId FROM crm_assignmemberrecord car
+					INNER JOIN crm_member cm ON car.memberId = cm.id
+					WHERE car.storeId = :storeId AND cm.guide_id IS NOT NULL) T0) 
+            ]]></body>
+        </sql>
+        <sql id="clear_guide_4Emp">
+            <body><![CDATA[
+         		UPDATE crm_member SET guide_id = NULL
+         		WHERE guide_id =:employeeId AND FIND_IN_SET(:storeId,store_ids)
+            ]]></body>
+        </sql>
+        <sql id="reassign_members" dynamic="true">
+            <body><![CDATA[
+         		UPDATE crm_member SET guide_id = :destEmpId
+         		WHERE guide_id =:sourceEmpId AND id IN (${memberIds?join(",")})
+            ]]></body>
+        </sql>
+        <sql id="assign_random_members" dynamic="true">
+            <body><![CDATA[
+           	UPDATE crm_member SET guide_id = :employeeId 
+           	WHERE id IN 
+           	(SELECT rondom.id FROM 
+           	(SELECT id from crm_member 
+           	WHERE guide_id IS NULL 
+           	AND FIND_IN_SET(store_ids,:storeId) 
+           	ORDER BY rand() LIMIT :count) rondom)
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

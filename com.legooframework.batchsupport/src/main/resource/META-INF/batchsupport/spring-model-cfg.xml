@@ -18,22 +18,31 @@
             </util:list>
         </property>
     </bean>
-    <bean id="legooJobExplorer" class="org.springframework.batch.core.explore.support.JobExplorerFactoryBean">
+    <bean id="legooJobEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="jobStatementFactory"/>
         <property name="dataSource" ref="jobDataSource"/>
     </bean>
-    <bean id="legooJobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+    <bean id="jobExplorer" class="org.springframework.batch.core.explore.support.JobExplorerFactoryBean">
+        <property name="dataSource" ref="jobDataSource"/>
+    </bean>
+    <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
         <property name="jobRepository" ref="jobRepository"/>
     </bean>
     <bean id="jobInstanceEntityAction" class="com.legooframework.model.batchsupport.entity.JobInstanceEntityAction"
-          parent="baseEntityAction">
-        <property name="statementFactory" ref="jobStatementFactory"/>
-        <property name="jobExplorer" ref="legooJobExplorer"/>
-        <property name="dataSource" ref="jobDataSource"/>
+          parent="legooJobEntityAction">
+        <property name="jobExplorer" ref="jobExplorer"/>
     </bean>
     <bean id="jobRepository" class="org.springframework.batch.core.repository.support.JobRepositoryFactoryBean"
           p:dataSource-ref="jobDataSource"
           p:transactionManager-ref="jobTransactionManager"
           p:table-prefix="BATCH_"
           p:databaseType="MYSQL"/>
-    <bean id="legooJobService" class="com.legooframework.model.batchsupport.service.LegooJobService"/>
+    <bean id="jobJobRegistry" class="org.springframework.batch.core.configuration.support.MapJobRegistry"/>
+    <bean id="jobOperator" class="org.springframework.batch.core.launch.support.SimpleJobOperator">
+        <property name="jobLauncher" ref="jobLauncher"/>
+        <property name="jobExplorer" ref="jobExplorer"/>
+        <property name="jobRepository" ref="jobRepository"/>
+        <property name="jobRegistry" ref="jobJobRegistry"/>
+    </bean>
 </beans>

@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="user_label_fields">
+            <![CDATA[
+		        <#macro entity_fields>
+                       ult.id AS 'id',
+                       ult.pid AS 'pId',
+                       ult.label_type AS 'labelType',
+                       ult.label_ctx AS 'labelCtx',
+                       ult.label_name AS 'labelName',
+                       ult.label_desc AS 'labelDesc',
+                       ult.label_enbale AS 'labelEnbale',
+                       ult.store_id AS 'storeId',
+                       ult.company_id AS 'companyId',
+                       (SELECT GROUP_CONCAT(child.id)
+                          FROM user_label_tree child
+                         WHERE child.id >= (ult.id*1000 + 100)
+                           AND child.id <= (ult.id*1000 + 999)
+                           AND child.store_id = -1 ) AS childIds
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="LabelNodeEntity">
+        <sql id="findByMixId" macros="user_label_fields">
+            <body><![CDATA[
+        SELECT <@entity_fields />
+          FROM user_label_tree AS ult
+         WHERE ult.id = :id
+           AND ult.store_id = :storeId
+           AND ult.company_id = :companyId
+           AND ult.delete_flag = 0
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+       INSERT INTO user_label_tree
+                   (id, pid, label_type, label_name, label_ctx, label_desc,  store_id, company_id, createUserId, createTime)
+            VALUES (:id,:pId, :labelType, :labelName, :labelCtx, :labelDesc, :storeId, :companyId, 0, NOW())
+            ]]></body>
+        </sql>
+        <sql id="exits_by_store" macros="user_label_fields">
+            <body><![CDATA[
+       SELECT <@entity_fields />
+          FROM user_label_tree AS ult
+         WHERE ult.store_id = :storeId
+           AND ult.label_name = :labelName
+           AND ult.delete_flag = 0
+           AND ult.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="exits_by_com" macros="user_label_fields">
+            <body><![CDATA[
+       SELECT <@entity_fields />
+          FROM user_label_tree AS ult
+         WHERE ult.label_name = :labelName
+           AND ult.store_id = -1
+           AND ult.delete_flag = 0
+           AND ( ult.id >= ult.pid*1000 + 100 AND ult.id <= ult.pid*1000 + 999)
+           AND ult.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="load_by_store" macros="user_label_fields">
+            <body><![CDATA[
+        SELECT <@entity_fields />
+          FROM user_label_tree AS ult
+         WHERE ult.company_id = :companyId
+           AND ult.store_id = :storeId
+           AND ult.delete_flag = 0
+         <#if enbale??>
+           AND ult.label_enbale = :enbale
+         </#if>
+            ]]></body>
+        </sql>
+        <sql id="load_by_com" macros="user_label_fields">
+            <body><![CDATA[
+       SELECT <@entity_fields />
+          FROM user_label_tree AS ult
+         WHERE ult.company_id = :companyId
+           AND ult.store_id = -1
+           AND ult.delete_flag = 0
+         <#if enbale??>
+           AND ult.label_enbale = :enbale
+         </#if>
+            ]]></body>
+        </sql>
+        <sql id="update_status">
+            <body><![CDATA[
+       UPDATE user_label_tree
+          SET label_enbale = :labelEnbale, modifyTime = NOW()
+        WHERE id = :id
+          AND delete_flag = 0
+          AND company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="update_txt_base">
+            <body><![CDATA[
+       UPDATE user_label_tree
+          SET label_name = :labelName,label_desc = :labelDesc, modifyTime = NOW()
+        WHERE id = :id
+          AND delete_flag = 0
+          AND company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="delete">
+            <body><![CDATA[
+       UPDATE user_label_tree
+          SET delete_flag = 1, modifyTime = NOW()
+        WHERE id = :id
+          AND company_id = :companyId
+            ]]></body>
+        </sql>
+    </model>
+    <model id="LabelMarkedEntity">
+        <sql id="findByIds" dynamic="true">
+            <body><![CDATA[
+        SELECT DISTINCT ulr.member_id AS 'memberId',
+               ulr.label_id AS 'labelId',
+               ulr.weixin_id AS 'weixinId',
+               ulr.store_id AS 'storeId',
+               ulr.company_id AS 'companyId'
+          FROM user_label_remark AS ulr
+         WHERE ulr.store_id = :storeId
+           AND ulr.label_id = :labelId
+           AND ulr.enabled = 1
+          <#if memberIds??>
+           AND ulr.member_id IN ( ${memberIds?join(", ")})
+          </#if>
+          <#if weixinIds??>
+           AND ulr.weixin_id IN ( <#list weixinIds as val>'${val}' <#if val_has_next>,</#if></#list> )
+          </#if>
+            ]]></body>
+        </sql>
+        <sql id="findByWeixinOrMember" dynamic="true">
+            <body><![CDATA[
+        SELECT DISTINCT ulr.member_id AS 'memberId',
+               ulr.label_id AS 'labelId',
+               ulr.weixin_id AS 'weixinId',
+               ulr.store_id AS 'storeId',
+               ulr.company_id AS 'companyId'
+          FROM user_label_remark AS ulr
+         WHERE ulr.enabled = 1
+           AND ulr.store_id = :storeId
+           AND ( <#if memberIds??> ulr.member_id IN ( ${memberIds?join(", ")}) OR </#if>
+                 <#if weixinIds??> ulr.weixin_id IN ( <#list weixinIds as val>'${val}' <#if val_has_next>,</#if></#list> ) </#if> )
+            ]]></body>
+        </sql>
+        <sql id="findByWeixinAndMember">
+            <body><![CDATA[
+        SELECT DISTINCT ulr.member_id AS 'memberId',
+               ulr.label_id AS 'labelId',
+               ulr.weixin_id AS 'weixinId',
+               ulr.store_id AS 'storeId',
+               ulr.company_id AS 'companyId'
+          FROM user_label_remark AS ulr
+         WHERE ulr.enabled = 1
+           AND ulr.store_id = :storeId
+           AND ulr.member_id = :memberId
+           AND ulr.weixin_id = :weixinId
+            ]]></body>
+        </sql>
+        <sql id="clearByWeixinOrMember" dynamic="true">
+            <body><![CDATA[
+   DELETE FROM user_label_remark
+         WHERE enabled = 1
+           AND store_id = :storeId
+           AND ( <#if memberIds??> member_id IN ( ${memberIds?join(", ")}) OR </#if>
+                 <#if weixinIds??> weixin_id IN ( <#list weixinIds as val>'${val}' <#if val_has_next>,</#if></#list> ) </#if> )
+            ]]></body>
+        </sql>
+        <sql id="findBySingle" dynamic="true">
+            <body><![CDATA[
+        SELECT DISTINCT ulr.member_id AS 'memberId',
+               ulr.label_id AS 'labelId',
+               ulr.weixin_id AS 'weixinId',
+               ulr.store_id AS 'storeId',
+               ulr.company_id AS 'companyId'
+          FROM user_label_remark AS ulr
+         WHERE ulr.store_id = :storeId
+           AND ulr.lable_id = :lableId
+           AND ulr.enabled = 1
+          <#if memberId??>
+           AND ulr.member_id = :memberId
+          </#if>
+          <#if weixinId??>
+           AND ulr.weixin_id = :weixinId
+          </#if>
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+        INSERT INTO user_label_remark
+                    (member_id, weixin_id, label_id, enabled, store_id, company_id, createUserId, createTime)
+             VALUES (?, ?, ?, 1, ?, ?, ?, NOW())
+            ]]></body>
+        </sql>
+        <sql id="removeLabel" dynamic="true">
+            <body><![CDATA[
+        DELETE FROM user_label_remark
+              WHERE label_id = :labelId
+                AND store_id = :storeId
+              <#if memberId??>
+                AND ( member_id = :memberId <#if weixinId??> OR weixin_id = :weixinId </#if> )
+              <#else>
+               AND ( weixin_id = :weixinId <#if memberId??> OR member_id = :memberId </#if> )
+              </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="UserRemarksEntity">
+        <sql id="findByEntity" dynamic="true">
+            <body><![CDATA[
+           SELECT url.id AS 'id', url.member_id AS 'memberId', url.weixin_id AS 'weixinId', url.remarks AS 'remarks',
+                  url.store_id AS 'storeId', url.company_id AS 'companyId',url.type AS 'type',
+                  url.createUserId AS 'createUserId', url.createTime AS 'createTime'
+             FROM user_remarks_list url
+            WHERE url.delete_flag = 0
+              AND url.store_id = :storeId
+              AND url.company_id = :companyId
+           <#if memberId??>
+              AND ( url.member_id = :memberId <#if weixinId??> OR url.weixin_id = :weixinId </#if> )
+           <#else>
+              AND ( url.weixin_id = :weixinId <#if memberId??> OR url.member_id = :memberId </#if> )
+           </#if>
+            ]]></body>
+        </sql>
+        <sql id="findById">
+            <body><![CDATA[
+           SELECT url.id AS 'id', url.member_id AS 'memberId', url.weixin_id AS 'weixinId', url.remarks AS 'remarks',
+                  url.store_id AS 'storeId', url.company_id AS 'companyId',url.type AS 'type',
+                  url.createUserId AS 'createUserId', url.createTime AS 'createTime'
+             FROM user_remarks_list url
+            WHERE url.delete_flag = 0
+              AND url.id = :id
+            ]]></body>
+        </sql>
+        <sql id="findByWeixinAndMember">
+            <body><![CDATA[
+        SELECT url.id AS 'id', url.member_id AS 'memberId', url.weixin_id AS 'weixinId', url.remarks AS 'remarks',
+                  url.store_id AS 'storeId', url.company_id AS 'companyId',url.type AS 'type',
+                  url.createUserId AS 'createUserId', url.createTime AS 'createTime'
+             FROM user_remarks_list url
+            WHERE url.delete_flag = 0
+              AND url.store_id = :storeId
+              AND url.member_id = :memberId
+              AND url.weixin_id = :weixinId
+            ]]></body>
+        </sql>
+        <sql id="findByWeixinOrMember" dynamic="true">
+            <body><![CDATA[
+           SELECT url.id AS 'id', url.member_id AS 'memberId', url.weixin_id AS 'weixinId', url.remarks AS 'remarks',
+                  url.store_id AS 'storeId', url.company_id AS 'companyId',url.type AS 'type',
+                  url.createUserId AS 'createUserId', url.createTime AS 'createTime'
+             FROM user_remarks_list url
+            WHERE url.delete_flag = 0
+              AND url.store_id = :storeId
+              AND ( <#if memberIds??> url.member_id IN ( ${memberIds?join(", ")}) OR </#if>
+                    <#if weixinIds??> url.weixin_id IN ( <#list weixinIds as val>'${val}' <#if val_has_next>,</#if></#list> ) </#if> )
+         ORDER BY url.createTime DESC
+            ]]></body>
+        </sql>
+        <sql id="clearByWeixinOrMember" dynamic="true">
+            <body><![CDATA[
+        UPDATE user_remarks_list
+           SET delete_flag = 1
+         WHERE delete_flag = 0
+           AND store_id = :storeId
+           AND ( <#if memberIds??> member_id IN ( ${memberIds?join(", ")}) OR </#if>
+                 <#if weixinIds??> weixin_id IN ( <#list weixinIds as val>'${val}' <#if val_has_next>,</#if></#list> ) </#if> )
+            ]]></body>
+        </sql>
+        <sql id="findOneByEntity" dynamic="true">
+            <body><![CDATA[
+                   SELECT url.id AS 'id', url.member_id AS 'memberId', url.weixin_id AS 'weixinId', url.remarks AS 'remarks',
+                          url.store_id AS 'storeId', url.company_id AS 'companyId',url.type AS 'type',
+                          url.createUserId AS 'createUserId', url.createTime AS 'createTime'
+                     FROM user_remarks_list url
+                    WHERE url.delete_flag = 0
+                      AND url.store_id = :storeId
+                      AND url.company_id = :companyId
+                      AND url.remarks = :remarks
+      <#if weixinId??>AND url.weixin_id = :weixinId</#if>
+      <#if memberId??>AND url.member_id = :memberId</#if>
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+           INSERT INTO user_remarks_list
+                       (member_id, weixin_id, remarks, delete_flag, store_id, company_id, createUserId, createTime)
+                VALUES (:memberId, :weixinId, :remarks, 0, :storeId, :companyId, :createUserId, NOW())
+            ]]></body>
+        </sql>
+        <sql id="insert_bind">
+            <body><![CDATA[
+           INSERT INTO user_remarks_list
+                       (member_id, weixin_id, remarks, delete_flag, store_id, company_id, createUserId, createTime,type)
+                VALUES (:memberId, :weixinId, :remarks, 0, :storeId, :companyId, :createUserId, NOW(),1)
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+        INSERT INTO user_remarks_list
+                    (member_id, weixin_id, remarks, delete_flag, store_id, company_id, createUserId, createTime)
+             VALUES (?, ?, ?, 0, ?, ?, ?, NOW())
+            ]]></body>
+        </sql>
+        <sql id="deleteByIds" dynamic="true">
+            <body><![CDATA[
+                UPDATE user_remarks_list
+                   SET delete_flag = 1
+                 WHERE id IN ( ${ids?join(", ")})
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

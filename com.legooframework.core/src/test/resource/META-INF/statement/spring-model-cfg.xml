@@ -6,8 +6,8 @@
     <bean id="statementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
         <property name="patterns">
             <util:list value-type="java.lang.String">
-                <value>.*[\\,/]base[\\,/].*-sql-cfg.xml$</value>
-                <value>.*[\\,/]base[\\,/]macro-sql-cfg.xml$</value>
+                <value>.*[\\,/]statement[\\,/].*-sql-cfg.xml$</value>
+                <value>.*[\\,/]statement[\\,/]macro-sql-cfg.xml$</value>
             </util:list>
         </property>
     </bean>

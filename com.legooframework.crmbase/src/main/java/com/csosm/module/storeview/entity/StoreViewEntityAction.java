@@ -75,7 +75,6 @@ public class StoreViewEntityAction extends BaseEntityAction<StoreViewEntity> {
                 }
             }
         }
-
         if (logger.isDebugEnabled())
             logger.debug(String.format("loadSubNodes(%s) res %s", nodeId, subNodes));
         return Optional.fromNullable(CollectionUtils.isEmpty(subNodes) ? null : subNodes);
@@ -210,8 +209,10 @@ public class StoreViewEntityAction extends BaseEntityAction<StoreViewEntity> {
         Set<Integer> removedIds = Sets.newHashSet();
         if (!exitView.isEmpty()) {
             removedIds.addAll(exitView);
-            exitIds.removeAll(removedIds);
-            removedIds.clear();
+            if (!CollectionUtils.isEmpty(removedIds)) {
+                exitIds.removeAll(removedIds);
+                removedIds.clear();
+            }
         }
         removedIds.addAll(exitIds);
         List<StoreEntity> removeStos = stores.stream().filter(x -> removedIds.contains(x.getId()))
@@ -317,7 +318,11 @@ public class StoreViewEntityAction extends BaseEntityAction<StoreViewEntity> {
         int res = getJdbc().update(getExecSql("editGroupNodeName", null), instance.toMap());
         Preconditions.checkState(1 == res);
         if (getCache().isPresent()) {
-            getCache().get().invalidate(String.format("%s_employee_%s", getModel(), optional.get().getOwnerId()));
+            if (optional.get().isSmsRechargeTree()) {
+                getCache().get().invalidate(String.format("%s_company_%s", getModel(), optional.get().getCompanyId()));
+            } else {
+                getCache().get().invalidate(String.format("%s_employee_%s", getModel(), optional.get().getOwnerId()));
+            }
         }
     }
 
@@ -337,12 +342,16 @@ public class StoreViewEntityAction extends BaseEntityAction<StoreViewEntity> {
     public String addSubGroupNode(String parentId, String nodeName, String nodeDesc, LoginUserContext loginUser) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(parentId), "上级节点不可以为空值.");
         Optional<StoreViewEntity> parentNode = findById(parentId);
-        Preconditions.checkState(parentNode.isPresent(), "Id=%d 对应的节点不存在...");
+        Preconditions.checkState(parentNode.isPresent(), "Id = %d 对应的节点不存在...");
         StoreViewEntity entity = new StoreViewEntity(nodeName, nodeDesc, parentNode.get(), loginUser);
         int res = getJdbc().update(getExecSql("insert", null), entity.toMap());
         Preconditions.checkState(1 == res);
         if (getCache().isPresent()) {
-            getCache().get().invalidate(String.format("%s_employee_%s", getModel(), entity.getOwnerId()));
+            if (parentNode.get().isSmsRechargeTree()) {
+                getCache().get().invalidate(String.format("%s_company_%s", getModel(), parentNode.get().getCompanyId()));
+            } else {
+                getCache().get().invalidate(String.format("%s_employee_%s", getModel(), entity.getOwnerId()));
+            }
         }
         return entity.getId();
     }
@@ -375,7 +384,11 @@ public class StoreViewEntityAction extends BaseEntityAction<StoreViewEntity> {
         if (logger.isDebugEnabled())
             logger.debug(String.format("User %s 删除 TreeView 节点 %s", loginUser.getEmployee().getUserName(), instance.get()));
         if (getCache().isPresent()) {
-            getCache().get().invalidate(String.format("%s_employee_%s", getModel(), instance.get().getOwnerId()));
+            if (instance.get().isSmsRechargeTree()) {
+                getCache().get().invalidate(String.format("%s_company_%s", getModel(), instance.get().getCompanyId()));
+            } else {
+                getCache().get().invalidate(String.format("%s_employee_%s", getModel(), instance.get().getOwnerId()));
+            }
         }
     }
 

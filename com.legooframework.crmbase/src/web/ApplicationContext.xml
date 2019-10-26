@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:jee="http://www.springframework.org/schema/jee"
+       xmlns:sec="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+                           http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <!-- db for batch job -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="crmDataSource"/>
+    </bean>
+    <alias name="transactionManager" alias="csosmTxManager"/>
+    <import resource="classpath*:META-INF/jwtoken/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/crmbase/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/rfm/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/wechat/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/labels/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/material/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/crmadapter/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/jwtoken/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/families/spring-model-cfg.xml"/>
+    <sec:http pattern="/login.html*" security="none"/>
+    <sec:http pattern="/api/inner/**" security="none"/>
+    <sec:http pattern="/api/orgmvc/company/stores.json*" security="none"/>
+    <sec:http pattern="/api/device/**" security="none"/>
+    <sec:http authentication-manager-ref="crmProviderManager"
+              request-matcher="ant"
+              security-context-repository-ref="securityContextRepositoryImpl">
+        <sec:intercept-url pattern="/api/**" access="hasRole('LOGINER')"/>
+        <sec:form-login login-page="/login.html"
+                        login-processing-url="/api/login"
+                        authentication-success-handler-ref="authenticationService"
+                        authentication-failure-handler-ref="authenticationService"/>
+        <sec:access-denied-handler error-page="/login.html?denied"/>
+        <sec:logout logout-url="/api/logout" success-handler-ref="logoutSuccessHandler"/>
+        <sec:csrf disabled="true"/>
+        <sec:headers>
+            <sec:header ref="tokenHeaderWrite"/>
+        </sec:headers>
+    </sec:http>
+    <beans profile="devp">
+        <jee:jndi-lookup id="crmDataSource" jndi-name="java:comp/env/jdbc/csosmcrm"/>
+    </beans>
+    <beans profile="test">
+        <jee:jndi-lookup id="crmDataSource" jndi-name="java:comp/env/jdbc/csosmcrm"/>
+    </beans>
+    <beans profile="puds">
+        <jee:jndi-lookup id="crmDataSource" jndi-name="java:comp/env/jdbc/csosmcrm"/>
+    </beans>
+</beans>

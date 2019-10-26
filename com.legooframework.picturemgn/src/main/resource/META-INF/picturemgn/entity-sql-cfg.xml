@@ -1,15 +1,172 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sqls>
-    <model id="DevicePinCodeEntity">
-        <sql id="findByPinCodes">
+	<macros>
+        <macro id="picture">
+            <![CDATA[
+             <#macro picture_label_fields>
+                l.id AS 'id',
+				l.pid AS 'pid',
+				l.label_name AS 'name',
+				l.label_desc AS 'desc',
+				l.label_ctx AS 'rangeCtx',
+				IFNULL((SELECT GROUP_CONCAT(id) FROM csosm_main.LABEL_BASE_INFO WHERE pid = l.id AND LENGTH(id) != 3),'') AS 'childIds',
+				l.label_enable AS 'enable',
+				l.store_id AS 'storeId',
+				l.company_id AS 'companyId',
+				l.tenant_id AS 'tenantId',
+				l.creator AS 'creator',
+				l.createTime AS 'createTime',
+				l.editor AS 'editor',
+				l.editTime AS 'editTime'
+	         </#macro>
+	         <#macro member_picture_fields>
+				mp.member_id AS 'memberId',
+				pb.id AS 'pictureId',
+				pb.url AS 'url',
+				pb.thumbnailUrl AS 'thumbnailUrl',
+				pb.size AS 'size',
+				pb.description AS 'description',
+				pb.label_ids AS 'labelIds',
+				mp.upload_emp AS 'uploadEmp',
+				mp.upload_time AS 'uploadTime',
+				mp.store_id AS 'storeId',
+				mp.company_id AS 'companyId',
+				mp.tenant_id AS 'tenantId',
+				mp.creator AS 'creator',
+				mp.createTime AS 'createTime',
+				mp.editor AS 'editor',
+				mp.editTime AS 'editTime'
+			 </#macro>       
+           ]]>
+        </macro>
+    </macros>
+    <model id="PictureLabelEntity">
+       <sql id="query_root_label" macros="picture">
             <body><![CDATA[
-           SELECT
-                dpc.pin_code AS 'pinCode'
-            FROM
-                DEVICE_PIN_CODE AS dpc
-            WHERE
-                dpc.pin_code IN (<#list pinCodes as em>'${em}'<#sep>, </#list>)
+          SELECT <@picture_label_fields />		
+		  FROM
+				csosm_main.LABEL_BASE_INFO l
+		  WHERE l.delete_flag = 0 AND l.label_enable = 1 AND LENGTH(l.id) = 3
+		  <#if storeId??>
+		  AND l.store_id = :storeId
+		  </#if>
+		  <#if companyId??>
+		  AND l.company_id = :companyId
+		  </#if>
             ]]></body>
         </sql>
+        <sql id="load_label_by_ids" macros="picture">
+            <body><![CDATA[
+          SELECT <@picture_label_fields />		
+		  FROM
+				csosm_main.LABEL_BASE_INFO l
+		  WHERE l.delete_flag = 0 AND l.label_enable = 1 AND l.id IN (${labelIds?join(",")})
+		  <#if companyId?? && storeId??>
+		  AND (l.company_id = :companyId OR l.store_id = :storeId)
+		  <#elseif storeId??>
+		  AND store_id = :storeId
+		  <#elseif companyId??>
+		  AND company_id = :companyId
+		  </#if>
+            ]]></body>
+        </sql>
+         <sql id="count_label_name" dynamic="true">
+            <body><![CDATA[
+          	SELECT COUNT(*) AS 'count' 
+          	FROM csosm_main.LABEL_BASE_INFO l
+          	WHERE l.label_name = :name
+	          <#if storeId??>
+			  AND l.store_id = :storeId
+			  </#if>
+			  <#if companyId??>
+			  AND l.company_id = :companyId
+			  </#if>
+            ]]></body>
+        </sql>
+        <sql id="insert_label">
+            <body><![CDATA[
+          	INSERT INTO csosm_main.LABEL_BASE_INFO 
+          			( id,pid,label_name,label_desc,label_ctx,store_id,company_id,tenant_id,creator,createTime)
+			VALUES(:id,:pId,:name,:desc,:rangeCtx,:storeId,:companyId,-1,-1,NOW());
+            ]]></body>
+        </sql>
+       <sql id="delete_labels_by_ids" dynamic="true">
+            <body><![CDATA[
+          	DELETE
+			FROM
+				csosm_main.LABEL_BASE_INFO 
+			WHERE
+				( id IN (${labelIds?join(",")})
+				OR pid IN (${labelIds?join(",")}))
+			   <#if companyId?? && storeId??>
+			   AND (l.company_id = :companyId OR l.store_id = :storeId)
+			   <#elseif storeId??>
+			   AND store_id = :storeId
+			   <#elseif companyId??>
+			   AND company_id = :companyId
+			  </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="MemberPictureEntity">
+    	<sql id="query_member_pictures" macros="picture">
+            <body><![CDATA[
+	        SELECT
+	        	<@member_picture_fields/>
+			FROM
+				csosm_main.MEMBER_PICTURE_INFO mp
+			INNER JOIN csosm_main.PICTURE_BASE_INFO pb ON
+				mp.picture_id = pb.id
+			WHERE mp.member_id = :memberId
+				AND mp.store_id = :storeId
+				AND mp.company_id = :companyId
+			<#if pictureIds??>
+				AND mp.picture_id IN ( <#list pictureIds as id>'${id}'<#if id_has_next>,</#if></#list> )
+			</#if>
+            ]]></body>
+       </sql>
+       <sql id="batch_insert_picture">
+            <body><![CDATA[
+	         INSERT INTO csosm_main.PICTURE_BASE_INFO
+				(id, url, thumbnailUrl, size, description, label_ids, tenant_id, creator, createTime)
+			 VALUES(?, ?, ?, ?, ?, ?, -1, -1, NOW())
+            ]]></body>
+       </sql>
+       <sql id="batch_insert_member_picture">
+            <body><![CDATA[
+	         INSERT INTO csosm_main.MEMBER_PICTURE_INFO
+				(member_id, picture_id, upload_emp, upload_time, store_id, company_id, tenant_id, creator, createTime)
+			VALUES(?, ?, ?, NOW(), ?, ?, -1, -1, NOW())
+            ]]></body>
+        </sql>
+        <sql id="remove_member_pictures" dynamic="true">
+            <body><![CDATA[
+	        DELETE FROM csosm_main.MEMBER_PICTURE_INFO
+			WHERE member_id = :memberId 
+			AND store_id = :storeId 
+			AND company_id = :companyId
+			AND picture_id IN ( <#list pictureIds as id>'${id}'<#if id_has_next>,</#if></#list> )
+            ]]></body>
+        </sql>
+        <sql id="remove_pictures" dynamic="true">
+            <body><![CDATA[
+	          DELETE FROM csosm_main.PICTURE_BASE_INFO
+	          WHERE id IN ( <#list pictureIds as id>'${id}'<#if id_has_next>,</#if></#list> )
+            ]]></body>
+        </sql>
+        <sql id="update_picture_description">
+            <body><![CDATA[
+	         UPDATE csosm_main.PICTURE_BASE_INFO 
+	         SET description = :description 
+	         WHERE id = :pictureId
+            ]]></body>
+        </sql>
+        <sql id="update_picture_labels">
+            <body><![CDATA[
+	         UPDATE csosm_main.PICTURE_BASE_INFO 
+	         SET label_ids = :labelIds 
+	         WHERE id = :pictureId
+            ]]></body>
+        </sql> 
     </model>
 </sqls>

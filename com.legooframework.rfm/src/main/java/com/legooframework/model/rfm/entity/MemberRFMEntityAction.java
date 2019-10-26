@@ -1,7 +1,7 @@
 package com.legooframework.model.rfm.entity;
 
 import com.csosm.commons.entity.BaseEntityAction;
-import com.csosm.module.base.entity.MemberEntity;
+import com.csosm.module.member.entity.MemberEntity;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

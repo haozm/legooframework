@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <macros>
+        <macro id="materialdetail_fileds">
+            <![CDATA[
+		        <#macro materialdetail_fileds>
+                    cmd.id AS 'id',
+                    cmd.company_id AS 'companyId',
+                    cmd.meta_range AS 'range',
+                    cmd.meta_group AS 'groupVal',
+                    cmd.org_id AS 'orgId',
+                    cmd.meta_size AS 'size',
+                    cmd.meta_type AS 'type',
+                    cmd.meta_deadline AS 'deadline',
+                    cmd.meta_enabled AS 'enabled',
+                    cmd.meta_ctx AS 'context',
+                    cmd.user_times AS 'useTimes',
+                    cmd.createUserId AS 'createUserId',
+                    cmd.createTime AS 'createTime',
+                    cmd.modifyUserId AS 'modifyUserId',
+                    cmd.modifyTime AS 'modifyTime'
+	            </#macro>
+	         ]]>
+        </macro>
+    </macros>
+    <model id="MaterialDetailEntity">
+        <sql id="findById" dynamic="true" macros="materialdetail_fileds">
+            <body><![CDATA[
+           SELECT <@materialdetail_fileds />
+            FROM chat_material_detail AS cmd
+           WHERE cmd.id = :id
+            ]]></body>
+        </sql>
+        <sql id="loadAllGroups">
+            <body><![CDATA[
+              SELECT id AS 'id',
+                     group_name AS 'groupName',
+                     company_id AS 'companyId',
+                     group_type AS 'groupType'
+                FROM chat_material_group
+            ORDER BY id
+            ]]></body>
+        </sql>
+        <sql id="findBlackOrWhiteByStore">
+            <body><![CDATA[
+            SELECT cmb.org_id AS 'id', cmb.meta_range AS 'range', cmb.company_id AS 'companyId',
+                   cmb.blacklist AS 'blacklist',cmb.whitelist AS 'whitelist'
+              FROM chat_material_blacklist cmb
+               WHERE cmb.org_id = :id
+                 AND cmb.meta_range = :range
+                 AND cmb.company_id = :companyId
+            ]]></body>
+        </sql>
+        <sql id="findBlackByOrgs" dynamic="true">
+            <body><![CDATA[
+            SELECT cmb.org_id AS 'id', cmb.meta_range AS 'range', cmb.company_id AS 'companyId', cmb.blacklist AS 'blacklist'
+              FROM chat_material_blacklist cmb
+             WHERE (cmb.org_id,cmb.meta_range,cmb.company_id )
+                   IN ( <#list datas as val>(${val.id}, ${val.ramge}, ${val.companyId}) <#if val_has_next>,</#if></#list> )
+            ]]></body>
+        </sql>
+        <sql id="updateBlackById">
+            <body><![CDATA[
+            UPDATE chat_material_blacklist
+               SET blacklist = :blacklist
+             WHERE (org_id,meta_range,company_id ) IN ((:id,:range,:companyId) )
+            ]]></body>
+        </sql>
+        <sql id="updateWhiteById">
+            <body><![CDATA[
+            UPDATE chat_material_blacklist
+               SET whitelist = :whitelist
+             WHERE (org_id,meta_range,company_id ) IN ((:id,:range,:companyId) )
+            ]]></body>
+        </sql>
+        <sql id="insertWhite" dynamic="true">
+            <body><![CDATA[
+        INSERT INTO chat_material_blacklist
+                    (org_id, meta_range, company_id, whitelist)
+             VALUES (:id, :range, :companyId, :whitelist)
+            ]]></body>
+        </sql>
+        <sql id="deleteBlackOrWhiteById" dynamic="true">
+            <body><![CDATA[
+       DELETE FROM chat_material_blacklist
+             WHERE (org_id,meta_range,company_id ) IN ((:id,:range,:companyId) )
+            ]]></body>
+        </sql>
+        <sql id="insertBlack">
+            <body><![CDATA[
+        INSERT INTO chat_material_blacklist
+                    (org_id, meta_range, company_id, blacklist)
+             VALUES (:id, :range, :companyId, :blacklist)
+            ]]></body>
+        </sql>
+        <sql id="insertWhite">
+            <body><![CDATA[
+        INSERT INTO chat_material_blacklist
+                    (org_id, meta_range, company_id, whitelist)
+             VALUES (:id, :range, :companyId, :whitelist)
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+          INSERT INTO chat_material_detail
+                      (id, company_id, meta_range, meta_group, org_id, meta_size, meta_type,
+                       meta_deadline, meta_enabled, meta_ctx, createUserId, createTime)
+               VALUES (:id, :companyId, :range,    :group,      :orgId,   :size,     :type,
+                       :deadline,     :enabled,   :materials,  :createUserId, NOW() )
+            ]]></body>
+        </sql>
+        <sql id="switchStatus">
+            <body><![CDATA[
+            UPDATE chat_material_detail
+               SET meta_enabled = :enabled ,modifyTime = NOW()
+             WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="editInfo">
+            <body><![CDATA[
+            UPDATE chat_material_detail
+               SET meta_ctx = :materials ,meta_deadline = :deadline, modifyTime = NOW()
+             WHERE id = :id
+            ]]></body>
+        </sql>
+        <sql id="incrementUseTimes">
+            <body><![CDATA[
+            UPDATE chat_material_detail
+               SET user_times = :useTimes, modifyTime = NOW()
+             WHERE id = :id
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

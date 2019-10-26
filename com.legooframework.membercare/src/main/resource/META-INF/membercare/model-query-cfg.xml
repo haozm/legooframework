@@ -6,80 +6,196 @@
                 <#macro touch90_fields>
                      armd.id AS 'id',
                      armd.task_id AS 'taskId',
-                     trm.store_id AS 'storeId',
-                     trm.member_id AS 'memberId',
+                     armd.store_id AS 'storeId',
+                     armd.member_id AS 'memberId',
                      armd.task_status AS 'taskStatus',
                      armd.step_index AS 'stepIndex',
                      (CASE armd.task_status
-                           WHEN 1 THEN '初始化'
-                           WHEN 2 THEN '执行中'
-                           WHEN 3 THEN '完成'
-                           WHEN 4 THEN '中止'
-                           WHEN 5 THEN '取消'
-                           WHEN 6 THEN '过期'
-                           ELSE '异常数据' END ) AS 'taskStatusDesc',
+                           WHEN 1 THEN '未开始'
+                           WHEN 2 THEN '待跟进'
+                           WHEN 3 THEN '已完成'
+                           WHEN 7 THEN '已延期'
+                           WHEN 4 THEN '已中止'
+                           WHEN 5 THEN '已取消'
+                           WHEN 6 THEN '已过期'
+                           ELSE '异常状态' END ) AS 'taskStatusDesc',
                      armd.start_date AS 'startDate',
-                     DATE_FORMAT(DATE_ADD(armd.start_date, INTERVAL 14 HOUR), '%Y-%m-%d %H:%i') AS 'startDateDesc' ,
-                     DATEDIFF(armd.expired_date, NOW()) AS 'expiredTag',
-                     DATE_FORMAT(DATE_ADD(armd.expired_date, INTERVAL 14 HOUR), '%Y-%m-%d %H:%i') AS 'expiredDateDesc' ,
+                     armd.remarks AS 'remarks',
+                     ( CASE armd.task_status
+                       WHEN 7 THEN TIMESTAMPDIFF(DAY, armd.start_date, NOW() )
+                       ELSE 0 END ) AS 'extensionedDays',
+                     DATE_FORMAT(armd.start_date, '%Y-%m-%d %H:%i') AS 'startDateDesc' ,
+                     TIMESTAMPDIFF(SECOND, SYSDATE(), armd.expired_date) AS 'expiredTag',
+                     DATE_FORMAT(armd.expired_date, '%Y-%m-%d %H:%i') AS 'expiredDateDesc' ,
+                     armd.sub_rule_id AS 'subRuleId',
+                     armd.rule_id AS 'ruleId',
                      armd.expired_date AS 'expiredDate',
                      armd.finished_date AS 'finishedDate',
-                     trm.task_type AS 'taskType',
+                     (CASE IFNULL( armd.auto_run , 0 )
+                           WHEN 1 THEN '自动'
+                           ELSE '手动' END ) AS 'autoRun',
+                     trm.business_type AS 'businessType',
+                     '90服务' AS 'businessTypeName',
                      trm.merge_info as 'mergeInfo',
-                     trm.automatic AS 'automatic',
+                     sto.name AS 'storeName',
+                     org.name AS 'companyName',
+                     mm.name AS 'memberName',
+                     armd.categories AS 'categories',
+                     mm.mobilePhone AS 'mobile',
+                     (SELECT awm.weixin_id
+                        FROM acp_weixin_member AS awm
+                       WHERE awm.company_id = ${TENANT_ID}
+                         AND awm.store_id = ${storeId}
+                         AND awm.member_id = armd.member_id ) AS 'weixinId',
+                     (   CASE IFNULL(mm.guide_id,-1)
+                         WHEN -1 THEN '-'
+                         ELSE ( SELECT emp.name
+                                  FROM acp_employee AS emp
+                                 WHERE emp.id = mm.guide_id
+                                   AND emp.company_id = mm.company_id ) END ) AS 'shoppingGuideName',
                      trm.cross_store AS 'crossStore',
                      IFNULL(trm.service_userid,-1) AS 'serviceUserid',
                      (CASE trm.cross_store
-                           WHEN 1 THEN '跨店会员'
-                           WHEN 0 THEN '本店会员'
-                           ELSE '普通顾客' END ) AS 'crossStoreDesc'
+                           WHEN 1 THEN '是'
+                           WHEN 0 THEN '否'
+                           ELSE '未知' END ) AS 'crossStoreDesc'
                 </#macro>
              ]]>
         </macro>
     </macros>
     <model id="MemberCare">
-        <sql id="touch90_list" dynamic="true" macros="touch90_fields">
+        <sql id="findMemberInfoByIds" dynamic="true">
             <body><![CDATA[
-      SELECT <@touch90_fields />
-        FROM TASK_RUN_MONITOR_DETAIL armd
-   LEFT JOIN TASK_RUN_MONITOR trm ON trm.id = armd.task_id
-       WHERE trm.task_type = :taskType
-         AND armd.task_status IN (${taskStatus?join(",")})
-         AND trm.company_id = :companyId
-   <#if single>
-         AND trm.store_id = :storeId
-   <#else>
-         AND trm.store_id IN (${storeIds?join(",")})
-   </#if>
-   <#if crossStoreFlag>
-        AND trm.cross_store = :crossStore
-   </#if>
-   <#if jobDays>
-        AND armd.start_date BETWEEN :job_start AND :job_end
-   </#if>
-    ORDER BY trm.store_id ,trm.member_id, armd.start_date
-       LIMIT :offset,:rows
+             SELECT a.member_id AS 'memberId',
+                    a.c_total_buy_amount01 AS 'c_total_buy_amount01'
+                    a.c_total_buy_amount02 AS 'c_total_buy_amount02'
+               FROM YG_Statistics.stat_member_total_buy AS a
+              WHERE a.company_id = :companyId
+                AND a.member_id IN (${memberIds?join(",")})
+            ]]></body>
+        </sql>
+        <sql id="totalStartingNums" dynamic="true">
+            <body><![CDATA[
+             SELECT ( CASE task_status
+                       WHEN 1 THEN 'Create'
+                       WHEN 2 THEN 'Starting'
+                       WHEN 3 THEN 'Finished'
+                       WHEN 4 THEN 'Stoped'
+                       WHEN 5 THEN 'Canceled'
+                       WHEN 7 THEN 'Extensioned'
+                       WHEN 6 THEN 'Expired'
+                       ELSE 'Exceptioned' END ) AS 'taskStatus',
+                    COUNT(task_status) AS 'num'
+               FROM TASK_JOB_DETAIL AS tjd
+              WHERE tjd.business_type = 'TOUCHED90'
+                AND tjd.tenant_id = :TENANT_ID
+                AND DATE(tjd.start_date) = CURDATE()
+            <#if storeId??>
+                AND tjd.store_id = :storeId
+            <#else>
+                AND tjd.store_id IN (${storeIds?join(",")})
+            </#if>
+            GROUP BY task_status
+            ]]></body>
+        </sql>
+        <sql id="touch90Steps">
+            <params>
+                <p name="storeId" type="INT" required="true"/>
+            </params>
+            <body><![CDATA[
+             SELECT DISTINCT tjd.step_index AS 'stepIndex'
+               FROM TASK_JOB_DETAIL AS tjd
+              WHERE tjd.business_type = :businessType
+                AND tjd.tenant_id = :TENANT_ID
+                AND tjd.store_id = :storeId
+           ORDER BY tjd.sub_rule_id
+            ]]></body>
+        </sql>
+        <sql id="touch90Categories">
+            <params>
+                <p name="storeId" type="INT" required="true"/>
+            </params>
+            <body><![CDATA[
+             SELECT DISTINCT tjd.categories AS 'categories'
+               FROM TASK_JOB_DETAIL AS tjd
+              WHERE tjd.business_type = :businessType
+                AND tjd.tenant_id = :TENANT_ID
+                AND tjd.store_id = :storeId
+           ORDER BY tjd.categories
+            ]]></body>
+        </sql>
+        <sql id="touch90_list" dynamic="true" macros="touch90_fields">
+            <params>
+                <p name="storeId" type="INT" required="true"/>
+                <p name="startDate" type="DATERANGE"/>
+                <p name="crossStore" type="INT"/>
+                <p name="stepIndex" type="STRING"/>
+                <p name="memberName" type="STRING"/>
+                <p name="taskStatus" type="INTS" required="true"/>
+            </params>
+            <body><![CDATA[
+              SELECT <@touch90_fields />
+                FROM TASK_JOB_DETAIL armd
+          INNER JOIN acp_store AS sto ON sto.id = armd.store_id AND sto.company_id = armd.tenant_id
+          INNER JOIN acp_organization AS org ON org.id = armd.tenant_id AND org.orgType = 1
+          INNER JOIN crm_member AS mm ON mm.id = armd.member_id AND mm.company_id = armd.tenant_id
+          INNER JOIN TASK_JOB_INSTANCE AS trm ON trm.id = armd.task_id
+               WHERE armd.business_type = :businessType
+                 AND armd.task_status IN ( ${taskStatus?join(",")} )
+                 AND armd.tenant_id = :TENANT_ID
+           <#if ROLE_IDS?seq_contains(5)>
+                 AND armd.store_id = :storeId
+           <#elseif ROLE_IDS?seq_contains(7)>
+                 AND armd.store_id = :storeId
+                 AND mm.guide_id = :LOGIN_ID
+           <#else>
+                 AND armd.store_id = :storeId
+           </#if>
+           <#if crossStore??>
+                AND trm.cross_store = :crossStore
+           </#if>
+           <#if stepIndex??>
+                AND armd.step_index = :stepIndex
+           </#if>
+           <#if memberName??>
+                AND mm.name = :memberName
+           </#if>
+           <#if startDate_start??>
+               AND armd.start_date BETWEEN '${startDate_start} 00:00:00' AND '${startDate_end} 23:59:59'
+           </#if>
+            ORDER BY armd.store_id, armd.member_id, armd.start_date
+               LIMIT :offset,:rows
             ]]></body>
         </sql>
         <sql id="touch90_list_count" dynamic="true">
             <body><![CDATA[
-      SELECT COUNT(armd.id) AS 'total'
-        FROM TASK_RUN_MONITOR_DETAIL armd
-   LEFT JOIN TASK_RUN_MONITOR trm ON trm.id = armd.task_id
-       WHERE trm.task_type = :taskType
-         AND armd.task_status IN (${taskStatus?join(",")})
-         AND trm.company_id = :companyId
-   <#if single>
-         AND trm.store_id = :storeId
-   <#else>
-         AND trm.store_id IN (${storeIds?join(",")})
-   </#if>
-   <#if crossStoreFlag>
-        AND trm.cross_store = :crossStore
-   </#if>
-   <#if jobDays>
-        AND armd.start_date BETWEEN :job_start AND :job_end
-   </#if>
+              SELECT COUNT(armd.id) AS 'total'
+                FROM TASK_JOB_DETAIL armd
+          INNER JOIN crm_member AS mm ON mm.id = armd.member_id AND mm.company_id = armd.tenant_id
+          INNER JOIN TASK_JOB_INSTANCE AS trm ON trm.id = armd.task_id
+               WHERE armd.business_type = :businessType
+                 AND armd.task_status IN ( ${taskStatus?join(",")} )
+                 AND armd.tenant_id = :TENANT_ID
+           <#if ROLE_IDS?seq_contains(5)>
+                 AND armd.store_id = :storeId
+           <#elseif ROLE_IDS?seq_contains(7)>
+                 AND armd.store_id = :storeId
+                 AND mm.guide_id = :LOGIN_ID
+           <#else>
+                 AND armd.store_id = :storeId
+           </#if>
+           <#if crossStore??>
+                 AND trm.cross_store = :crossStore
+           </#if>
+           <#if stepIndex??>
+                 AND armd.step_index = :stepIndex
+           </#if>
+           <#if memberName??>
+                AND mm.name = :memberName
+           </#if>
+           <#if startDate_start??>
+                 AND armd.start_date BETWEEN '${startDate_start} 00:00:00' AND '${startDate_end} 23:59:59'
+           </#if>
             ]]></body>
         </sql>
         <sql id="touch90_detail">
@@ -87,24 +203,96 @@
           SELECT armd.id AS 'id',
                  armd.task_status AS 'taskStatus',
                  armd.step_index AS 'stepIndex',
+                 mm.name AS 'memberName',
+                 mm.mobilePhone AS 'mobile',
+                 armd.categories AS 'categories',
                  (CASE armd.task_status
-                        WHEN 1 then '初始化'
-                        WHEN 2 then '执行中'
-                        WHEN 3 then '完成'
-                        WHEN 4 then '中止'
-                        WHEN 5 then '取消'
-                        WHEN 6 then '过期'
-                        ELSE  '异常数据' END ) AS 'taskStatusDesc',
+                        WHEN 1 then '未开始'
+                        WHEN 2 then '待跟进'
+                        WHEN 3 then '已完成'
+                        WHEN 4 then '已中止'
+                        WHEN 7 then '已延期'
+                        WHEN 5 then '已取消'
+                        WHEN 6 then '已过期'
+                        ELSE  '异常状态' END ) AS 'taskStatusDesc',
                 armd.start_date AS 'startDate',
-                DATE_FORMAT(DATE_ADD(armd.start_date, INTERVAL 14 HOUR), '%Y-%m-%d %H:%i') AS 'startDateDesc' ,
+                DATE_FORMAT(armd.start_date, '%Y-%m-%d %H:%i') AS 'startDateDesc' ,
                 DATEDIFF(armd.expired_date, NOW()) AS 'expiredTag',
-                DATE_FORMAT(DATE_ADD(armd.expired_date, INTERVAL 14 HOUR), '%Y-%m-%d %H:%i') AS 'expiredDateDesc',
+                DATE_FORMAT(armd.expired_date, '%Y-%m-%d %H:%i') AS 'expiredDateDesc',
                 armd.expired_date AS 'expiredDate',
-                armd.finished_date AS 'finishedDate'
-             FROM TASK_RUN_MONITOR_DETAIL armd
-        LEFT JOIN TASK_RUN_MONITOR trm ON trm.id = armd.task_id
+                armd.finished_date AS 'finishedDate',
+                DATE_FORMAT(armd.finished_date, '%Y-%m-%d %H:%i') AS 'finishedDateDesc'
+             FROM TASK_JOB_DETAIL armd
+       INNER JOIN crm_member AS mm ON mm.id = armd.member_id AND mm.company_id = armd.tenant_id
+       INNER JOIN TASK_JOB_INSTANCE trm ON trm.id = armd.task_id
             WHERE armd.task_id = :taskId
          ORDER BY armd.start_date
+            ]]></body>
+        </sql>
+    </model>
+    <macros>
+        <macro id="load_switch_fields">
+            <![CDATA[
+             <#macro load_list_fields businessType>
+              SELECT tcs.company_id AS 'companyId',
+               '-' AS 'storeName',
+               tcs.store_id AS 'storeId',
+               org.name AS 'companyName',
+               '${businessType}' AS 'businessType',
+               tcs.enbaled AS 'enabled',
+               '公司范围' AS 'rangeScope',
+               DATE_FORMAT(tcs.start_date,'%Y-%m-%d') AS 'startDate'
+	      FROM TASK_JOB_SWITCH AS tcs
+    INNER JOIN acp_organization org ON org.id = tcs.company_id AND org.orgType = 1
+         WHERE org.status = 1
+           AND tcs.store_id = -1
+           AND tcs.business_type = '${businessType}'
+     UNION ALL
+        SELECT sto.company_id AS 'companyId',
+               sto.name AS 'storeName',
+               sto.id AS 'storeId',
+               org.name AS 'companyName',
+	           '${businessType}' AS 'businessType',
+	           IFNULL (( SELECT tcs.enbaled
+	                FROM TASK_JOB_SWITCH tcs
+	               WHERE tcs.company_id = sto.company_id
+		             AND sto.id = tcs.store_id
+		             AND tcs.business_type = '${businessType}') , 0) AS 'enabled',
+		       '门店范围' AS 'rangeScope',
+		       ( CASE IFNULL(tjs.start_date,0)
+                  WHEN 0 THEN ( SELECT DATE_FORMAT( a.start_date,'%Y-%m-%d')
+                                  FROM TASK_JOB_SWITCH a
+                                 WHERE a.company_id = sto.company_id AND  a.store_id = -1  AND a.business_type = '${businessType}')
+	                ELSE DATE_FORMAT( tjs.start_date,'%Y-%m-%d')  END )  AS 'startDate'
+          FROM acp_store AS sto
+     LEFT JOIN acp_organization org ON org.id = sto.company_id AND org.orgType = 1
+     LEFT JOIN TASK_JOB_SWITCH tjs ON sto.company_id = tjs.company_id AND sto.id = tjs.store_id AND tjs.business_type = '${businessType}'
+         WHERE sto.status = 1
+	         </#macro>
+	          ]]>
+        </macro>
+    </macros>
+    <model id="TaskSwitchEntity">
+        <sql id="load_switch_count" dynamic="true" macros="load_switch_fields">
+            <body><![CDATA[
+         SELECT COUNT(*)
+          FROM ( <@load_list_fields businessType /> ) AS A
+         WHERE A.companyId = :TENANT_ID
+         <#if (STORE_ID != -1) >
+           AND A.storeId = :STORE_ID
+         </#if>
+            ]]></body>
+        </sql>
+        <sql id="load_switch" dynamic="true" macros="load_switch_fields">
+            <body><![CDATA[
+        SELECT A.*
+          FROM ( <@load_list_fields businessType /> ) AS A
+         WHERE  A.companyId = :TENANT_ID
+         <#if (STORE_ID != -1) >
+           AND A.storeId = :STORE_ID
+         </#if>
+      ORDER BY A.enabled DESC, A.storeId
+         LIMIT :offset,:rows
             ]]></body>
         </sql>
     </model>

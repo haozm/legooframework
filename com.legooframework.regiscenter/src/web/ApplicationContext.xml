@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:sec="http://www.springframework.org/schema/security"
+       xmlns:util="http://www.springframework.org/schema/util" xmlns:jee="http://www.springframework.org/schema/jee"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+                           http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+                           http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="regisCenterDB"/>
+    </bean>
+    <alias name="regisCenterDB" alias="deviceDataSource"/>
+    <alias name="regisCenterDB" alias="regisCenterDataSource"/>
+
+    <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/entities/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/jwtoken/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/crmadapter/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/regiscenter/spring-model-cfg.xml"/>
+
+    <bean id="authenticationEntryPoint"
+          class="com.legooframework.model.crmadapter.service.JsonAuthenticationEntryPoint"/>
+    <bean id="checkTokenExitsFilter" class="com.legooframework.model.crmadapter.service.CheckTokenExitsFilter">
+        <constructor-arg name="authenticationEntryPoint" ref="authenticationEntryPoint"/>
+        <property name="jwTokenAction" ref="jwTokenAction"/>
+    </bean>
+    <bean id="ssoSecurityContextRepository"
+          class="com.legooframework.model.crmadapter.service.SecurityContextRepositoryImpl"/>
+    <bean id="securityContextPersistenceFilter"
+          class="org.springframework.security.web.context.SecurityContextPersistenceFilter">
+        <constructor-arg name="repo" ref="ssoSecurityContextRepository"/>
+    </bean>
+    <bean id="filterChainProxy" class="org.springframework.security.web.FilterChainProxy">
+        <constructor-arg>
+            <util:list>
+                <sec:filter-chain pattern="/api/regcnt/**" filters="none"/>
+                <sec:filter-chain pattern="/api/regcntmgr/**" filters="checkTokenExitsFilter,securityContextPersistenceFilter"/>
+            </util:list>
+        </constructor-arg>
+    </bean>
+    <beans profile="devp">
+        <jee:jndi-lookup id="regisCenterDB" jndi-name="java:comp/env/jdbc/regiscenter"/>
+    </beans>
+    <beans profile="test">
+        <jee:jndi-lookup id="regisCenterDB" jndi-name="java:comp/env/jdbc/regiscenter"/>
+    </beans>
+    <beans profile="production">
+        <jee:jndi-lookup id="regisCenterDB" jndi-name="java:comp/env/jdbc/regiscenter"/>
+    </beans>
+</beans>

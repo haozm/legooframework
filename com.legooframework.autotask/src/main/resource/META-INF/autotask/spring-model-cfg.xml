@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:batch="http://www.springframework.org/schema/batch"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       					   http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+                           http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd
+                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd">
+    <bean id="autotaskBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/autotask/legoo-model-cfg.xml"/>
+    </bean>
+    <bean id="autotaskStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]autotask[\\,/]entity-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="autotaskCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
+        <property name="caffeineSpecs">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="autoTaskCache" value="initialCapacity=16,maximumSize=1024,expireAfterAccess=10m"/>
+            </util:map>
+        </property>
+    </bean>
+    <bean id="autotaskAbsEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="autotaskStatementFactory"/>
+        <property name="dataSource" ref="autotaskDataSource"/>
+        <property name="cacheManager" ref="autotaskCacheManager"/>
+    </bean>
+    <bean id="autotaskRestTemplate" class="org.springframework.web.client.RestTemplate"/>
+    <bean id="autotaskRestTemplateHelper" class="com.legooframework.model.autotask.entity.RestTemplateHelper">
+        <constructor-arg name="restTemplate" ref="autotaskRestTemplate"/>
+    </bean>
+    <bean id="taskSourceEntityAction" class="com.legooframework.model.autotask.entity.TaskSourceEntityAction"
+          parent="autotaskAbsEntityAction"/>
+    <bean id="taskRuleEntityAction" class="com.legooframework.model.autotask.entity.TaskRuleEntityAction"
+          parent="autotaskAbsEntityAction"/>
+    <bean id="taskExecuteEntityAction" class="com.legooframework.model.autotask.entity.TaskExecuteEntityAction"
+          parent="autotaskAbsEntityAction"/>
+    <bean id="taskSwitchEntityAction" class="com.legooframework.model.autotask.entity.TaskSwitchEntityAction"
+          parent="autotaskAbsEntityAction"/>
+
+    <bean id="autoTaskExecuteJobListener" class="com.legooframework.model.autotask.entity.TaskExecuteJobListener"/>
+    <bean id="autotaskJobsScheduler" class="com.legooframework.model.autotask.entity.SchedulerJobsFactoryBean"
+          destroy-method="shutdown">
+        <property name="jobListener" ref="autoTaskExecuteJobListener"/>
+    </bean>
+    <bean id="autoTaskService" class="com.legooframework.model.autotask.service.AutoTaskService"/>
+    <bean id="autoTaskMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
+
+    <bean id="autoTaskExecuteJobDetail" class="com.legooframework.model.autotask.entity.TaskExecuteJobDetailBuilder"
+          scope="prototype">
+        <property name="messagingTemplate" ref="autoTaskMessagingTemplate"/>
+    </bean>
+
+    <!-- ====================== step01  ===================================== -->
+    <bean id="taskAbsPsCursorItemReader" class="com.legooframework.model.autotask.step.AbsPsCursorItemReader"
+          abstract="true">
+        <property name="sqlStatementFactory" ref="autotaskStatementFactory"/>
+        <property name="dataSource" ref="autotaskDataSource"/>
+    </bean>
+    <bean id="taskSourceItemReader" class="com.legooframework.model.autotask.step.TaskSourceItemReader"
+          parent="taskAbsPsCursorItemReader" scope="step">
+        <property name="stepParams" value="#{jobParameters['step01.params']}"/>
+    </bean>
+    <bean id="taskSourceItemProcessor" class="com.legooframework.model.autotask.step.TaskSourceItemProcessor"/>
+    <bean id="taskSourceItemWriter" class="com.legooframework.model.autotask.step.TaskSourceItemWriter"/>
+    <!-- ====================== step02  ===================================== -->
+    <bean id="taskExecuteItemReader" class="com.legooframework.model.autotask.step.TaskExecuteItemReader"
+          parent="taskAbsPsCursorItemReader" scope="step"/>
+    <bean id="taskExecuteItemProcessor" class="com.legooframework.model.autotask.step.TaskExecuteItemProcessor"/>
+    <bean id="taskExecuteItemWriter" class="com.legooframework.model.autotask.step.TaskExecuteItemWriter"/>
+
+    <batch:job id="buildTaskJob" job-repository="jobRepository">
+        <batch:step id="step01" next="step02">
+            <batch:tasklet start-limit="1">
+                <batch:chunk reader="taskSourceItemReader"
+                             processor="taskSourceItemProcessor"
+                             writer="taskSourceItemWriter"
+                             commit-interval="50"/>
+            </batch:tasklet>
+        </batch:step>
+        <batch:step id="step02">
+            <batch:tasklet start-limit="1">
+                <batch:chunk reader="taskExecuteItemReader"
+                             processor="taskExecuteItemProcessor"
+                             writer="taskExecuteItemWriter"
+                             commit-interval="100"/>
+            </batch:tasklet>
+        </batch:step>
+    </batch:job>
+
+    <int:channel id="task-running-channel">
+        <int:queue/>
+    </int:channel>
+    <int:outbound-channel-adapter channel="task-running-channel" ref="autoTaskService" method="doneTaskExecute">
+        <int:poller fixed-rate="500" receive-timeout="30000" time-unit="MILLISECONDS" max-messages-per-poll="1"/>
+    </int:outbound-channel-adapter>
+</beans>

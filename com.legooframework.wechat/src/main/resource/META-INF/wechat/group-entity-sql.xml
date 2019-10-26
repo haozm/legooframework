@@ -1,0 +1,903 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+	<macros>
+		<macro id="group_base_macro">
+            <![CDATA[
+		        <#macro weixin_table_fields>
+                    (
+						SELECT
+							DISTINCT t.iconUrl,
+							t.nickName,
+							t.userName,
+							t.conRemark,
+							t.type,
+							t.fromDevicesId,
+							t.contactLabelIds,
+							IF( aws.employee_id IS NULL,
+							0,
+							1 ) AS 'signed'
+						FROM
+							yycomm.${tableName} t
+						LEFT JOIN yycomm.UPDATE_${tableName} hc ON
+							hc.userName = t.userName
+						LEFT JOIN acp_weixin_sign aws ON
+							t.userName = aws.weixin_id
+						WHERE
+							t.work = 1
+							AND IFNULL( hc.flag,
+							'init' ) IN ( 'init',
+							'add' )
+							AND t.type <> 4
+							AND SUBSTRING_INDEX( t.userName, '@',-1 )!= 'chatroom'
+						GROUP BY
+							t.userName ) wx
+	            </#macro>
+	            <#macro member_select_fields>	            	
+                    DISTINCT
+                    wx.memberId AS 'memberId',
+                    wx.memberName AS 'memberName',
+                    wx.conRemark AS 'conRemark',
+                    wx.iconUrl AS 'iconUrl',
+                    CASE
+                    WHEN (MAX(wx.memberId) IS NULL && wx.conRemark <> '') THEN wx.conRemark
+                    WHEN (wx.conRemark IS NULL || wx.conRemark = '') THEN wx.nickName
+                    ELSE MAX(wx.memberName)
+                    END AS 'nickName',
+                    wx.userName AS 'userName',
+                    wx.`type` AS 'wxType',
+                    wx.signed AS 'signed'
+	            </#macro>
+	            <#macro member_select_table>
+	            	((
+						SELECT
+							DISTINCT t.iconUrl,
+							t.nickName,
+							t.userName,
+							t.conRemark,
+							t.type,
+							t.fromDevicesId,
+							t.contactLabelIds,
+							cm.id AS 'memberId',
+							cm.name AS 'memberName',
+							IF( aws.employee_id IS NULL,
+							0,
+							1 ) AS 'signed'
+						FROM
+							yycomm.${tableName} t
+						LEFT JOIN yycomm.UPDATE_${tableName} hc ON
+							hc.userName = t.userName
+						LEFT JOIN acp_weixin_sign aws ON
+							t.userName = aws.weixin_id
+						INNER JOIN acp_weixin_member axm ON
+							axm.weixin_id = t.userName
+							AND axm.store_id = :storeId
+							AND axm.company_id = :companyId
+						INNER JOIN crm_member cm ON
+							cm.id = axm.member_id
+							AND cm.company_id = :companyId
+						WHERE
+							t.work = 1
+							AND IFNULL( hc.flag,
+							'init' ) IN ( 'init',
+							'add' )
+							AND t.type <> 4
+							AND SUBSTRING_INDEX( t.userName, '@',-1 )!= 'chatroom' )
+						UNION (
+						SELECT
+						DISTINCT t.iconUrl,
+						t.nickName,
+						t.userName,
+						t.conRemark,
+						t.type,
+						t.fromDevicesId,
+						t.contactLabelIds,
+						NULL AS 'memberId',
+						'' AS 'memberName',
+						IF( aws.employee_id IS NULL,
+						0,
+						1 ) AS 'signed'
+						FROM
+						yycomm.${tableName} t
+						LEFT JOIN yycomm.UPDATE_${tableName} hc ON
+						hc.userName = t.userName
+						LEFT JOIN acp_weixin_sign aws ON
+						t.userName = aws.weixin_id
+						WHERE
+						t.work = 1
+						AND IFNULL( hc.flag,
+						'init' ) IN ( 'init',
+						'add' )
+						AND t.type <> 4
+						AND SUBSTRING_INDEX( t.userName, '@',-1 )!= 'chatroom' )) AS wx
+	            </#macro>	            
+	            <#macro newadd_friend_weixin_table>
+	            	((
+						SELECT
+							DISTINCT t.iconUrl,
+							t.nickName,
+							t.userName,
+							t.conRemark,
+							t.type,
+							t.fromDevicesId,
+							t.contactLabelIds,
+							cm.id AS 'memberId',
+							cm.name AS 'memberName',
+							IF( aws.employee_id IS NULL,
+							0,
+							1 ) AS 'signed'
+						FROM
+							yycomm.${tableName} t
+						LEFT JOIN yycomm.UPDATE_${tableName} hc ON
+							hc.userName = t.userName
+						LEFT JOIN acp_weixin_sign aws ON
+							t.userName = aws.weixin_id
+						INNER JOIN acp_weixin_member axm ON
+							axm.weixin_id = t.userName
+							AND axm.store_id = :storeId
+							AND axm.company_id = :companyId
+						INNER JOIN crm_member cm ON
+							cm.id = axm.member_id
+							AND cm.company_id = :companyId
+						WHERE
+							t.work = 1
+							AND IFNULL( hc.flag,
+							'init' ) IN ( 'add' )
+							AND t.type <> 4
+							AND SUBSTRING_INDEX( t.userName, '@',-1 )!= 'chatroom'
+							AND hc.createtime >= DATE_SUB( NOW(),
+							INTERVAL :beforeDays DAY ) )
+						UNION (
+						SELECT
+						DISTINCT t.iconUrl,
+						t.nickName,
+						t.userName,
+						t.conRemark,
+						t.type,
+						t.fromDevicesId,
+						t.contactLabelIds,
+						NULL AS 'memberId',
+						'' AS 'memberName',
+						IF( aws.employee_id IS NULL,
+						0,
+						1 ) AS 'signed'
+						FROM
+						yycomm.${tableName} t
+						LEFT JOIN yycomm.UPDATE_${tableName} hc ON
+						hc.userName = t.userName
+						LEFT JOIN acp_weixin_sign aws ON
+						t.userName = aws.weixin_id
+						WHERE
+						t.work = 1
+						AND IFNULL( hc.flag,
+						'init' ) IN ( 'add' )
+						AND t.type <> 4
+						AND SUBSTRING_INDEX( t.userName, '@',-1 )!= 'chatroom'
+						AND hc.createtime >= DATE_SUB( NOW(),
+						INTERVAL :beforeDays DAY ) )) AS wx                
+	            </#macro>
+	            <#macro memberdto_fields>
+	            	DISTINCT
+	                axm.member_id AS 'memberId',
+					cm.`name` AS 'memberName',
+					wx.conRemark AS 'conRemark',
+					wx.iconUrl AS 'iconUrl',
+					CASE 
+					WHEN (axm.member_id IS NULL && wx.conRemark <> '') THEN wx.conRemark
+					WHEN (wx.conRemark IS NULL || wx.conRemark = '') THEN wx.nickName
+					ELSE cm.name
+					END AS 'nickName',
+					wx.userName AS 'userName',
+					wx.`type` AS 'wxType',
+					wx.signed AS 'signed'
+	            </#macro>
+	            <#macro weixin_table>
+	            	yycomm.${tableName} t
+									LEFT JOIN
+										yycomm.UPDATE_${tableName} hc
+									ON hc.userName = t.userName AND hc.store_id =:storeId AND hc.company_id = :companyId
+									LEFT JOIN acp_weixin_sign aws
+									ON t.userName = aws.weixin_id
+									WHERE 
+									t.work = 1 AND 
+									IFNULL(hc.flag,'init') IN ('init','add','add_chatroom_member','rm_chatroom_member')
+									AND t.type <> 4
+									AND SUBSTRING_INDEX(t.userName,'@',-1)!='chatroom' AND LOCATE('gh_',t.userName) = 0
+	            </#macro>
+	            <#macro group_memberdto_fields>
+	            	DISTINCT
+                    gi.id AS 'groupId',
+			    	gi.group_name AS 'groupName',
+			       	wx.memberId AS 'memberId',
+                    wx.memberName AS 'memberName',
+                    wx.conRemark AS 'conRemark',
+                    wx.iconUrl AS 'iconUrl',
+                    CASE
+                    WHEN (MAX(wx.memberId) IS NULL && wx.conRemark <> '') THEN wx.conRemark
+                    WHEN (wx.conRemark IS NULL || wx.conRemark = '') THEN wx.nickName
+                    ELSE MAX(wx.memberName)
+                    END AS 'nickName',
+                    wx.userName AS 'userName',
+                    wx.`type` AS 'wxType',
+                    wx.signed AS 'signed'
+	            </#macro>	            
+	         ]]>
+		</macro>
+	</macros>
+	<model id="group">
+		<sql id="insert_common_group">
+			<body><![CDATA[
+             	INSERT INTO acp_group_instance
+					(id,store_id,company_id,group_name,type,createUserId,createTime)
+				VALUES
+					(:id,:storeId,:companyId,:groupName,:type,createUserId,NOW())
+            ]]></body>
+		</sql>
+		<sql id="modify_group_name">
+			<body><![CDATA[
+             	UPDATE acp_group_instance
+					SET group_name =:groupName
+				WHERE id =:id
+            ]]></body>
+		</sql>
+		<sql id="delete_ungranted_guide_groups">
+			<body><![CDATA[
+            	DELETE FROM acp_group_instance
+				WHERE type = 1 AND store_id = :storeId AND company_id = :companyId 
+				AND id NOT IN 
+				(SELECT DISTINCT group_id FROM acp_group_guide WHERE store_id = :storeId AND company_id = :companyId)
+            ]]></body>
+		</sql>
+		<sql id="delete_group">
+			<body><![CDATA[
+            	DELETE g
+            	FROM acp_group_instance g
+            	where g.id =:groupId AND store_id =:storeId AND company_id =:companyId
+            ]]></body>
+		</sql>
+		<sql id="delete_group_friend">
+			<body><![CDATA[
+             	DELETE FROM acp_group_friend
+				WHERE group_id =:groupId
+            ]]></body>
+		</sql>
+		<sql id="delete_groud_guides">
+			<body><![CDATA[
+             	DELETE FROM acp_group_guide
+				WHERE group_id =:groupId AND store_id =:storeId AND company_id =:companyId
+            ]]></body>
+		</sql>
+		<sql id="insert_group_friend">
+			<body><![CDATA[
+             	INSERT INTO acp_group_friend
+					(id,group_id,friend_id,createUserId,createTime)
+				VALUES
+					(:id,:groupId,:friendId,:createUserId,NOW())
+            ]]></body>
+		</sql>
+		<sql id="find_friendIds_by_groupId">
+			<body><![CDATA[
+             	SELECT 
+             	friend_id AS 'friendId' 
+             	FROM acp_group_friend 
+             	WHERE group_id =:groupId
+            ]]></body>
+		</sql>
+		<sql id="delete_friends">
+			<body><![CDATA[
+             	DELETE FROM acp_group_friend
+				WHERE friend_id =:friendId AND group_id =:groupId
+            ]]></body>
+		</sql>
+		<sql id="remove_groups_friend" dynamic="true">
+			<body><![CDATA[
+             	DELETE FROM acp_group_friend
+				WHERE friend_id =:friendId 
+				AND group_id IN ( <#list groupIds as id>'${id}'<#if id_has_next>,</#if></#list> )
+            ]]></body>
+		</sql>
+		<sql id="insert_group_friend">
+			<body><![CDATA[
+             	INSERT INTO acp_group_friend
+					(id,group_id,friend_id,createUserId,createTime)
+				VALUES
+					(:id,:groupId,:friendId,:createUserId,NOW())
+            ]]></body>
+		</sql>
+		<sql id="insert_group_guides">
+			<body><![CDATA[
+             	INSERT INTO acp_group_guide
+					(id,group_id,guide_id,store_id,company_id,createUserId,createTime)
+				VALUES
+					(?,?,?,?,?,?,NOW())
+            ]]></body>
+		</sql>
+		<sql id="delete_groud_guides">
+			<body><![CDATA[
+             	DELETE FROM acp_group_guide
+				WHERE group_id =:groupId AND store_id =:storeId AND company_id =:companyId
+            ]]></body>
+		</sql>
+		<sql id="query_group_guides" dynamic="true">
+			<body><![CDATA[
+             	SELECT 
+					'0000' AS 'groupId',
+					'所有好友' AS 'groupName',
+					guide_id AS 'guideId'
+					FROM acp_group_guide
+				WHERE store_id =:storeId AND company_id =:companyId AND group_id = '0000'
+				UNION SELECT 
+					'0000' AS 'groupId',
+					'所有好友' AS 'groupName',
+					null AS 'guideId'										
+				UNION
+				SELECT
+					gi.id AS 'groupId',
+					gi.group_name AS 'groupName',
+					gg.guide_id AS 'guideId'
+					FROM acp_group_instance gi
+					LEFT JOIN acp_group_guide gg
+					ON gi.id = gg.group_id
+				WHERE gi.store_id =:storeId AND gi.company_id =:companyId
+            ]]></body>
+		</sql>
+		<sql id="load_all_friend_group" macros="group_base_macro">
+			<body><![CDATA[
+             	SELECT
+					'0000' AS "id",
+					'所有好友' AS "groupName",
+					'${storeId}' AS "storeId",
+					'${companyId}' AS "companyId",
+					2 AS 'type',
+					(SELECT COUNT(DISTINCT t.userName) FROM <@weixin_table />) 
+					AS 'size'
+            ]]></body>
+		</sql>
+		<sql id="count_granted_all_friend_group" dynamic="true">
+			<body><![CDATA[
+             	SELECT COUNT(*) FROM acp_group_guide
+				WHERE group_id ='0000' 
+				AND store_id =:storeId 
+				AND company_id =:companyId
+				<#if guideId??>
+					AND guide_id =:guideId
+				</#if>
+            ]]></body>
+		</sql>
+		<sql id="search_all_friend_group" macros="group_base_macro">
+			<body><![CDATA[
+			SELECT <@member_select_fields/>
+			FROM <@member_select_table/>			
+				WHERE 1 = 1				
+				<#if search??>
+				AND ( 
+				wx.nickName LIKE :search
+				OR wx.conRemark LIKE :search 
+				OR wx.memberName LIKE :search)
+				</#if>
+				<#if userLabels??>
+             	AND wx.userName IN (
+              	SELECT DISTINCT weixin_id 
+              	FROM user_label_remark 
+              	WHERE store_id = :storeId 
+              	AND company_id = :companyId
+              	AND weixin_id IS NOT NULL 
+              	AND label_id IN (${userLabels?join(", ")}))
+            	</#if>
+			GROUP BY wx.userName
+			]]></body>
+		</sql>
+		<sql id="count_new_friend_group_friend" macros="group_base_macro">
+			<body><![CDATA[
+			SELECT
+				COUNT(*) AS 'count'
+			FROM
+				<@newadd_friend_weixin_table />
+			WHERE wx.userName = :friendId
+			]]></body>
+		</sql>
+		<sql id="load_new_friend_group" macros="group_base_macro">
+			<body><![CDATA[
+             	SELECT
+					'2222' AS "id",
+					'新增好友' AS "groupName",
+					'${storeId}' AS "storeId",
+					'${companyId}' AS "companyId",
+					3 AS 'type',
+					(SELECT COUNT(DISTINCT t.userName)  FROM <@weixin_table />
+									AND hc.createtime >= DATE_SUB(NOW(),INTERVAL :beforeDays DAY)) 
+					AS 'size'
+            ]]></body>
+		</sql>
+		<sql id="search_new_friend_group" macros="group_base_macro">
+			<body><![CDATA[
+			SELECT
+				<@member_select_fields/>
+			FROM
+				<@newadd_friend_weixin_table />
+			LEFT JOIN acp_weixin_member axm ON
+				axm.weixin_id = wx.userName AND axm.store_id = :storeId AND axm.company_id = :companyId
+			LEFT JOIN crm_member cm ON
+				cm.id = axm.member_id AND  cm.company_id = :companyId
+			WHERE 1 = 1
+			<#if search??>
+				AND ( 
+				wx.nickName LIKE :search
+				OR wx.conRemark LIKE :search 
+				OR wx.memberName LIKE :search
+				)
+			</#if>
+			<#if userLabels??>
+				AND wx.userName IN (
+              	SELECT DISTINCT weixin_id 
+              	FROM user_label_remark 
+              	WHERE store_id = :storeId 
+              	AND company_id = :companyId
+              	AND weixin_id IS NOT NULL 
+              	AND label_id IN (${userLabels?join(", ")}))
+            </#if>		
+			GROUP BY wx.userName
+			]]></body>
+		</sql>
+		<sql id="count_granted_new_friend_group" dynamic="true">
+			<body><![CDATA[
+             	SELECT COUNT(*) FROM acp_group_guide
+				WHERE group_id ='2222' AND store_id =:storeId AND company_id =:companyId
+				<#if guideId??>
+				AND guide_id =:guideId
+				</#if>
+            ]]></body>
+		</sql>
+		<sql id="count_common_group_friend" dynamic="true">
+			<body><![CDATA[
+             	SELECT 
+             	COUNT(*) AS 'count' 
+             	FROM acp_group_friend 
+             	WHERE friend_id = :friendId AND group_id = :groupId
+            ]]></body>
+		</sql>
+		<sql id="load_common_group" dynamic="true">
+			<body><![CDATA[
+             	SELECT
+					agi.id AS "id",
+					agi.group_name AS "groupName",
+					agi.store_id AS "storeId",
+					agi.company_id AS "companyId",
+					agi.type AS 'type',
+					(SELECT COUNT(DISTINCT t.userName) FROM acp_group_friend agf 
+					INNER JOIN yycomm.${tableName} t ON t.userName = agf.friend_id
+					WHERE t.work = 1 AND agf.group_id = agi.id) as 'size'
+					FROM acp_group_instance agi
+					LEFT JOIN acp_group_friend agf ON agf.group_id = agi.id
+				WHERE agi.id =:id
+				<#if type??>
+					AND agi.type = :type
+				</#if>
+				GROUP BY agi.id
+				ORDER BY agi.createTime
+            ]]></body>
+		</sql>
+		<sql id="find_granted_signed_group" dynamic="true">
+			<body><![CDATA[
+             	SELECT	DISTINCT
+					agi.id AS "id",
+					agi.group_name AS "groupName",
+					agi.store_id AS "storeId",
+					agi.company_id AS "companyId",
+					agi.type AS 'type',
+					0 as 'size'
+					FROM acp_group_instance agi
+					LEFT JOIN acp_group_friend agf ON agf.group_id = agi.id
+					LEFT JOIN acp_group_guide agg ON agi.id = agg.group_id
+					INNER JOIN acp_weixin_sign aws
+					ON aws.employee_id = agg.guide_id AND agf.friend_id = aws.weixin_id
+					WHERE agi.type = 1 AND aws.store_id = :storeId AND aws.company_id = :companyId AND aws.weixin_id = :weixinId
+            ]]></body>
+		</sql>
+		<sql id="load_common_groups" dynamic="true">
+			<body><![CDATA[
+             	SELECT
+					agi.id AS "id",
+					agi.group_name AS "groupName",
+					agi.store_id AS "storeId",
+					agi.company_id AS "companyId",
+					agi.type AS 'type',
+					(SELECT COUNT(DISTINCT t.userName) FROM acp_group_friend agf 
+					INNER JOIN yycomm.${tableName} t ON t.userName = agf.friend_id
+					WHERE t.work = 1 AND agf.group_id = agi.id) AS 'size'
+					FROM acp_group_instance agi
+					WHERE agi.store_id = :storeId AND agi.company_id = :companyId 
+					<#if type??>
+						AND agi.type = :type
+					</#if>
+					ORDER BY agi.createTime
+            ]]></body>
+		</sql>
+		<sql id="search_common_group" macros="group_base_macro">
+			<body><![CDATA[
+				SELECT <@member_select_fields/>
+				FROM <@member_select_table/>
+				<#if groupId??>
+				INNER JOIN acp_group_friend gf ON
+					gf.friend_id = wx.userName
+					AND gf.group_id =:groupId
+				</#if>
+				<#if groupIds??>
+				INNER JOIN acp_group_friend gf ON
+					gf.friend_id = wx.userName
+					AND gf.group_id IN ( <#list groupIds as id>'${id}'<#if id_has_next>,</#if></#list> )
+				</#if>
+				WHERE 1 = 1
+				<#if search??>
+				AND ( 
+				wx.nickName LIKE :search
+				OR wx.conRemark LIKE :search 
+				OR wx.memberName LIKE :search)
+				</#if>
+				<#if userLabels??>
+				AND wx.userName IN (
+              	SELECT DISTINCT weixin_id 
+              	FROM user_label_remark 
+              	WHERE store_id = :storeId 
+              	AND company_id = :companyId
+              	AND weixin_id IS NOT NULL 
+              	AND label_id IN (${userLabels?join(", ")}))
+            	</#if>
+			GROUP BY wx.userName
+			]]></body>
+		</sql>
+		<sql id="search_common_groups_with_members" macros="group_base_macro">
+			<body><![CDATA[
+            SELECT
+		    	<@group_memberdto_fields />
+        	FROM
+        	(SELECT id,group_name FROM acp_group_instance WHERE store_id =:storeId AND company_id =:companyId
+	        <#if guideId??>
+					AND id IN (SELECT group_id FROM acp_group_guide WHERE guide_id =:guideId)
+		     </#if> ) gi
+			LEFT JOIN acp_group_friend gf ON gf.group_id = gi.id
+			LEFT JOIN <@member_select_table />
+				ON gf.friend_id = wx.userName			
+			WHERE 1 = 1
+			<#if search??>
+				AND ( 
+				wx.nickName LIKE :search
+				OR wx.conRemark LIKE :search 
+				OR wx.memberName LIKE :search)
+				</#if>
+			<#if userLabels??>
+				AND wx.userName IN (
+              	SELECT DISTINCT weixin_id 
+              	FROM user_label_remark 
+              	WHERE store_id = :storeId 
+              	AND company_id = :companyId
+              	AND weixin_id IS NOT NULL 
+              	AND label_id IN (${userLabels?join(", ")}))
+            </#if>	
+			 GROUP BY wx.userName
+			      ]]></body>
+		</sql>
+		<sql id="load_granted_common_groups_4guide" macros="group_base_macro">
+			<body><![CDATA[
+             	SELECT
+					agi.id AS "id",
+					agi.group_name AS "groupName",
+					agi.store_id AS "storeId",
+					agi.company_id AS "companyId",
+					agi.type AS 'type',
+					COUNT(DISTINCT wx.userName) as 'size'
+					FROM acp_group_instance agi
+					LEFT JOIN acp_group_friend agf ON agf.group_id = agi.id					
+					LEFT JOIN 
+					<@weixin_table_fields /> 
+					ON agf.friend_id = wx.userName
+				WHERE agi.id IN 
+				(SELECT group_id FROM acp_group_guide 
+				WHERE company_id = :companyId 
+				AND store_id = :storeId 
+				AND guide_id = :guideId)
+				GROUP BY agi.id
+				ORDER BY agi.createTime
+            ]]></body>
+		</sql>
+		<sql id="load_label_group" macros="group_base_macro">
+			<body><![CDATA[
+             	SELECT 
+					CONCAT('${deviceId}','_','label','_',l.Id) AS 'id',
+					CONCAT(l.Name,'组') AS 'groupName',
+					'${storeId}' AS 'storeId',
+					'${companyId}' AS 'companyId',
+					5 AS 'type',
+					(SELECT COUNT(DISTINCT t.userName) 
+					FROM <@weixin_table />
+					AND 
+					t.fromDevicesId = :deviceId 
+					AND FIND_IN_SET(l.Id,t.contactLabelIds) <> 0) AS 'size'
+				FROM yycomm.Label_${deviceId} l
+				WHERE l.Id = :labelId
+            ]]></body>
+		</sql>
+		<sql id="load_label_groups" macros="group_base_macro">
+			<body><![CDATA[
+				<#list deviceIds as deviceId>
+				<#if deviceId_index == 0>
+	             	SELECT 
+						CONCAT('${deviceId}','_','label','_',l.Id) AS 'id',
+						CONCAT(l.Name,'组') AS 'groupName',
+						'${storeId}' AS 'storeId',
+						'${companyId}' AS 'companyId',
+						5 AS 'type',
+						(SELECT COUNT(DISTINCT wx.userName) 
+						FROM <@weixin_table_fields />
+						WHERE 
+						wx.fromDevicesId = '${deviceId}'
+						AND FIND_IN_SET(l.Id,wx.contactLabelIds) <> 0) AS 'size'
+					FROM yycomm.Label_${deviceId} l
+				<#else>
+					UNION
+					SELECT 
+						CONCAT('${deviceId}','_','label','_',l.Id) AS 'id',
+						CONCAT(l.Name,'组') AS 'groupName',
+						'${storeId}' AS 'storeId',
+						'${companyId}' AS 'companyId',
+						5 AS 'type',
+						(SELECT COUNT(DISTINCT wx.userName) 
+						FROM <@weixin_table_fields />
+						WHERE 
+						wx.fromDevicesId = '${deviceId}'
+						AND FIND_IN_SET(l.Id,wx.contactLabelIds) <> 0) AS 'size'
+					FROM yycomm.Label_${deviceId} l
+				</#if>
+				</#list>
+            ]]></body>
+		</sql>
+		<sql id="list_label_groups" macros="group_base_macro">
+			<body><![CDATA[
+             	SELECT
+		    	CONCAT('${deviceId}','_','label','_',l.Id) AS 'groupId',
+		    	CONCAT(l.Name,'组') AS 'groupName',
+		        axm.member_id AS 'memberId',
+				cm.`name` AS 'memberName',
+				IF( axm.member_id IS NULL,wx.conRemark, cm.name) AS 'conRemark',
+				wx.iconUrl AS 'iconUrl',
+				wx.nickName AS 'nickName',
+				wx.userName AS 'userName',
+				wx.`type` AS 'wxType',
+				IF(wx.signed IS NULL,0,1) AS 'signed'
+        	FROM yycomm.Label_${deviceId} l
+					LEFT JOIN 
+					(SELECT DISTINCT t.* FROM <@weixin_table />) wx
+				ON FIND_IN_SET(l.Id,wx.contactLabelIds)
+			LEFT JOIN acp_weixin_member axm ON axm.weixin_id = wx.userName AND axm.store_id =:storeId AND company_id =2922
+			LEFT JOIN crm_member cm ON cm.id = axm.member_id
+			 <#if guideId??>
+					WHERE l.Id IN (SELECT group_id FROM acp_group_guide WHERE guide_id =:guideId)
+		     </#if> 
+			 ORDER BY wx.userName
+            ]]></body>
+		</sql>
+		<sql id="search_label_groups" macros="group_base_macro">
+			<body><![CDATA[
+            SELECT 
+             	<@memberdto_fields />
+			FROM
+				<@weixin_table_fields />
+			LEFT JOIN acp_weixin_member axm 
+			ON	axm.weixin_id = wx.userName AND axm.store_id = :storeId AND axm.company_id = :companyId 
+			LEFT JOIN crm_member cm 
+			ON	cm.id = axm.member_id  AND cm.company_id = :companyId
+			INNER JOIN yycomm.Label_${deviceId} l 
+			ON wx.fromDevicesId = :deviceId
+			<#list labelIds as labelId>
+				<#if labelId_index == 0>
+				AND 
+				FIND_IN_SET('${labelId}',wx.contactLabelIds) 
+				<#else>
+				OR 
+				FIND_IN_SET('${labelId}',wx.contactLabelIds)
+				</#if>
+			</#list>
+			WHERE 1 = 1
+			<#if search??>
+				AND ( 
+				wx.nickName LIKE :search
+				OR wx.conRemark LIKE :search 
+				OR cm.`name` LIKE :search
+				)
+			</#if>
+			<#if userLabels??>
+				AND wx.userName IN (
+              	SELECT DISTINCT weixin_id 
+              	FROM user_label_remark 
+              	WHERE store_id = :storeId 
+              	AND company_id = :companyId
+              	AND weixin_id IS NOT NULL 
+              	AND label_id IN (${userLabels?join(", ")}))
+            </#if>
+			 ORDER BY wx.userName
+            ]]></body>
+		</sql>
+		<sql id="search_label_group" macros="group_base_macro">
+			<body><![CDATA[
+            SELECT 
+             	<@memberdto_fields />
+			FROM
+				<@weixin_table_fields />
+			LEFT JOIN acp_weixin_member axm 
+			ON	axm.weixin_id = wx.userName AND axm.store_id = :storeId AND axm.company_id = :companyId 
+			LEFT JOIN crm_member cm 
+			ON	cm.id = axm.member_id  AND cm.company_id = :companyId
+			INNER JOIN yycomm.Label_${deviceId} l 
+			ON FIND_IN_SET(l.Id,wx.contactLabelIds) AND wx.fromDevicesId = :deviceId AND l.Id = :labelId
+			WHERE 1 = 1
+			<#if search??>
+				AND ( 
+				wx.nickName LIKE :search
+				OR wx.conRemark LIKE :search 
+				OR cm.`name` LIKE :search
+				)
+			</#if>
+			<#if userLabels??>
+				AND wx.userName IN (
+              	SELECT DISTINCT weixin_id 
+              	FROM user_label_remark 
+              	WHERE store_id = :storeId 
+              	AND company_id = :companyId
+              	AND weixin_id IS NOT NULL 
+              	AND label_id IN (${userLabels?join(", ")}))
+            </#if>
+			 ORDER BY wx.userName
+            ]]></body>
+		</sql>
+		<sql id="query_guide_group_names">
+			<body><![CDATA[
+             	SELECT
+					group_name AS "groupName"
+					FROM acp_group_instance
+				WHERE store_id =:storeId AND type = 1
+				ORDER BY createTime
+            ]]></body>
+		</sql>
+		<sql id="count_userdefined_group_name">
+			<body><![CDATA[
+             	SELECT
+					COUNT(*) AS 'count'
+				FROM acp_group_instance
+				WHERE store_id =:storeId AND type = 0 AND group_name =:name
+            ]]></body>
+		</sql>
+		<sql id="load_granted_guide_groups" dynamic="true">
+			<body><![CDATA[
+             	SELECT
+             		agg.guide_id AS 'guideId',
+					agi.id AS "id",
+					agi.group_name AS "groupName",
+					agi.store_id AS "storeId",
+					agi.company_id AS "companyId",
+					agi.type AS 'type',
+					(SELECT COUNT(DISTINCT t.userName) FROM acp_group_friend agf 
+					INNER JOIN yycomm.${tableName} t ON t.userName = agf.friend_id
+					WHERE t.work = 1 AND agf.group_id = agi.id) AS 'size'
+					FROM acp_group_instance agi
+					INNER JOIN acp_group_guide agg ON agi.id = agg.group_id
+					WHERE agi.store_id = :storeId AND agi.company_id = :companyId AND agi.type = 1
+					<#if guideId??>
+						AND agg.guide_id = :guideId
+					</#if>
+					ORDER BY agi.createTime
+            ]]></body>
+		</sql>
+		<sql id="load_store_groups" dynamic="true">
+			<body><![CDATA[
+			SELECT
+				'0000' AS "id",
+				'所有好友' AS "groupName",
+				'${storeId}' AS "storeId",
+				'${companyId}' AS "companyId",
+				2 AS 'type',
+				(
+				SELECT
+					COUNT( DISTINCT t.userName )
+				FROM
+					yycomm.${tableName} t
+				LEFT JOIN yycomm.UPDATE_${tableName} hc ON
+					hc.userName = t.userName
+					AND hc.store_id =:storeId
+					AND hc.company_id = :companyId
+				LEFT JOIN acp_weixin_sign aws ON
+					t.userName = aws.weixin_id
+				WHERE
+					t.work = 1
+					AND IFNULL( hc.flag,
+					'init' ) IN ( 'init',
+					'add' )
+					AND t.type <> 4
+					AND SUBSTRING_INDEX( t.userName, '@',-1 )!= 'chatroom' ) AS 'size'
+			UNION SELECT
+				'2222' AS "id",
+				'新增好友' AS "groupName",
+				'${storeId}' AS "storeId",
+				'${companyId}' AS "companyId",
+				3 AS 'type',
+				(
+				SELECT
+					COUNT( DISTINCT t.userName )
+				FROM
+					yycomm.${tableName} t
+				LEFT JOIN yycomm.UPDATE_${tableName} hc ON
+					hc.userName = t.userName
+					AND hc.store_id = :storeId
+					AND hc.company_id = :companyId
+				LEFT JOIN acp_weixin_sign aws ON
+					t.userName = aws.weixin_id
+				WHERE
+					t.work = 1
+					AND IFNULL( hc.flag,
+					'init' ) IN ( 'init',
+					'add' )
+					AND t.type <> 4
+					AND SUBSTRING_INDEX( t.userName, '@',-1 )!= 'chatroom'
+					AND hc.createtime >= DATE_SUB( NOW(),
+					INTERVAL :beforeDays DAY )) AS 'size'
+			UNION SELECT
+				agi.id AS "id",
+				agi.group_name AS "groupName",
+				agi.store_id AS "storeId",
+				agi.company_id AS "companyId",
+				agi.type AS 'type',
+				(
+				SELECT
+					COUNT( DISTINCT t.userName )
+				FROM
+					acp_group_friend agf
+				INNER JOIN yycomm.${tableName} t ON
+					t.userName = agf.friend_id
+				WHERE
+					t.work = 1
+					AND agf.group_id = agi.id ) AS 'size'
+			FROM
+				acp_group_instance agi
+			WHERE
+				agi.store_id = :storeId
+				AND agi.company_id = :companyId													
+            ]]></body>
+		</sql>
+		<sql id="delete_all_friend_guide_groups">
+			<body><![CDATA[
+             	DELETE FROM acp_group_guide
+             	where 
+             	store_id = :storeId and company_id = :companyId AND group_id = '0000'
+            ]]></body>
+		</sql>
+		<sql id="save_allfriend_group_log">
+			<body><![CDATA[
+             	INSERT INTO 
+             	acp_group_log
+             	(group_id,group_name,granted_stores) 
+             	VALUES 
+             	(:groupId,:groupName,:storeIds)
+            ]]></body>
+		</sql>
+		<sql id="find_allfriend_group_log">
+			<body><![CDATA[
+             	SELECT 
+             	group_id AS 'groupId',
+             	group_name AS 'groupName',
+             	granted_stores AS 'storeIds' 
+             	FROM acp_group_log
+            ]]></body>
+		</sql>
+		<sql id="count_allfriend_group_log">
+			<body><![CDATA[
+             	SELECT COUNT(*)
+             	FROM acp_group_log
+				WHERE FIND_IN_SET(:storeId,granted_stores) AND group_id = '0000'
+            ]]></body>
+		</sql>
+		<sql id="update_allfriend_group_log">
+			<body><![CDATA[
+             	UPDATE acp_group_log 
+             	SET granted_stores =:storeIds
+            ]]></body>
+		</sql>
+	</model>
+</sqls>

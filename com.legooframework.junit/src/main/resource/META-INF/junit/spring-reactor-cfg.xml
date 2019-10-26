@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+    <context:property-placeholder location="classpath:META-INF/junit/jdbc.properties"/>
+    <bean id="jobDataSource" class="com.zaxxer.hikari.HikariDataSource">
+        <property name="driverClassName" value="${job.jdbc.driver}"/>
+        <property name="jdbcUrl" value="${job.jdbc.url}"/>
+        <property name="username" value="${job.jdbc.username}"/>
+        <property name="password" value="${job.jdbc.password}"/>
+        <property name="readOnly" value="false"/>
+        <property name="connectionTimeout" value="30000"/>
+        <property name="idleTimeout" value="600000"/>
+        <property name="maxLifetime" value="1800000"/>
+        <property name="maximumPoolSize" value="8"/>
+        <property name="minimumIdle" value="2"/>
+    </bean>
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="jobDataSource"/>
+    </bean>
+    <alias name="jobDataSource" alias="reactorDataSource"/>
+    <alias name="jobDataSource" alias="acpDataSource"/>
+    <alias name="jobDataSource" alias="autotaskDataSource"/>
+    <alias name="transactionManager" alias="jobTransactionManager"/>
+</beans>
+

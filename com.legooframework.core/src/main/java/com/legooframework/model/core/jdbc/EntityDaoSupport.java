@@ -2,6 +2,7 @@ package com.legooframework.model.core.jdbc;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactory;
@@ -40,6 +41,27 @@ public abstract class EntityDaoSupport extends NamedParameterJdbcDaoSupport {
         }
     }
 
+    protected <T> int[][] batchUpdateBySql(String execSql, ParameterizedPreparedStatementSetter<T> pss, Collection<T> batchArgs) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(execSql), "参数 execSql 不可以为空值...");
+        Preconditions.checkArgument(!CollectionUtils.isEmpty(batchArgs), "Collection<T> batchArgs  参数不可以为空...");
+        Map<String, Object> params = LoginContextHolder.get().toParams();
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            if (logger.isDebugEnabled())
+                logger.debug(buildLog("batchUpdate", "", "", params, execSql));
+            Preconditions.checkNotNull(getJdbcTemplate(), "JdbcTemplate Not Be init...");
+            int[][] result = getJdbcTemplate().batchUpdate(execSql, batchArgs, batchArgs.size(), pss);
+            stopwatch.stop();
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("batchUpdate [%s,%s result is %s and elapsed %s ms]",
+                        "", "", batchArgs.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+            return result;
+        } catch (DataAccessException e) {
+            String err_msg = String.format("%s(%s,%s) whit %s has error", "batchUpdate", "", "", params);
+            logger.error(err_msg, e);
+            throw new ExecJdbcSqlException(err_msg, e);
+        }
+    }
 
     protected <T> int[][] batchUpdate
             (SQLStatementFactory statementFactory, String model, String stmtId,
@@ -54,7 +76,7 @@ public abstract class EntityDaoSupport extends NamedParameterJdbcDaoSupport {
             if (logger.isDebugEnabled())
                 logger.debug(buildLog("batchUpdate", model, stmtId, params, execSql));
             Preconditions.checkNotNull(getJdbcTemplate(), "JdbcTemplate Not Be init...");
-            int[][] result = getJdbcTemplate().batchUpdate(execSql, batchArgs, 2048, pss);
+            int[][] result = getJdbcTemplate().batchUpdate(execSql, batchArgs, batchArgs.size(), pss);
             stopwatch.stop();
             if (logger.isDebugEnabled())
                 logger.debug(String.format("batchUpdate [%s,%s result is %s and elapsed %s ms]",
@@ -62,6 +84,28 @@ public abstract class EntityDaoSupport extends NamedParameterJdbcDaoSupport {
             return result;
         } catch (DataAccessException e) {
             String err_msg = String.format("%s(%s,%s) whit %s has error", "batchUpdate", model, stmtId, params);
+            logger.error(err_msg, e);
+            throw new ExecJdbcSqlException(err_msg, e);
+        }
+    }
+
+    protected <T extends BatchSetter> int[][] batchInsert(String execSql, int batchSize, Collection<T> batchArgs) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(execSql), "参数 execSql=? 不可以为空值...");
+        Preconditions.checkArgument(!CollectionUtils.isEmpty(batchArgs), "Collection<T> batchArgs  参数不可以为空...");
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            if (logger.isDebugEnabled())
+                logger.debug(buildLog("batchInsert", null, null, null, execSql));
+            Preconditions.checkNotNull(getJdbcTemplate(), "JdbcTemplate Not Be init...");
+            int[][] result = getJdbcTemplate().batchUpdate(execSql, batchArgs, batchSize,
+                    (ps, argument) -> argument.setValues(ps));
+            stopwatch.stop();
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("batchInsert [%s,%s result is %s and elapsed %s ms]",
+                        null, null, batchArgs.size(), stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+            return result;
+        } catch (DataAccessException e) {
+            String err_msg = String.format("%s(%s) whit %s has error", "batchInsert", execSql, batchArgs.size());
             logger.error(err_msg, e);
             throw new ExecJdbcSqlException(err_msg, e);
         }
@@ -79,7 +123,7 @@ public abstract class EntityDaoSupport extends NamedParameterJdbcDaoSupport {
             if (logger.isDebugEnabled())
                 logger.debug(buildLog("batchInsert", model, stmtId, params, execSql));
             Preconditions.checkNotNull(getJdbcTemplate(), "JdbcTemplate Not Be init...");
-            int[][] result = getJdbcTemplate().batchUpdate(execSql, batchArgs, 2048,
+            int[][] result = getJdbcTemplate().batchUpdate(execSql, batchArgs, batchArgs.size(),
                     (ps, argument) -> argument.setValues(ps));
             stopwatch.stop();
             if (logger.isDebugEnabled())
@@ -88,6 +132,32 @@ public abstract class EntityDaoSupport extends NamedParameterJdbcDaoSupport {
             return result;
         } catch (DataAccessException e) {
             String err_msg = String.format("%s(%s,%s) whit %s has error", "batchInsert", model, stmtId, params);
+            logger.error(err_msg, e);
+            throw new ExecJdbcSqlException(err_msg, e);
+        }
+    }
+
+    protected <T> Optional<List<T>> queryForList(String execSql, Map<String, Object> paramMap, Class<T> clazz) {
+        Preconditions.checkNotNull(execSql, "参数 execSql 不可以为空值...");
+        Map<String, Object> params = LoginContextHolder.get().toParams();
+        if (MapUtils.isNotEmpty(paramMap)) params.putAll(paramMap);
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            if (logger.isDebugEnabled())
+                logger.debug(buildLog("queryForList", null, null, params, execSql));
+            List<T> result = getTemplate().queryForList(execSql, params, clazz);
+            stopwatch.stop();
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("queryForList [%s,%s result is %s and elapsed %s ms]",
+                        null, null, result, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+            return Optional.ofNullable(CollectionUtils.isEmpty(result) ? null : result);
+        } catch (EmptyResultDataAccessException e1) {
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("queryForList [%s,%s result is %s and elapsed %s ms]",
+                        null, null, 0, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+            return Optional.empty();
+        } catch (DataAccessException e) {
+            String err_msg = String.format("%s(%s) whit %s has error", "queryForList", execSql, params);
             logger.error(err_msg, e);
             throw new ExecJdbcSqlException(err_msg, e);
         }
@@ -228,7 +298,6 @@ public abstract class EntityDaoSupport extends NamedParameterJdbcDaoSupport {
         return update(model, stmtId, execSql, params);
     }
 
-
     protected int update(SQLStatementFactory statementFactory, String model, String stmtId,
                          Map<String, Object> paramMap) {
         Preconditions.checkNotNull(statementFactory, "参数 SQLStatementFactory statementFactory 不可以为空值...");
@@ -237,6 +306,25 @@ public abstract class EntityDaoSupport extends NamedParameterJdbcDaoSupport {
         String execSql = statementFactory.getExecSql(model, stmtId, params);
         return update(model, stmtId, execSql, params);
     }
+
+    protected int update(String execSql, Map<String, Object> params) {
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        try {
+            if (logger.isDebugEnabled())
+                logger.debug(buildLog("update", null, null, params, execSql));
+            int result = getTemplate().update(execSql, params);
+            stopwatch.stop();
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("update (%s) result is %s and elapsed %s ms",
+                        execSql, result, stopwatch.elapsed(TimeUnit.MILLISECONDS)));
+            return result;
+        } catch (DataAccessException e) {
+            String err_msg = String.format("%s(%s) whit %s has error", "update", execSql, params);
+            logger.error(err_msg, e);
+            throw new ExecJdbcSqlException(err_msg, e);
+        }
+    }
+
 
     private int update(String model, String stmtId, String execSql, Map<String, Object> params) {
         Stopwatch stopwatch = Stopwatch.createStarted();

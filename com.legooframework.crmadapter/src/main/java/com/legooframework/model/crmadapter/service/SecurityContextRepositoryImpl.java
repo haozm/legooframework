@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.base.runtime.LoginUser;
 import com.legooframework.model.jwtoken.entity.JWToken;
 import com.legooframework.model.jwtoken.entity.JWTokenAction;
@@ -21,7 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.concurrent.TimeUnit;
 
-public class SecurityContextRepositoryImpl extends CrmAdapterService implements SecurityContextRepository {
+public class SecurityContextRepositoryImpl extends BundleService implements SecurityContextRepository {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityContextRepositoryImpl.class);
     private final static String KEY_HEADER = "Authorization";
@@ -43,11 +44,18 @@ public class SecurityContextRepositoryImpl extends CrmAdapterService implements 
         }
         final JWToken jwToken = (JWToken) request.getAttribute("__spring_security_token");
         Preconditions.checkNotNull(jwToken, "非法的 Token取值....,token值为空...");
-        String loginName = jwToken.getLoginName();
-        String[] login_info = StringUtils.split(loginName, '@');
-        LoginUser user = getBean(CrmReadService.class).loadByLoginName(Integer.valueOf(login_info[0]), login_info[1]);
-        user.setToken(tokenId);
-        user.setLoginName(loginName);
+        LoginUser user = null;
+        if (jwToken.isAnonymous()) {
+            user = LoginContextHolder.getAnonymousCtx();
+            user.setToken(tokenId);
+            user.setLoginName(jwToken.getLoginName());
+        } else {
+            String loginName = jwToken.getLoginName();
+            String[] login_info = StringUtils.split(loginName, '@');
+            user = getBean(CrmReadService.class).loadByLoginName(Integer.valueOf(login_info[0]), login_info[1]);
+            user.setToken(tokenId);
+            user.setLoginName(loginName);
+        }
         securityContext = createSecurityContext(user);
         securityContextCache.put(tokenId, securityContext);
         if (logger.isDebugEnabled())

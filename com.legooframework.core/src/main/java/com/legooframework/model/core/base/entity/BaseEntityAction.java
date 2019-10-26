@@ -19,12 +19,13 @@ import org.springframework.core.ResolvableType;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.sql.PreparedStatement;
+import java.sql.Statement;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -33,6 +34,9 @@ public abstract class BaseEntityAction<T extends BaseEntity> extends EntityDaoSu
     private static final Logger logger = LoggerFactory.getLogger(BaseEntityAction.class);
 
     private final Class<T> entityClass;
+
+    protected final static int GENERATEDKEY_INT = 1;
+    protected final static int GENERATEDKEY_LONG = 2;
 
     @SuppressWarnings("unchecked")
     protected BaseEntityAction(String cacheName) {
@@ -47,6 +51,7 @@ public abstract class BaseEntityAction<T extends BaseEntity> extends EntityDaoSu
                                       Collection<T> batchArgs) {
         return super.batchUpdate(getStatementFactory(), getModelName(), stmtId, pss, batchArgs);
     }
+
 
     protected <T extends BatchSetter> int[][] batchInsert(String stmtId, Collection<T> batchArgs) {
         return super.batchInsert(getStatementFactory(), getModelName(), stmtId, batchArgs);
@@ -92,11 +97,38 @@ public abstract class BaseEntityAction<T extends BaseEntity> extends EntityDaoSu
         return super.asyncQueryForList(getStatementFactory(), getModelName(), stmtId, paramMap, rowMapper);
     }
 
-    protected <T> Optional<T> queryForObject(String stmtId, Map<String, Object> paramMap, Class<T> clazz) {
+    protected Optional<T> queryForObject(String stmtId, Map<String, Object> paramMap, Class<T> clazz) {
         try {
             return super.queryForObject(getStatementFactory(), getModelName(), stmtId, paramMap, clazz);
         } catch (EmptyResultDataAccessException e) {
             return Optional.empty();
+        }
+    }
+
+    protected <M> Optional<M> queryForSimpleObj(String stmtId, Map<String, Object> paramMap, Class<M> clazz) {
+        try {
+            return super.queryForObject(getStatementFactory(), getModelName(), stmtId, paramMap, clazz);
+        } catch (EmptyResultDataAccessException e) {
+            return Optional.empty();
+        }
+    }
+
+    protected Object insertSingleWithGeneratedKey(String stmtId, final BatchSetter setter, Map<String, Object> params,
+                                                  int generatedkeyType) {
+        final String exec_sql = getStatementFactory().getExecSql(getModelName(), stmtId, params);
+        KeyHolder generatedKey = new GeneratedKeyHolder();
+        Objects.requireNonNull(getJdbcTemplate()).update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(exec_sql, Statement.RETURN_GENERATED_KEYS);
+            setter.setValues(ps);
+            return ps;
+        }, generatedKey);
+        Preconditions.checkNotNull(generatedKey.getKey(), "自增长健返回空空值....");
+        if (GENERATEDKEY_INT == generatedkeyType) {
+            return generatedKey.getKey().intValue();
+        } else if (GENERATEDKEY_LONG == generatedkeyType) {
+            return generatedKey.getKey().longValue();
+        } else {
+            throw new IllegalArgumentException(String.format("非法的参数 generatedkeyType = %s,取值范围是:[1,2]", generatedkeyType));
         }
     }
 

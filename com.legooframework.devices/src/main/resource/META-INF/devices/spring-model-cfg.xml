@@ -9,7 +9,6 @@
     <bean id="devicesBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/devices/legoo-model-cfg.xml"/>
     </bean>
-
     <bean id="devicesStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
         <property name="patterns">
             <util:list value-type="java.lang.String">
@@ -32,25 +31,28 @@
         <property name="statementFactory" ref="devQueryStatementFactory"/>
         <property name="dataSource" ref="deviceDataSource"/>
     </bean>
-    <bean id="deviceEntityAction" class="com.legooframework.model.devices.entity.DeviceEntityAction"
-          parent="baseEntityAction">
+    <bean id="deviceAbsEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
         <property name="statementFactory" ref="devicesStatementFactory"/>
         <property name="dataSource" ref="deviceDataSource"/>
     </bean>
+    <bean id="deviceEntityAction" class="com.legooframework.model.devices.entity.DeviceEntityAction"
+          parent="deviceAbsEntityAction"/>
+
     <!--<bean id="remoteCmdAction" class="com.legooframework.model.devices.entity.RemoteCmdAction"
           parent="baseEntityAction">
         <property name="statementFactory" ref="devicesStatementFactory"/>
         <property name="dataSource" ref="deviceDataSource"/>
     </bean>-->
 
-    <bean id="devicesEventListenerService" class="com.legooframework.model.devices.service.EventListenerService"/>
+    <!--<bean id="devicesEventListenerService" class="com.legooframework.model.devices.service.EventListenerService"/>-->
 
-    <int:chain id="device-chain" input-channel="syncEventBus" output-channel="nullChannel">
-        <int:filter ref="devicesBundle"/>
-        <int:service-activator ref="devicesEventListenerService" method="handleMessage"/>
-    </int:chain>
+    <!--<int:chain id="device-chain" input-channel="syncEventBus" output-channel="nullChannel">-->
+        <!--<int:filter ref="devicesBundle"/>-->
+        <!--<int:service-activator ref="devicesEventListenerService" method="handleMessage"/>-->
+    <!--</int:chain>-->
 
-    <int:publish-subscribe-channel id="device-command-channel"/>
-    <int:service-activator ref="devicesEventListenerService" method="handleMessage"
-                           input-channel="device-command-channel"/>
+    <!--<int:publish-subscribe-channel id="device-command-channel"/>-->
+    <!--<int:service-activator ref="devicesEventListenerService" method="handleMessage"-->
+                           <!--input-channel="device-command-channel"/>-->
 </beans>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="StatisticalRefEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+          SELECT sdi.id, sdi.company_id, sdi.role_id, sdi.statistical_id, sdi.table_field_ids, sdi.echart_id,
+                 sdi.delete_flag, sdi.tenant_id, sdi.creator, sdi.createTime, sdi.editor, sdi.editTime
+            FROM acp.STATISTICAL_DEF_INFO AS sdi
+           WHERE sdi.delete_flag = 0
+         <#if sql="findByCompany">
+             AND sdi.company_id = :companyId
+         </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="StatisticalLayoutEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+          SELECT sli.id, sli.company_id, sli.title,sli.role_id, sli.statistical_id, sli.layout_type, sli.region_01, sli.region_02, sli.region_03, sli.region_04,
+                 sli.region_05, sli.region_06, sli.region_07, sli.region_08, sli.region_09, sli.region_10, sli.region_11, sli.region_12,
+                 sli.delete_flag,sli.tenant_id, sli.creator, sli.createTime, sli.editor, sli.editTime
+            FROM acp.STATISTICAL_LAYOUT_INFO sli
+           WHERE sli.delete_flag = 0
+         <#if sql="loadPageByUser">
+             AND sli.company_id = :companyId
+             AND sli.statistical_id IS NULL
+             AND sli.layout_type = :layoutType
+         <#elseif sql="loadSubPageByUser">
+             AND sli.company_id = :companyId
+             AND sli.layout_type = :layoutType
+             AND sli.statistical_id = :statisticalId
+         </#if>
+            ]]></body>
+        </sql>
+    </model>
+    <model id="UserAuthorEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+       SELECT emp.id AS 'id',emp.name AS 'empName', GROUP_CONCAT(empr.role_id) AS 'roleIds',
+              com.id AS 'comId',org.id AS 'orgId',sto.id as 'storeId',
+              ( CASE WHEN org.id IS NULL THEN NULL
+                     ELSE ( SELECT GROUP_CONCAT(_temp.id)
+                              FROM acp.acp_organization AS _temp
+                             WHERE _temp.code LIKE CONCAT(org.code,'_%') ) END
+              ) AS 'subOrgIds',
+              ( CASE WHEN org.id IS NULL THEN NULL
+                     ELSE ( SELECT GROUP_CONCAT(_sto.id)
+                              FROM  acp.acp_store AS _sto
+                             WHERE _sto.organization_id IN ( SELECT _temp.id
+                                                               FROM acp.acp_organization AS _temp
+                                                              WHERE _temp.code LIKE CONCAT(org.code,'_%'))) END
+               ) AS 'storeIds'
+         FROM acp.acp_employee AS emp
+   INNER JOIN acp.acp_employee_role AS empr ON empr.employee_id = emp.id
+   INNER JOIN acp.acp_organization AS com ON emp.company_id = com.id and com.orgType=1
+    LEFT JOIN acp.acp_organization AS org ON emp.organization_id = org.id
+    LEFT JOIN acp.acp_store AS sto ON emp.store_id = sto.id
+        WHERE emp.id = :userId
+     <#if companyId??>
+          AND emp.company_id = :companyId
+     </#if>
+     GROUP BY emp.id
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

@@ -45,7 +45,8 @@ public class SqlSubMetaParseRule extends AbstractSqlParseRule {
                 AttributesUtil.getBooleanValue(attributes, "colfixed", false),
                 AttributesUtil.getBooleanValue(attributes, "sum", false),
                 AttributesUtil.getIfPresent(attributes, "sublist").orNull(),
-                MapUtils.isEmpty(params) ? null : params);
+                MapUtils.isEmpty(params) ? null : params,
+                AttributesUtil.getIfPresent(attributes, "for").orNull());
         if (logger.isTraceEnabled()) logger.trace(columnMeta.toString());
         ColumnMeta builder = getDigester().peek();
         builder.addColumnMeta(columnMeta);

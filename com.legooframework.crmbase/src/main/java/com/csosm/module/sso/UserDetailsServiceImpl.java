@@ -22,10 +22,11 @@ public class UserDetailsServiceImpl extends AbstractBaseServer implements UserDe
         Preconditions.checkState(ArrayUtils.isNotEmpty(login_info) && login_info.length == 2, "登陆账号格式错误，格式为：公司@账户");
         Integer companyId = Integer.valueOf(login_info[0]);
         String userName = login_info[1];
-
         LoginUserContext user = baseModelServer.loadByUserName(companyId, userName);
-        if (user == null)
-            throw new UsernameNotFoundException(String.format("Id=%s 对应的账户不存在....", username));
+        if (user == null) 
+        	throw new UsernameNotFoundException(String.format("账号或密码有误....", username));
+        if(!user.getEmployee().isEnabled()) 
+        	throw new UsernameNotFoundException(String.format("账户已被禁用....", username));
         user.setLoginName(username);
         if (logger.isDebugEnabled())
             logger.debug(String.format("loadUserByUsername(%s) return %s", username, user));

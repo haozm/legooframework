@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="SaleRecordEntity">
+        <sql id="loadByDateInterval" macros="crm_salerecord_fields">
+            <body><![CDATA[
+             SELECT <@salerecord_fields />
+               FROM crm_salerecord AS acs
+              WHERE LENGTH(acs.member_id) > 0
+                AND LENGTH(acs.store_id) > 0
+                AND LENGTH(acs.company_id) > 0
+                AND acs.updateTime IS NOT NULL
+                AND acs.status = 1
+                AND acs.company_id = :companyId
+                AND acs.store_id IN (${storeIds?join(",")})
+                AND acs.updateTime BETWEEN :startDay AND :endDay
+           ORDER BY acs.store_id,acs.member_id,acs.createTime
+            ]]></body>
+        </sql>
+    </model>
+</sqls>

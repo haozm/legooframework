@@ -28,22 +28,24 @@ public class Touch90CareLogEntity extends BaseEntity<String> implements BatchSet
 
     private static final Joiner STAGE_JOINER = Joiner.on(',');
     private final Integer storeId, companyId;
+    private final String categories, logDatePk;
     private final LocalDate logDate;
     private int count4Add;
     private Set<Integer> addList;
     private int count4Update;
     private Set<Integer> updateList;
 
-    Touch90CareLogEntity(CrmOrganizationEntity company, CrmStoreEntity store, LocalDate logDate,
-                         Collection<Integer> addList, Collection<Integer> updateList) {
-        super("", company.getId().longValue(), -1L);
+    Touch90CareLogEntity(CrmStoreEntity store, String categories, LocalDate logDate, Collection<Integer> addList, Collection<Integer> updateList) {
+        super("", store.getCompanyId().longValue(), -1L);
         this.storeId = store.getId();
-        this.companyId = company.getId();
+        this.companyId = store.getCompanyId();
         this.logDate = logDate;
+        this.logDatePk = logDate.toString("yyyy-MM-dd");
         this.addList = Sets.newHashSet(addList);
         this.updateList = Sets.newHashSet(updateList);
         this.count4Add = addList.size();
         this.count4Update = updateList.size();
+        this.categories = categories;
     }
 
     @Override
@@ -57,21 +59,24 @@ public class Touch90CareLogEntity extends BaseEntity<String> implements BatchSet
         ps.setObject(6, CollectionUtils.isNotEmpty(updateList) ? STAGE_JOINER.join(updateList) : null);
         ps.setObject(7, count4Update);
         ps.setObject(8, this.companyId.longValue());
+        ps.setObject(9, this.categories);
+        ps.setObject(10, this.logDatePk);
     }
 
     Touch90CareLogEntity(String id, ResultSet res) {
         super(id, res);
         try {
             this.storeId = ResultSetUtil.getObject(res, "storeId", Integer.class);
+            this.categories = ResultSetUtil.getOptString(res, "categories", null);
             this.companyId = ResultSetUtil.getObject(res, "companyId", Integer.class);
+            this.logDatePk = ResultSetUtil.getString(res, "logDatePk");
             this.logDate = LocalDate.fromDateFields(ResultSetUtil.getObject(res, "logDate", Date.class));
             String _add_list = ResultSetUtil.getOptString(res, "addList", null);
             if (Strings.isEmpty(_add_list)) {
                 this.addList = null;
                 this.count4Add = 0;
             } else {
-                this.addList = Stream.of(StringUtils.split(_add_list, ',')).map(Integer::valueOf)
-                        .collect(Collectors.toSet());
+                this.addList = Stream.of(StringUtils.split(_add_list, ',')).map(Integer::valueOf).collect(Collectors.toSet());
                 this.count4Add = this.addList.size();
             }
             String _update_list = ResultSetUtil.getOptString(res, "updateList", null);
@@ -79,8 +84,7 @@ public class Touch90CareLogEntity extends BaseEntity<String> implements BatchSet
                 this.updateList = null;
                 this.count4Update = 0;
             } else {
-                this.updateList = Stream.of(StringUtils.split(_update_list, ',')).map(Integer::valueOf)
-                        .collect(Collectors.toSet());
+                this.updateList = Stream.of(StringUtils.split(_update_list, ',')).map(Integer::valueOf).collect(Collectors.toSet());
                 this.count4Update = this.updateList.size();
             }
         } catch (SQLException e) {
@@ -120,24 +124,8 @@ public class Touch90CareLogEntity extends BaseEntity<String> implements BatchSet
         return companyId;
     }
 
-    public LocalDate getLogDate() {
+    LocalDate getLogDate() {
         return logDate;
-    }
-
-    public int getCount4Add() {
-        return count4Add;
-    }
-
-    public Set<Integer> getAddList() {
-        return addList;
-    }
-
-    public int getCount4Update() {
-        return count4Update;
-    }
-
-    public Set<Integer> getUpdateList() {
-        return updateList;
     }
 
     @Override
@@ -146,15 +134,16 @@ public class Touch90CareLogEntity extends BaseEntity<String> implements BatchSet
         if (!(o instanceof Touch90CareLogEntity)) return false;
         Touch90CareLogEntity that = (Touch90CareLogEntity) o;
         return Objects.equals(storeId, that.storeId) &&
+                Objects.equals(categories, that.categories) &&
                 Objects.equals(companyId, that.companyId) &&
-                Objects.equals(logDate, that.logDate) &&
+                Objects.equals(logDatePk, that.logDatePk) &&
                 SetUtils.isEqualSet(addList, that.addList) &&
                 SetUtils.isEqualSet(updateList, that.updateList);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(storeId, companyId, logDate, addList, updateList);
+        return Objects.hash(storeId, categories, companyId, logDatePk, addList, updateList);
     }
 
     @Override
@@ -162,7 +151,8 @@ public class Touch90CareLogEntity extends BaseEntity<String> implements BatchSet
         return MoreObjects.toStringHelper(this)
                 .add("companyId", companyId)
                 .add("storeId", storeId)
-                .add("logDate", logDate)
+                .add("categories", categories)
+                .add("logDatePk", logDatePk)
                 .add("count4Add", count4Add)
                 .add("addList", addList)
                 .add("count4Update", count4Update)

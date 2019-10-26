@@ -214,6 +214,16 @@ public class StoreEntityAction extends BaseEntityAction<StoreEntity> {
         List<StoreEntity> _sts = filter(stores);
         return Optional.fromNullable(CollectionUtils.isEmpty(_sts) ? null : _sts);
     }
+    
+    public Optional<List<StoreEntity>> loadAllStoreByOrganization(OrganizationEntity organization) {
+        Preconditions.checkNotNull(organization, "入参OrganizationEntity organization 不可以为空...");
+        Map<String, Object> param = Maps.newHashMap();
+        param.put("orgId", organization.getId());
+        List<StoreEntity> stores = getNamedParameterJdbcTemplate()
+                .query(getExecSql("loadAllStoreByOrg", param), param, new RowMapperImpl());
+        List<StoreEntity> _sts = filter(stores);
+        return Optional.fromNullable(CollectionUtils.isEmpty(_sts) ? null : _sts);
+    }
 
     public Optional<List<StoreEntity>> loadByHasDevice() {
         Map<String, Object> param = Maps.newHashMap();
@@ -351,7 +361,8 @@ public class StoreEntityAction extends BaseEntityAction<StoreEntity> {
                     resultSet.getInt("birthdayBefore"),
                     resultSet.getString("phone"),
                     resultSet.getInt("hiddenMemberPhoneFlag"),
-                    resultSet.getInt("state"));
+                    resultSet.getInt("state"),
+                    resultSet.getObject("rfmSetting") == null ? null : resultSet.getInt("rfmSetting"));
         }
     }
 
@@ -375,7 +386,9 @@ public class StoreEntityAction extends BaseEntityAction<StoreEntity> {
                         resultSet.getInt("beforeDays"),
                         resultSet.getString("phone"),
                         resultSet.getInt("hiddenMemberPhoneFlag"),
-                        resultSet.getInt("state"));
+                        resultSet.getInt("state"),
+                        resultSet.getObject("rfmSetting") == null ? null : resultSet.getInt("rfmSetting")
+                        );
             }
             return null;
         }
