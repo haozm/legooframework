@@ -34,8 +34,6 @@
         <property name="dataSource" ref="saleRecordDataSource"/>
     </bean>
     <bean id="saleRecordEntityAction" class="com.legooframework.model.salesrecords.entity.SaleRecordEntityAction"
-          parent="saleRecordAbsEntityAction">
-        <property name="executorService" ref="sales-record-executor"/>
-    </bean>
+          parent="saleRecordAbsEntityAction" />
     <bean id="saleRecordService" class="com.legooframework.model.salesrecords.service.SaleRecordService"/>
 </beans>
