@@ -2,7 +2,7 @@
     <tstamp>
         <format property="build.current.time" pattern="yyyyMMdd_HHmmss"/>
     </tstamp>
-    <property name="jdk.home" value="C:/Java/jdk1.8.0_181"/>
+    <property name="jdk.home" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home"/>
     <property name="spring.profiles.active" value="devp"/>
     <property name="project.name" value="webwork"/>
     <property name="project.version" value="1.0.0"/>
