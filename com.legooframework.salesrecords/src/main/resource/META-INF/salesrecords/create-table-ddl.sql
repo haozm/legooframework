@@ -32,8 +32,9 @@ UPDATE crm_salerecord
    SET change_flag= CONCAT(company_id,store_id,IFNULL(member_id,0),oldSaleRecordId,IFNULL(saleTotalAmount,0), DATE_FORMAT(createTime,'%Y-%m-%d %H:%i:%s'),status);
 
 -- ADD BY HXJ 2019-10-17
-DROP TABLE IF EXISTS ACP_EMPLOYEE_SCALE_SETTING;
-CREATE TABLE ACP_EMPLOYEE_SCALE_SETTING (
+-- setting_rules [{se=2,ce=1,ce=10},{se=2,ce=1},{se=1}]
+DROP TABLE IF EXISTS ACP_EMPLOYEE_SCALE_RULE;
+CREATE TABLE ACP_EMPLOYEE_SCALE_RULE (
     id                 BIGINT(20)       NOT NULL AUTO_INCREMENT,
     company_id         INT(11)          NOT NULL,
     store_id           INT(11)          NOT NULL DEFAULT 0,
@@ -44,4 +45,6 @@ CREATE TABLE ACP_EMPLOYEE_SCALE_SETTING (
     createTime         DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
     editor             BIGINT(20)       NULL     DEFAULT NULL,
     editTime           DATETIME         NULL     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+) DEFAULT CHARSET = utf8mb4
+    COLLATE = 'utf8mb4_general_ci'
+    ENGINE = InnoDB;
