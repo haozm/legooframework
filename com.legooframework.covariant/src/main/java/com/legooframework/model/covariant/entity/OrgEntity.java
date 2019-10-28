@@ -45,9 +45,9 @@ public class OrgEntity extends BaseEntity<Integer> implements ToReplace {
     public Map<String, Object> toParamMap(String... excludes) {
         Map<String, Object> params = Maps.newHashMap();
         if (isCompany()) {
-            params.put("orgId", getId());
-        } else {
             params.put("companyId", getId());
+        } else {
+            params.put("orgId", getId());
         }
         params.put("shortName", shortName);
         return params;

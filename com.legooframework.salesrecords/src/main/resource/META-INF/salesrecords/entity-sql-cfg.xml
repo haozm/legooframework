@@ -87,4 +87,36 @@
             ]]></body>
         </sql>
     </model>
+    <model id="EmpDividedRuleEntity">
+        <sql id="insert">
+            <body><![CDATA[
+   REPLACE INTO acp.ACP_EMPLOYEE_DIVIDED_RULE
+                (company_id, store_id, member_rule, no_member_rule,  crs_member_rule,  crs_no_member_rule, auto_run, delete_flag, tenant_id)
+         VALUES (:companyId, :storeId, :memberRule,  :noMemberRule, :crossMemberRule, :crossNoMemberRule,  :autoRun,           0, :companyId )
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+   REPLACE INTO acp.ACP_EMPLOYEE_DIVIDED_RULE
+                (company_id, store_id, member_rule, no_member_rule, crs_member_rule, crs_no_member_rule, auto_run, delete_flag, tenant_id)
+         VALUES (?, ?, ?,  ?, ?, ?, ?, 0, ? )
+            ]]></body>
+        </sql>
+        <sql id="deleteByCompany">
+            <body><![CDATA[
+   DELETE FROM acp.ACP_EMPLOYEE_DIVIDED_RULE WHERE company_id = :companyId  AND store_id != 0
+            ]]></body>
+        </sql>
+        <sql id="quer4List" dynamic="true">
+            <body><![CDATA[
+    SELECT id, company_id, store_id, member_rule, no_member_rule, crs_member_rule, crs_no_member_rule, auto_run, delete_flag, tenant_id, creator, createTime, editor, editTime
+      FROM acp.ACP_EMPLOYEE_DIVIDED_RULE
+ <#if (sql=="loadAllByCompany")>
+      WHERE company_id = :companyId
+ <#else>
+      WHERE company_id = -1
+ </#if>
+            ]]></body>
+        </sql>
+    </model>
 </sqls>

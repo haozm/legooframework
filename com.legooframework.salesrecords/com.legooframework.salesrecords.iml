@@ -11,7 +11,7 @@
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="com.legooframework.core" />
-    <orderEntry type="library" name="extlib" level="application" />
     <orderEntry type="module" module-name="com.legooframework.covariant" />
+    <orderEntry type="library" name="extlib" level="project" />
   </component>
 </module>

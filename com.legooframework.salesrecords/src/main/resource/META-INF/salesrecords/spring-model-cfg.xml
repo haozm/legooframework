@@ -24,6 +24,13 @@
             </util:list>
         </property>
     </bean>
+    <bean id="saleCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
+        <property name="caffeineSpecs">
+            <util:map key-type="java.lang.String" value-type="java.lang.String">
+                <entry key="saleCache" value="initialCapacity=32,maximumSize=1024,expireAfterAccess=30m"/>
+            </util:map>
+        </property>
+    </bean>
     <bean id="salesRecordsJdbcQuerySupport" class="com.legooframework.model.core.jdbc.JdbcQuerySupport">
         <property name="statementFactory" ref="salesRecordsQueryFactory"/>
         <property name="dataSource" ref="saleRecordDataSource"/>
@@ -32,8 +39,13 @@
           abstract="true">
         <property name="statementFactory" ref="salesRecordsStatementFactory"/>
         <property name="dataSource" ref="saleRecordDataSource"/>
+        <property name="cacheManager" ref="saleCacheManager"/>
     </bean>
     <bean id="saleRecordEntityAction" class="com.legooframework.model.salesrecords.entity.SaleRecordEntityAction"
-          parent="saleRecordAbsEntityAction" />
+          parent="saleRecordAbsEntityAction"/>
+    <bean id="saleEmpDividedRuleAction" class="com.legooframework.model.salesrecords.entity.EmpDividedRuleEntityAction"
+          parent="saleRecordAbsEntityAction"/>
+    <bean id="saleEmployeeAllotAction" class="com.legooframework.model.salesrecords.entity.EmployeeAllotEntityAction"
+          parent="saleRecordAbsEntityAction"/>
     <bean id="saleRecordService" class="com.legooframework.model.salesrecords.service.SaleRecordService"/>
 </beans>
