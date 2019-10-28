@@ -54,7 +54,7 @@ CREATE TABLE ACP_EMPLOYEE_ALLOT_RULE (
   COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
 
-CREATE UNIQUE INDEX ACP_EMPLOYEE_ALLOT_RULE_company_id_IDX USING BTREE ON acp.ACP_EMPLOYEE_DIVIDED_RULE (company_id,store_id);
+CREATE UNIQUE INDEX ACP_EMPLOYEE_ALLOT_RULE_company_id_IDX USING BTREE ON acp.ACP_EMPLOYEE_ALLOT_RULE (company_id,store_id);
 
 -- ADD BY HXJ
 -- sale_type 1,2,3,4      allot_type:1 总账  0 明细张
@@ -64,12 +64,12 @@ CREATE TABLE ACP_EMPLOYEE_ALLOT_RESULT (
     company_id         INT(11)          NOT NULL,
     store_id           INT(11)          NOT NULL DEFAULT 0,
     sale_type          TINYINT UNSIGNED NOT NULL ,
-    member_id          TINYINT UNSIGNED NOT NULL DEFAULT 0,
     sale_id            INT(11)          NOT NULL,
+    member_id          TINYINT UNSIGNED NOT NULL DEFAULT 0,
     error_tag          TINYINT UNSIGNED NOT NULL DEFAULT 0,
     allot_type         TINYINT UNSIGNED NOT NULL,
     allot_rule         VARCHAR(512)     DEFAULT NULL,
-    employee_id        INT(11)          NOT NULL,
+    employee_id        INT(11)          NOT NULL DEFAULT 0,
     card_amount        NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
     sale_amount        NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
     allot_msg          VARCHAR(512)     NULL,
