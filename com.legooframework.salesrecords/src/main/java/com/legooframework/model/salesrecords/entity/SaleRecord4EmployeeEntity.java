@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,6 +46,10 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
         } catch (SQLException e) {
             throw new RuntimeException("还原对象 EmployeeAllotEntity 发生异常", e);
         }
+    }
+
+    Optional<Integer> getMemberId() {
+        return Optional.ofNullable(memberId == 0 ? null : memberId);
     }
 
     boolean isNoCross() {

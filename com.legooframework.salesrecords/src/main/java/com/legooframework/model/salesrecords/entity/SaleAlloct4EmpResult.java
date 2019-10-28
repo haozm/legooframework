@@ -14,7 +14,7 @@ public class SaleAlloct4EmpResult {
     private final SaleRecord4EmployeeEntity employeeAllot;
     private List<SaleAlloctRuleEntity.Rule> rules;
     private int type; // 1 2 3 4
-    private final List<Temp> results = Lists.newArrayList();
+    private final List<Result> results = Lists.newArrayList();
     private boolean error;
     private String message;
 
@@ -59,7 +59,7 @@ public class SaleAlloct4EmpResult {
         Integer employeeId = this.employeeAllot.getSrvEmpId();
         Optional<SaleAlloctRuleEntity.Rule> rule_opt = rules.stream().filter(SaleAlloctRuleEntity.Rule::isSvrEmp).findFirst();
         Preconditions.checkState(rule_opt.isPresent(), "数据异常....,不存在对应的导购分配规则");
-        this.results.add(new Temp(rule_opt.get(), employeeId, employeeAllot));
+        this.results.add(new Result(rule_opt.get(), employeeId, employeeAllot));
     }
 
     // 销售导购
@@ -68,7 +68,7 @@ public class SaleAlloct4EmpResult {
         List<SaleAlloctRuleEntity.Rule> sub_rules = rules.stream().filter(x -> !x.isSvrEmp()).collect(Collectors.toList());
         int index = 0;
         for (Integer empId : employeeAllot.getSaleEmpIds()) {
-            this.results.add(new Temp(sub_rules.get(index), empId, employeeAllot));
+            this.results.add(new Result(sub_rules.get(index), empId, employeeAllot));
             index++;
         }
     }
@@ -85,14 +85,14 @@ public class SaleAlloct4EmpResult {
                 .toString();
     }
 
-    static class Temp {
+    static class Result {
         private final Integer empId;
         private final double careAmount;
         private final double saleAmount;
         private final SaleAlloctRuleEntity.Rule rule;
 
 
-        Temp(SaleAlloctRuleEntity.Rule rule, Integer empId, SaleRecord4EmployeeEntity allot) {
+        Result(SaleAlloctRuleEntity.Rule rule, Integer empId, SaleRecord4EmployeeEntity allot) {
             this.rule = rule;
             this.empId = empId;
             this.careAmount = this.rule.allocation(allot.getTotalCardPrice());

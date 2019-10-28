@@ -57,17 +57,17 @@ CREATE TABLE ACP_EMPLOYEE_ALLOT_RULE (
 CREATE UNIQUE INDEX ACP_EMPLOYEE_ALLOT_RULE_company_id_IDX USING BTREE ON acp.ACP_EMPLOYEE_ALLOT_RULE (company_id,store_id);
 
 -- ADD BY HXJ
--- sale_type 1,2,3,4      allot_type:1 总账  0 明细张
+-- sale_type 1,2,3,4      is_detail:0 总账  1 明细张
 DROP TABLE IF EXISTS ACP_EMPLOYEE_ALLOT_RESULT;
 CREATE TABLE ACP_EMPLOYEE_ALLOT_RESULT (
     id                 BIGINT(20)       NOT NULL AUTO_INCREMENT,
     company_id         INT(11)          NOT NULL,
     store_id           INT(11)          NOT NULL DEFAULT 0,
-    sale_type          TINYINT UNSIGNED NOT NULL ,
     sale_id            INT(11)          NOT NULL,
+    order_type         TINYINT UNSIGNED NOT NULL,
     member_id          TINYINT UNSIGNED NOT NULL DEFAULT 0,
     error_tag          TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    allot_type         TINYINT UNSIGNED NOT NULL,
+    is_detail          TINYINT UNSIGNED NOT NULL DEFAULT 0,
     allot_rule         VARCHAR(512)     DEFAULT NULL,
     employee_id        INT(11)          NOT NULL DEFAULT 0,
     card_amount        NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
