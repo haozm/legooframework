@@ -33,8 +33,8 @@ UPDATE crm_salerecord
 
 -- ADD BY HXJ 2019-10-17 Divided into
 -- setting_rules [{se=2,ce=1,ce=10},{se=2,ce=1},{se=1}]
-DROP TABLE IF EXISTS ACP_EMPLOYEE_DIVIDED_RULE;
-CREATE TABLE ACP_EMPLOYEE_DIVIDED_RULE (
+DROP TABLE IF EXISTS ACP_EMPLOYEE_ALLOT_RULE;
+CREATE TABLE ACP_EMPLOYEE_ALLOT_RULE (
     id                 BIGINT(20)       NOT NULL AUTO_INCREMENT,
     company_id         INT(11)          NOT NULL,
     store_id           INT(11)          NOT NULL DEFAULT 0,
@@ -54,4 +54,32 @@ CREATE TABLE ACP_EMPLOYEE_DIVIDED_RULE (
   COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
 
-CREATE UNIQUE INDEX ACP_EMPLOYEE_DIVIDED_RULE_company_id_IDX USING BTREE ON acp.ACP_EMPLOYEE_DIVIDED_RULE (company_id,store_id);
+CREATE UNIQUE INDEX ACP_EMPLOYEE_ALLOT_RULE_company_id_IDX USING BTREE ON acp.ACP_EMPLOYEE_DIVIDED_RULE (company_id,store_id);
+
+-- ADD BY HXJ
+-- sale_type 1,2,3,4      allot_type:1 总账  0 明细张
+DROP TABLE IF EXISTS ACP_EMPLOYEE_ALLOT_RESULT;
+CREATE TABLE ACP_EMPLOYEE_ALLOT_RESULT (
+    id                 BIGINT(20)       NOT NULL AUTO_INCREMENT,
+    company_id         INT(11)          NOT NULL,
+    store_id           INT(11)          NOT NULL DEFAULT 0,
+    sale_type          TINYINT UNSIGNED NOT NULL ,
+    member_id          TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    sale_id            INT(11)          NOT NULL,
+    error_tag          TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    allot_type         TINYINT UNSIGNED NOT NULL,
+    allot_rule         VARCHAR(512)     DEFAULT NULL,
+    employee_id        INT(11)          NOT NULL,
+    card_amount        NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
+    sale_amount        NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
+    allot_msg          VARCHAR(512)     NULL,
+    delete_flag        TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    tenant_id          BIGINT(20)       NULL     DEFAULT NULL,
+    creator            BIGINT(20)       NOT NULL DEFAULT -1,
+    createTime         DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    editor             BIGINT(20)       NULL     DEFAULT NULL,
+    editTime           DATETIME         NULL     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) DEFAULT CHARSET = utf8mb4
+  COLLATE = 'utf8mb4_general_ci'
+  ENGINE = InnoDB;

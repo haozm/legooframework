@@ -9,8 +9,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
 
-import static org.junit.Assert.*;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-acp-cfg.xml",
@@ -18,7 +16,7 @@ import static org.junit.Assert.*;
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/covariant/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/salesrecords/spring-model-cfg.xml"}
 )
-public class EmployeeAllotEntityActionTest {
+public class SaleRecord4EmployeeEntityActionTest {
 
     @Before
     public void setUp() throws Exception {
@@ -27,9 +25,9 @@ public class EmployeeAllotEntityActionTest {
 
     @Test
     public void findById() {
-        employeeAllotEntityAction.findById(4219793).ifPresent(x -> System.out.println(x));
+        saleRecord4EmployeeEntityAction.findById(4219793).ifPresent(x -> System.out.println(x));
     }
 
     @Autowired
-    private EmployeeAllotEntityAction employeeAllotEntityAction;
+    private SaleRecord4EmployeeEntityAction saleRecord4EmployeeEntityAction;
 }

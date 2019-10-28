@@ -43,9 +43,9 @@
     </bean>
     <bean id="saleRecordEntityAction" class="com.legooframework.model.salesrecords.entity.SaleRecordEntityAction"
           parent="saleRecordAbsEntityAction"/>
-    <bean id="saleEmpDividedRuleAction" class="com.legooframework.model.salesrecords.entity.EmpDividedRuleEntityAction"
+    <bean id="saleEmpDividedRuleAction" class="com.legooframework.model.salesrecords.entity.SaleAlloctRuleEntityAction"
           parent="saleRecordAbsEntityAction"/>
-    <bean id="saleEmployeeAllotAction" class="com.legooframework.model.salesrecords.entity.EmployeeAllotEntityAction"
+    <bean id="saleEmployeeAllotAction" class="com.legooframework.model.salesrecords.entity.SaleRecord4EmployeeEntityAction"
           parent="saleRecordAbsEntityAction"/>
     <bean id="saleRecordService" class="com.legooframework.model.salesrecords.service.SaleRecordService"/>
 </beans>

@@ -11,34 +11,34 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Optional;
 
-public class EmployeeAllotEntityAction extends BaseEntityAction<EmployeeAllotEntity> {
+public class SaleRecord4EmployeeEntityAction extends BaseEntityAction<SaleRecord4EmployeeEntity> {
 
-    private static final Logger logger = LoggerFactory.getLogger(EmployeeAllotEntityAction.class);
+    private static final Logger logger = LoggerFactory.getLogger(SaleRecord4EmployeeEntityAction.class);
 
-    public EmployeeAllotEntityAction() {
+    public SaleRecord4EmployeeEntityAction() {
         super(null);
     }
 
     @Override
-    public Optional<EmployeeAllotEntity> findById(Object id) {
+    public Optional<SaleRecord4EmployeeEntity> findById(Object id) {
         Map<String, Object> params = Maps.newHashMap();
         params.put("id", id);
         params.put("sql", "findById");
-        Optional<EmployeeAllotEntity> optional = super.queryForEntity("quer4list", params, getRowMapper());
+        Optional<SaleRecord4EmployeeEntity> optional = super.queryForEntity("quer4list", params, getRowMapper());
         if (logger.isDebugEnabled())
             logger.debug(String.format("findById(%d) return %s", id, optional.orElse(null)));
         return optional;
     }
 
     @Override
-    protected RowMapper<EmployeeAllotEntity> getRowMapper() {
+    protected RowMapper<SaleRecord4EmployeeEntity> getRowMapper() {
         return new RowMapperImpl();
     }
 
-    private static class RowMapperImpl implements RowMapper<EmployeeAllotEntity> {
+    private static class RowMapperImpl implements RowMapper<SaleRecord4EmployeeEntity> {
         @Override
-        public EmployeeAllotEntity mapRow(ResultSet resultSet, int i) throws SQLException {
-            return new EmployeeAllotEntity(resultSet.getInt("id"), resultSet);
+        public SaleRecord4EmployeeEntity mapRow(ResultSet resultSet, int i) throws SQLException {
+            return new SaleRecord4EmployeeEntity(resultSet.getInt("id"), resultSet);
         }
     }
 }

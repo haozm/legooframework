@@ -138,6 +138,12 @@ public class MvcController extends BaseController {
             Map<String, Object> params = user.toViewMap();
             if (StringUtils.equals("birthdaycare", useType)) {
                 params.put("useType", 4);
+                params.put("sql", "birthdaycare");
+            } else if (StringUtils.equals("ninetycare", useType)) {
+                params.put("useType", 1);
+                params.put("sql", "ninetycare");
+                if (requestBody.containsKey("subUseType"))
+                    params.put("subUseType", MapUtils.getIntValue(requestBody, "subUseType", 1));
             } else {
                 params.put("useType", -1);
             }

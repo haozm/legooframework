@@ -264,9 +264,13 @@
        WHERE cmt.status = 1
     <#if (sql="findAllBirthCareTemplet4Store")>
          AND cmt.useType = :useType
-         AND cmt.company_id = :companyId
-         AND (cmt.store_id = :storeId OR cmt.store_id IS NULL)
+         AND ((cmt.company_id = :companyId AND cmt.store_id IS NULL) OR cmt.store_id = :storeId )
     ORDER BY cmt.defaultState, cmt.store_id
+    <#elseif (sql=="findAllNinetyCareTemplet4Store")>
+         AND cmt.useType = :useType
+         AND ((cmt.company_id = :companyId AND cmt.store_id IS NULL) OR cmt.store_id = :storeId )
+   <#if subUseType??> AND IFNULL(cmt.subUseType,0) = :subUseType </#if>
+    ORDER BY cmt.defaultState, cmt.store_id, cmt.subUseType
     <#elseif (sql=="findById")>
          AND cmt.id = :msgTemplateId
     </#if>

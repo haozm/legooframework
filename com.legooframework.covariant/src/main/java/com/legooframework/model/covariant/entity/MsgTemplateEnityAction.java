@@ -2,7 +2,6 @@ package com.legooframework.model.covariant.entity;
 
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
@@ -42,6 +41,14 @@ public class MsgTemplateEnityAction extends BaseEntityAction<MsgTemplateEnity> {
         Map<String, Object> params = store.toParamMap();
         params.put("useType", MsgTemplateEnity.USETYPE_BIRTHDAYCARE);
         params.put("sql", "findAllBirthCareTemplet4Store");
+        return findByParams(params);
+    }
+
+    public Optional<List<MsgTemplateEnity>> findAllNinetyCareTemplet4Store(StoEntity store, Integer subUseType) {
+        Map<String, Object> params = store.toParamMap();
+        params.put("useType", MsgTemplateEnity.USETYPE_NINETYPLAN);
+        if (null != subUseType) params.put("subUseType", subUseType);
+        params.put("sql", "findAllNinetyCareTemplet4Store");
         return findByParams(params);
     }
 

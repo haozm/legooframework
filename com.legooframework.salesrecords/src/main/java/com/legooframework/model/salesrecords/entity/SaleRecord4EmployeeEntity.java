@@ -14,14 +14,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class EmployeeAllotEntity extends BaseEntity<Integer> {
+public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
 
     private final List<SaleSubRecord> saleRecords;
     private final Integer saleStoreId, companyId, memberStoreId, memberId;
     private final Integer srvEmpId;
     private final List<Integer> saleEmpIds;
+    private final double totalCardPrice, totalSalePrice;
 
-    EmployeeAllotEntity(Integer id, ResultSet resultSet) throws RuntimeException {
+    SaleRecord4EmployeeEntity(Integer id, ResultSet resultSet) throws RuntimeException {
         super(id);
         try {
             this.companyId = resultSet.getInt("company_id");
@@ -39,6 +40,8 @@ public class EmployeeAllotEntity extends BaseEntity<Integer> {
             String[] values = StringUtils.split(records_str, '$');
             List<SaleSubRecord> _records = Stream.of(values).map(SaleSubRecord::new).collect(Collectors.toList());
             this.saleRecords = ImmutableList.copyOf(_records);
+            this.totalCardPrice = this.saleRecords.stream().mapToDouble(x -> x.cardPrice).sum();
+            this.totalSalePrice = this.saleRecords.stream().mapToDouble(x -> x.salePrice).sum();
         } catch (SQLException e) {
             throw new RuntimeException("还原对象 EmployeeAllotEntity 发生异常", e);
         }
@@ -73,11 +76,11 @@ public class EmployeeAllotEntity extends BaseEntity<Integer> {
     }
 
     double getTotalCardPrice() {
-        return this.saleRecords.stream().mapToDouble(x -> x.cardPrice).sum();
+        return totalCardPrice;
     }
 
     double getTotalSalePrice() {
-        return this.saleRecords.stream().mapToDouble(x -> x.salePrice).sum();
+        return totalCardPrice;
     }
 
     @Override

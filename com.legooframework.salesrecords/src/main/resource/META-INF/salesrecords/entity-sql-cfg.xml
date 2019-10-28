@@ -87,30 +87,30 @@
             ]]></body>
         </sql>
     </model>
-    <model id="EmpDividedRuleEntity">
+    <model id="SaleAlloctRuleEntity">
         <sql id="insert">
             <body><![CDATA[
-   REPLACE INTO acp.ACP_EMPLOYEE_DIVIDED_RULE
+   REPLACE INTO acp.ACP_EMPLOYEE_ALLOT_RULE
                 (company_id, store_id, member_rule, no_member_rule,  crs_member_rule,  crs_no_member_rule, auto_run, delete_flag, tenant_id)
          VALUES (:companyId, :storeId, :memberRule,  :noMemberRule, :crossMemberRule, :crossNoMemberRule,  :autoRun,           0, :companyId )
             ]]></body>
         </sql>
         <sql id="batchInsert">
             <body><![CDATA[
-   REPLACE INTO acp.ACP_EMPLOYEE_DIVIDED_RULE
+   REPLACE INTO acp.ACP_EMPLOYEE_ALLOT_RULE
                 (company_id, store_id, member_rule, no_member_rule, crs_member_rule, crs_no_member_rule, auto_run, delete_flag, tenant_id)
          VALUES (?, ?, ?,  ?, ?, ?, ?, 0, ? )
             ]]></body>
         </sql>
         <sql id="deleteByCompany">
             <body><![CDATA[
-   DELETE FROM acp.ACP_EMPLOYEE_DIVIDED_RULE WHERE company_id = :companyId  AND store_id != 0
+   DELETE FROM acp.ACP_EMPLOYEE_ALLOT_RULE WHERE company_id = :companyId  AND store_id != 0
             ]]></body>
         </sql>
         <sql id="quer4List" dynamic="true">
             <body><![CDATA[
     SELECT id, company_id, store_id, member_rule, no_member_rule, crs_member_rule, crs_no_member_rule, auto_run, delete_flag, tenant_id, creator, createTime, editor, editTime
-      FROM acp.ACP_EMPLOYEE_DIVIDED_RULE
+      FROM acp.ACP_EMPLOYEE_ALLOT_RULE
  <#if (sql=="loadAllByCompany")>
       WHERE company_id = :companyId
  <#else>
@@ -119,7 +119,7 @@
             ]]></body>
         </sql>
     </model>
-    <model id="EmployeeAllotEntity">
+    <model id="SaleRecord4EmployeeEntity">
         <sql id="quer4list" dynamic="true">
             <body><![CDATA[
     SELECT allot.sale_record_id AS 'id',

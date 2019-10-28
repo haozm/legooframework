@@ -24,36 +24,36 @@ import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSetter {
+public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSetter {
 
-    private final static Comparator<List<Divided>> COMPARABLE_LIST = Comparator.comparingInt(List::size);
-    private final static Comparator<Divided> COMPARABLE_SINGLE =
-            Comparator.comparingInt((ToIntFunction<Divided>) val -> val.type == 1 ? 0 : 1).thenComparingDouble(o -> o.value);
+    private final static Comparator<List<Rule>> COMPARABLE_LIST = Comparator.comparingInt(List::size);
+    private final static Comparator<Rule> COMPARABLE_SINGLE =
+            Comparator.comparingInt((ToIntFunction<Rule>) val -> val.type == 1 ? 0 : 1).thenComparingDouble(o -> o.value);
 
     private Integer companyId, storeId;
     private boolean autoRun;
-    private List<List<Divided>> memberRule;
-    private List<List<Divided>> noMemberRule;
-    private List<List<Divided>> crossMemberRule;
-    private List<List<Divided>> crossNoMemberRule;
+    private List<List<Rule>> memberRule;
+    private List<List<Rule>> noMemberRule;
+    private List<List<Rule>> crossMemberRule;
+    private List<List<Rule>> crossNoMemberRule;
 
     boolean isCompany() {
         return this.storeId == 0;
     }
 
-    List<List<Divided>> getMemberRule() {
+    List<List<Rule>> getMemberRule() {
         return memberRule;
     }
 
-    List<List<Divided>> getNoMemberRule() {
+    List<List<Rule>> getNoMemberRule() {
         return noMemberRule;
     }
 
-    List<List<Divided>> getCrossMemberRule() {
+    List<List<Rule>> getCrossMemberRule() {
         return crossMemberRule;
     }
 
-    List<List<Divided>> getCrossNoMemberRule() {
+    List<List<Rule>> getCrossNoMemberRule() {
         return crossNoMemberRule;
     }
 
@@ -73,9 +73,9 @@ public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSe
         return this.companyId.equals(store.getCompanyId()) && this.storeId.equals(store.getId());
     }
 
-    private EmpDividedRuleEntity(Integer companyId, Integer storeId, boolean autoRun, List<List<Divided>> memberRule,
-                                 List<List<Divided>> noMemberRule, List<List<Divided>> crossMemberRule,
-                                 List<List<Divided>> crossNoMemberRule) {
+    private SaleAlloctRuleEntity(Integer companyId, Integer storeId, boolean autoRun, List<List<Rule>> memberRule,
+                                 List<List<Rule>> noMemberRule, List<List<Rule>> crossMemberRule,
+                                 List<List<Rule>> crossNoMemberRule) {
         super(0);
         this.companyId = companyId;
         this.storeId = storeId;
@@ -90,7 +90,7 @@ public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSe
         sortAndCheck(this.crossNoMemberRule, 2);
     }
 
-    EmpDividedRuleEntity(Integer id, ResultSet resultSet) throws RuntimeException {
+    SaleAlloctRuleEntity(Integer id, ResultSet resultSet) throws RuntimeException {
         super(id);
         try {
             this.companyId = resultSet.getInt("company_id");
@@ -126,21 +126,21 @@ public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSe
         ps.setObject(8, this.companyId);
     }
 
-    private void sortAndCheck(List<List<Divided>> rules, int type) {
+    private void sortAndCheck(List<List<Rule>> rules, int type) {
         if (CollectionUtils.isNotEmpty(rules)) {
             if (type == 1) {
                 rules.forEach($it -> $it.forEach(x -> {
-                    List<Divided> _list = $it.stream().filter(dd -> dd.type == 1).collect(Collectors.toList());
+                    List<Rule> _list = $it.stream().filter(dd -> dd.type == 1).collect(Collectors.toList());
                     Preconditions.checkArgument(CollectionUtils.isNotEmpty(_list) && _list.size() == 1, "非法的规则设定，存在多个服务导购....");
                 }));
             } else if (type == 2) {
                 rules.forEach($it -> $it.forEach(x -> {
-                    List<Divided> list = $it.stream().filter(dd -> dd.type == 1).collect(Collectors.toList());
+                    List<Rule> list = $it.stream().filter(dd -> dd.type == 1).collect(Collectors.toList());
                     Preconditions.checkArgument(CollectionUtils.isEmpty(list), "非法的规则设定，非会员单存在服务导购设定....");
                 }));
             }
             rules.forEach($it -> {
-                double sum = $it.stream().mapToDouble(Divided::getValue).sum();
+                double sum = $it.stream().mapToDouble(Rule::getValue).sum();
                 Preconditions.checkArgument(sum <= 1.0, "分成比例规则总和需小于等于100%");
             });
             rules.forEach(x -> x.sort(COMPARABLE_SINGLE));
@@ -148,15 +148,15 @@ public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSe
         }
     }
 
-    static EmpDividedRuleEntity createByStore(StoEntity store, boolean autoRun, List<List<Divided>> memberRule,
-                                              List<List<Divided>> noMemberRule) {
-        return new EmpDividedRuleEntity(store.getCompanyId(), store.getId(), autoRun, memberRule, noMemberRule, null, null);
+    static SaleAlloctRuleEntity createByStore(StoEntity store, boolean autoRun, List<List<Rule>> memberRule,
+                                              List<List<Rule>> noMemberRule) {
+        return new SaleAlloctRuleEntity(store.getCompanyId(), store.getId(), autoRun, memberRule, noMemberRule, null, null);
     }
 
-    static EmpDividedRuleEntity createByCompany(OrgEntity company, boolean autoRun, List<List<Divided>> memberRule,
-                                                List<List<Divided>> noMemberRule, List<List<Divided>> crossMemberRule,
-                                                List<List<Divided>> crossNoMemberRule) {
-        return new EmpDividedRuleEntity(company.getId(), null, autoRun, memberRule, noMemberRule,
+    static SaleAlloctRuleEntity createByCompany(OrgEntity company, boolean autoRun, List<List<Rule>> memberRule,
+                                                List<List<Rule>> noMemberRule, List<List<Rule>> crossMemberRule,
+                                                List<List<Rule>> crossNoMemberRule) {
+        return new SaleAlloctRuleEntity(company.getId(), null, autoRun, memberRule, noMemberRule,
                 crossMemberRule, crossNoMemberRule);
     }
 
@@ -175,17 +175,17 @@ public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSe
         return params;
     }
 
-    private String toString4Save(List<List<Divided>> rules, Joiner sub_joiner, Joiner joiner) {
+    private String toString4Save(List<List<Rule>> rules, Joiner sub_joiner, Joiner joiner) {
         if (CollectionUtils.isEmpty(rules)) return null;
         return joiner.join(rules.stream().map(sub_joiner::join).collect(Collectors.toList()));
     }
 
-    private List<List<Divided>> reduction4Save(String values) {
+    private List<List<Rule>> reduction4Save(String values) {
         if (Strings.isNullOrEmpty(values)) return null;
-        List<List<Divided>> res_list = Lists.newArrayList();
+        List<List<Rule>> res_list = Lists.newArrayList();
         String[] sub_list = StringUtils.split(values, '$');
         for (String $it : sub_list) {
-            res_list.add(Stream.of(StringUtils.split($it, '#')).map(Divided::new).collect(Collectors.toList()));
+            res_list.add(Stream.of(StringUtils.split($it, '#')).map(Rule::new).collect(Collectors.toList()));
         }
         return res_list;
     }
@@ -203,17 +203,17 @@ public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSe
                 .toString();
     }
 
-    public static class Divided {
+    public static class Rule {
         private final int type; //  1  服务导购  2 销售导购
         private final double value; // 分成比例
 
-        private Divided(int type, double value) {
+        private Rule(int type, double value) {
             this.type = type;
             Preconditions.checkArgument(value > 0.0 && value <= 1, "分成比例非法 value=%s", value);
             this.value = value;
         }
 
-        Divided(String str) {
+        Rule(String str) {
             String[] args = StringUtils.split(str, ',');
             this.type = Integer.parseInt(args[0]);
             this.value = Double.parseDouble(args[1]);
@@ -235,19 +235,19 @@ public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSe
             return value;
         }
 
-        static Divided serviceEmp(double divided) {
-            return new Divided(1, divided);
+        static Rule serviceEmp(double divided) {
+            return new Rule(1, divided);
         }
 
-        static Divided saledEmp(double divided) {
-            return new Divided(2, divided);
+        static Rule saledEmp(double divided) {
+            return new Rule(2, divided);
         }
 
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-            Divided that = (Divided) o;
+            Rule that = (Rule) o;
             return type == that.type &&
                     Double.compare(that.value, value) == 0;
         }
