@@ -24,14 +24,14 @@ public class EmployeeAllotEntity extends BaseEntity<Integer> {
     EmployeeAllotEntity(Integer id, ResultSet resultSet) throws RuntimeException {
         super(id);
         try {
-            this.companyId = resultSet.getInt("companyId");
+            this.companyId = resultSet.getInt("company_id");
             this.saleStoreId = resultSet.getInt("saleStoreId");
             this.memberStoreId = resultSet.getInt("memberStoreId");
-            this.memberId = ResultSetUtil.getOptObject(resultSet, "memberId", Integer.class).orElse(0);
-            this.srvEmpId = ResultSetUtil.getOptObject(resultSet, "service_emp_id", Integer.class).orElse(0);
+            this.memberId = ResultSetUtil.getOptObject(resultSet, "member_id", Long.class).orElse(0L).intValue();
+            this.srvEmpId = ResultSetUtil.getOptObject(resultSet, "service_emp_id", Long.class).orElse(0L).intValue();
             List<Integer> _saleEmpIds = Lists.newArrayList();
             for (int i = 1; i < 4; i++) {
-                Integer empId = ResultSetUtil.getOptObject(resultSet, String.format("old_emp0%d_id", i), Integer.class).orElse(0);
+                int empId = ResultSetUtil.getOptObject(resultSet, String.format("old_emp0%d_id", i), Long.class).orElse(0L).intValue();
                 if (empId != 0) _saleEmpIds.add(empId);
             }
             this.saleEmpIds = CollectionUtils.isEmpty(_saleEmpIds) ? null : ImmutableList.copyOf(_saleEmpIds);
@@ -44,16 +44,40 @@ public class EmployeeAllotEntity extends BaseEntity<Integer> {
         }
     }
 
-    boolean isCross() {
+    boolean isNoCross() {
         return saleStoreId.equals(memberStoreId);
+    }
+
+    boolean isCross() {
+        return !saleStoreId.equals(memberStoreId);
     }
 
     boolean hasSvrEmp() {
         return this.srvEmpId != 0;
     }
 
+    Integer getSrvEmpId() {
+        return srvEmpId;
+    }
+
+    int getEmpCount() {
+        return (hasSvrEmp() ? 1 : 0) + (CollectionUtils.isNotEmpty(this.saleEmpIds) ? this.saleEmpIds.size() : 0);
+    }
+
+    List<Integer> getSaleEmpIds() {
+        return saleEmpIds;
+    }
+
     boolean hasSaleEmps() {
         return CollectionUtils.isNotEmpty(this.saleEmpIds);
+    }
+
+    double getTotalCardPrice() {
+        return this.saleRecords.stream().mapToDouble(x -> x.cardPrice).sum();
+    }
+
+    double getTotalSalePrice() {
+        return this.saleRecords.stream().mapToDouble(x -> x.salePrice).sum();
     }
 
     @Override

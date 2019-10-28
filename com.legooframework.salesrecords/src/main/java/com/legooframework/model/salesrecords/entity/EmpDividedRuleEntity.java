@@ -1,6 +1,9 @@
 package com.legooframework.model.salesrecords.entity;
 
-import com.google.common.base.*;
+import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
@@ -9,7 +12,6 @@ import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.LocalDate;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,6 +39,22 @@ public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSe
 
     boolean isCompany() {
         return this.storeId == 0;
+    }
+
+    List<List<Divided>> getMemberRule() {
+        return memberRule;
+    }
+
+    List<List<Divided>> getNoMemberRule() {
+        return noMemberRule;
+    }
+
+    List<List<Divided>> getCrossMemberRule() {
+        return crossMemberRule;
+    }
+
+    List<List<Divided>> getCrossNoMemberRule() {
+        return crossNoMemberRule;
     }
 
     boolean isCompany(OrgEntity company) {
@@ -91,6 +109,7 @@ public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSe
             throw new RuntimeException("还原对象 EmpDividedRuleEntity 发生异常", e);
         }
     }
+
 
     @Override
     public void setValues(PreparedStatement ps) throws SQLException {
@@ -200,6 +219,17 @@ public class EmpDividedRuleEntity extends BaseEntity<Integer> implements BatchSe
             this.value = Double.parseDouble(args[1]);
         }
 
+        int getType() {
+            return type;
+        }
+
+        boolean isSvrEmp() {
+            return this.type == 1;
+        }
+
+        double allocation(double total) {
+            return total * value;
+        }
 
         double getValue() {
             return value;

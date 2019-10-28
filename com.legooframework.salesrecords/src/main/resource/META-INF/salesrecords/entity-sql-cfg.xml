@@ -119,4 +119,22 @@
             ]]></body>
         </sql>
     </model>
+    <model id="EmployeeAllotEntity">
+        <sql id="quer4list" dynamic="true">
+            <body><![CDATA[
+    SELECT allot.sale_record_id AS 'id',
+           GROUP_CONCAT(CONCAT_WS('^^',sub.id,IFNULL(sub.cardPrice,0.0),IFNULL(sub.salePrice,0.0)) ORDER BY sub.id SEPARATOR '$') AS 'records',
+           allot.member_id, allot.service_emp_id, allot.old_emp01_id,allot.old_emp02_id,allot.old_emp03_id,
+           allot.store_id AS 'saleStoreId', csm.store_id AS 'memberStoreId', allot.company_id
+      FROM acp.sales_employee_allot AS allot
+INNER JOIN acp.crm_salesubrecord sub ON sub.saleRecord_id = allot.sale_record_id
+ LEFT JOIN acp.crm_store_member csm ON allot.member_id = csm.member_id AND allot.member_id IS NOT NULL
+ <#if (sql="findById")>
+     WHERE allot.sale_record_id = :id
+ </#if>
+  GROUP BY allot.sale_record_id
+  ORDER BY allot.sale_record_id
+            ]]></body>
+        </sql>
+    </model>
 </sqls>
