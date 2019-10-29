@@ -888,6 +888,7 @@
     <target name="webapp-new">
         <filter token="spring.profiles.active" value="${spring.profiles.active}"/>
         <filter token="vfs.root" value="${vfs.root}"/>
+        <filter token="app.name" value="${app.name}"/>
         <echo message="[-----------------  Start develop webapp   -----------------]"/>
         <mkdir dir="${wepapp.root}/${app.name}/WEB-INF/classes"/>
         <delete dir="${wepapp.root}/${app.name}/WEB-INF" includes="**/*.xml"/>
@@ -897,6 +898,10 @@
         <copy encoding="UTF-8" overwrite="true"
               file="com.legooframework.${app.name}/src/web/jdbc.properties"
               tofile="${wepapp.root}/${app.name}/WEB-INF/classes/jdbc.properties"
+              filtering="true"/>
+        <copy encoding="UTF-8" overwrite="true"
+              file="com.legooframework.${app.name}/src/resource/META-INF/${app.name}/log4j2.xml"
+              tofile="${wepapp.root}/${app.name}/WEB-INF/classes/log4j2.xml"
               filtering="true"/>
         <echo message="[-----------------  End develop ${wepapp.root}/${app.name} devp -----------------]"/>
     </target>
