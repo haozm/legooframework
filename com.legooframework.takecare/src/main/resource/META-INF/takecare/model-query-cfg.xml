@@ -129,6 +129,7 @@ LEFT JOIN acp.crm_shoppingguide_member T2 ON T2.member_id = T.id
                  WHEN trl.send_channel = 9 THEN '取消跟进'
                  ELSE '其他渠道' END ) AS 'sendChannelName',
            task.taskNode, task.id AS 'taskId',
+           DATE_FORMAT(trl.createTime, GET_FORMAT(DATETIME,'iso')) AS 'createTimeFmt',
            DATE_FORMAT(task.startTime, GET_FORMAT(DATETIME,'iso')) AS 'taskStartTime',
            DATE_FORMAT(task.doneTime, GET_FORMAT(DATETIME,'iso')) AS 'taskDoneTime',
            DATE_FORMAT(task.overdueTime, GET_FORMAT(DATETIME,'iso')) AS 'taskOverdueTime'
