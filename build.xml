@@ -900,7 +900,7 @@
               tofile="${wepapp.root}/${app.name}/WEB-INF/classes/jdbc.properties"
               filtering="true"/>
         <copy encoding="UTF-8" overwrite="true"
-              file="com.legooframework.${app.name}/src/resource/META-INF/${app.name}/log4j2.xml"
+              file="com.legooframework.${app.name}/src/web/log4j2.xml"
               tofile="${wepapp.root}/${app.name}/WEB-INF/classes/log4j2.xml"
               filtering="true"/>
         <echo message="[-----------------  End develop ${wepapp.root}/${app.name} devp -----------------]"/>
