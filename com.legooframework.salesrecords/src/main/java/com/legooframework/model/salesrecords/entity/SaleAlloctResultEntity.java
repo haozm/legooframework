@@ -40,6 +40,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         this.saleDateTime = saleRecord4Employee.getSaleDateTime();
         this.employeeId = 0;
         this.error = error;
+        this.allotMsg = errMsg;
     }
 
     SaleAlloctResultEntity(SaleAlloctResultEntity totalRec, Integer employeeId, SaleAlloctRuleEntity.Rule rule, double cardAmount,
