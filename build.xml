@@ -61,7 +61,7 @@
         <path id="salesrecords_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-covariant-*.jar"/>
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar"/>
         </path>
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.salesrecords"/>
@@ -78,15 +78,17 @@
         </antcall>
         <delete dir="${webapp.root}/salesrecords/WEB-INF/lib" includes="*.jar"/>
         <copy todir="${webapp.root}/salesrecords/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-covariant-*.jar,legoo-salesrecords-*.jar"/>
+            <fileset dir="${lib.dir}"
+                     includes="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar,legoo-salesrecords-*.jar"/>
         </copy>
         <delete dir="${webapp.root}/salesrecords/WEB-INF/classes" includes="**/*.xml"/>
         <copy todir="${webapp.root}/salesrecords/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}" includes="**/core/**,**/covariant/**,**/salesrecords/**"/>
+            <fileset dir="${config.dir}" includes="**/core/**,**/batchsupport/**,**/covariant/**,**/salesrecords/**"/>
         </copy>
         <delete dir="${webapp.root}/salesrecords/resources" includes="**/*.*"/>
         <copy todir="${webapp.root}/salesrecords/resources" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${resources.dir}" includes="**/core/**,**/covariant/**,**/salesrecords/**"/>
+            <fileset dir="${resources.dir}"
+                     includes="**/core/**,**/batchsupport/**,**/covariant/**,**/salesrecords/**"/>
         </copy>
     </target>
     <target name="install-web-regiscenter">
