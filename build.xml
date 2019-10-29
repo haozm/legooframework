@@ -890,7 +890,7 @@
         <filter token="vfs.root" value="${vfs.root}"/>
         <filter token="app.name" value="${app.name}"/>
         <echo message="[-----------------  Start develop webapp   -----------------]"/>
-        <delete dir="${wepapp.root}/${app.name}/WEB-INF"/>
+        <delete dir="${wepapp.root}/${app.name}/WEB-INF" includes="**/*.xml"/>
         <mkdir dir="${wepapp.root}/${app.name}/WEB-INF/classes"/>
         <copy todir="${wepapp.root}/${app.name}/WEB-INF" encoding="UTF-8" overwrite="true" filtering="true">
             <fileset dir="com.legooframework.${app.name}/src/web" includes="*.xml" excludes="log4j2.xml"/>
