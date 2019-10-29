@@ -287,7 +287,7 @@
         <copy todir="${webapp.root}/takecare/WEB-INF/lib" encoding="UTF-8">
             <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-covariant-*.jar,legoo-takecare-*.jar"/>
         </copy>
-        <delete dir="${webapp.root}/takecare/WEB-INF/classes" includes="**/*.xml"/>
+        <delete dir="${webapp.root}/takecare/WEB-INF/classes/META-INF" includes="**/*.xml"/>
         <copy todir="${webapp.root}/takecare/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="**/core/**,**/covariant/**,**/takecare/**"/>
         </copy>
