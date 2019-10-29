@@ -80,9 +80,12 @@ public class MvcController extends BaseController {
             ts = startTx(request, null);
             getBean(TakeCareService.class, request).batchBirthdayCare(memberIds, channels, followUpContent, arg_imgs, user);
             commitTx(request, ts);
+        } catch (Exception e) {
+            if (ts != null) rollbackTx(request, ts);
+            logger.error("executecare () has error", e);
+            throw e;
         } finally {
             LoginContextHolder.clear();
-            if (ts != null) rollbackTx(request, ts);
         }
         return JsonMessageBuilder.OK().toMessage();
     }
@@ -170,7 +173,6 @@ public class MvcController extends BaseController {
             logger.debug(String.format("executeNinetyCare(requestBody=%s,url=%s) start", requestBody, request.getRequestURL().toString()));
         LoginContextHolder.setAnonymousCtx();
         String cache_key = null;
-
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
             String taskIds_str = MapUtils.getString(requestBody, "taskIds", null);
