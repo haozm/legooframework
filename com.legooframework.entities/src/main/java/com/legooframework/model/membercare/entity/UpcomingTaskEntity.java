@@ -8,11 +8,9 @@ import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.crmadapter.entity.CrmMemberEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
-import com.legooframework.model.salesrecords.entity.SaleRecordEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 
 import java.math.BigDecimal;
@@ -145,14 +143,14 @@ public class UpcomingTaskEntity extends BaseEntity<Integer> implements BatchSett
         return saleTotalAmount;
     }
 
-    static UpcomingTaskEntity createJobInstance(TaskCareRuleEntity taskCareRule, CrmMemberEntity member,
-                                                CrmStoreEntity store, SaleRecordEntity saleRecord) {
-        List<Integer> mergeInfo = Lists.newArrayList();
-        mergeInfo.add(saleRecord.getId());
-        Integer serviceUserId = saleRecord.getShoppingguideId().orElse(null);
-        return new UpcomingTaskEntity(taskCareRule, member, store,
-                saleRecord.getId(), mergeInfo, saleRecord.getSaleDate(), serviceUserId, true, saleRecord.getSaleTotalAmount());
-    }
+//    static UpcomingTaskEntity createJobInstance(TaskCareRuleEntity taskCareRule, CrmMemberEntity member,
+//                                                CrmStoreEntity store, SaleRecordEntity saleRecord) {
+//        List<Integer> mergeInfo = Lists.newArrayList();
+//        mergeInfo.add(saleRecord.getId());
+//        Integer serviceUserId = saleRecord.getShoppingguideId().orElse(null);
+//        return new UpcomingTaskEntity(taskCareRule, member, store,
+//                saleRecord.getId(), mergeInfo, saleRecord.getSaleDate(), serviceUserId, true, saleRecord.getSaleTotalAmount());
+//    }
 
     boolean isOwner(CrmStoreEntity store, CrmMemberEntity member) {
         return this.memberId.equals(member.getId()) && this.storeId.equals(store.getId());

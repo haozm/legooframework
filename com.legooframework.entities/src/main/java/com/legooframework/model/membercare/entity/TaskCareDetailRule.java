@@ -5,19 +5,13 @@ import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Range;
-import com.legooframework.model.salesrecords.entity.SaleRecordEntity;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.StringJoiner;
-import java.util.concurrent.TimeUnit;
-
-import static java.lang.String.format;
 
 public class TaskCareDetailRule {
 
@@ -143,41 +137,41 @@ public class TaskCareDetailRule {
         return startTime;
     }
 
-    Optional<UpcomingTaskDetailEntity> createDetail(TaskCareRuleEntity rule, UpcomingTaskEntity task, SaleRecordEntity saleRecord) {
-        if (!isEnabled()) return Optional.empty();
-        UpcomingTaskDetailEntity _task_detail = null;
-        LocalDateTime _start = null;
-        LocalDateTime sale_date = saleRecord.getSaleDate();
-        if (delay.getTimeUnit().equals(TimeUnit.HOURS)) {
-            // _start = saleRecord.getSaleDate().plusHours((int) delay.getDuration());
-            _start = saleRecord.getSaleDate();
-        } else if (delay.getTimeUnit().equals(TimeUnit.DAYS)) {
-            _start = sale_date.plusDays((int) delay.getDuration());
-            _start = new LocalDateTime(_start.getYear(), _start.getMonthOfYear(), _start.getDayOfMonth(), 0, 0, 1);
-        } else {
-            throw new IllegalArgumentException(format("尚未支持该参数解析 %s", delay.getTimeUnit()));
-        }
-        LocalDateTime _expired = null;
-        if (this.expired.getDuration() == 0L) {
-            _expired = new LocalDateTime(_start.getYear(), _start.getMonthOfYear(), _start.getDayOfMonth(), 23, 59, 59);
-        } else if (expired.getTimeUnit().equals(TimeUnit.DAYS)) {
-            _expired = _start.plusDays((int) this.expired.getDuration());
-            _expired = new LocalDateTime(_expired.getYear(), _expired.getMonthOfYear(), _expired.getDayOfMonth(),
-                    23, 59, 59);
-        } else {
-            throw new IllegalArgumentException(format("尚未支持该参数解析 %s", _expired));
-        }
-
-        if (consumption == null) {
-            _task_detail = new UpcomingTaskDetailEntity(task, _start, _expired, rule, this);
-        } else {
-            long saleTotalAmount = saleRecord.getSaleTotalAmount().longValue();
-            if (saleTotalAmount < consumption.lowerEndpoint() || consumption.contains(saleTotalAmount)) {
-                _task_detail = new UpcomingTaskDetailEntity(task, _start, _expired, rule, this);
-            }
-        }
-        return Optional.ofNullable(_task_detail);
-    }
+//    Optional<UpcomingTaskDetailEntity> createDetail(TaskCareRuleEntity rule, UpcomingTaskEntity task, SaleRecordEntity saleRecord) {
+//        if (!isEnabled()) return Optional.empty();
+//        UpcomingTaskDetailEntity _task_detail = null;
+//        LocalDateTime _start = null;
+//        LocalDateTime sale_date = saleRecord.getSaleDate();
+//        if (delay.getTimeUnit().equals(TimeUnit.HOURS)) {
+//            // _start = saleRecord.getSaleDate().plusHours((int) delay.getDuration());
+//            _start = saleRecord.getSaleDate();
+//        } else if (delay.getTimeUnit().equals(TimeUnit.DAYS)) {
+//            _start = sale_date.plusDays((int) delay.getDuration());
+//            _start = new LocalDateTime(_start.getYear(), _start.getMonthOfYear(), _start.getDayOfMonth(), 0, 0, 1);
+//        } else {
+//            throw new IllegalArgumentException(format("尚未支持该参数解析 %s", delay.getTimeUnit()));
+//        }
+//        LocalDateTime _expired = null;
+//        if (this.expired.getDuration() == 0L) {
+//            _expired = new LocalDateTime(_start.getYear(), _start.getMonthOfYear(), _start.getDayOfMonth(), 23, 59, 59);
+//        } else if (expired.getTimeUnit().equals(TimeUnit.DAYS)) {
+//            _expired = _start.plusDays((int) this.expired.getDuration());
+//            _expired = new LocalDateTime(_expired.getYear(), _expired.getMonthOfYear(), _expired.getDayOfMonth(),
+//                    23, 59, 59);
+//        } else {
+//            throw new IllegalArgumentException(format("尚未支持该参数解析 %s", _expired));
+//        }
+//
+//        if (consumption == null) {
+//            _task_detail = new UpcomingTaskDetailEntity(task, _start, _expired, rule, this);
+//        } else {
+//            long saleTotalAmount = saleRecord.getSaleTotalAmount().longValue();
+//            if (saleTotalAmount < consumption.lowerEndpoint() || consumption.contains(saleTotalAmount)) {
+//                _task_detail = new UpcomingTaskDetailEntity(task, _start, _expired, rule, this);
+//            }
+//        }
+//        return Optional.ofNullable(_task_detail);
+//    }
 
     @Override
     public String toString() {
