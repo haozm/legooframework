@@ -33,13 +33,17 @@ public class SaleAlloctRule4Store {
     }
 
     // 业务分配
-    SaleAlloct4EmpResult allocation(SaleRecord4EmployeeEntity employeeAllot) {
-        SaleAlloct4EmpResult saleAlloct4EmpResult = new SaleAlloct4EmpResult(employeeAllot);
+    public void allocation(SaleAlloct4EmpResult saleAlloct4EmpResult) {
+        SaleRecord4EmployeeEntity employeeAllot = saleAlloct4EmpResult.getEmployeeAllot();
+        int emp_count = employeeAllot.getEmpCount();
+        if (emp_count == 0) {
+            saleAlloct4EmpResult.setException(new RuntimeException("该销售单无导购数据信息....."));
+            return;
+        }
         try {
             if (employeeAllot.isNoCross() && employeeAllot.hasSvrEmp()) {
                 if (CollectionUtils.isEmpty(this.memberRule))
                     throw new AllocatEmpException(String.format("门店%d未配置分配规则....", store.getId()));
-                int emp_count = employeeAllot.getEmpCount();
                 Optional<List<SaleAlloctRuleEntity.Rule>> rulesOpt = this.memberRule.stream()
                         .filter(x -> x.size() == emp_count).findFirst();
                 if (!rulesOpt.isPresent())
@@ -48,7 +52,6 @@ public class SaleAlloctRule4Store {
             } else if (employeeAllot.isNoCross() && !employeeAllot.hasSvrEmp()) {
                 if (CollectionUtils.isEmpty(this.noMemberRule))
                     throw new AllocatEmpException(String.format("门店%d未配置分配规则....", store.getId()));
-                int emp_count = employeeAllot.getEmpCount();
                 Optional<List<SaleAlloctRuleEntity.Rule>> rulesOpt = this.noMemberRule.stream()
                         .filter(x -> x.size() == emp_count).findFirst();
                 if (!rulesOpt.isPresent())
@@ -57,7 +60,6 @@ public class SaleAlloctRule4Store {
             } else if (employeeAllot.isCross() && employeeAllot.hasSvrEmp()) {
                 if (CollectionUtils.isEmpty(this.crossMemberRule))
                     throw new AllocatEmpException(String.format("门店%d未配置分配规则....", store.getId()));
-                int emp_count = employeeAllot.getEmpCount();
                 Optional<List<SaleAlloctRuleEntity.Rule>> rulesOpt = this.crossMemberRule.stream()
                         .filter(x -> x.size() == emp_count).findFirst();
                 if (!rulesOpt.isPresent())
@@ -66,11 +68,10 @@ public class SaleAlloctRule4Store {
             } else if (employeeAllot.isCross() && !employeeAllot.hasSvrEmp()) {
                 if (CollectionUtils.isEmpty(this.crossNoMemberRule))
                     throw new AllocatEmpException(String.format("门店%d未配置分配规则....", store.getId()));
-                int emp_count = employeeAllot.getEmpCount();
-                Optional<List<SaleAlloctRuleEntity.Rule>> rulesOpt = this.memberRule.stream()
+                Optional<List<SaleAlloctRuleEntity.Rule>> rulesOpt = this.crossNoMemberRule.stream()
                         .filter(x -> x.size() == emp_count).findFirst();
                 if (!rulesOpt.isPresent())
-                    throw new AllocatEmpException(String.format("门店%d缺少数量为%d的跨店会员分配规则", store.getId(), emp_count));
+                    throw new AllocatEmpException(String.format("门店%d缺少数量为%d的跨店非会员分配规则", store.getId(), emp_count));
                 saleAlloct4EmpResult.crsNoMmberDevide(rulesOpt.get());
             } else {
                 throw new RuntimeException("未知异常...");
@@ -79,7 +80,6 @@ public class SaleAlloctRule4Store {
             logger.error(String.format("分配销售单%s发生异常", employeeAllot), e);
             saleAlloct4EmpResult.setException(e);
         }
-        return saleAlloct4EmpResult;
     }
 
 

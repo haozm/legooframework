@@ -48,19 +48,37 @@ public class SaleAlloctRuleEntityAction extends BaseEntityAction<SaleAlloctRuleE
         evict(company.getId());
     }
 
+    public Optional<List<Integer>> loadEnabledCompanies() {
+        String query_sql = "SELECT DISTINCT company_id FROM acp.ACP_EMPLOYEE_ALLOT_RULE WHERE delete_flag= 0 AND store_id = 0";
+        return super.queryForList(query_sql, null, Integer.class);
+    }
+
     /**
      * 加载指定store  的规则
      *
      * @param store
      * @return
      */
-    Optional<SaleAlloctRule4Store> findByStore(StoEntity store) {
+    public Optional<SaleAlloctRule4Store> findByStore4Use(StoEntity store) {
         Optional<List<SaleAlloctRuleEntity>> all_list = loadAllByCompany(store.getCompanyId());
         if (!all_list.isPresent()) return Optional.empty();
         Optional<SaleAlloctRuleEntity> store_rule = all_list.get().stream().filter(x -> x.isStore(store)).findFirst();
         Optional<SaleAlloctRuleEntity> com_rule = all_list.get().stream().filter(x -> x.isOnlyCompany(store)).findFirst();
         Preconditions.checkState(com_rule.isPresent(), "数据异常，缺失公司分成规则");
         return Optional.of(new SaleAlloctRule4Store(store, store_rule.orElse(null), com_rule.get()));
+    }
+
+    public Optional<SaleAlloctRuleEntity> findByCompany(OrgEntity company) {
+        Optional<List<SaleAlloctRuleEntity>> all_list = loadAllByCompany(company.getId());
+        return all_list.flatMap(sa -> sa.stream().filter(x -> x.isOnlyCompany(company)).findFirst());
+    }
+
+    public Optional<SaleAlloctRuleEntity> findByStore(StoEntity store) {
+        Optional<List<SaleAlloctRuleEntity>> all_list = loadAllByCompany(store.getCompanyId());
+        if (!all_list.isPresent()) return Optional.empty();
+        Optional<SaleAlloctRuleEntity> store_rule = all_list.get().stream().filter(x -> x.isStore(store)).findFirst();
+        if (store_rule.isPresent()) return store_rule;
+        return all_list.get().stream().filter(x -> x.isOnlyCompany(store)).findFirst();
     }
 
     @SuppressWarnings("unchecked")

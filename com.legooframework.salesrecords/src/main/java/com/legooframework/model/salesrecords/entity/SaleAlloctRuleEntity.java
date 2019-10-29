@@ -69,6 +69,10 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
         return isCompany() && this.companyId.equals(store.getCompanyId());
     }
 
+    boolean isOnlyCompany(OrgEntity company) {
+        return isCompany() && (this.storeId == null || this.storeId == 0);
+    }
+
     boolean isStore(StoEntity store) {
         return this.companyId.equals(store.getCompanyId()) && this.storeId.equals(store.getId());
     }
@@ -96,14 +100,14 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
             this.companyId = resultSet.getInt("company_id");
             this.storeId = resultSet.getInt("store_id");
             this.autoRun = resultSet.getInt("auto_run") == 1;
-            this.memberRule = reduction4Save(resultSet.getString("member_rule"));
-            this.noMemberRule = reduction4Save(resultSet.getString("no_member_rule"));
+            this.memberRule = decodingRule(resultSet.getString("member_rule"));
+            this.noMemberRule = decodingRule(resultSet.getString("no_member_rule"));
             if (this.storeId != 0) {
                 this.crossMemberRule = null;
                 this.crossNoMemberRule = null;
             } else {
-                this.crossMemberRule = reduction4Save(resultSet.getString("crs_member_rule"));
-                this.crossNoMemberRule = reduction4Save(resultSet.getString("crs_no_member_rule"));
+                this.crossMemberRule = decodingRule(resultSet.getString("crs_member_rule"));
+                this.crossNoMemberRule = decodingRule(resultSet.getString("crs_no_member_rule"));
             }
         } catch (SQLException e) {
             throw new RuntimeException("还原对象 EmpDividedRuleEntity 发生异常", e);
@@ -118,10 +122,10 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
         Joiner sub_joiner = Joiner.on('#');
         ps.setObject(1, companyId);
         ps.setObject(2, storeId == null ? 0 : storeId);
-        ps.setObject(3, toString4Save(memberRule, sub_joiner, joiner));
-        ps.setObject(4, toString4Save(noMemberRule, sub_joiner, joiner));
-        ps.setObject(5, toString4Save(crossMemberRule, sub_joiner, joiner));
-        ps.setObject(6, toString4Save(crossNoMemberRule, sub_joiner, joiner));
+        ps.setObject(3, encodingRule(memberRule, sub_joiner, joiner));
+        ps.setObject(4, encodingRule(noMemberRule, sub_joiner, joiner));
+        ps.setObject(5, encodingRule(crossMemberRule, sub_joiner, joiner));
+        ps.setObject(6, encodingRule(crossNoMemberRule, sub_joiner, joiner));
         ps.setObject(7, this.autoRun ? 1 : 0);
         ps.setObject(8, this.companyId);
     }
@@ -168,19 +172,35 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
         params.put("autoRun", autoRun ? 1 : 0);
         Joiner joiner = Joiner.on('$');
         Joiner sub_joiner = Joiner.on('#');
-        params.put("memberRule", toString4Save(memberRule, sub_joiner, joiner));
-        params.put("noMemberRule", toString4Save(noMemberRule, sub_joiner, joiner));
-        params.put("crossMemberRule", toString4Save(crossMemberRule, sub_joiner, joiner));
-        params.put("crossNoMemberRule", toString4Save(crossNoMemberRule, sub_joiner, joiner));
+        params.put("memberRule", encodingRule(memberRule, sub_joiner, joiner));
+        params.put("noMemberRule", encodingRule(noMemberRule, sub_joiner, joiner));
+        params.put("crossMemberRule", encodingRule(crossMemberRule, sub_joiner, joiner));
+        params.put("crossNoMemberRule", encodingRule(crossNoMemberRule, sub_joiner, joiner));
         return params;
     }
 
-    private String toString4Save(List<List<Rule>> rules, Joiner sub_joiner, Joiner joiner) {
+    private String encodingRule(List<List<Rule>> rules, Joiner sub_joiner, Joiner joiner) {
         if (CollectionUtils.isEmpty(rules)) return null;
         return joiner.join(rules.stream().map(sub_joiner::join).collect(Collectors.toList()));
     }
 
-    private List<List<Rule>> reduction4Save(String values) {
+    @Override
+    public Map<String, Object> toViewMap() {
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("companyId", companyId);
+        params.put("storeId", storeId);
+        params.put("isCompany", isCompany());
+        params.put("autoRun", autoRun);
+        Joiner joiner = Joiner.on('$');
+        Joiner sub_joiner = Joiner.on('#');
+        params.put("memberRule", encodingRule(memberRule, sub_joiner, joiner));
+        params.put("noMemberRule", encodingRule(noMemberRule, sub_joiner, joiner));
+        params.put("crossMemberRule", encodingRule(crossMemberRule, sub_joiner, joiner));
+        params.put("crossNoMemberRule", encodingRule(crossNoMemberRule, sub_joiner, joiner));
+        return params;
+    }
+
+    public static List<List<Rule>> decodingRule(String values) {
         if (Strings.isNullOrEmpty(values)) return null;
         List<List<Rule>> res_list = Lists.newArrayList();
         String[] sub_list = StringUtils.split(values, '$');

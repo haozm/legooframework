@@ -85,16 +85,6 @@ public class CareNinetyEntity extends BaseEntity<Integer> {
         return optional.get();
     }
 
-    Optional<CareNinetyTaskEntity> nextTask(CareNinetyTaskEntity task) {
-        return this.details.stream()
-                .filter(x -> x.getTaskNode() > task.getTaskNode()).filter(CareNinetyTaskEntity::isProcessing).findFirst();
-    }
-
-    boolean contains(Integer taskId) {
-        if (CollectionUtils.isEmpty(this.taskIds)) return false;
-        return this.taskIds.contains(taskId);
-    }
-
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)

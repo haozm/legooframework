@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:batch="http://www.springframework.org/schema/batch"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+                           http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd">
     <bean id="salesRecordsBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/salesrecords/legoo-model-cfg.xml"/>
     </bean>
@@ -43,9 +45,42 @@
     </bean>
     <bean id="saleRecordEntityAction" class="com.legooframework.model.salesrecords.entity.SaleRecordEntityAction"
           parent="saleRecordAbsEntityAction"/>
-    <bean id="saleEmpDividedRuleAction" class="com.legooframework.model.salesrecords.entity.SaleAlloctRuleEntityAction"
+    <bean id="saleAlloctRuleAction" class="com.legooframework.model.salesrecords.entity.SaleAlloctRuleEntityAction"
           parent="saleRecordAbsEntityAction"/>
-    <bean id="saleEmployeeAllotAction" class="com.legooframework.model.salesrecords.entity.SaleRecord4EmployeeEntityAction"
+    <bean id="saleEmployeeAllotAction"
+          class="com.legooframework.model.salesrecords.entity.SaleRecord4EmployeeEntityAction"
+          parent="saleRecordAbsEntityAction"/>
+    <bean id="saleAlloctResultAction" class="com.legooframework.model.salesrecords.entity.SaleAlloctResultEntityAction"
           parent="saleRecordAbsEntityAction"/>
     <bean id="saleRecordService" class="com.legooframework.model.salesrecords.service.SaleRecordService"/>
+
+    <!-- ======================================= Job steps ======================================= -->
+    <bean id="saleRecord4EmployeeItemReader"
+          class="com.legooframework.model.salesrecords.entity.SaleRecord4EmployeeItemReader"
+          scope="step">
+        <property name="sqlStatementFactory" ref="salesRecordsStatementFactory"/>
+        <property name="dataSource" ref="saleRecordDataSource"/>
+        <property name="params" value="#{jobParameters['job.params']}"/>
+    </bean>
+    <bean id="saleRecord4EmployeeItemProcessor"
+          class="com.legooframework.model.salesrecords.entity.SaleRecord4EmployeeItemProcessor">
+        <constructor-arg name="saleAlloctRuleAction" ref="saleAlloctRuleAction"/>
+        <constructor-arg name="storeAction" ref="covariantStoEntityAction"/>
+    </bean>
+    <bean id="saleRecord4EmployeeItemWriter"
+          class="com.legooframework.model.salesrecords.entity.SaleRecord4EmployeeItemWriter">
+        <constructor-arg name="saleAlloctResultAction" ref="saleAlloctResultAction"/>
+        <constructor-arg name="saleRecord4EmployeeAction" ref="saleEmployeeAllotAction"/>
+    </bean>
+
+    <batch:job id="saleRecord4EmployeeJob" job-repository="jobRepository">
+        <batch:step id="step01">
+            <batch:tasklet start-limit="1">
+                <batch:chunk reader="saleRecord4EmployeeItemReader"
+                             processor="saleRecord4EmployeeItemProcessor"
+                             writer="saleRecord4EmployeeItemWriter"
+                             commit-interval="500"/>
+            </batch:tasklet>
+        </batch:step>
+    </batch:job>
 </beans>

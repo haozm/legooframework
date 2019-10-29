@@ -57,22 +57,25 @@ CREATE TABLE ACP_EMPLOYEE_ALLOT_RULE (
 CREATE UNIQUE INDEX ACP_EMPLOYEE_ALLOT_RULE_company_id_IDX USING BTREE ON acp.ACP_EMPLOYEE_ALLOT_RULE (company_id,store_id);
 
 -- ADD BY HXJ
--- sale_type 1,2,3,4      is_detail:0 总账  1 明细张
+-- order_type 1,2,3,4      is_detail:0 总账  1 明细张
 DROP TABLE IF EXISTS ACP_EMPLOYEE_ALLOT_RESULT;
 CREATE TABLE ACP_EMPLOYEE_ALLOT_RESULT (
     id                 BIGINT(20)       NOT NULL AUTO_INCREMENT,
     company_id         INT(11)          NOT NULL,
     store_id           INT(11)          NOT NULL DEFAULT 0,
-    sale_id            INT(11)          NOT NULL,
+    sale_record_id     INT(11)          NOT NULL,
+    employee_id        INT(11)          NOT NULL DEFAULT 0,
+    employee_type      TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    employee_count     TINYINT UNSIGNED NOT NULL DEFAULT 0,
     order_type         TINYINT UNSIGNED NOT NULL,
-    member_id          TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    member_id          INT(11) NOT NULL DEFAULT 0,
     error_tag          TINYINT UNSIGNED NOT NULL DEFAULT 0,
     is_detail          TINYINT UNSIGNED NOT NULL DEFAULT 0,
     allot_rule         VARCHAR(512)     DEFAULT NULL,
-    employee_id        INT(11)          NOT NULL DEFAULT 0,
     card_amount        NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
     sale_amount        NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
     allot_msg          VARCHAR(512)     NULL,
+    sale_date          DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
     delete_flag        TINYINT UNSIGNED NOT NULL DEFAULT 0,
     tenant_id          BIGINT(20)       NULL     DEFAULT NULL,
     creator            BIGINT(20)       NOT NULL DEFAULT -1,

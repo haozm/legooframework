@@ -7,16 +7,18 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.JdbcQuerySupport;
 import com.legooframework.model.core.jdbc.PagingResult;
+import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
-import com.legooframework.model.covariant.entity.MemberEntity;
-import com.legooframework.model.covariant.entity.MemberEntityAction;
-import com.legooframework.model.covariant.entity.UserAuthorEntity;
-import com.legooframework.model.covariant.entity.UserAuthorEntityAction;
+import com.legooframework.model.covariant.entity.*;
+import com.legooframework.model.salesrecords.entity.SaleAlloctRuleEntity;
+import com.legooframework.model.salesrecords.entity.SaleAlloctRuleEntityAction;
 import com.legooframework.model.salesrecords.entity.SaleRecordEntity;
 import com.legooframework.model.salesrecords.entity.SaleRecordEntityAction;
+import com.legooframework.model.salesrecords.service.SaleRecordService;
 import org.apache.commons.collections4.MapUtils;
+import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +35,95 @@ import java.util.Optional;
 public class MvcController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(MvcController.class);
+
+    @RequestMapping(value = "/alloct/store/byperiod.json")
+    public JsonMessage alloctByStoreWithPeriod(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("alloctByStoreWithPeriod(requestBody=%s)", requestBody));
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            Integer storeId = null;
+            if (user.isStoreManager()) {
+                storeId = user.getStoreId().orElse(0);
+            } else if (user.isAdmin()) {
+                storeId = MapUtils.getInteger(requestBody, "storeId", null);
+            }
+            StoEntity store = getBean(StoEntityAction.class, request).loadById(storeId);
+            String start_str = MapUtils.getString(requestBody, "start", null);
+            String end_str = MapUtils.getString(requestBody, "end", null);
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(start_str), "参数 start 不可为空值");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(end_str), "参数 end 不可为空值");
+            LocalDate start = DateTimeUtils.parseYYYYMMDD(start_str);
+            LocalDate end = DateTimeUtils.parseYYYYMMDD(end_str);
+            getBean(SaleRecordService.class, request).alloctSaleOrder4StoreWithPeriod(store, start, end);
+            return JsonMessageBuilder.OK().toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
+    @RequestMapping(value = "/alloct/reader/rule.json")
+    public JsonMessage readerAlloctRule(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("readerAlloctRule(requestBody=%s)", requestBody));
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            Integer storeId = null;
+            if (user.isStoreManager()) {
+                storeId = user.getStoreId().orElse(0);
+            } else if (user.isAdmin()) {
+                storeId = MapUtils.getInteger(requestBody, "storeId", null);
+            }
+            Optional<SaleAlloctRuleEntity> optional;
+            if (storeId == null) {
+                OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
+                optional = getBean(SaleAlloctRuleEntityAction.class, request).findByCompany(company);
+            } else {
+                StoEntity store = getBean(StoEntityAction.class, request).loadById(storeId);
+                optional = getBean(SaleAlloctRuleEntityAction.class, request).findByStore(store);
+            }
+            Map<String, Object> params = optional.map(SaleAlloctRuleEntity::toViewMap).orElse(null);
+            return JsonMessageBuilder.OK().withPayload(params).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
+    @RequestMapping(value = "/alloct/write/rule.json")
+    public JsonMessage writeAlloctRule(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("writeAlloctRule(requestBody=%s)", requestBody));
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            int auto_run = MapUtils.getIntValue(requestBody, "auto_run", 1);
+            int coverted = MapUtils.getIntValue(requestBody, "coverted", 0);
+            String member_rule_str = MapUtils.getString(requestBody, "member_rule", null);
+            String no_member_rule_str = MapUtils.getString(requestBody, "no_member_rule", null);
+            String crs_member_rule_str = MapUtils.getString(requestBody, "crs_member_rule", null);
+            String crs_no_member_rule_str = MapUtils.getString(requestBody, "crs_no_member_rule", null);
+            List<List<SaleAlloctRuleEntity.Rule>> memberRule = SaleAlloctRuleEntity.decodingRule(member_rule_str);
+            List<List<SaleAlloctRuleEntity.Rule>> noMemberRule = SaleAlloctRuleEntity.decodingRule(no_member_rule_str);
+            List<List<SaleAlloctRuleEntity.Rule>> crossMemberRule = SaleAlloctRuleEntity.decodingRule(crs_member_rule_str);
+            List<List<SaleAlloctRuleEntity.Rule>> crossNoMemberRule = SaleAlloctRuleEntity.decodingRule(crs_no_member_rule_str);
+            if (user.isStoreManager()) {
+                StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
+                getBean(SaleAlloctRuleEntityAction.class, request).insert4Store(store, auto_run == 1, memberRule, noMemberRule);
+            } else if (user.isAdmin()) {
+                OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
+                getBean(SaleAlloctRuleEntityAction.class, request).insert4Company(company, auto_run == 1, memberRule, noMemberRule,
+                        crossMemberRule, crossNoMemberRule, coverted == 1);
+            } else {
+                throw new RuntimeException("当前账户无权限操作....");
+            }
+            return JsonMessageBuilder.OK().toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
 
     @RequestMapping(value = "/90days/bymember.json")
     public JsonMessage loadSaleRecodesByMember(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {

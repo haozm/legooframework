@@ -7,6 +7,7 @@ import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.LocalDateTime;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -22,6 +23,7 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
     private final Integer srvEmpId;
     private final List<Integer> saleEmpIds;
     private final double totalCardPrice, totalSalePrice;
+    private final LocalDateTime saleDateTime;
 
     SaleRecord4EmployeeEntity(Integer id, ResultSet resultSet) throws RuntimeException {
         super(id);
@@ -33,8 +35,8 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
             this.srvEmpId = ResultSetUtil.getOptObject(resultSet, "service_emp_id", Long.class).orElse(0L).intValue();
             List<Integer> _saleEmpIds = Lists.newArrayList();
             for (int i = 1; i < 4; i++) {
-                int empId = ResultSetUtil.getOptObject(resultSet, String.format("old_emp0%d_id", i), Long.class).orElse(0L).intValue();
-                if (empId != 0) _saleEmpIds.add(empId);
+                String empId = ResultSetUtil.getOptString(resultSet, String.format("old_emp0%d_id", i), "0");
+                if (!StringUtils.equals("0", empId)) _saleEmpIds.add(Integer.parseInt(empId));
             }
             this.saleEmpIds = CollectionUtils.isEmpty(_saleEmpIds) ? null : ImmutableList.copyOf(_saleEmpIds);
             String records_str = resultSet.getString("records");
@@ -43,13 +45,22 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
             this.saleRecords = ImmutableList.copyOf(_records);
             this.totalCardPrice = this.saleRecords.stream().mapToDouble(x -> x.cardPrice).sum();
             this.totalSalePrice = this.saleRecords.stream().mapToDouble(x -> x.salePrice).sum();
+            this.saleDateTime = ResultSetUtil.getLocalDateTime(resultSet, "createTime");
         } catch (SQLException e) {
             throw new RuntimeException("还原对象 EmployeeAllotEntity 发生异常", e);
         }
     }
 
+    LocalDateTime getSaleDateTime() {
+        return saleDateTime;
+    }
+
     Optional<Integer> getMemberId() {
         return Optional.ofNullable(memberId == 0 ? null : memberId);
+    }
+
+    Integer getSaleStoreId() {
+        return saleStoreId;
     }
 
     boolean isNoCross() {
@@ -76,16 +87,12 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
         return saleEmpIds;
     }
 
-    boolean hasSaleEmps() {
-        return CollectionUtils.isNotEmpty(this.saleEmpIds);
-    }
-
     double getTotalCardPrice() {
         return totalCardPrice;
     }
 
     double getTotalSalePrice() {
-        return totalCardPrice;
+        return totalSalePrice;
     }
 
     @Override
@@ -98,6 +105,8 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
                 .add("memberId", memberId)
                 .add("srvEmpId", srvEmpId)
                 .add("saleEmpIds", saleEmpIds)
+                .add("totalCardPrice", totalCardPrice)
+                .add("totalSalePrice", totalSalePrice)
                 .add("saleRecords", saleRecords)
                 .toString();
     }
@@ -117,8 +126,8 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
         public String toString() {
             return MoreObjects.toStringHelper(this)
                     .add("id", id)
-                    .add("cardPrice", cardPrice)
-                    .add("salePrice", salePrice)
+                    .add("cp", cardPrice)
+                    .add("sp", salePrice)
                     .toString();
         }
     }

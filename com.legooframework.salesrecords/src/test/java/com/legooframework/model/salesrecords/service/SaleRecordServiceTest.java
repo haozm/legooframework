@@ -14,12 +14,14 @@ import org.springframework.util.ResourceUtils;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
-        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
+        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-acp-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/batchsupport/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/covariant/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/salesrecords/spring-model-cfg.xml"}
 )
 public class SaleRecordServiceTest {
+
     @Before
     public void setUp() throws Exception {
         LoginContextHolder.setCtx(new LoginContextTest());
@@ -29,10 +31,15 @@ public class SaleRecordServiceTest {
     public void loadMergeSaleRecords() {
         LocalDateTime start = DateTimeUtils.parseDef("2018-09-15 00:00:00");
         LocalDateTime end = DateTimeUtils.parseDef("2018-12-14 23:59:59");
-  //      saleRecordService.loadSaleRecordByStore(67, null, start.toDate(), end.toDate(), true);
+        //      saleRecordService.loadSaleRecordByStore(67, null, start.toDate(), end.toDate(), true);
 //        System.out.println(res);
     }
 
     @Autowired
     SaleRecordService saleRecordService;
+
+    @Test
+    public void saleRecord4EmployeeJob() {
+        saleRecordService.alloctSaleOrder4EmployeeJob();
+    }
 }
