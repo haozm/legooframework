@@ -3,6 +3,7 @@ package com.legooframework.model.statistical.mvc;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.JdbcQuerySupport;
 import com.legooframework.model.core.jdbc.PagingResult;
+import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
@@ -24,6 +25,15 @@ import java.util.Optional;
 public class SalesMvcController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(SalesMvcController.class);
+
+    @RequestMapping(value = "/welcome.json")
+    @ResponseBody
+    public JsonMessage welcome(HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("welcome(url=%s)", request.getRequestURI()));
+        Bundle bundle = getBean("statisticalBundle", Bundle.class, request);
+        return JsonMessageBuilder.OK().withPayload(bundle.toDesc()).toMessage();
+    }
 
     @RequestMapping(value = "/{companyId}/pages.json")
     @ResponseBody

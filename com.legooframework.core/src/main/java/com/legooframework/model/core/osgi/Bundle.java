@@ -4,6 +4,7 @@ import com.legooframework.model.core.event.LegooEvent;
 import org.springframework.integration.core.MessageSelector;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface Bundle extends MessageSelector {
@@ -17,5 +18,7 @@ public interface Bundle extends MessageSelector {
     List<DependsItem> getDepends();
 
     boolean exitsDepends();
+
+    Map<String, Object> toDesc();
 
 }

@@ -3,6 +3,7 @@ package com.legooframework.model.reactor.mvc;
 import com.google.common.base.Strings;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.cache.CaffeineCacheManager;
+import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
@@ -20,6 +21,15 @@ import javax.servlet.http.HttpServletRequest;
 public class MvcController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(MvcController.class);
+
+    @RequestMapping(value = "/welcome.json")
+    @ResponseBody
+    public JsonMessage welcome(HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("welcome(url=%s)", request.getRequestURI()));
+        Bundle bundle = getBean("reactorBundle", Bundle.class, request);
+        return JsonMessageBuilder.OK().withPayload(bundle.toDesc()).toMessage();
+    }
 
     @RequestMapping(value = "/cache/clean.json")
     @ResponseBody
