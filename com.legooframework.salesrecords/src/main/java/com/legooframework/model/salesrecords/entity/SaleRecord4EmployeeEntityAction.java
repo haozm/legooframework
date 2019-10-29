@@ -57,10 +57,11 @@ public class SaleRecord4EmployeeEntityAction extends BaseEntityAction<SaleRecord
             logger.debug(String.format("findByStoreWithPeriod(%d) return %s", store.getId(), optional.map(List::size).orElse(0)));
         return optional;
     }
-
-
+    
     public long loadUndoCountByCompany(OrgEntity company) {
-        String query_sql = "SELECT COUNT(sale_record_id) FROM acp.sales_employee_allot WHERE allot_status = 0 AND company_id = %d";
+        String query_sql = "SELECT COUNT(allot.sale_record_id) FROM acp.sales_employee_allot AS allot \n " +
+                "INNER JOIN acp.crm_salesubrecord sub ON sub.saleRecord_id = allot.sale_record_id \n" +
+                "WHERE allot.allot_status = 0 AND allot.company_id = %d";
         query_sql = String.format(query_sql, company.getId());
         return super.queryForLong(query_sql, 0L);
     }
