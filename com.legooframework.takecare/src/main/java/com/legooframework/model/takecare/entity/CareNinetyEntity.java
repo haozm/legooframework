@@ -95,47 +95,6 @@ public class CareNinetyEntity extends BaseEntity<Integer> {
         return this.taskIds.contains(taskId);
     }
 
-    Integer getPlanNodeId() {
-        return taskIndex;
-    }
-
-
-    int getPlanState() {
-        return planState;
-    }
-
-    LocalDateTime getPlanPerformTime() {
-        return planPerformTime;
-    }
-
-    void updateNextTask(CareNinetyTaskEntity nextTask) {
-        this.planState = 4;
-        this.planPerformTime = nextTask.getStartTime();
-        this.updateTime = LocalDateTime.now();
-        this.taskIndex = nextTask.getTaskNode();
-    }
-
-    boolean isCanceled() {
-        return this.planState == 5 || this.planState == 6;
-    }
-
-    boolean isProcessing() {
-        return !isFinished() && !isCanceled();
-    }
-
-    boolean isFinished() {
-        return this.planState == 2;
-    }
-
-    Optional<CareNinetyEntity> finished() {
-        if (isProcessing()) {
-            this.planState = 2;
-            this.updateTime = LocalDateTime.now();
-            return Optional.of(this);
-        }
-        return Optional.empty();
-    }
-
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
