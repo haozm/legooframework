@@ -416,7 +416,7 @@
             <reference refid="smsgateway_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="jar-wechatcircle">
+    <target name="install-wechatcircle-jar">
         <path id="wechatcircle_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
@@ -428,7 +428,7 @@
             <reference refid="wechatcircle_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="install-web-wechatcircle">
+    <target name="install-wechatcircle-web">
         <antcall target="webapp-new">
             <param name="app.name" value="wechatcircle"/>
             <param name="spring.profiles.active" value="${spring.profiles.active}"/>
@@ -440,9 +440,13 @@
             <fileset dir="${lib.dir}"
                      includes="legoo-core-*.jar,legoo-wechatcircle-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar"/>
         </copy>
-        <delete dir="${webapp.root}/wechatcircle/WEB-INF/classes" includes="**/*.xml"/>
+        <delete dir="${webapp.root}/wechatcircle/WEB-INF/classes/META-INF" includes="**/*.xml"/>
         <copy todir="${webapp.root}/wechatcircle/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="**/core/**,**/wechatcircle/**,**/entities/**,**/crmadapter/**"/>
+        </copy>
+        <delete dir="${webapp.root}/wechatcircle/resources" includes="**/*.xml"/>
+        <copy todir="${webapp.root}/wechatcircle/resources" overwrite="true" encoding="UTF-8" flatten="false">
+            <fileset dir="${resources.dir}" includes="**/core/**,**/wechatcircle/**,**/entities/**,**/crmadapter/**"/>
         </copy>
     </target>
     <target name="jar-smsresult">
