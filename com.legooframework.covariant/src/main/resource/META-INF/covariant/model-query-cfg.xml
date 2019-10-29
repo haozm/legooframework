@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sqls>
     <model id="MsgTemplateEnity">
-        <sql id="quert4EnabledList">
+        <sql id="quert4EnabledList" dynamic="true">
             <body><![CDATA[
       SELECT cmt.id, cmt.content, cmt.name, IFNULL(cmt.sortNo,0) AS 'sortNo' ,
              IFNULL(cmt.subUseType,0) AS 'subUseType',
@@ -10,19 +10,19 @@
              cmt.company_id AS 'companyId', IFNULL(cmt.store_id,0) AS 'storeId'
         FROM acp.crm_messagetemplet AS cmt
        WHERE cmt.status = 1
-       <#if (sql=="birthdaycare")>
+ <#if (sql=="birthdaycare")>
          AND cmt.useType = :useType
          AND cmt.company_id = :USER_COMPANY_ID
          AND IFNULL(cmt.templetState,1) = 1
          AND (cmt.store_id = :USER_STORE_ID OR cmt.store_id IS NULL)
     ORDER BY cmt.defaultState, cmt.store_id
-       <#elseif (sql=="ninetycare")>
+ <#elseif (sql=="ninetycare")>
          AND cmt.useType = :useType
          AND IFNULL(cmt.templetState,1) = 1
     <#if subUseType??> AND IFNULL(cmt.subUseType,0) = :subUseType </#if>
          AND ((cmt.company_id = :USER_COMPANY_ID AND cmt.store_id IS NULL ) OR cmt.store_id = :USER_STORE_ID )
     ORDER BY cmt.defaultState,cmt.store_id, cmt.subUseType
-       </#if>
+ </#if>
             ]]></body>
         </sql>
     </model>
