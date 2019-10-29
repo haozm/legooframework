@@ -56,6 +56,7 @@ public class CareNinetyEntityAction extends BaseEntityAction<CareNinetyEntity> {
         } else {
             change_task = current_task.finished();
         }
+        change_task.ifPresent(this::updateTask);
 //        if (change_task.isPresent()) {
 //            Optional<CareNinetyTaskEntity> nextTask = careNinety.get().nextTask(change_task.get());
 //            if (nextTask.isPresent()) {
@@ -81,12 +82,12 @@ public class CareNinetyEntityAction extends BaseEntityAction<CareNinetyEntity> {
 //            logger.debug(String.format("[90] 主任务更新  %s 完成", care));
 //    }
 
-//    private void updateTask(CareNinetyTaskEntity task) {
-//        String updateSql = "UPDATE acp.crm_plantask SET taskState= ?, doneTime=NOW(), remark= ? WHERE id = ?";
-//        Objects.requireNonNull(getJdbcTemplate()).update(updateSql, task.getTaskState(), task.getRemark(), task.getId());
-//        if (logger.isDebugEnabled())
-//            logger.debug(String.format("[90] 主任务 planId= %d ，更新子任务 %s", task.getPlanId(), task));
-//    }
+    private void updateTask(CareNinetyTaskEntity task) {
+        String updateSql = "UPDATE acp.crm_plantask SET taskState= ?, doneTime=NOW(), remark= ? WHERE id = ?";
+        Objects.requireNonNull(getJdbcTemplate()).update(updateSql, task.getTaskState(), task.getRemark(), task.getId());
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("[90] 主任务 planId= %d ，更新子任务 %s", task.getPlanId(), task));
+    }
 
     Optional<CareNinetyEntity> findByTaskId(Integer taskId) {
         Map<String, Object> params = Maps.newHashMap();
