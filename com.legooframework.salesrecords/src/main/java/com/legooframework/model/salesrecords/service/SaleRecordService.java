@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.covariant.entity.MemberEntity;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.OrgEntityAction;
@@ -107,26 +108,31 @@ public class SaleRecordService extends BundleService {
      * @Doc * FK
      */
     public void alloctSaleOrder4EmployeeJob() {
-        Optional<List<Integer>> companyIds = getBean(SaleAlloctRuleEntityAction.class).loadEnabledCompanies();
-        if (!companyIds.isPresent()) return;
-        Job job = getBean("saleRecord4EmployeeJob", Job.class);
-        for (Integer comId : companyIds.get()) {
-            OrgEntity company = getBean(OrgEntityAction.class).loadComById(comId);
-            long count = getBean(SaleRecord4EmployeeEntityAction.class).loadUndoCountByCompany(company);
-            if (count == 0L) continue;
-            if (logger.isDebugEnabled())
-                logger.debug(String.format("saleRecord4EmployeeJob(%d) undo count %d, JOb start", comId, count));
-            JobParametersBuilder jb = new JobParametersBuilder();
-            Map<String, Object> params = Maps.newHashMap();
-            params.put("companyId", company.getId());
-            jb.addString("job.params", Joiner.on('$').withKeyValueSeparator('=').join(params));
-            jb.addDate("job.tamptime", LocalDateTime.now().toDate());
-            JobParameters jobParameters = jb.toJobParameters();
-            try {
-                getJobLauncher().run(job, jobParameters);
-            } catch (Exception e) {
-                logger.error("saleRecord4EmployeeJob() has error", e);
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            Optional<List<Integer>> companyIds = getBean(SaleAlloctRuleEntityAction.class).loadEnabledCompanies();
+            if (!companyIds.isPresent()) return;
+            Job job = getBean("saleRecord4EmployeeJob", Job.class);
+            for (Integer comId : companyIds.get()) {
+                OrgEntity company = getBean(OrgEntityAction.class).loadComById(comId);
+                long count = getBean(SaleRecord4EmployeeEntityAction.class).loadUndoCountByCompany(company);
+                if (count == 0L) continue;
+                if (logger.isDebugEnabled())
+                    logger.debug(String.format("saleRecord4EmployeeJob(%d) undo count %d, JOb start", comId, count));
+                JobParametersBuilder jb = new JobParametersBuilder();
+                Map<String, Object> params = Maps.newHashMap();
+                params.put("companyId", company.getId());
+                jb.addString("job.params", Joiner.on('$').withKeyValueSeparator('=').join(params));
+                jb.addDate("job.tamptime", LocalDateTime.now().toDate());
+                JobParameters jobParameters = jb.toJobParameters();
+                try {
+                    getJobLauncher().run(job, jobParameters);
+                } catch (Exception e) {
+                    logger.error("saleRecord4EmployeeJob() has error", e);
+                }
             }
+        } finally {
+            LoginContextHolder.clear();
         }
     }
 
