@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping(value = "/manager")
+@RequestMapping(value = "/reactor")
 public class MvcController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(MvcController.class);
