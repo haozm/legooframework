@@ -320,7 +320,7 @@
             <fileset dir="${lib.dir}"
                      includes="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar,legoo-autotask-*.jar"/>
         </copy>
-        <delete dir="${webapp.root}/autotask/WEB-INF/classes" includes="**/*.xml"/>
+        <delete dir="${webapp.root}/autotask/WEB-INF/classes/META-INF" includes="**/*.xml"/>
         <copy todir="${webapp.root}/autotask/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="**/core/**,**/batchsupport/**,**/covariant/**,**/autotask/**"/>
         </copy>
