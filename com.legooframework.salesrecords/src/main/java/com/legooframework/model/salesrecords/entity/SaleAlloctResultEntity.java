@@ -36,7 +36,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         this.empType = 0;
         this.allotRule = CollectionUtils.isEmpty(rules) ? null : rules.toString();
         this.cardAmount = saleRecord4Employee.getTotalCardPrice();
-        this.saleAmount = saleRecord4Employee.getTotalCardPrice();
+        this.saleAmount = saleRecord4Employee.getTotalSalePrice();
         this.saleDateTime = saleRecord4Employee.getSaleDateTime();
         this.employeeId = 0;
         this.error = error;
