@@ -81,7 +81,7 @@
             <fileset dir="${lib.dir}"
                      includes="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar,legoo-salesrecords-*.jar"/>
         </copy>
-        <delete dir="${webapp.root}/salesrecords/WEB-INF/classes" includes="**/*.xml"/>
+        <delete dir="${webapp.root}/salesrecords/WEB-INF/classes/META-INF" includes="**/*.xml"/>
         <copy todir="${webapp.root}/salesrecords/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="**/core/**,**/batchsupport/**,**/covariant/**,**/salesrecords/**"/>
         </copy>
@@ -888,22 +888,21 @@
     <target name="webapp-new">
         <filter token="spring.profiles.active" value="${spring.profiles.active}"/>
         <filter token="vfs.root" value="${vfs.root}"/>
-        <filter token="app.name" value="${app.name}"/>
+        <filter token="log.file" value="${app.name}"/>
         <echo message="[-----------------  Start develop webapp   -----------------]"/>
-        <delete dir="${wepapp.root}/${app.name}/WEB-INF" includes="**/*.xml"/>
+        <delete dir="${wepapp.root}/${app.name}/WEB-INF" includes="**/*.xml,**/*.jar"/>
         <mkdir dir="${wepapp.root}/${app.name}/WEB-INF/classes"/>
         <copy todir="${wepapp.root}/${app.name}/WEB-INF" encoding="UTF-8" overwrite="true" filtering="true">
             <fileset dir="com.legooframework.${app.name}/src/web" includes="*.xml" excludes="log4j2.xml"/>
+        </copy>
+        <copy todir="${wepapp.root}/${app.name}/WEB-INF/classes" encoding="UTF-8" overwrite="true" filtering="true">
+            <fileset dir="com.legooframework.${app.name}/src/web" includes="log4j2.xml"/>
         </copy>
         <copy encoding="UTF-8" overwrite="true"
               file="com.legooframework.${app.name}/src/web/jdbc.properties"
               tofile="${wepapp.root}/${app.name}/WEB-INF/classes/jdbc.properties"
               filtering="true"/>
-        <copy encoding="UTF-8" overwrite="true"
-              file="com.legooframework.${app.name}/src/web/log4j2.xml"
-              tofile="${wepapp.root}/${app.name}/WEB-INF/classes/log4j2.xml"
-              filtering="true"/>
-        <echo message="[-----------------  End develop ${wepapp.root}/${app.name} devp -----------------]"/>
+        <echo message="[-----------------  End develop ${wepapp.root}/${app.name} -----------------]"/>
     </target>
 
     <target name="install-web-manager">
