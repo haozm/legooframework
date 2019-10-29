@@ -12,7 +12,6 @@ import com.legooframework.model.covariant.entity.OrgEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.salesrecords.entity.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
@@ -108,6 +107,8 @@ public class SaleRecordService extends BundleService {
      * @Doc * FK
      */
     public void alloctSaleOrder4EmployeeJob() {
+        if(logger.isDebugEnabled())
+            logger.debug(String.format("Run alloctSaleOrder4EmployeeJob() .... start.."));
         LoginContextHolder.setAnonymousCtx();
         try {
             Optional<List<Integer>> companyIds = getBean(SaleAlloctRuleEntityAction.class).loadEnabledCompanies();
