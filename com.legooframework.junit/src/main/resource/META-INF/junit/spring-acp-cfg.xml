@@ -26,6 +26,7 @@
     <alias name="acpDataSource" alias="statisticalDataSource"/>
 
     <alias name="acpDataSource" alias="jobDataSource"/>
+    <alias name="acpDataSource" alias="saleRecordDataSource"/>
     <alias name="transactionManager" alias="jobTransactionManager"/>
     <alias name="acpDataSource" alias="reactorDataSource"/>
 </beans>

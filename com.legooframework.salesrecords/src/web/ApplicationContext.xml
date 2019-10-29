@@ -14,7 +14,11 @@
     </bean>
     <alias name="dataSource" alias="saleRecordDataSource"/>
     <alias name="dataSource" alias="acpDataSource"/>
+    <alias name="dataSource" alias="jobDataSource"/>
+    <alias name="transactionManager" alias="jobTransactionManager"/>
+    
     <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/batchsupport/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/covariant/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/salesrecords/spring-model-cfg.xml"/>
 

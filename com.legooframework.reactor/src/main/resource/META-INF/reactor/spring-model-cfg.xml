@@ -35,6 +35,7 @@
           parent="reactorAbsEntityAction"/>
     <bean id="retailFactRowMapper" class="com.legooframework.model.reactor.entity.RetailFactRowMapper"
           scope="prototype"/>
+
     <bean id="retailFactAggItemReader" class="com.legooframework.model.reactor.entity.RetailFactAggItemReader"
           scope="step">
         <property name="sqlStatementFactory" ref="reactorStatementFactory"/>
@@ -63,5 +64,4 @@
             </batch:tasklet>
         </batch:step>
     </batch:job>
-
 </beans>
