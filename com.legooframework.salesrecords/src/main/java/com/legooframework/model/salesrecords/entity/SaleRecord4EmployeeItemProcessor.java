@@ -35,5 +35,5 @@ public class SaleRecord4EmployeeItemProcessor implements ItemProcessor<SaleRecor
 
     private SaleAlloctRuleEntityAction saleAlloctRuleAction;
     private StoEntityAction storeAction;
-    
+
 }

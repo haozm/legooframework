@@ -35,6 +35,10 @@ public class SaleAlloctRule4Store {
     // 业务分配
     public void allocation(SaleAlloct4EmpResult saleAlloct4EmpResult) {
         SaleRecord4EmployeeEntity employeeAllot = saleAlloct4EmpResult.getEmployeeAllot();
+        if (!employeeAllot.hasSubRecord()) {
+            saleAlloct4EmpResult.setException(new RuntimeException("该销售无销售明细..."));
+            return;
+        }
         int emp_count = employeeAllot.getEmpCount();
         if (emp_count == 0) {
             saleAlloct4EmpResult.setException(new RuntimeException("该销售单无导购数据信息....."));
@@ -81,7 +85,6 @@ public class SaleAlloctRule4Store {
             saleAlloct4EmpResult.setException(e);
         }
     }
-
 
     @Override
     public String toString() {

@@ -1,6 +1,7 @@
 package com.legooframework.model.salesrecords.entity;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.entity.BaseEntity;
@@ -19,6 +20,7 @@ import java.util.stream.Stream;
 public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
 
     private final List<SaleSubRecord> saleRecords;
+    private final String subRecordIds;
     private final Integer saleStoreId, companyId, memberStoreId, memberId;
     private final Integer srvEmpId;
     private final List<Integer> saleEmpIds;
@@ -31,11 +33,12 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
             this.companyId = resultSet.getInt("company_id");
             this.saleStoreId = resultSet.getInt("saleStoreId");
             this.memberStoreId = resultSet.getInt("memberStoreId");
+            this.subRecordIds = resultSet.getString("subRecordIds");
             this.memberId = ResultSetUtil.getOptObject(resultSet, "member_id", Long.class).orElse(0L).intValue();
             this.srvEmpId = ResultSetUtil.getOptObject(resultSet, "service_emp_id", Long.class).orElse(0L).intValue();
             List<Integer> _saleEmpIds = Lists.newArrayList();
             for (int i = 1; i < 4; i++) {
-                String empId = ResultSetUtil.getOptString(resultSet, String.format("old_emp0%d_id", i), "0");
+                String empId = ResultSetUtil.getOptString(resultSet, String.format("sales_emp0%d_id", i), "0");
                 if (!StringUtils.equals("0", empId)) _saleEmpIds.add(Integer.parseInt(empId));
             }
             this.saleEmpIds = CollectionUtils.isEmpty(_saleEmpIds) ? null : ImmutableList.copyOf(_saleEmpIds);
@@ -49,6 +52,10 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
         } catch (SQLException e) {
             throw new RuntimeException("还原对象 EmployeeAllotEntity 发生异常", e);
         }
+    }
+
+    boolean hasSubRecord() {
+        return !Strings.isNullOrEmpty(subRecordIds);
     }
 
     LocalDateTime getSaleDateTime() {
