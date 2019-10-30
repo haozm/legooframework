@@ -81,7 +81,7 @@
             <fileset dir="${lib.dir}"
                      includes="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar,legoo-salesrecords-*.jar"/>
         </copy>
-        <delete dir="${webapp.root}/salesrecords/WEB-INF/classes/META-INF" includes="**/*.xml"/>
+        <delete dir="${webapp.root}/salesrecords/WEB-INF/classes" includes="**/*.xml"/>
         <copy todir="${webapp.root}/salesrecords/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="**/core/**,**/batchsupport/**,**/covariant/**,**/salesrecords/**"/>
         </copy>
@@ -287,7 +287,7 @@
         <copy todir="${webapp.root}/takecare/WEB-INF/lib" encoding="UTF-8">
             <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-covariant-*.jar,legoo-takecare-*.jar"/>
         </copy>
-        <delete dir="${webapp.root}/takecare/WEB-INF/classes/META-INF" includes="**/*.xml"/>
+        <delete dir="${webapp.root}/takecare/WEB-INF/classes" includes="**/*.xml"/>
         <copy todir="${webapp.root}/takecare/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="**/core/**,**/covariant/**,**/takecare/**"/>
         </copy>
@@ -320,7 +320,7 @@
             <fileset dir="${lib.dir}"
                      includes="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar,legoo-autotask-*.jar"/>
         </copy>
-        <delete dir="${webapp.root}/autotask/WEB-INF/classes/META-INF" includes="**/*.xml"/>
+        <delete dir="${webapp.root}/autotask/WEB-INF/classes" includes="**/*.xml"/>
         <copy todir="${webapp.root}/autotask/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="**/core/**,**/batchsupport/**,**/covariant/**,**/autotask/**"/>
         </copy>
@@ -349,7 +349,7 @@
             <fileset dir="${lib.dir}"
                      includes="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar,legoo-reactor-*.jar"/>
         </copy>
-        <delete dir="${webapp.root}/reactor/WEB-INF/classes/META-INF" includes="**/*.xml"/>
+        <delete dir="${webapp.root}/reactor/WEB-INF/classes" includes="**/*.xml"/>
         <copy todir="${webapp.root}/reactor/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="**/core/**,**/batchsupport/**,**/covariant/**,**/reactor/**"/>
         </copy>
@@ -381,7 +381,7 @@
         <copy todir="${webapp.root}/statistical/WEB-INF/lib" encoding="UTF-8">
             <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-covariant-*.jar,legoo-statistical-*.jar"/>
         </copy>
-        <delete dir="${webapp.root}/statistical/WEB-INF/classes/META-INF" includes="**/*.xml"/>
+        <delete dir="${webapp.root}/statistical/WEB-INF/classes" includes="**/*.xml"/>
         <copy todir="${webapp.root}/statistical/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="**/core/**,**/covariant/**,**/statistical/**"/>
         </copy>
@@ -440,7 +440,7 @@
             <fileset dir="${lib.dir}"
                      includes="legoo-core-*.jar,legoo-wechatcircle-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar"/>
         </copy>
-        <delete dir="${webapp.root}/wechatcircle/WEB-INF/classes/META-INF" includes="**/*.xml"/>
+        <delete dir="${webapp.root}/wechatcircle/WEB-INF/classes" includes="**/*.xml"/>
         <copy todir="${webapp.root}/wechatcircle/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="**/core/**,**/wechatcircle/**,**/entities/**,**/crmadapter/**"/>
         </copy>
@@ -898,9 +898,6 @@
         <mkdir dir="${wepapp.root}/${app.name}/WEB-INF/classes"/>
         <copy todir="${wepapp.root}/${app.name}/WEB-INF" encoding="UTF-8" overwrite="true" filtering="true">
             <fileset dir="com.legooframework.${app.name}/src/web" includes="*.xml" excludes="log4j2.xml"/>
-        </copy>
-        <copy todir="${wepapp.root}/${app.name}/WEB-INF/classes" encoding="UTF-8" overwrite="true" filtering="true">
-            <fileset dir="com.legooframework.${app.name}/src/web" includes="log4j2.xml"/>
         </copy>
         <copy encoding="UTF-8" overwrite="true"
               file="com.legooframework.${app.name}/src/web/jdbc.properties"
