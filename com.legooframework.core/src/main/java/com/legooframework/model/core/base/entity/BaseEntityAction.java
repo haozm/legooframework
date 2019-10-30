@@ -74,6 +74,8 @@ public abstract class BaseEntityAction<T extends BaseEntity> extends EntityDaoSu
             params.putAll(paramMap);
         params.putAll(loginUser.toParams());
         String exec_sql = getStatementFactory().getExecSql(getModelName(), stmtId, params);
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("queryForMapList(%s,%s) \n [exec_sql] %s", stmtId, paramMap, exec_sql));
         List<Map<String, Object>> mapList = getNamedParameterJdbcTemplate().queryForList(exec_sql, params);
         if (logger.isDebugEnabled())
             logger.debug(String.format("queryForMapList(%s,%s) size is %s", getModelName(), stmtId,
