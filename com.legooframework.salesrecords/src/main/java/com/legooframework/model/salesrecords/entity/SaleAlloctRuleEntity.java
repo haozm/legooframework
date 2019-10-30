@@ -20,15 +20,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSetter {
 
     private final static Comparator<List<Rule>> COMPARABLE_LIST = Comparator.comparingInt(List::size);
-    private final static Comparator<Rule> COMPARABLE_SINGLE =
-            Comparator.comparingInt((ToIntFunction<Rule>) val -> val.type == 1 ? 0 : 1).thenComparingDouble(o -> o.value);
+    private final static Comparator<Rule> COMPARABLE_SINGLE = Comparator.comparingInt(val -> val.type == 1 ? 0 : 1);
 
     private Integer companyId, storeId;
     private boolean autoRun;
