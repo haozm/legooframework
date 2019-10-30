@@ -47,6 +47,35 @@ public class MvcController extends BaseController {
         return JsonMessageBuilder.OK().withPayload(bundle.toDesc()).toMessage();
     }
 
+    @RequestMapping(value = "/summary/alloct/byemp.json")
+    public JsonMessage summaryAlloctByEmpPage(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("summaryAlloctByemp(requestBody=%s)", requestBody));
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            int pageNum = MapUtils.getInteger(requestBody, "pageNum", 1);
+            int pageSize = MapUtils.getInteger(requestBody, "pageSize", 20);
+            Map<String, Object> params = user.toViewMap();
+            params.put("storeId", MapUtils.getInteger(requestBody, "storeId", -1));
+            params.put("employeeId", MapUtils.getInteger(requestBody, "employeeId", -1));
+            String start_date = MapUtils.getString(requestBody, "start");
+            String end_date = MapUtils.getString(requestBody, "end");
+            if (Strings.isNullOrEmpty(start_date) || Strings.isNullOrEmpty(end_date)) {
+                LocalDate now = LocalDate.now();
+                params.put("startTime", now.dayOfMonth().withMinimumValue());
+                params.put("endTime", now.dayOfMonth().withMaximumValue());
+            } else {
+                params.put("startTime", start_date);
+                params.put("endTime", end_date);
+            }
+            PagingResult page = getJdbcQuerySupport(request).queryForPage("SaleAlloctResultEntity", "summaryByemp", pageNum, pageSize, params);
+            return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
     @RequestMapping(value = "/alloct/store/byperiod.json")
     public JsonMessage alloctByStoreWithPeriod(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())

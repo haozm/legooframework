@@ -174,4 +174,62 @@
             ]]></body>
         </sql>
     </model>
+    <model id="SaleAlloctResultEntity">
+        <sql id="summaryByemp_count" dynamic="true">
+            <body><![CDATA[
+    SELECT COUNT(detail.employee_id)
+      FROM acp.ACP_EMPLOYEE_ALLOT_RESULT AS detail
+INNER JOIN acp.ACP_EMPLOYEE_ALLOT_RESULT AS total ON total.is_detail=0 AND total.sale_record_id = detail.sale_record_id
+INNER JOIN acp.acp_employee emp ON emp.id = detail.employee_id
+     WHERE total.error_tag = 0
+       AND detail.is_detail = 1
+       AND detail.company_id = :USER_COMPANY_ID
+    <#if (USER_ROLE=="StoreManager" OR USER_ROLE=="ShoppingGuide")>
+       AND emp.store_id = :USER_STORE_ID
+    <#eles>
+       AND emp.store_id = :storeId
+    </#if>
+    <#if (USER_ROLE=="ShoppingGuide")>
+      AND emp.id = :USER_ID
+    <#elseif (employeeId!=-1)>
+      AND emp.id = :employeeId
+    </#if>
+      AND total.sale_date BETWEEN '${startTime} 00:00:00' AND '${endTime} 23:59:59'
+  GROUP BY detail.employee_id
+            ]]></body>
+        </sql>
+        <sql id="summaryByemp" dynamic="true">
+            <body><![CDATA[
+    SELECT detail.employee_id AS 'employeeId',emp.name AS 'employeeName',
+           '${startTime}' AS 'start', '${endTime}' AS 'end',
+           SUM(total.card_amount) AS 'totalCardAmount', SUM(total.sale_amount) AS 'totalSaleAmount' ,
+           COUNT(total.sale_record_id) AS 'totalOrderNum', SUM(total.goods_num) AS 'totalGoodsNum',
+           SUM(detail.sale_amount) AS 'employeeAllSaleAmount',
+           SUM(IF(detail.employee_type=1,detail.sale_amount,0)) AS 'employeeDirectSaleAmount',
+           SUM(IF(detail.employee_type=2,detail.sale_amount,0)) AS 'employeeDividedSaleAmount',
+           ROUND(SUM(total.sale_amount) /SUM(total.card_amount),2) AS 'discountNum',
+           ROUND(SUM(total.card_amount) /COUNT(total.sale_record_id),2) AS 'customerPrice',
+           ROUND(SUM(total.card_amount) /SUM(total.goods_num),2) AS 'unitPrice',
+           ROUND(SUM(total.goods_num) /COUNT(total.sale_record_id),2) AS 'jointRate'
+      FROM acp.ACP_EMPLOYEE_ALLOT_RESULT AS detail
+INNER JOIN acp.ACP_EMPLOYEE_ALLOT_RESULT AS total ON total.is_detail=0 AND total.sale_record_id = detail.sale_record_id
+INNER JOIN acp.acp_employee emp ON emp.id = detail.employee_id
+     WHERE total.error_tag = 0
+       AND detail.is_detail =1
+     <#if (USER_ROLE=="StoreManager" OR USER_ROLE=="ShoppingGuide")>
+       AND emp.store_id = :USER_STORE_ID
+    <#eles>
+       AND emp.store_id = :storeId
+    </#if>
+    <#if (USER_ROLE=="ShoppingGuide")>
+      AND emp.id = :USER_ID
+    <#elseif (employeeId!=-1)>
+      AND emp.id = :employeeId
+    </#if>
+      AND total.sale_date BETWEEN '${startTime} 00:00:00' AND '${endTime} 23:59:59'
+  GROUP BY detail.employee_id
+  ORDER BY employeeAllSaleAmount DESC
+            ]]></body>
+        </sql>
+    </model>
 </sqls>
