@@ -158,6 +158,12 @@ public class SQLStatementFactory extends FileReloadSupport<ConfigByFileMeta> {
     }
 
     @Override
+    protected void updateConfig(File file, ConfigByFileMeta config) {
+        super.updateConfig(file, config);
+        this.cache.invalidateAll();
+    }
+
+    @Override
     protected Optional<ConfigByFileMeta> parseFile(File file) {
         if (!isSupported(file)) return Optional.empty();
         Digester digester = DigesterLoader.newLoader(this.rulesModule).newDigester();

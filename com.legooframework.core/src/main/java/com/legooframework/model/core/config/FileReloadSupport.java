@@ -44,7 +44,7 @@ public abstract class FileReloadSupport<T> implements FileReload {
         fileMaps.remove(file.getAbsolutePath());
     }
 
-    private void updateConfig(File file, T config) {
+    protected void updateConfig(File file, T config) {
         Preconditions.checkNotNull(config, "配置项不可以为空.");
         fileMaps.remove(file.getAbsolutePath());
         fileMaps.put(file.getAbsolutePath(), config);
