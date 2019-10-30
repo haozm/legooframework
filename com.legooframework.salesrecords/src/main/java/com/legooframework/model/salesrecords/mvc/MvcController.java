@@ -201,7 +201,6 @@ public class MvcController extends BaseController {
         } finally {
             LoginContextHolder.clear();
         }
-
     }
 
     @RequestMapping(value = "/load/details.json")

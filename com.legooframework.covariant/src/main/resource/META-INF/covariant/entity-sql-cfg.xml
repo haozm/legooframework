@@ -40,15 +40,15 @@
         <sql id="query4list" dynamic="true">
             <body><![CDATA[
           SELECT cm.id, IFNULL(cm.calendarType,1) AS 'calendarType', cm.carePeople, cm.certificate, cm.certificateType, cm.characterType, cm.createCardTime, cm.createTime,
-                 cm.detailAddress, cm.email, cm.faithType, cm.hobby, cm.idols, cm.jobType, cm.likeBrand, cm.likeContact, cm.marryStatus, cm.memberType, cm.name,
+                 cm.detailAddress, cm.faithType, cm.hobby, cm.idols, cm.jobType, cm.likeBrand, cm.likeContact, cm.marryStatus, cm.memberType, cm.name,
                  cm.oldMemberCode, cm.oldShoppingGuideId, cm.oldStoreId, cm.phone, cm.photoFileName, cm.qqNum, cm.rechargeAmount, cm.remark, cm.serviceLevel, cm.sex,
-                 cm.source_channel, cm.source_from, cm.specialDay, cm.status, cm.updateTime, cm.wechatNum, cm.weiboNum, cm.zodiac, cm.company_id, cm.createUser_id,
-                 cm.memberCardType_id, cm.updateUser_id, cm.firstSaleRecordAmount, cm.firstSaleRecordNo, cm.weixinUser_wx_user_id, cm.assignState, cm.telephone,
-                 cm.memberCardNum, cm.unreachable, cm.lastVisitTime, cm.rfm, cm.createStoreId, cm.awakenCount, cm.consumeTotalCount, cm.consumeTotalCountCurYear,
+                 cm.source_channel, cm.source_from, cm.specialDay, cm.status, cm.wechatNum, cm.weiboNum, cm.company_id, cm.createUser_id,
+                 cm.memberCardType_id, cm.firstSaleRecordAmount, cm.firstSaleRecordNo, cm.weixinUser_wx_user_id, cm.assignState, cm.telephone,
+                 cm.memberCardNum, cm.unreachable, cm.rfm, cm.createStoreId, cm.awakenCount, cm.consumeTotalCount, cm.consumeTotalCountCurYear,
                  cm.maxConsumePrice, cm.maxConsumePriceCurYear, cm.totalConsumeAmount, cm.totalConsumeAmountCurYear, cm.hasWeixinAccount, cm.education,
-                 cm.likeContactTime, cm.effectiveFlag, cm.namePinyin, cm.limitday, cm.iconUrl, cm.totalScore, cm.companypy, cm.crc32id, cm.store_id, cm.daysAgoCount,
-                 cm.has_wechat_fan, cm.totalScore02,csm.store_id AS 'real_storeId', IFNULL(cgm.shoppingguide_id,0) AS 'real_shoppingguide_id',sto.organization_id AS 'organization_id',
-                 ( CASE WHEN IFNULL(cm.calendarType,1) = 1 THEN cm.birthday ELSE cm.lunarBirthday END) AS 'birthday',
+                 cm.effectiveFlag, cm.limitday, cm.iconUrl, cm.totalScore, cm.companypy, cm.crc32id, cm.store_id, cm.daysAgoCount,
+                 cm.has_wechat_fan, cm.totalScore02, csm.store_id AS 'real_storeId', IFNULL(cgm.shoppingguide_id,0) AS 'real_shoppingguide_id',sto.organization_id AS 'organization_id',
+                 ( CASE WHEN IFNULL(cm.calendarType,1) = 1 THEN cm.birthday ELSE cm.lunarBirthday END) AS 'birthday',cm.lastVisitTime,
                  ( CASE WHEN IFNULL(cm.calendarType,1) = 1 THEN CONCAT( YEAR(NOW()), DATE_FORMAT(cm.birthday,'%m%d'))
                         ELSE (SELECT cgci.gregorian_calendar
                                 FROM YG_Statistics.calendar_g_c_index AS cgci

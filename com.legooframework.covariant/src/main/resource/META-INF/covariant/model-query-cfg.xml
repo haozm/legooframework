@@ -38,4 +38,12 @@
             ]]></body>
         </sql>
     </model>
+
+    <model id="MemberEntity">
+        <sql id="findById" dynamic="true">
+            <body><![CDATA[
+
+            ]]></body>
+        </sql>
+    </model>
 </sqls>

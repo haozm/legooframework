@@ -63,9 +63,7 @@ public class MemberAgg implements ToReplace {
     }
 
     public Map<String, Object> toViewMap() {
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("memberName", this.getMember().getName());
-        params.put("memberId", this.getMember().getId());
+        Map<String, Object> params = this.getMember().toViewMap();
         return params;
     }
 

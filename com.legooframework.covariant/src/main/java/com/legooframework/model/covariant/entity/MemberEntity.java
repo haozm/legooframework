@@ -5,9 +5,11 @@ import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
+import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.core.utils.DateTimeUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -24,6 +26,7 @@ public class MemberEntity extends BaseEntity<Integer> implements ToReplace {
     private final LocalDate birthday;
     private final LocalDate thisYearBirthday;
     private final double totalScore, rechargeAmount;
+    private final LocalDateTime lastVisitTime;
 
     MemberEntity(Integer id, ResultSet res) {
         super(id);
@@ -34,9 +37,10 @@ public class MemberEntity extends BaseEntity<Integer> implements ToReplace {
             this.orgId = res.getInt("organization_id");
             this.shoppingGuideId = res.getInt("real_shoppingguide_id");
             this.companyId = res.getInt("company_id");
-            this.effective = res.getInt("status") == 1;
+            this.effective = res.getInt("effectiveFlag") == 1;
             this.cardNum = res.getString("memberCardNum");
             this.cardName = res.getString("cardName");
+            this.lastVisitTime = ResultSetUtil.getLocalDateTime(res, "lastVisitTime");
             this.companyName = res.getString("companyName");
             this.calendarType = res.getInt("calendarType");
             this.totalScore = res.getBigDecimal("totalScore") == null ? 0.0D : res.getBigDecimal("totalScore").doubleValue();
@@ -126,6 +130,16 @@ public class MemberEntity extends BaseEntity<Integer> implements ToReplace {
         params.put("储值余额", this.rechargeAmount);
         params.put("品牌名称", this.companyName);
         params.put("会员生日", this.birthday == null ? "未指定" : this.birthday.toString("yyyy-MM-dd"));
+        return params;
+    }
+
+    @Override
+    public Map<String, Object> toViewMap() {
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("memberId", getId());
+        params.put("memberName", this.name);
+        params.put("memberLastVisitTime", lastVisitTime == null ? "--" : lastVisitTime.toString("yyyy-MM-dd HH:mm:ss"));
+        params.put("memberBirthday", birthday == null ? "--" : birthday.toString("MM-dd"));
         return params;
     }
 
