@@ -177,7 +177,7 @@
     <model id="SaleAlloctResultEntity">
         <sql id="summaryByemp_count" dynamic="true">
             <body><![CDATA[
-    SELECT COUNT(detail.employee_id)
+    SELECT COUNT(DISTINCT detail.employee_id)
       FROM acp.ACP_EMPLOYEE_ALLOT_RESULT AS detail
 INNER JOIN acp.ACP_EMPLOYEE_ALLOT_RESULT AS total ON total.is_detail=0 AND total.sale_record_id = detail.sale_record_id
 INNER JOIN acp.acp_employee emp ON emp.id = detail.employee_id
@@ -186,7 +186,7 @@ INNER JOIN acp.acp_employee emp ON emp.id = detail.employee_id
        AND detail.company_id = :USER_COMPANY_ID
     <#if (USER_ROLE=="StoreManager" || USER_ROLE=="ShoppingGuide")>
        AND emp.store_id = :USER_STORE_ID
-    <#eles>
+    <#else>
        AND emp.store_id = :storeId
     </#if>
     <#if (USER_ROLE=="ShoppingGuide")>
@@ -195,7 +195,6 @@ INNER JOIN acp.acp_employee emp ON emp.id = detail.employee_id
       AND emp.id = :employeeId
     </#if>
       AND total.sale_date BETWEEN '${startTime} 00:00:00' AND '${endTime} 23:59:59'
-  GROUP BY detail.employee_id
             ]]></body>
         </sql>
         <sql id="summaryByemp" dynamic="true">
@@ -218,7 +217,7 @@ INNER JOIN acp.acp_employee emp ON emp.id = detail.employee_id
        AND detail.is_detail =1
      <#if (USER_ROLE=="StoreManager" || USER_ROLE=="ShoppingGuide")>
        AND emp.store_id = :USER_STORE_ID
-    <#eles>
+    <#else>
        AND emp.store_id = :storeId
     </#if>
     <#if (USER_ROLE=="ShoppingGuide")>

@@ -30,6 +30,7 @@ CREATE TABLE REACTOR_RECORD_SWITCH
 (
     id           BIGINT(20)       NOT NULL AUTO_INCREMENT,
     company_id   INT(11)          NOT NULL,
+    enabled      TINYINT UNSIGNED NOT NULL DEFAULT 0,
     switch_type  VARCHAR(32)      NOT NULL,
     allow_store_ids   VARCHAR(512)     NULL DEFAULT NULL,
     forbid_store_ids  VARCHAR(512)     NULL DEFAULT NULL,

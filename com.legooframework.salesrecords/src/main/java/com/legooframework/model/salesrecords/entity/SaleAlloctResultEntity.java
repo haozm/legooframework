@@ -15,7 +15,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
 
     private Integer companyId, storeId, saleRecordId, employeeId, orderType, empNum, empType, memberId, goodsSum;
     private boolean error, detail;
-    private String allotRule, allotMsg;
+    private String allotRule, allotMsg, oldSaleRecordId;
     private double cardAmount, saleAmount;
     private LocalDateTime saleDateTime;
 
@@ -34,6 +34,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         this.empNum = saleRecord4Employee.getEmpCount();
         this.detail = false;
         this.empType = 0;
+        this.oldSaleRecordId = saleRecord4Employee.getOldSaleRecordId();
         this.allotRule = CollectionUtils.isEmpty(rules) ? null : rules.toString();
         this.cardAmount = saleRecord4Employee.getTotalCardPrice();
         this.saleAmount = saleRecord4Employee.getTotalSalePrice();
@@ -53,6 +54,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         this.orderType = totalRec.orderType;
         this.memberId = totalRec.memberId;
         this.goodsSum = totalRec.goodsSum;
+        this.oldSaleRecordId = totalRec.oldSaleRecordId;
         this.saleDateTime = totalRec.saleDateTime;
         this.empType = rule.getType();
         this.empNum = 1;
@@ -64,7 +66,6 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         this.error = false;
         this.allotMsg = "OK";
     }
-
 
     @Override
     public void setValues(PreparedStatement ps) throws SQLException {
@@ -87,6 +88,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         ps.setObject(15, saleDateTime.toDate());
         ps.setObject(16, companyId);
         ps.setObject(17, goodsSum);
+        ps.setObject(18, oldSaleRecordId);
     }
 
     @Override
@@ -108,6 +110,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
                 .add("saleAmount", saleAmount)
                 .add("goodsSum", goodsSum)
                 .add("saleDateTime", saleDateTime)
+                .add("oldSaleRecordId", oldSaleRecordId)
                 .toString();
     }
 }

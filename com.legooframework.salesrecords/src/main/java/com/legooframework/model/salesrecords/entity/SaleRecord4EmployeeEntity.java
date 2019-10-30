@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
 
     private final List<SaleSubRecord> saleRecords;
-    private final String subRecordIds;
+    private final String subRecordIds, oldSaleRecordId;
     private final Integer saleStoreId, companyId, memberStoreId, memberId, srvEmpId, goodsNum;
     private final List<Integer> saleEmpIds;
     private final double totalCardPrice, totalSalePrice;
@@ -33,6 +33,7 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
             this.saleStoreId = resultSet.getInt("saleStoreId");
             this.memberStoreId = resultSet.getInt("memberStoreId");
             this.subRecordIds = resultSet.getString("subRecordIds");
+            this.oldSaleRecordId = resultSet.getString("old_sale_record_id");
             this.memberId = ResultSetUtil.getOptObject(resultSet, "member_id", Long.class).orElse(0L).intValue();
             this.srvEmpId = ResultSetUtil.getOptObject(resultSet, "service_emp_id", Long.class).orElse(0L).intValue();
             List<Integer> _saleEmpIds = Lists.newArrayList();
@@ -57,6 +58,10 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
         } catch (SQLException e) {
             throw new RuntimeException("还原对象 EmployeeAllotEntity 发生异常", e);
         }
+    }
+
+    String getOldSaleRecordId() {
+        return oldSaleRecordId;
     }
 
     boolean hasSubRecord() {

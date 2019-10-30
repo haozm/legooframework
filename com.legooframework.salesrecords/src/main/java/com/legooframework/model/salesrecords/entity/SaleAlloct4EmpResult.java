@@ -20,7 +20,7 @@ public class SaleAlloct4EmpResult {
     private int type; // 1 2 3 4
     private final List<Result> results = Lists.newArrayList();
     private boolean error;
-    private String message;
+    private String message, oldSaleRecordId;
 
     Integer getSaleRecordId() {
         return employeeAllot.getId();

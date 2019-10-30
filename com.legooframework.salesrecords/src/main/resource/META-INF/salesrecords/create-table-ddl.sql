@@ -76,6 +76,7 @@ CREATE TABLE ACP_EMPLOYEE_ALLOT_RESULT (
     card_amount        NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
     sale_amount        NUMERIC(10,2)    NOT NULL DEFAULT 0.00,
     allot_msg          VARCHAR(512)     NULL,
+    old_sale_record_Id VARCHAR(128)     NULL,
     sale_date          DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
     delete_flag        TINYINT UNSIGNED NOT NULL DEFAULT 0,
     tenant_id          BIGINT(20)       NULL     DEFAULT NULL,
