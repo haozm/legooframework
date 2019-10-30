@@ -114,8 +114,7 @@ public class SaleAlloct4EmpResult {
 
     static class Result {
         private final Integer empId;
-        private final double careAmount;
-        private final double saleAmount;
+        private final double careAmount, saleAmount;
         private final SaleAlloctRuleEntity.Rule rule;
 
 

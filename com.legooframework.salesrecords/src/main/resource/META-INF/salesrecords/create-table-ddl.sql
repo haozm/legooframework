@@ -67,6 +67,7 @@ CREATE TABLE ACP_EMPLOYEE_ALLOT_RESULT (
     employee_id        INT(11)          NOT NULL DEFAULT 0,
     employee_type      TINYINT UNSIGNED NOT NULL DEFAULT 0,
     employee_count     TINYINT UNSIGNED NOT NULL DEFAULT 0,
+    goods_num          TINYINT UNSIGNED NOT NULL DEFAULT 0,
     order_type         TINYINT UNSIGNED NOT NULL,
     member_id          INT(11) NOT NULL DEFAULT 0,
     error_tag          TINYINT UNSIGNED NOT NULL DEFAULT 0,

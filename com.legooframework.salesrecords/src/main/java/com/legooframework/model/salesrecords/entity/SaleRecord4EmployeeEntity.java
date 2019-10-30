@@ -21,8 +21,7 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
 
     private final List<SaleSubRecord> saleRecords;
     private final String subRecordIds;
-    private final Integer saleStoreId, companyId, memberStoreId, memberId;
-    private final Integer srvEmpId;
+    private final Integer saleStoreId, companyId, memberStoreId, memberId, srvEmpId, goodsNum;
     private final List<Integer> saleEmpIds;
     private final double totalCardPrice, totalSalePrice;
     private final LocalDateTime saleDateTime;
@@ -51,8 +50,9 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
             } else {
                 this.saleRecords = null;
             }
-            this.totalCardPrice = Strings.isNullOrEmpty(this.subRecordIds) ? 0.0D : this.saleRecords.stream().mapToDouble(x -> x.cardPrice).sum();
-            this.totalSalePrice = Strings.isNullOrEmpty(this.subRecordIds) ? 0.0D : this.saleRecords.stream().mapToDouble(x -> x.salePrice).sum();
+            this.goodsNum = CollectionUtils.isEmpty(this.saleRecords) ? 0 : this.saleRecords.stream().mapToInt(x -> x.goodsNum).sum();
+            this.totalCardPrice = CollectionUtils.isEmpty(this.saleRecords) ? 0.0D : this.saleRecords.stream().mapToDouble(x -> x.cardPrice).sum();
+            this.totalSalePrice = CollectionUtils.isEmpty(this.saleRecords) ? 0.0D : this.saleRecords.stream().mapToDouble(x -> x.salePrice).sum();
             this.saleDateTime = ResultSetUtil.getLocalDateTime(resultSet, "createTime");
         } catch (SQLException e) {
             throw new RuntimeException("还原对象 EmployeeAllotEntity 发生异常", e);
@@ -99,6 +99,10 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
         return saleEmpIds;
     }
 
+    int getGoodsNum() {
+        return goodsNum;
+    }
+
     double getTotalCardPrice() {
         return totalCardPrice;
     }
@@ -124,7 +128,7 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
     }
 
     static class SaleSubRecord {
-        private final int id;
+        private final int id, goodsNum;
         private final double cardPrice, salePrice;
 
         SaleSubRecord(String item) {
@@ -132,6 +136,7 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
             this.id = Integer.parseInt(args[0]);
             this.cardPrice = Double.parseDouble(args[1]);
             this.salePrice = Double.parseDouble(args[2]);
+            this.goodsNum = Integer.parseInt(args[3]);
         }
 
         @Override

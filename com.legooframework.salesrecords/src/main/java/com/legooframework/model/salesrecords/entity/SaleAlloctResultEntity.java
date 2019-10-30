@@ -13,7 +13,7 @@ import java.util.List;
 
 public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSetter {
 
-    private Integer companyId, storeId, saleRecordId, employeeId, orderType, empNum, empType, memberId;
+    private Integer companyId, storeId, saleRecordId, employeeId, orderType, empNum, empType, memberId, goodsSum;
     private boolean error, detail;
     private String allotRule, allotMsg;
     private double cardAmount, saleAmount;
@@ -38,6 +38,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         this.cardAmount = saleRecord4Employee.getTotalCardPrice();
         this.saleAmount = saleRecord4Employee.getTotalSalePrice();
         this.saleDateTime = saleRecord4Employee.getSaleDateTime();
+        this.goodsSum = saleRecord4Employee.getGoodsNum();
         this.employeeId = 0;
         this.error = error;
         this.allotMsg = errMsg;
@@ -51,6 +52,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         this.saleRecordId = totalRec.saleRecordId;
         this.orderType = totalRec.orderType;
         this.memberId = totalRec.memberId;
+        this.goodsSum = totalRec.goodsSum;
         this.saleDateTime = totalRec.saleDateTime;
         this.empType = rule.getType();
         this.empNum = 1;
@@ -84,6 +86,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         ps.setObject(14, allotMsg);
         ps.setObject(15, saleDateTime.toDate());
         ps.setObject(16, companyId);
+        ps.setObject(17, goodsSum);
     }
 
     @Override
@@ -103,6 +106,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
                 .add("allotMsg", allotMsg)
                 .add("cardAmount", cardAmount)
                 .add("saleAmount", saleAmount)
+                .add("goodsSum", goodsSum)
                 .add("saleDateTime", saleDateTime)
                 .toString();
     }

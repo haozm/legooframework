@@ -70,7 +70,7 @@ public class SaleRecord4EmployeeEntityActionTest {
 
     @Test
     public void findById() {
-        saleRecord4EmployeeEntityAction.findById(4219793).ifPresent(x -> System.out.println(x));
+        saleRecord4EmployeeEntityAction.findById(4205625).ifPresent(x -> System.out.println(x));
     }
 
     @Autowired
