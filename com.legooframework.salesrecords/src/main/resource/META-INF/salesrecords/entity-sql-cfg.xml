@@ -125,6 +125,8 @@
     SELECT allot.sale_record_id AS 'id',GROUP_CONCAT(sub.id) AS 'subRecordIds',
            GROUP_CONCAT(CONCAT_WS('^^',sub.id,IFNULL(sub.cardPrice,0.0),IFNULL(sub.salePrice,0.0)) ORDER BY sub.id SEPARATOR '$') AS 'records',
            allot.member_id, allot.service_emp_id, allot.sales_emp01_id,allot.sales_emp02_id,allot.sales_emp03_id,
+           allot.sales_emp04_id,allot.sales_emp05_id,allot.sales_emp06_id,allot.sales_emp07_id,allot.sales_emp08_id,
+           allot.sales_emp09_id,allot.sales_emp10_id,
            allot.store_id AS 'saleStoreId', csm.store_id AS 'memberStoreId', allot.company_id, allot.createTime
       FROM acp.sales_employee_allot AS allot
  LEFT JOIN acp.crm_salesubrecord sub ON sub.saleRecord_id = allot.sale_record_id

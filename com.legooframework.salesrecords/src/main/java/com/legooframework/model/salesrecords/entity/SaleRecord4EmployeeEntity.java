@@ -37,8 +37,9 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
             this.memberId = ResultSetUtil.getOptObject(resultSet, "member_id", Long.class).orElse(0L).intValue();
             this.srvEmpId = ResultSetUtil.getOptObject(resultSet, "service_emp_id", Long.class).orElse(0L).intValue();
             List<Integer> _saleEmpIds = Lists.newArrayList();
-            for (int i = 1; i < 4; i++) {
-                String empId = ResultSetUtil.getOptString(resultSet, String.format("sales_emp0%d_id", i), "0");
+            String[] args = new String[]{"01", "02", "03", "04", "05", "06", "07", "08", "09", "10"};
+            for (String $it : args) {
+                String empId = ResultSetUtil.getOptString(resultSet, String.format("sales_emp%s_id", $it), "0");
                 if (!StringUtils.equals("0", empId)) _saleEmpIds.add(Integer.parseInt(empId));
             }
             this.saleEmpIds = CollectionUtils.isEmpty(_saleEmpIds) ? null : ImmutableList.copyOf(_saleEmpIds);
