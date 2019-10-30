@@ -42,12 +42,16 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
                 if (!StringUtils.equals("0", empId)) _saleEmpIds.add(Integer.parseInt(empId));
             }
             this.saleEmpIds = CollectionUtils.isEmpty(_saleEmpIds) ? null : ImmutableList.copyOf(_saleEmpIds);
-            String records_str = resultSet.getString("records");
-            String[] values = StringUtils.split(records_str, '$');
-            List<SaleSubRecord> _records = Stream.of(values).map(SaleSubRecord::new).collect(Collectors.toList());
-            this.saleRecords = ImmutableList.copyOf(_records);
-            this.totalCardPrice = this.saleRecords.stream().mapToDouble(x -> x.cardPrice).sum();
-            this.totalSalePrice = this.saleRecords.stream().mapToDouble(x -> x.salePrice).sum();
+            if (!Strings.isNullOrEmpty(this.subRecordIds)) {
+                String records_str = resultSet.getString("records");
+                String[] values = StringUtils.split(records_str, '$');
+                List<SaleSubRecord> _records = Stream.of(values).map(SaleSubRecord::new).collect(Collectors.toList());
+                this.saleRecords = ImmutableList.copyOf(_records);
+            } else {
+                this.saleRecords = null;
+            }
+            this.totalCardPrice = Strings.isNullOrEmpty(this.subRecordIds) ? 0.0D : this.saleRecords.stream().mapToDouble(x -> x.cardPrice).sum();
+            this.totalSalePrice = Strings.isNullOrEmpty(this.subRecordIds) ? 0.0D : this.saleRecords.stream().mapToDouble(x -> x.salePrice).sum();
             this.saleDateTime = ResultSetUtil.getLocalDateTime(resultSet, "createTime");
         } catch (SQLException e) {
             throw new RuntimeException("还原对象 EmployeeAllotEntity 发生异常", e);
