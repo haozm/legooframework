@@ -184,7 +184,7 @@ INNER JOIN acp.acp_employee emp ON emp.id = detail.employee_id
      WHERE total.error_tag = 0
        AND detail.is_detail = 1
        AND detail.company_id = :USER_COMPANY_ID
-    <#if (USER_ROLE=="StoreManager" OR USER_ROLE=="ShoppingGuide")>
+    <#if (USER_ROLE=="StoreManager" || USER_ROLE=="ShoppingGuide")>
        AND emp.store_id = :USER_STORE_ID
     <#eles>
        AND emp.store_id = :storeId
@@ -216,7 +216,7 @@ INNER JOIN acp.ACP_EMPLOYEE_ALLOT_RESULT AS total ON total.is_detail=0 AND total
 INNER JOIN acp.acp_employee emp ON emp.id = detail.employee_id
      WHERE total.error_tag = 0
        AND detail.is_detail =1
-     <#if (USER_ROLE=="StoreManager" OR USER_ROLE=="ShoppingGuide")>
+     <#if (USER_ROLE=="StoreManager" || USER_ROLE=="ShoppingGuide")>
        AND emp.store_id = :USER_STORE_ID
     <#eles>
        AND emp.store_id = :storeId
