@@ -66,10 +66,14 @@ public class MvcController extends BaseController {
             params.put("employeeId", MapUtils.getInteger(requestBody, "employeeId", 0));
             String start_date = MapUtils.getString(requestBody, "start");
             String end_date = MapUtils.getString(requestBody, "end");
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(start_date), "时间范围不可以为空...");
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(end_date), "时间范围不可以为空...");
-            params.put("startTime", start_date);
-            params.put("endTime", end_date);
+            if (Strings.isNullOrEmpty(start_date) || Strings.isNullOrEmpty(end_date)) {
+                LocalDate now = LocalDate.now();
+                params.put("startTime", now.dayOfMonth().withMinimumValue());
+                params.put("endTime", now.dayOfMonth().withMaximumValue());
+            } else {
+                params.put("startTime", start_date);
+                params.put("endTime", end_date);
+            }
             PagingResult page = getJdbcQuerySupport(request).queryForPage("SaleAlloctResultEntity", "alloct4Detail", pageNum, pageSize, params);
             return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
         } finally {
