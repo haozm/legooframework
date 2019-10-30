@@ -47,6 +47,36 @@ public class MvcController extends BaseController {
         return JsonMessageBuilder.OK().withPayload(bundle.toDesc()).toMessage();
     }
 
+    @RequestMapping(value = "/detail/alloct/byemp.json")
+    public JsonMessage detailAlloctByEmpPage(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("detailAlloctByEmpPage(requestBody=%s)", requestBody));
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            int pageNum = MapUtils.getInteger(requestBody, "pageNum", 1);
+            int pageSize = MapUtils.getInteger(requestBody, "pageSize", 20);
+            Map<String, Object> params = user.toViewMap();
+            int cross = MapUtils.getIntValue(requestBody, "cross", -1);
+            if (cross != -1) params.put("cross", cross);
+            int orderType = MapUtils.getIntValue(requestBody, "orderType", -1);
+            if (orderType != -1) params.put("orderType", orderType);
+            String keyword = MapUtils.getString(requestBody, "keyword", null);
+            if (!Strings.isNullOrEmpty(keyword)) params.put("keyword", String.format("%%%s%%", keyword));
+            params.put("employeeId", MapUtils.getInteger(requestBody, "employeeId", 0));
+            String start_date = MapUtils.getString(requestBody, "start");
+            String end_date = MapUtils.getString(requestBody, "end");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(start_date), "时间范围不可以为空...");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(end_date), "时间范围不可以为空...");
+            params.put("startTime", start_date);
+            params.put("endTime", end_date);
+            PagingResult page = getJdbcQuerySupport(request).queryForPage("SaleAlloctResultEntity", "alloct4Detail", pageNum, pageSize, params);
+            return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
     @RequestMapping(value = "/summary/alloct/byemp.json")
     public JsonMessage summaryAlloctByEmpPage(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())

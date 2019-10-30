@@ -230,5 +230,67 @@ INNER JOIN acp.acp_employee emp ON emp.id = detail.employee_id
   ORDER BY employeeAllSaleAmount DESC
             ]]></body>
         </sql>
+        <sql id="alloct4Detail_count" dynamic="true">
+            <body><![CDATA[
+    SELECT COUNT(detail.old_sale_record_Id)
+      FROM acp.ACP_EMPLOYEE_ALLOT_RESULT AS detail
+INNER JOIN acp.ACP_EMPLOYEE_ALLOT_RESULT AS total ON total.is_detail=0 AND total.sale_record_id = detail.sale_record_id
+INNER JOIN acp.acp_store AS st ON detail.store_id = st.id
+ LEFT JOIN acp.acp_employee emp ON emp.id = detail.employee_id
+ LEFT JOIN acp.crm_shoppingguide_member csm ON csm.member_id = detail.member_id
+ LEFT JOIN acp.crm_member AS  cm ON cm.id = detail.member_id
+     WHERE total.error_tag = 0
+       AND detail.is_detail = 1
+       AND detail.company_id = :USER_COMPANY_ID
+       AND detail.employee_id = :employeeId
+       AND total.sale_date BETWEEN '${startTime} 00:00:00' AND '${endTime} 23:59:59'
+   <#if orderType??> AND detail.order_type = :orderType </#if>
+   <#if cross??> <#if (cross==1)> AND detail.order_type IN (1,2) <#else> AND detail.order_type IN (3,4) </#if> </#if>
+   <#if keyword??>
+      AND (detail.old_sale_record_Id LIKE :keyword  OR
+           detail.member_id IN ( SELECT cmm.id
+                                   FROM acp.crm_member cmm
+                                  WHERE cmm.company_id = :USER_COMPANY_ID
+                                    AND (cmm.name LIKE :keyword OR cmm.phone LIKE :keyword ) )
+          )
+   </#if>
+            ]]></body>
+        </sql>
+        <sql id="alloct4Detail" dynamic="true">
+            <body><![CDATA[
+      SELECT detail.employee_id AS 'employeeId',emp.name AS 'employeeName',
+             detail.old_sale_record_Id AS 'oldSaleRecordId', total.sale_amount AS 'totalSaleAmount',
+             detail.allot_rule AS 'allotRule',detail.sale_amount 'employeeSaleAmount',
+             detail.order_type AS 'orderType',
+             (CASE WHEN detail.order_type = 1 THEN '会员单'
+                   WHEN detail.order_type = 2 THEN '散客单'
+                   WHEN detail.order_type = 3 THEN '跨店会员单'
+                   ELSE '跨店非会员单' END ) AS 'orderTypeName',
+             IFNULL(cm.name,'--') AS 'memberNamne', IFNULL(cm.phone,'--') AS 'memberPhone', st.name AS 'storeName',
+             DATE_FORMAT(detail.sale_date,GET_FORMAT(DATETIME,'iso')) AS 'saleDate',
+             (SELECT emp.name from acp.acp_employee emp where emp.id =csm.shoppingguide_id ) AS 'svrShoppingGuide'
+      FROM acp.ACP_EMPLOYEE_ALLOT_RESULT AS detail
+INNER JOIN acp.ACP_EMPLOYEE_ALLOT_RESULT AS total ON total.is_detail=0 AND total.sale_record_id = detail.sale_record_id
+INNER JOIN acp.acp_store AS st ON detail.store_id = st.id
+ LEFT JOIN acp.acp_employee emp ON emp.id = detail.employee_id
+ LEFT JOIN acp.crm_shoppingguide_member csm ON csm.member_id = detail.member_id
+ LEFT JOIN acp.crm_member AS  cm ON cm.id = detail.member_id
+     WHERE total.error_tag = 0
+       AND detail.is_detail = 1
+       AND detail.company_id = :USER_COMPANY_ID
+       AND detail.employee_id = :employeeId
+       AND total.sale_date BETWEEN '${startTime} 00:00:00' AND '${endTime} 23:59:59'
+   <#if orderType??> AND detail.order_type = :orderType </#if>
+   <#if cross??> <#if (cross==1)> AND detail.order_type IN (1,2) <#else> AND detail.order_type IN (3,4) </#if> </#if>
+   <#if keyword??>
+      AND (detail.old_sale_record_Id LIKE :keyword  OR
+           detail.member_id IN ( SELECT cmm.id
+                                   FROM acp.crm_member cmm
+                                  WHERE cmm.company_id = :USER_COMPANY_ID
+                                    AND (cmm.name LIKE :keyword OR cmm.phone LIKE :keyword ) )
+          )
+   </#if>
+            ]]></body>
+        </sql>
     </model>
 </sqls>
