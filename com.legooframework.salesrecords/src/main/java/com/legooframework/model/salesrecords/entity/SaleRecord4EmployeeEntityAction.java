@@ -63,6 +63,8 @@ public class SaleRecord4EmployeeEntityAction extends BaseEntityAction<SaleRecord
                 "LEFT JOIN acp.crm_salesubrecord sub ON sub.saleRecord_id = sea.sale_record_id \n" +
                 "WHERE sea.allot_status = 0 AND sea.company_id = %d AND sea.createTime > '%s 00:00:00'";
         query_sql = String.format(query_sql, company.getId(), startDate.toString("yyyy-MM-dd"));
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("loadUndoCountByCompany() sql=> %s", query_sql));
         return super.queryForLong(query_sql, 0L);
     }
 

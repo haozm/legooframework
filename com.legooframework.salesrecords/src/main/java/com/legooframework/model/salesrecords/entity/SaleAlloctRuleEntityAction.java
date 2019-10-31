@@ -70,7 +70,10 @@ public class SaleAlloctRuleEntityAction extends BaseEntityAction<SaleAlloctRuleE
     public Optional<List<Map<String, Object>>> loadEnabledCompanies() {
         String query_sql = "SELECT company_id AS 'companyId', DATE_FORMAT(start_date,GET_FORMAT(DATE,'iso')) AS 'startDate' \n " +
                 "FROM acp.ACP_EMPLOYEE_ALLOT_RULE WHERE delete_flag = 0 AND store_id = 0";
-        return super.queryForMapList(query_sql, null);
+        Optional<List<Map<String, Object>>> mapList = super.queryForMapList(query_sql, null);
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("loadEnabledCompanies() res->%s", mapList.orElse(null)));
+        return mapList;
     }
 
     /**

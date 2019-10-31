@@ -110,8 +110,7 @@ public class SaleRecordService extends BundleService {
      * @Doc * FK
      */
     public void alloctSaleOrder4EmployeeJob() {
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("Run alloctSaleOrder4EmployeeJob() .... start.."));
+        if (logger.isDebugEnabled()) logger.debug("Run alloctSaleOrder4EmployeeJob() .... start..");
         LoginContextHolder.setAnonymousCtx();
         try {
             //companyId startDate
