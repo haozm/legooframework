@@ -130,7 +130,7 @@ public class SaleRecordService extends BundleService {
                 cfs.add(CompletableFuture.runAsync(new AlloctSaleOrderJob(company, yyyy_mm_dd)));
             }
             if (CollectionUtils.isNotEmpty(cfs))
-                CompletableFuture.allOf(cfs.toArray(new CompletableFuture[]{}));
+                CompletableFuture.allOf(cfs.toArray(new CompletableFuture[]{})).join();
         } finally {
             LoginContextHolder.clear();
         }
