@@ -124,7 +124,8 @@ public class SaleRecordService extends BundleService {
                 // 一起奔跑吧~~~~ 骚年......
                 cfs.add(CompletableFuture.runAsync(new AlloctSaleOrderJob(company)));
             }
-            CompletableFuture.allOf(cfs.toArray(new CompletableFuture[]{}));
+            if (CollectionUtils.isNotEmpty(cfs))
+                CompletableFuture.allOf(cfs.toArray(new CompletableFuture[]{}));
         } finally {
             LoginContextHolder.clear();
         }
