@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class SaleRecordService extends BundleService {
@@ -107,19 +108,37 @@ public class SaleRecordService extends BundleService {
      * @Doc * FK
      */
     public void alloctSaleOrder4EmployeeJob() {
-        if(logger.isDebugEnabled())
+        if (logger.isDebugEnabled())
             logger.debug(String.format("Run alloctSaleOrder4EmployeeJob() .... start.."));
         LoginContextHolder.setAnonymousCtx();
         try {
             Optional<List<Integer>> companyIds = getBean(SaleAlloctRuleEntityAction.class).loadEnabledCompanies();
             if (!companyIds.isPresent()) return;
-            Job job = getBean("saleRecord4EmployeeJob", Job.class);
             for (Integer comId : companyIds.get()) {
                 OrgEntity company = getBean(OrgEntityAction.class).loadComById(comId);
                 long count = getBean(SaleRecord4EmployeeEntityAction.class).loadUndoCountByCompany(company);
                 if (count == 0L) continue;
                 if (logger.isDebugEnabled())
                     logger.debug(String.format("saleRecord4EmployeeJob(%d) undo count %d, JOb start", comId, count));
+                // 一起奔跑吧~~~~ 骚年......
+                CompletableFuture.runAsync(new AlloctSaleOrderJob(company));
+            }
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
+    private class AlloctSaleOrderJob implements Runnable {
+        private final OrgEntity company;
+
+        AlloctSaleOrderJob(OrgEntity company) {
+            this.company = company;
+        }
+
+        @Override
+        public void run() {
+            LoginContextHolder.setAnonymousCtx();
+            try {
                 JobParametersBuilder jb = new JobParametersBuilder();
                 Map<String, Object> params = Maps.newHashMap();
                 params.put("companyId", company.getId());
@@ -127,13 +146,14 @@ public class SaleRecordService extends BundleService {
                 jb.addDate("job.tamptime", LocalDateTime.now().toDate());
                 JobParameters jobParameters = jb.toJobParameters();
                 try {
+                    Job job = getBean("saleRecord4EmployeeJob", Job.class);
                     getJobLauncher().run(job, jobParameters);
                 } catch (Exception e) {
                     logger.error("saleRecord4EmployeeJob() has error", e);
                 }
+            } finally {
+                LoginContextHolder.clear();
             }
-        } finally {
-            LoginContextHolder.clear();
         }
     }
 
