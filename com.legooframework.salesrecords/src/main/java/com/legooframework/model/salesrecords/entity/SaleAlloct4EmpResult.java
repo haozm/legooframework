@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 public class SaleAlloct4EmpResult {
 
-    private final StoEntity store;
+    private StoEntity store;
     private final SaleRecord4EmployeeEntity employeeAllot;
     private List<SaleAlloctRuleEntity.Rule> rules;
     private int type; // 1 2 3 4
@@ -53,6 +53,15 @@ public class SaleAlloct4EmpResult {
         this.employeeAllot = employeeAllot;
         this.store = store;
         this.error = false;
+    }
+
+    public SaleAlloct4EmpResult(SaleRecord4EmployeeEntity employeeAllot) {
+        this.employeeAllot = employeeAllot;
+        this.error = false;
+    }
+
+    void setStore(StoEntity store) {
+        this.store = store;
     }
 
     void memberDevide(List<SaleAlloctRuleEntity.Rule> rules) {

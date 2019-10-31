@@ -20,11 +20,13 @@ public class SaleRecord4EmployeeItemProcessor implements ItemProcessor<SaleRecor
 
     @Override
     public SaleAlloct4EmpResult process(SaleRecord4EmployeeEntity item) throws Exception {
-        StoEntity store = storeAction.loadById(item.getSaleStoreId());
-        SaleAlloct4EmpResult result = new SaleAlloct4EmpResult(store, item);
+        SaleAlloct4EmpResult result = new SaleAlloct4EmpResult(item);
         try {
-            Optional<SaleAlloctRule4Store> rules = saleAlloctRuleAction.findByStore4Use(store);
-            Preconditions.checkState(rules.isPresent(), "不存在store=%d 对应的分配规则", store.getId());
+            Optional<StoEntity> store = storeAction.findById(item.getSaleStoreId());
+            Preconditions.checkState(store.isPresent(), "不存在ID=%d 对应的门店", item.getSaleStoreId());
+            result.setStore(store.get());
+            Optional<SaleAlloctRule4Store> rules = saleAlloctRuleAction.findByStore4Use(store.get());
+            Preconditions.checkState(rules.isPresent(), "不存在store=%d 对应的分配规则", store.get().getId());
             rules.get().allocation(result);
         } catch (Exception e) {
             logger.error("Process has error", e);
