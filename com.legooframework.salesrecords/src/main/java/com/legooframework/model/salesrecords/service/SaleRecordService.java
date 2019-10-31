@@ -114,6 +114,7 @@ public class SaleRecordService extends BundleService {
         try {
             Optional<List<Integer>> companyIds = getBean(SaleAlloctRuleEntityAction.class).loadEnabledCompanies();
             if (!companyIds.isPresent()) return;
+            List<CompletableFuture<Void>> cfs = Lists.newArrayList();
             for (Integer comId : companyIds.get()) {
                 OrgEntity company = getBean(OrgEntityAction.class).loadComById(comId);
                 long count = getBean(SaleRecord4EmployeeEntityAction.class).loadUndoCountByCompany(company);
@@ -121,13 +122,15 @@ public class SaleRecordService extends BundleService {
                 if (logger.isDebugEnabled())
                     logger.debug(String.format("saleRecord4EmployeeJob(%d) undo count %d, JOb start", comId, count));
                 // 一起奔跑吧~~~~ 骚年......
-                CompletableFuture.runAsync(new AlloctSaleOrderJob(company));
+                cfs.add(CompletableFuture.runAsync(new AlloctSaleOrderJob(company)));
             }
+            CompletableFuture.allOf(cfs.toArray(new CompletableFuture[]{}));
         } finally {
             LoginContextHolder.clear();
         }
     }
 
+    // OXOX
     private class AlloctSaleOrderJob implements Runnable {
         private final OrgEntity company;
 
