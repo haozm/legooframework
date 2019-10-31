@@ -22,7 +22,8 @@ public class SaleAlloctResultEntityAction extends BaseEntityAction<SaleAlloctRes
     public void batchInsert(Collection<SaleAlloctResultEntity> instance) {
         if (CollectionUtils.isEmpty(instance)) return;
         Set<Integer> saleIds = instance.stream().map(SaleAlloctResultEntity::getSaleRecordId).collect(Collectors.toSet());
-        deleteBySaleIds(saleIds);
+        Integer companyId = instance.iterator().next().getCompanyId();
+        deleteBySaleIds(saleIds, companyId);
         super.batchInsert("batchInsert", instance);
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchInsert(Collection<SaleAlloctResultEntity> instance) size is %d", instance.size()));
@@ -33,13 +34,14 @@ public class SaleAlloctResultEntityAction extends BaseEntityAction<SaleAlloctRes
      *
      * @param saleIds
      */
-    private void deleteBySaleIds(Set<Integer> saleIds) {
+    private void deleteBySaleIds(Set<Integer> saleIds, Integer companyId) {
         if (CollectionUtils.isEmpty(saleIds)) return;
         String ids = Joiner.on(',').join(saleIds);
-        String delete_sql = String.format("DELETE FROM acp.ACP_EMPLOYEE_ALLOT_RESULT WHERE sale_record_id IN (%s)", ids);
+        String delete_sql = String.format("DELETE FROM acp.ACP_EMPLOYEE_ALLOT_RESULT WHERE sale_record_id IN (%s) AND company_id = %d",
+                ids, companyId);
         super.update(delete_sql, null);
         if (logger.isDebugEnabled())
-            logger.debug(String.format("deleteBySaleIds(%s) finished....", ids));
+            logger.debug(String.format("deleteBySaleIds(%s,companyId=%d) finished....", ids, companyId));
     }
 
     @Override

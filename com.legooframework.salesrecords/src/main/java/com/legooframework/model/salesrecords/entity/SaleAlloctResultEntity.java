@@ -19,6 +19,10 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
     private double cardAmount, saleAmount;
     private LocalDateTime saleDateTime;
 
+    Integer getCompanyId() {
+        return companyId;
+    }
+
     Integer getSaleRecordId() {
         return saleRecordId;
     }
