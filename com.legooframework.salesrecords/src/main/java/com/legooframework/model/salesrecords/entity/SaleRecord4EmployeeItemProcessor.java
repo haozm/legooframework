@@ -35,10 +35,10 @@ public class SaleRecord4EmployeeItemProcessor implements ItemProcessor<SaleRecor
                 cache.put(item.getSaleStoreId(), value);
             }
             if (value instanceof String)
-                throw new RuntimeException(String.format("不存在ID=%s 对应的门店", item.getSaleStoreId()));
+                throw new RuntimeException(String.format("不存在ID=%d 对应的门店", item.getSaleStoreId()));
             StoEntity store = (StoEntity) value;
             Optional<SaleAlloctRule4Store> rules = saleAlloctRuleAction.findByStore4Use(store);
-            Preconditions.checkState(rules.isPresent(), "不存在store=%d 对应的分配规则", store.getId());
+            Preconditions.checkState(rules.isPresent(), "不存在storeId=%d 对应的分配规则", store.getId());
             rules.get().allocation(result);
         } catch (Exception e) {
             logger.error("Process has error", e);
