@@ -14,10 +14,7 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class SaleAlloctRuleEntityAction extends BaseEntityAction<SaleAlloctRuleEntity> {
 
@@ -30,8 +27,24 @@ public class SaleAlloctRuleEntityAction extends BaseEntityAction<SaleAlloctRuleE
     public void insert4Store(StoEntity store, boolean autoRun, List<List<SaleAlloctRuleEntity.Rule>> memberRule,
                              List<List<SaleAlloctRuleEntity.Rule>> noMemberRule) {
         SaleAlloctRuleEntity rule = SaleAlloctRuleEntity.createByStore(store, autoRun, memberRule, noMemberRule);
+        Optional<List<SaleAlloctRuleEntity>> all_rule = loadAllByCompany(store.getCompanyId());
+        if (all_rule.isPresent()) {
+            Optional<SaleAlloctRuleEntity> exits = all_rule.get().stream().filter(x -> x.isSameRule(rule)).findFirst();
+            exits.ifPresent(this::deleteByRule);
+        }
         super.updateAction(rule, "insert");
         evict(store.getCompanyId());
+    }
+
+    private void deleteByRule(SaleAlloctRuleEntity rule) {
+        Objects.requireNonNull(super.getJdbcTemplate())
+                .update("UPDATE acp.ACP_EMPLOYEE_ALLOT_RULE SET delete_flag = 1 WHERE id = ?", rule.getId());
+    }
+
+    private void deleteAllStore(SaleAlloctRuleEntity rule) {
+        Objects.requireNonNull(super.getJdbcTemplate())
+                .update("UPDATE acp.ACP_EMPLOYEE_ALLOT_RULE SET delete_flag = 1 WHERE company_id = ? AND store_id != 0",
+                        rule.getCompanyId());
     }
 
     public void insert4Company(OrgEntity company, boolean autoRun, List<List<SaleAlloctRuleEntity.Rule>> memberRule,
@@ -40,9 +53,14 @@ public class SaleAlloctRuleEntityAction extends BaseEntityAction<SaleAlloctRuleE
                                List<List<SaleAlloctRuleEntity.Rule>> crossNoMemberRule, boolean coverted, LocalDate startDate) {
         SaleAlloctRuleEntity rule = SaleAlloctRuleEntity.createByCompany(company, autoRun, memberRule, noMemberRule,
                 crossMemberRule, crossNoMemberRule, startDate);
+        Optional<List<SaleAlloctRuleEntity>> all_rule = loadAllByCompany(company.getId());
+        if (all_rule.isPresent()) {
+            Optional<SaleAlloctRuleEntity> exits = all_rule.get().stream().filter(x -> x.isSameRule(rule)).findFirst();
+            exits.ifPresent(this::deleteById);
+        }
         super.updateAction(rule, "insert");
         if (coverted) {
-            super.updateAction("deleteByCompany", company.toParamMap());
+            deleteAllStore(rule);
             if (logger.isDebugEnabled())
                 logger.debug(String.format("公司 %s 重写规则，应用到下级所有门店....", company.getId()));
         }
@@ -110,7 +128,7 @@ public class SaleAlloctRuleEntityAction extends BaseEntityAction<SaleAlloctRuleE
     }
 
     private void evict(Integer companyId) {
-        getCache().ifPresent(c -> c.evict(companyId));
+        getCache().ifPresent(c -> c.evict(String.format("EMP_DIVIDED_COM_%d", companyId)));
     }
 
     @Override

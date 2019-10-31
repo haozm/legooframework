@@ -39,6 +39,9 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
     private List<List<Rule>> crossNoMemberRule;
     private LocalDate startDate;
 
+    Integer getCompanyId() {
+        return companyId;
+    }
 
     boolean isCompany() {
         return this.storeId == 0;
@@ -66,6 +69,10 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
 
     boolean isAutoRun() {
         return autoRun;
+    }
+
+    boolean isSameRule(SaleAlloctRuleEntity that) {
+        return Objects.equals(this.companyId, that.companyId) && Objects.equals(this.storeId, that.storeId);
     }
 
     boolean isOnlyCompany(StoEntity store) {
