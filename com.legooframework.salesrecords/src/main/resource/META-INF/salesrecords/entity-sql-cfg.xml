@@ -147,8 +147,8 @@
         <sql id="batchInsert">
             <body><![CDATA[
     INSERT INTO acp.ACP_EMPLOYEE_ALLOT_RESULT
-                (company_id, store_id, sale_record_id, employee_id, employee_type, employee_count, order_type, member_id, error_tag, is_detail, allot_rule, card_amount, sale_amount, allot_msg, sale_date, delete_flag, tenant_id, goods_num,old_sale_record_Id)
-         VALUES (         ?,        ?,              ?,           ?,              ?,              ?,          ?,        ?,         ?,         ?,          ?,           ?,           ?,         ?,          ?,          0,         ?,         ?,?)
+                (company_id, store_id, sale_record_id, employee_id, employee_type, employee_count, order_type, member_id, error_tag, is_detail, allot_rule, card_amount, sale_amount, allot_msg, sale_date, delete_flag, tenant_id, goods_num,old_sale_record_Id, member_store_id)
+         VALUES (         ?,        ?,              ?,           ?,              ?,              ?,          ?,        ?,         ?,         ?,          ?,           ?,           ?,         ?,          ?,          0,         ?,         ?,                 ?, ?)
             ]]></body>
         </sql>
     </model>

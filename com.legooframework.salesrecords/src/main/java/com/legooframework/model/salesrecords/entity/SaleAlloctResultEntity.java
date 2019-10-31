@@ -13,7 +13,7 @@ import java.util.List;
 
 public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSetter {
 
-    private Integer companyId, storeId, saleRecordId, employeeId, orderType, empNum, empType, memberId, goodsSum;
+    private Integer companyId, storeId, saleRecordId, employeeId, orderType, empNum, empType, memberId, memberStoreId, goodsSum;
     private boolean error, detail;
     private String allotRule, allotMsg, oldSaleRecordId;
     private double cardAmount, saleAmount;
@@ -37,6 +37,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         this.memberId = saleRecord4Employee.getMemberId().orElse(0);
         this.empNum = saleRecord4Employee.getEmpCount();
         this.detail = false;
+        this.memberStoreId = saleRecord4Employee.getMemberStoreId();
         this.empType = 0;
         this.oldSaleRecordId = saleRecord4Employee.getOldSaleRecordId();
         this.allotRule = CollectionUtils.isEmpty(rules) ? null : rules.toString();
@@ -58,6 +59,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         this.orderType = totalRec.orderType;
         this.memberId = totalRec.memberId;
         this.goodsSum = totalRec.goodsSum;
+        this.memberStoreId = totalRec.memberStoreId;
         this.oldSaleRecordId = totalRec.oldSaleRecordId;
         this.saleDateTime = totalRec.saleDateTime;
         this.empType = rule.getType();
@@ -93,6 +95,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         ps.setObject(16, companyId);
         ps.setObject(17, goodsSum);
         ps.setObject(18, oldSaleRecordId);
+        ps.setObject(19, memberStoreId == null ? 0 : memberStoreId);
     }
 
     @Override
@@ -106,6 +109,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
                 .add("empNum", empNum)
                 .add("empType", empType)
                 .add("memberId", memberId)
+                .add("memberStoreId", memberStoreId)
                 .add("error", error)
                 .add("detail", detail)
                 .add("allotRule", allotRule)
@@ -115,6 +119,7 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
                 .add("goodsSum", goodsSum)
                 .add("saleDateTime", saleDateTime)
                 .add("oldSaleRecordId", oldSaleRecordId)
+                .add("memberStoreId", memberStoreId)
                 .toString();
     }
 }

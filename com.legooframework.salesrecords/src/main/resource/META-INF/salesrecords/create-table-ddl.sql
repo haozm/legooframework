@@ -71,6 +71,7 @@ CREATE TABLE ACP_EMPLOYEE_ALLOT_RESULT (
     goods_num          INT(11)          NOT NULL DEFAULT 0,
     order_type         TINYINT UNSIGNED NOT NULL,
     member_id          INT(11) NOT NULL DEFAULT 0,
+    member_store_id    INT(11) NOT NULL DEFAULT 0,
     error_tag          TINYINT UNSIGNED NOT NULL DEFAULT 0,
     is_detail          TINYINT UNSIGNED NOT NULL DEFAULT 0,
     allot_rule         VARCHAR(512)     DEFAULT NULL,
