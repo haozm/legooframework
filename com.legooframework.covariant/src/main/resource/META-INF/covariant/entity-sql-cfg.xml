@@ -29,6 +29,8 @@
      WHERE sto.status = 1
     <#if (sql=="findById")>
        AND sto.id = :storeId
+    <#elseif (sql=="findByIds")>
+       AND sto.id IN (${storeIds?join(",")})
     <#elseif (sql=="findByOldInfo")>
        AND LOWER(sto.oldStoreId)  = :oldStoreId
        AND LOWER(sto.companypy) = :companypy

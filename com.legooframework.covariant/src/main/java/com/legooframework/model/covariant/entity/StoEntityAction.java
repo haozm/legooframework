@@ -4,11 +4,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
+import org.apache.commons.collections4.CollectionUtils;
 import org.junit.Before;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -43,6 +46,14 @@ public class StoEntityAction extends BaseEntityAction<StoEntity> {
         Optional<StoEntity> store = super.queryForEntity("query4list", params, getRowMapper());
         getCache().ifPresent(c -> store.ifPresent(s -> c.put(cache_key, s)));
         return store;
+    }
+
+    public Optional<List<StoEntity>> findByIds(Collection<Integer> storeIds) {
+        if (CollectionUtils.isEmpty(storeIds)) return Optional.empty();
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("storeIds", storeIds);
+        params.put("sql", "findByIds");
+        return super.queryForEntities("query4list", params, getRowMapper());
     }
 
     @Override

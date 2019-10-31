@@ -34,7 +34,7 @@ public class ReactorSwitchEntityActionTest {
     @Test
     public void updateRetailFactSwitch() {
         OrgEntity com = orgEntityAction.loadComById(1);
-        reactorSwitchEntityAction.updateRetailFactSwitch(com, null);
+        reactorSwitchEntityAction.eidtRetailFactSwitch(com, null);
     }
 
     @Test

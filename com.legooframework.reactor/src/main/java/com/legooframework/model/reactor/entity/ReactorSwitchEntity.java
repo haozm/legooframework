@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 
 public class ReactorSwitchEntity extends BaseEntity<Long> {
 
-    final static String TYPE_RETAILFACT = "RetailFact";
+    public final static String TYPE_RETAILFACT = "RetailFact";
 
     private final Integer companyId;
     private boolean enabled;
@@ -72,9 +72,7 @@ public class ReactorSwitchEntity extends BaseEntity<Long> {
         }
     }
 
-    Optional<ReactorSwitchEntity> allowStoreIds(Set<StoEntity> stores) {
-        Set<Integer> storeIds = CollectionUtils.isEmpty(stores) ? null :
-                stores.stream().mapToInt(StoEntity::getId).boxed().collect(Collectors.toSet());
+    Optional<ReactorSwitchEntity> allowStoreIds(Set<Integer> storeIds) {
         if (SetUtils.isEqualSet(this.allowStoreIds, storeIds)) return Optional.empty();
         ReactorSwitchEntity clone = (ReactorSwitchEntity) cloneMe();
         clone.enabled = true;
@@ -91,6 +89,20 @@ public class ReactorSwitchEntity extends BaseEntity<Long> {
         params.put("switchType", type);
         params.put("allowStoreIds", CollectionUtils.isEmpty(allowStoreIds) ? null : Joiner.on(',').join(allowStoreIds));
         params.put("forbidStoreIds", CollectionUtils.isEmpty(forbidStoreIds) ? null : Joiner.on(',').join(forbidStoreIds));
+        return params;
+    }
+
+    @Override
+    public Map<String, Object> toViewMap() {
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("companyId", companyId);
+        params.put("id", getId());
+        params.put("enabled", enabled ? 1 : 0);
+        params.put("switchType", type);
+        params.put("allowStoreIds", CollectionUtils.isEmpty(allowStoreIds) ? new String[0]
+                : Joiner.on(',').join(allowStoreIds));
+        params.put("forbidStoreIds", CollectionUtils.isEmpty(forbidStoreIds) ? new String[0]
+                : Joiner.on(',').join(forbidStoreIds));
         return params;
     }
 
