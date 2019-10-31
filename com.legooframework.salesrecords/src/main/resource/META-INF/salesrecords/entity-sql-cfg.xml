@@ -104,7 +104,7 @@
         </sql>
         <sql id="quer4List" dynamic="true">
             <body><![CDATA[
-    SELECT id, company_id, store_id, member_rule, no_member_rule, crs_member_rule, crs_no_member_rule, auto_run, delete_flag, tenant_id, creator, createTime, editor, editTime
+    SELECT id, company_id, store_id, member_rule, no_member_rule, crs_member_rule, crs_no_member_rule, auto_run, start_date, delete_flag, tenant_id, creator, createTime, editor, editTime
       FROM acp.ACP_EMPLOYEE_ALLOT_RULE
  <#if (sql=="loadAllByCompany")>
       WHERE delete_flag = 0 AND company_id = :companyId
