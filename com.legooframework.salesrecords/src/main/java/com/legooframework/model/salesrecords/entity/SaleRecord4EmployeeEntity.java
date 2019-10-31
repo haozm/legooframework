@@ -26,6 +26,14 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
     private final double totalCardPrice, totalSalePrice;
     private final LocalDateTime saleDateTime;
 
+    Integer getCompanyId() {
+        return companyId;
+    }
+
+    Integer getMemberStoreId() {
+        return memberStoreId;
+    }
+
     SaleRecord4EmployeeEntity(Integer id, ResultSet resultSet) throws RuntimeException {
         super(id);
         try {

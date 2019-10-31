@@ -40,7 +40,7 @@ public class SaleRecord4EmployeeEntityActionTest {
         Optional<List<SaleRecord4EmployeeEntity>> todo_list = saleRecord4EmployeeEntityAction.findByStore(store);
         List<SaleAlloct4EmpResult> saleAlloct4EmpResults = Lists.newArrayList();
         for (SaleRecord4EmployeeEntity $it : todo_list.get()) {
-            SaleAlloct4EmpResult res = new SaleAlloct4EmpResult(store, $it);
+            SaleAlloct4EmpResult res = new SaleAlloct4EmpResult($it);
             saleAlloctRule4Store.get().allocation(res);
             saleAlloct4EmpResults.add(res);
         }

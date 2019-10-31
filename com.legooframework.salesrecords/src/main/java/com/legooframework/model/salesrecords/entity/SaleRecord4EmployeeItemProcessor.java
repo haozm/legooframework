@@ -23,8 +23,7 @@ public class SaleRecord4EmployeeItemProcessor implements ItemProcessor<SaleRecor
         SaleAlloct4EmpResult result = new SaleAlloct4EmpResult(item);
         try {
             Optional<StoEntity> store = storeAction.findById(item.getSaleStoreId());
-            Preconditions.checkState(store.isPresent(), "不存在ID=%d 对应的门店", item.getSaleStoreId());
-            result.setStore(store.get());
+            Preconditions.checkState(store.isPresent(), "不存在ID=%s 对应的门店", item.getSaleStoreId());
             Optional<SaleAlloctRule4Store> rules = saleAlloctRuleAction.findByStore4Use(store.get());
             Preconditions.checkState(rules.isPresent(), "不存在store=%d 对应的分配规则", store.get().getId());
             rules.get().allocation(result);

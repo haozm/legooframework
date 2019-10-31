@@ -23,11 +23,11 @@ public class SaleAlloctResultEntity extends BaseEntity<Long> implements BatchSet
         return saleRecordId;
     }
 
-    SaleAlloctResultEntity(StoEntity store, SaleRecord4EmployeeEntity saleRecord4Employee, int orderType,
+    SaleAlloctResultEntity(SaleRecord4EmployeeEntity saleRecord4Employee, int orderType,
                            List<SaleAlloctRuleEntity.Rule> rules, boolean error, String errMsg) {
         super(0L);
-        this.companyId = store.getCompanyId();
-        this.storeId = store.getId();
+        this.companyId = saleRecord4Employee.getCompanyId();
+        this.storeId = saleRecord4Employee.getSaleStoreId();
         this.saleRecordId = saleRecord4Employee.getId();
         this.orderType = orderType;
         this.memberId = saleRecord4Employee.getMemberId().orElse(0);

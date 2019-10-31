@@ -90,7 +90,7 @@ public class SaleRecordService extends BundleService {
         List<SaleAlloct4EmpResult> saleAlloct4EmpResults = Lists.newArrayList();
 
         for (SaleRecord4EmployeeEntity $it : saleRecord4Emps.get()) {
-            SaleAlloct4EmpResult result = new SaleAlloct4EmpResult(store, $it);
+            SaleAlloct4EmpResult result = new SaleAlloct4EmpResult($it);
             try {
                 rules.get().allocation(result);
             } catch (Exception e) {

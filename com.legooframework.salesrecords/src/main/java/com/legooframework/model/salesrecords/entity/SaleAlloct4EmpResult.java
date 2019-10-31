@@ -4,9 +4,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +12,6 @@ import java.util.stream.Collectors;
 
 public class SaleAlloct4EmpResult {
 
-    private StoEntity store;
     private final SaleRecord4EmployeeEntity employeeAllot;
     private List<SaleAlloctRuleEntity.Rule> rules;
     private int type; // 1 2 3 4
@@ -28,7 +25,7 @@ public class SaleAlloct4EmpResult {
 
     public List<SaleAlloctResultEntity> processResult() {
         List<SaleAlloctResultEntity> list = Lists.newArrayList();
-        SaleAlloctResultEntity total = new SaleAlloctResultEntity(store, employeeAllot, type, rules, error, message);
+        SaleAlloctResultEntity total = new SaleAlloctResultEntity(employeeAllot, type, rules, error, message);
         list.add(total);
         if (!error && CollectionUtils.isNotEmpty(results)) {
             for (Result $it : results) {
@@ -49,19 +46,9 @@ public class SaleAlloct4EmpResult {
         this.message = msg;
     }
 
-    public SaleAlloct4EmpResult(StoEntity store, SaleRecord4EmployeeEntity employeeAllot) {
-        this.employeeAllot = employeeAllot;
-        this.store = store;
-        this.error = false;
-    }
-
     public SaleAlloct4EmpResult(SaleRecord4EmployeeEntity employeeAllot) {
         this.employeeAllot = employeeAllot;
         this.error = false;
-    }
-
-    void setStore(StoEntity store) {
-        this.store = store;
     }
 
     void memberDevide(List<SaleAlloctRuleEntity.Rule> rules) {
