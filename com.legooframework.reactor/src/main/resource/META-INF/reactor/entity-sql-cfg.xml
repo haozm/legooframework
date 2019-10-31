@@ -65,4 +65,25 @@ INNER JOIN acp.acp_store AS sto ON LOWER(sto.oldStoreId) = LOWER(crt.old_store_i
             ]]></body>
         </sql>
     </model>
+    <model id="ReactorSwitchEntity">
+        <sql id="find4All">
+            <body><![CDATA[
+    SELECT id, company_id, enabled, switch_type, allow_store_ids, forbid_store_ids, delete_flag
+      FROM acp.REACTOR_RECORD_SWITCH
+     WHERE delete_flag = 0
+            ]]></body>
+        </sql>
+        <sql id="insert">
+            <body><![CDATA[
+   INSERT INTO acp.REACTOR_RECORD_SWITCH
+               (company_id,  enabled, switch_type, allow_store_ids, forbid_store_ids, delete_flag,  tenant_id )
+        VALUES (:companyId, :enabled, :switchType,  :allowStoreIds,  :forbidStoreIds,           0, :companyId)
+            ]]></body>
+        </sql>
+        <sql id="updateWhitelist">
+            <body><![CDATA[
+   UPDATE acp.REACTOR_RECORD_SWITCH SET allow_store_ids = :allowStoreIds WHERE id = :id
+            ]]></body>
+        </sql>
+    </model>
 </sqls>

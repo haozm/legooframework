@@ -33,9 +33,11 @@
           parent="reactorAbsEntityAction"/>
     <bean id="reactorLogEntityAction" class="com.legooframework.model.reactor.entity.ReactorLogEntityAction"
           parent="reactorAbsEntityAction"/>
+    <bean id="reactorSwitchAction" class="com.legooframework.model.reactor.entity.ReactorSwitchEntityAction"
+          parent="reactorAbsEntityAction"/>
+
     <bean id="retailFactRowMapper" class="com.legooframework.model.reactor.entity.RetailFactRowMapper"
           scope="prototype"/>
-
     <bean id="retailFactAggItemReader" class="com.legooframework.model.reactor.entity.RetailFactAggItemReader"
           scope="step">
         <property name="sqlStatementFactory" ref="reactorStatementFactory"/>

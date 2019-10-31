@@ -74,7 +74,8 @@ public class MvcController extends BaseController {
                 params.put("startTime", start_date);
                 params.put("endTime", end_date);
             }
-            PagingResult page = getJdbcQuerySupport(request).queryForPage("SaleAlloctResultEntity", "alloct4Detail", pageNum, pageSize, params);
+            PagingResult page = getJdbcQuerySupport(request).queryForPage("SaleAlloctResultEntity", "alloct4Detail",
+                    pageNum, pageSize, params);
             return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
         } finally {
             LoginContextHolder.clear();
@@ -103,7 +104,8 @@ public class MvcController extends BaseController {
                 params.put("startTime", start_date);
                 params.put("endTime", end_date);
             }
-            PagingResult page = getJdbcQuerySupport(request).queryForPage("SaleAlloctResultEntity", "summaryByemp", pageNum, pageSize, params);
+            PagingResult page = getJdbcQuerySupport(request).queryForPage("SaleAlloctResultEntity", "summaryByemp",
+                    pageNum, pageSize, params);
             return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
         } finally {
             LoginContextHolder.clear();
