@@ -37,9 +37,10 @@ public class SaleRecord4EmployeeItemReader extends AbstractCursorItemReader<Sale
     private static Splitter.MapSplitter SPLITTER = Splitter.on('$').withKeyValueSeparator('=');
 
     public void setParams(String params) {
-        // companyId=%s
+        // companyId=%s startDate=???
         Map<String, String> _map = SPLITTER.split(params);
         paramMap.put("companyId", MapUtils.getIntValue(_map, "companyId"));
+        paramMap.put("startDate", MapUtils.getString(_map, "startDate"));
         paramMap.put("sql", "findUndoByCompany");
     }
 

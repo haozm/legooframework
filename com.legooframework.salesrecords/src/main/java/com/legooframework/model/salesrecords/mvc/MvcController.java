@@ -189,8 +189,11 @@ public class MvcController extends BaseController {
                 getBean(SaleAlloctRuleEntityAction.class, request).insert4Store(store, auto_run == 1, memberRule, noMemberRule);
             } else if (user.isAdmin()) {
                 OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
+                String startDate_str = MapUtils.getString(requestBody, "startDate",
+                        LocalDate.now().dayOfMonth().withMinimumValue().toString("yyyy-MM-dd"));
+                LocalDate startDate = DateTimeUtils.parseYYYYMMDD(startDate_str);
                 getBean(SaleAlloctRuleEntityAction.class, request).insert4Company(company, auto_run == 1, memberRule, noMemberRule,
-                        crossMemberRule, crossNoMemberRule, coverted == 1);
+                        crossMemberRule, crossNoMemberRule, coverted == 1, startDate);
             } else {
                 throw new RuntimeException("当前账户无权限操作....");
             }

@@ -43,6 +43,7 @@ CREATE TABLE ACP_EMPLOYEE_ALLOT_RULE (
     crs_member_rule    VARCHAR(512)     DEFAULT NULL,
     crs_no_member_rule VARCHAR(512)     DEFAULT NULL,
     auto_run           TINYINT UNSIGNED NOT NULL DEFAULT 1,
+    start_date         DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
     delete_flag        TINYINT UNSIGNED NOT NULL DEFAULT 0,
     tenant_id          BIGINT(20)       NULL     DEFAULT NULL,
     creator            BIGINT(20)       NOT NULL DEFAULT -1,

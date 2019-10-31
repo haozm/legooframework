@@ -58,11 +58,11 @@ public class SaleRecord4EmployeeEntityAction extends BaseEntityAction<SaleRecord
         return optional;
     }
 
-    public long loadUndoCountByCompany(OrgEntity company) {
+    public long loadUndoCountByCompany(OrgEntity company, LocalDate startDate) {
         String query_sql = "SELECT COUNT(sea.sale_record_id) FROM acp.sales_employee_allot AS sea \n " +
                 "LEFT JOIN acp.crm_salesubrecord sub ON sub.saleRecord_id = sea.sale_record_id \n" +
-                "WHERE sea.allot_status = 0 AND sea.company_id = %d";
-        query_sql = String.format(query_sql, company.getId());
+                "WHERE sea.allot_status = 0 AND sea.company_id = %d AND sea.createTime > '%s 00:00:00'";
+        query_sql = String.format(query_sql, company.getId(), startDate.toString("yyyy-MM-dd"));
         return super.queryForLong(query_sql, 0L);
     }
 

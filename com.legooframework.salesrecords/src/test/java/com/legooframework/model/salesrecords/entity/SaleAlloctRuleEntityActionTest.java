@@ -6,6 +6,7 @@ import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.OrgEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.StoEntityAction;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -100,7 +101,7 @@ public class SaleAlloctRuleEntityActionTest {
 
         OrgEntity company = orgEntityAction.loadComById(1);
         SaleAlloctRuleEntity rule = SaleAlloctRuleEntity.createByCompany(company, true, memner_rule,
-                no_memner_rule, crs_memner_rule, crs_no_memner_rule);
+                no_memner_rule, crs_memner_rule, crs_no_memner_rule, LocalDate.now());
         System.out.println(rule.toString());
     }
 
@@ -253,7 +254,7 @@ public class SaleAlloctRuleEntityActionTest {
         crs_no_memner_rule.add(no_memrule06);
 
         saleAlloctRuleEntityAction.insert4Company(company, true, memner_rule, no_memner_rule, crs_memner_rule,
-                crs_no_memner_rule, true);
+                crs_no_memner_rule, true, LocalDate.now());
         saleAlloctRuleEntityAction.insert4Store(store, true, memner_rule, no_memner_rule);
     }
 

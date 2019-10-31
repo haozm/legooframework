@@ -32,7 +32,7 @@ public class SaleAlloctResultEntityAction extends BaseEntityAction<SaleAlloctRes
     /**
      * 删除历史
      *
-     * @param saleIds
+     * @param saleIds OOXX
      */
     private void deleteBySaleIds(Set<Integer> saleIds, Integer companyId) {
         if (CollectionUtils.isEmpty(saleIds)) return;

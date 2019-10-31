@@ -139,6 +139,7 @@
  <#elseif (sql=="findUndoByCompany")>
      WHERE allot.allot_status = 0
        AND allot.company_id = ${companyId}
+       AND allot.createTime > '${startDate} 00:00:00'
  <#elseif (sql=="findByStoreWithPeriod")>
      WHERE allot.company_id = :companyId
        AND allot.store_id = :storeId

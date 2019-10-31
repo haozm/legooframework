@@ -52,7 +52,7 @@ public class SaleRecord4EmployeeEntityActionTest {
     @Test
     public void findUndoCountByCompany() {
         OrgEntity com = orgEntityAction.loadComById(1);
-        System.out.println(saleRecord4EmployeeEntityAction.loadUndoCountByCompany(com));
+        System.out.println(saleRecord4EmployeeEntityAction.loadUndoCountByCompany(com, LocalDate.now()));
     }
 
     @Test

@@ -7,6 +7,7 @@ import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
+import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -36,9 +37,9 @@ public class SaleAlloctRuleEntityAction extends BaseEntityAction<SaleAlloctRuleE
     public void insert4Company(OrgEntity company, boolean autoRun, List<List<SaleAlloctRuleEntity.Rule>> memberRule,
                                List<List<SaleAlloctRuleEntity.Rule>> noMemberRule,
                                List<List<SaleAlloctRuleEntity.Rule>> crossMemberRule,
-                               List<List<SaleAlloctRuleEntity.Rule>> crossNoMemberRule, boolean coverted) {
-        SaleAlloctRuleEntity rule = SaleAlloctRuleEntity.createByCompany(company, autoRun, memberRule, noMemberRule, crossMemberRule,
-                crossNoMemberRule);
+                               List<List<SaleAlloctRuleEntity.Rule>> crossNoMemberRule, boolean coverted, LocalDate startDate) {
+        SaleAlloctRuleEntity rule = SaleAlloctRuleEntity.createByCompany(company, autoRun, memberRule, noMemberRule,
+                crossMemberRule, crossNoMemberRule, startDate);
         super.updateAction(rule, "insert");
         if (coverted) {
             super.updateAction("deleteByCompany", company.toParamMap());
@@ -48,9 +49,10 @@ public class SaleAlloctRuleEntityAction extends BaseEntityAction<SaleAlloctRuleE
         evict(company.getId());
     }
 
-    public Optional<List<Integer>> loadEnabledCompanies() {
-        String query_sql = "SELECT DISTINCT company_id FROM acp.ACP_EMPLOYEE_ALLOT_RULE WHERE delete_flag= 0 AND store_id = 0";
-        return super.queryForList(query_sql, null, Integer.class);
+    public Optional<List<Map<String, Object>>> loadEnabledCompanies() {
+        String query_sql = "SELECT company_id AS 'companyId', DATE_FORMAT(start_date,GET_FORMAT(DATE,'iso')) AS 'startDate' \n " +
+                "FROM acp.ACP_EMPLOYEE_ALLOT_RULE WHERE delete_flag = 0 AND store_id = 0";
+        return super.queryForMapList(query_sql, null);
     }
 
     /**

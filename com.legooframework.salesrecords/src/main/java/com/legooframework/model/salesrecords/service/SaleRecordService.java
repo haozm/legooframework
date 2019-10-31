@@ -6,12 +6,14 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
+import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.covariant.entity.MemberEntity;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.OrgEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.salesrecords.entity.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
@@ -20,10 +22,7 @@ import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -79,8 +78,11 @@ public class SaleRecordService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("alloctSaleOrder4StoreWithPeriod(%d,%s,%s) start ....", store.getId(),
                     start.toString("yyyy-MM-dd"), end.toString("yyyy-MM-dd")));
-        Optional<List<Integer>> companyIds = getBean(SaleAlloctRuleEntityAction.class).loadEnabledCompanies();
-        Preconditions.checkState(companyIds.isPresent() && companyIds.get().contains(store.getCompanyId()), "尚未配置规则....");
+        Optional<List<Map<String, Object>>> rule_inf = getBean(SaleAlloctRuleEntityAction.class).loadEnabledCompanies();
+        Preconditions.checkState(rule_inf.isPresent(), "尚未配置规则....");
+        Set<Integer> companyIds = rule_inf.get().stream().mapToInt(x -> MapUtils.getInteger(x, "companyId")).boxed()
+                .collect(Collectors.toSet());
+        Preconditions.checkState(CollectionUtils.isNotEmpty(companyIds) && companyIds.contains(store.getCompanyId()), "尚未配置规则....");
         Optional<SaleAlloctRule4Store> rules = getBean(SaleAlloctRuleEntityAction.class).findByStore4Use(store);
         Preconditions.checkState(rules.isPresent(), "不存在 门店=%d对应的分配规则", store.getId());
 
@@ -112,17 +114,21 @@ public class SaleRecordService extends BundleService {
             logger.debug(String.format("Run alloctSaleOrder4EmployeeJob() .... start.."));
         LoginContextHolder.setAnonymousCtx();
         try {
-            Optional<List<Integer>> companyIds = getBean(SaleAlloctRuleEntityAction.class).loadEnabledCompanies();
-            if (!companyIds.isPresent()) return;
+            //companyId startDate
+            Optional<List<Map<String, Object>>> run_info = getBean(SaleAlloctRuleEntityAction.class).loadEnabledCompanies();
+            if (!run_info.isPresent()) return;
             List<CompletableFuture<Void>> cfs = Lists.newArrayList();
-            for (Integer comId : companyIds.get()) {
-                OrgEntity company = getBean(OrgEntityAction.class).loadComById(comId);
-                long count = getBean(SaleRecord4EmployeeEntityAction.class).loadUndoCountByCompany(company);
+            for (Map<String, Object> $it : run_info.get()) {
+                Integer companyId = MapUtils.getInteger($it, "companyId");
+                LocalDate yyyy_mm_dd = DateTimeUtils.parseYYYYMMDD(MapUtils.getString($it, "startDate"));
+                OrgEntity company = getBean(OrgEntityAction.class).loadComById(companyId);
+                long count = getBean(SaleRecord4EmployeeEntityAction.class).loadUndoCountByCompany(company, yyyy_mm_dd);
                 if (count == 0L) continue;
                 if (logger.isDebugEnabled())
-                    logger.debug(String.format("saleRecord4EmployeeJob(%d) undo count %d, JOb start", comId, count));
+                    logger.debug(String.format("saleRecord4EmployeeJob(companyId=%d,startDate = %s) undo count %d, JOb start",
+                            companyId, yyyy_mm_dd, count));
                 // 一起奔跑吧~~~~ 骚年......
-                cfs.add(CompletableFuture.runAsync(new AlloctSaleOrderJob(company)));
+                cfs.add(CompletableFuture.runAsync(new AlloctSaleOrderJob(company, yyyy_mm_dd)));
             }
             if (CollectionUtils.isNotEmpty(cfs))
                 CompletableFuture.allOf(cfs.toArray(new CompletableFuture[]{}));
@@ -133,10 +139,13 @@ public class SaleRecordService extends BundleService {
 
     // OXOX
     private class AlloctSaleOrderJob implements Runnable {
-        private final OrgEntity company;
 
-        AlloctSaleOrderJob(OrgEntity company) {
+        private final OrgEntity company;
+        private final LocalDate startDate;
+
+        AlloctSaleOrderJob(OrgEntity company, LocalDate startDate) {
             this.company = company;
+            this.startDate = startDate;
         }
 
         @Override
@@ -146,6 +155,7 @@ public class SaleRecordService extends BundleService {
                 JobParametersBuilder jb = new JobParametersBuilder();
                 Map<String, Object> params = Maps.newHashMap();
                 params.put("companyId", company.getId());
+                params.put("startDate", startDate.toString("yyyy-MM-dd"));
                 jb.addString("job.params", Joiner.on('$').withKeyValueSeparator('=').join(params));
                 jb.addDate("job.tamptime", LocalDateTime.now().toDate());
                 JobParameters jobParameters = jb.toJobParameters();

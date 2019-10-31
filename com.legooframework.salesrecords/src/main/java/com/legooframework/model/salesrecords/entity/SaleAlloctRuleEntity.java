@@ -8,10 +8,13 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
+import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -34,6 +37,8 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
     private List<List<Rule>> noMemberRule;
     private List<List<Rule>> crossMemberRule;
     private List<List<Rule>> crossNoMemberRule;
+    private LocalDate startDate;
+
 
     boolean isCompany() {
         return this.storeId == 0;
@@ -77,7 +82,7 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
 
     private SaleAlloctRuleEntity(Integer companyId, Integer storeId, boolean autoRun, List<List<Rule>> memberRule,
                                  List<List<Rule>> noMemberRule, List<List<Rule>> crossMemberRule,
-                                 List<List<Rule>> crossNoMemberRule) {
+                                 List<List<Rule>> crossNoMemberRule, LocalDate startDate) {
         super(0);
         this.companyId = companyId;
         this.storeId = storeId;
@@ -90,6 +95,7 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
         sortAndCheck(this.crossMemberRule, 1);
         this.crossNoMemberRule = crossNoMemberRule;
         sortAndCheck(this.crossNoMemberRule, 2);
+        this.startDate = startDate;
     }
 
     SaleAlloctRuleEntity(Integer id, ResultSet resultSet) throws RuntimeException {
@@ -100,6 +106,7 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
             this.autoRun = resultSet.getInt("auto_run") == 1;
             this.memberRule = decodingRule(resultSet.getString("member_rule"));
             this.noMemberRule = decodingRule(resultSet.getString("no_member_rule"));
+            this.startDate = ResultSetUtil.getLocalDate(resultSet, "start_date");
             if (this.storeId != 0) {
                 this.crossMemberRule = null;
                 this.crossNoMemberRule = null;
@@ -112,6 +119,9 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
         }
     }
 
+    LocalDate getStartDate() {
+        return startDate;
+    }
 
     @Override
     public void setValues(PreparedStatement ps) throws SQLException {
@@ -152,14 +162,16 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
 
     static SaleAlloctRuleEntity createByStore(StoEntity store, boolean autoRun, List<List<Rule>> memberRule,
                                               List<List<Rule>> noMemberRule) {
-        return new SaleAlloctRuleEntity(store.getCompanyId(), store.getId(), autoRun, memberRule, noMemberRule, null, null);
+        return new SaleAlloctRuleEntity(store.getCompanyId(), store.getId(), autoRun, memberRule, noMemberRule,
+                null, null, LocalDate.now());
     }
 
     static SaleAlloctRuleEntity createByCompany(OrgEntity company, boolean autoRun, List<List<Rule>> memberRule,
                                                 List<List<Rule>> noMemberRule, List<List<Rule>> crossMemberRule,
-                                                List<List<Rule>> crossNoMemberRule) {
+                                                List<List<Rule>> crossNoMemberRule, LocalDate startDate) {
+        Preconditions.checkArgument(startDate != null, "开始日期不可以为空值...");
         return new SaleAlloctRuleEntity(company.getId(), null, autoRun, memberRule, noMemberRule,
-                crossMemberRule, crossNoMemberRule);
+                crossMemberRule, crossNoMemberRule, startDate);
     }
 
     @Override
@@ -174,6 +186,7 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
         params.put("noMemberRule", encodingRule(noMemberRule, sub_joiner, joiner));
         params.put("crossMemberRule", encodingRule(crossMemberRule, sub_joiner, joiner));
         params.put("crossNoMemberRule", encodingRule(crossNoMemberRule, sub_joiner, joiner));
+        params.put("startDate", startDate.toDate());
         return params;
     }
 
@@ -195,6 +208,7 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
         params.put("noMemberRule", encodingRule(noMemberRule, sub_joiner, joiner));
         params.put("crossMemberRule", encodingRule(crossMemberRule, sub_joiner, joiner));
         params.put("crossNoMemberRule", encodingRule(crossNoMemberRule, sub_joiner, joiner));
+        params.put("startDate", startDate.toString("yyyy-MM-dd"));
         return params;
     }
 
