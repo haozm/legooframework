@@ -81,9 +81,7 @@
         </sql>
         <sql id="updateChangeFlag">
             <body><![CDATA[
-        UPDATE crm_salerecord
-           SET change_flag = ?
-         WHERE id = ?
+     UPDATE crm_salerecord SET change_flag = ?  WHERE id = ?
             ]]></body>
         </sql>
     </model>
