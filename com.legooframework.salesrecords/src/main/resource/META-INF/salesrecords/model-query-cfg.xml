@@ -176,16 +176,13 @@
         <sql id="saleDetailsByMember_count" dynamic="true">
             <body><![CDATA[
            SELECT COUNT(total.id)
-             FROM acp.crm_salesubrecord AS record
-       INNER JOIN acp.crm_salerecord AS total ON  total.id = record.saleRecord_id
-       INNER JOIN acp.crm_goods AS goods ON record.goods_id = goods.id
+             FROM acp.crm_salerecord AS total
             WHERE total.company_id = :USER_COMPANY_ID
        <#if planId??>
               AND total.ninetyPlanFollowUp_id = :planId
        <#else>
               AND total.member_id = :memberId
        </#if>
-         GROUP BY total.id
             ]]></body>
         </sql>
         <sql id="saleDetailsByMember" dynamic="true">
@@ -200,9 +197,9 @@
                         WHEN IFNULL(total.consumeType,1) =3 THEN '订金支付'
                         WHEN IFNULL(total.consumeType,1) =4 THEN '积分抵扣'
                         ELSE '其他方式' END ) AS 'consumeTypeName'
-             FROM acp.crm_salesubrecord AS record
-       INNER JOIN acp.crm_salerecord AS total ON  total.id = record.saleRecord_id
-       INNER JOIN acp.crm_goods AS goods ON record.goods_id = goods.id
+             FROM acp.crm_salerecord AS total
+        LEFT JOIN acp.crm_salesubrecord AS record ON  total.id = record.saleRecord_id
+        LEFT JOIN acp.crm_goods AS goods ON record.goods_id = goods.id
             WHERE total.company_id = :USER_COMPANY_ID
        <#if planId??>
               AND total.ninetyPlanFollowUp_id = :planId

@@ -12,7 +12,6 @@ import com.legooframework.model.covariant.entity.UserAuthorEntityAction;
 import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -47,8 +46,7 @@ public class SalesMvcController extends BaseController {
         Integer userId = MapUtils.getInteger(requestBody, "userId");
         UserAuthorEntity user = getBean(UserAuthorEntityAction.class, request).loadUserById(userId, companyId);
         requestBody.putAll(user.toViewMap());
-        PagingResult page = queryAction.queryForPage("empSales", "sales",
-                pageNum, pageSize, requestBody);
+        PagingResult page = getJdbcQuery(request).queryForPage("empSales", "sales", pageNum, pageSize, requestBody);
         return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
     }
 
@@ -61,7 +59,7 @@ public class SalesMvcController extends BaseController {
         Integer userId = MapUtils.getInteger(requestBody, "userId");
         UserAuthorEntity user = getBean(UserAuthorEntityAction.class, request).loadUserById(userId, companyId);
         requestBody.putAll(user.toViewMap());
-        Optional<Map<String, Object>> result = queryAction.queryForMap("empSales", "salesDetail", requestBody);
+        Optional<Map<String, Object>> result = getJdbcQuery(request).queryForMap("empSales", "salesDetail", requestBody);
         if (!result.isPresent())
             return JsonMessageBuilder.OK().toMessage();
         return JsonMessageBuilder.OK().withPayload(result.get()).toMessage();
@@ -69,14 +67,15 @@ public class SalesMvcController extends BaseController {
 
     @RequestMapping(value = "/{companyId}/goods.json")
     @ResponseBody
-    public JsonMessage queryGoods(@PathVariable(value = "companyId") int companyId, @RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+    public JsonMessage queryGoods(@PathVariable(value = "companyId") int companyId,
+                                  @RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         if (logger.isDebugEnabled())
             logger.debug(String.format("URL=[%s],statistics(requestBody=%s)", request.getRequestURI(), requestBody));
         Integer userId = MapUtils.getInteger(requestBody, "userId");
         UserAuthorEntity user = getBean(UserAuthorEntityAction.class, request).loadUserById(userId, companyId);
         requestBody.putAll(user.toViewMap());
-        Optional<List<Map<String, Object>>> result = queryAction.queryForList("empSales", "salesGoods", requestBody);
+        Optional<List<Map<String, Object>>> result = getJdbcQuery(request).queryForList("empSales", "salesGoods", requestBody);
         if (!result.isPresent())
             return JsonMessageBuilder.OK().toMessage();
         return JsonMessageBuilder.OK().withPayload(result.get()).toMessage();
@@ -84,20 +83,22 @@ public class SalesMvcController extends BaseController {
 
     @RequestMapping(value = "/{companyId}/total.json")
     @ResponseBody
-    public JsonMessage queryTotal(@PathVariable(value = "companyId") int companyId, @RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+    public JsonMessage queryTotal(@PathVariable(value = "companyId") int companyId,
+                                  @RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         if (logger.isDebugEnabled())
             logger.debug(String.format("URL=[%s],statistics(requestBody=%s)", request.getRequestURI(), requestBody));
         Integer userId = MapUtils.getInteger(requestBody, "userId");
         UserAuthorEntity user = getBean(UserAuthorEntityAction.class, request).loadUserById(userId, companyId);
         requestBody.putAll(user.toViewMap());
-        Optional<Map<String, Object>> result = queryAction.queryForMap("empSales", "sales_total", requestBody);
+        Optional<Map<String, Object>> result = getJdbcQuery(request).queryForMap("empSales", "sales_total", requestBody);
         if (!result.isPresent())
             return JsonMessageBuilder.OK().toMessage();
         return JsonMessageBuilder.OK().withPayload(result.get()).toMessage();
     }
 
-    @Autowired
-    private JdbcQuerySupport queryAction;
+    private JdbcQuerySupport getJdbcQuery(HttpServletRequest request) {
+        return getBean("statisticalQuerySupport", JdbcQuerySupport.class, request);
+    }
 
 }
