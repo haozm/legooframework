@@ -173,6 +173,39 @@
          ORDER BY record.id DESC
             ]]></body>
         </sql>
+        <sql id="saleDetailsByMember_count">
+            <body><![CDATA[
+           SELECT COUNT(total.id)
+             FROM acp.crm_salesubrecord AS record
+       INNER JOIN acp.crm_salerecord AS total ON  total.id = record.saleRecord_id
+       INNER JOIN acp.crm_goods AS goods ON record.goods_id = goods.id
+            WHERE total.company_id = :USER_COMPANY_ID
+              AND total.member_id = :memberId
+         GROUP BY total.id
+            ]]></body>
+        </sql>
+        <sql id="saleDetailsByMember">
+            <body><![CDATA[
+           SELECT total.id AS 'saleRecordId', total.createTime,
+                  DATE_FORMAT(total.createTime,GET_FORMAT(DATETIME,'iso')) AS 'saleRecordDate',
+                  total.saleOrderNo, SUM(record.salePrice * record.goodsCount) AS 'totalPrice' ,
+                  GROUP_CONCAT(goods.name  Separator ',')  AS 'goodsNames',
+                  IFNULL(total.consumeType,1) AS 'consumeType',
+                  (CASE WHEN IFNULL(total.consumeType,1) =1 THEN '现金支付'
+                        WHEN IFNULL(total.consumeType,1) =2 THEN '银行刷卡'
+                        WHEN IFNULL(total.consumeType,1) =3 THEN '订金支付'
+                        WHEN IFNULL(total.consumeType,1) =4 THEN '积分抵扣'
+                        ELSE '其他方式' END ) AS 'consumeTypeName'
+             FROM acp.crm_salesubrecord AS record
+       INNER JOIN acp.crm_salerecord AS total ON  total.id = record.saleRecord_id
+       INNER JOIN acp.crm_goods AS goods ON record.goods_id = goods.id
+            WHERE total.company_id = :USER_COMPANY_ID
+              AND total.member_id = :memberId
+         GROUP BY total.id
+         ORDER BY total.id DESC
+         LIMIT :offset,:rows
+            ]]></body>
+        </sql>
     </model>
     <model id="SaleAlloctResultEntity">
         <sql id="summaryByemp_count" dynamic="true">

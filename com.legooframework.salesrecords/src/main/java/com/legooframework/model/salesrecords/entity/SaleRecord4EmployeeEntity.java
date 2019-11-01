@@ -34,6 +34,13 @@ public class SaleRecord4EmployeeEntity extends BaseEntity<Integer> {
         return memberStoreId;
     }
 
+    /**
+     * FK OOXX
+     *
+     * @param id        OO
+     * @param resultSet XX
+     * @throws RuntimeException OXOX
+     */
     SaleRecord4EmployeeEntity(Integer id, ResultSet resultSet) throws RuntimeException {
         super(id);
         try {

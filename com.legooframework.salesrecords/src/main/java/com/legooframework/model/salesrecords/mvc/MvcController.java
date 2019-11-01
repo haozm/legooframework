@@ -19,13 +19,11 @@ import com.legooframework.model.salesrecords.entity.SaleRecordEntity;
 import com.legooframework.model.salesrecords.entity.SaleRecordEntityAction;
 import com.legooframework.model.salesrecords.service.SaleRecordService;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -284,6 +282,28 @@ public class MvcController extends BaseController {
             Optional<List<Map<String, Object>>> resulate = getJdbcQuerySupport(request).queryForList("SaleRecordEntity",
                     "saledetails", params);
             return JsonMessageBuilder.OK().withPayload(resulate.orElse(null)).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
+    @RequestMapping(value = "/load/saledetails/bymember.json")
+    public JsonMessage loadSaledetailsByMember(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("loadSaleRecordsByCareType(requestBody=%s)", requestBody));
+        LoginContextHolder.setAnonymousCtx();
+        UserAuthorEntity user = loadLoginUser(requestBody, request);
+        Map<String, Object> params = user.toViewMap();
+        int pageNum = MapUtils.getInteger(requestBody, "pageNum", 1);
+        int pageSize = MapUtils.getInteger(requestBody, "pageSize", 20);
+        try {
+            Integer memberId = MapUtils.getInteger(requestBody, "memberId", 0);
+            Preconditions.checkArgument(memberId > 0, "非法的memberId = %s 取值....", memberId);
+            params.put("memberId", memberId);
+            params.put("paged", true);
+            PagingResult pagingResult = getJdbcQuerySupport(request)
+                    .queryForPage("SaleRecordEntity", "saleDetailsByMember", pageNum, pageSize, params);
+            return JsonMessageBuilder.OK().withPayload(pagingResult.toData()).toMessage();
         } finally {
             LoginContextHolder.clear();
         }
