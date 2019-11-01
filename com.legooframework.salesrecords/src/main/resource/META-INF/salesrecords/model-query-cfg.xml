@@ -173,18 +173,22 @@
          ORDER BY record.id DESC
             ]]></body>
         </sql>
-        <sql id="saleDetailsByMember_count">
+        <sql id="saleDetailsByMember_count" dynamic="true">
             <body><![CDATA[
            SELECT COUNT(total.id)
              FROM acp.crm_salesubrecord AS record
        INNER JOIN acp.crm_salerecord AS total ON  total.id = record.saleRecord_id
        INNER JOIN acp.crm_goods AS goods ON record.goods_id = goods.id
             WHERE total.company_id = :USER_COMPANY_ID
+       <#if planId??>
+              AND total.ninetyPlanFollowUp_id = :planId
+       <#else>
               AND total.member_id = :memberId
+       </#if>
          GROUP BY total.id
             ]]></body>
         </sql>
-        <sql id="saleDetailsByMember">
+        <sql id="saleDetailsByMember" dynamic="true">
             <body><![CDATA[
            SELECT total.id AS 'saleRecordId', total.createTime,
                   DATE_FORMAT(total.createTime,GET_FORMAT(DATETIME,'iso')) AS 'saleRecordDate',
@@ -200,7 +204,11 @@
        INNER JOIN acp.crm_salerecord AS total ON  total.id = record.saleRecord_id
        INNER JOIN acp.crm_goods AS goods ON record.goods_id = goods.id
             WHERE total.company_id = :USER_COMPANY_ID
+       <#if planId??>
+              AND total.ninetyPlanFollowUp_id = :planId
+       <#else>
               AND total.member_id = :memberId
+       </#if>
          GROUP BY total.id
          ORDER BY total.id DESC
          LIMIT :offset,:rows

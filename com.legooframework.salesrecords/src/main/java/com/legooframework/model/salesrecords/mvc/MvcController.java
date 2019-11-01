@@ -300,6 +300,8 @@ public class MvcController extends BaseController {
             Integer memberId = MapUtils.getInteger(requestBody, "memberId", 0);
             Preconditions.checkArgument(memberId > 0, "非法的memberId = %s 取值....", memberId);
             params.put("memberId", memberId);
+            Integer planId = MapUtils.getInteger(requestBody, "planId", 0);
+            if (planId != 0) params.put("planId", planId);
             params.put("paged", true);
             PagingResult pagingResult = getJdbcQuerySupport(request)
                     .queryForPage("SaleRecordEntity", "saleDetailsByMember", pageNum, pageSize, params);
