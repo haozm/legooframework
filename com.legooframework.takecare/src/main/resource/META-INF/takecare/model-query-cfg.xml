@@ -141,4 +141,41 @@ INNER JOIN acp.crm_plantask AS task ON task.id = trl.sub_care_id AND trl.busines
             ]]></body>
         </sql>
     </model>
+    <model id="MemberCareRecord">
+        <sql id="memberCareByMember_count">
+            <body><![CDATA[
+     SELECT COUNT(cmc.id)
+       FROM acp.crm_membercarerecord AS cmc
+      WHERE cmc.member_id = :memberId
+            ]]></body>
+        </sql>
+        <sql id="memberCareByMember">
+            <body><![CDATA[
+     SELECT mm.name AS 'memberName',cmc.followUpTime, emp.name AS 'employeeName',
+            DATE_FORMAT(cmc.followUpTime, GET_FORMAT(DATETIME,'iso')) AS 'followUpTimeName',
+            cmc.followUpContent, cmc.followUpWay, cmc.planType, cmc.memberFeedback,cmc.shoppingGuideSummary,
+            (CASE WHEN cmc.planType =1 THEN '90服务'
+                  WHEN cmc.planType =2 THEN '返单计划'
+                  WHEN cmc.planType =3 THEN '感动计划'
+                  WHEN cmc.planType =4 THEN '生日关怀'
+                  WHEN cmc.planType =5 THEN '节日关怀'
+                  WHEN cmc.planType =6 THEN '睡眠唤醒'
+                  WHEN cmc.planType =7 THEN '会员回访'
+                  WHEN cmc.planType =8 THEN '预约服务'
+                  WHEN cmc.planType =9 THEN '家庭节日关怀'
+                  ELSE '其他关怀' END ) AS 'planTypeName',
+            (CASE WHEN cmc.followUpWay =1 THEN '短信'
+                  WHEN cmc.followUpWay =2 THEN '微信'
+                  WHEN cmc.followUpWay =4 THEN '线下跟进'
+                  WHEN cmc.followUpWay =10 THEN '取消跟进'
+                  ELSE '其他' END ) AS 'followUpWayName'
+       FROM acp.crm_membercarerecord AS cmc
+ INNER JOIN acp.crm_member mm ON cmc.member_id = mm.id
+  LEFT JOIN acp.acp_employee emp ON cmc.employee_id = emp.id
+      WHERE cmc.member_id = :memberId
+   ORDER BY cmc.followUpTime DESC
+      LIMIT :offset,:rows
+            ]]></body>
+        </sql>
+    </model>
 </sqls>

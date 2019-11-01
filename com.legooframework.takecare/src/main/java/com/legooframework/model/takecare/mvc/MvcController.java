@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.cache.CaffeineCacheManager;
 import com.legooframework.model.core.jdbc.JdbcQuerySupport;
+import com.legooframework.model.core.jdbc.PagingResult;
 import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
@@ -64,6 +65,28 @@ public class MvcController extends BaseController {
         getBean(Constant.CACHE_MANAGER, CaffeineCacheManager.class, request).clearByCache(Constant.CACHE_ENTITYS);
         LoginContextHolder.clear();
         return JsonMessageBuilder.OK().toMessage();
+    }
+
+    @RequestMapping(value = "/membercare/bymember/pages.json")
+    @ResponseBody
+    public JsonMessage loadMemberCareByMember(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("loadMemberCareByMember(requestBody=%s,url=%s) start", requestBody,
+                    request.getRequestURL().toString()));
+        LoginContextHolder.setAnonymousCtx();
+        int pageNum = MapUtils.getInteger(requestBody, "pageNum", 1);
+        int pageSize = MapUtils.getInteger(requestBody, "pageSize", 20);
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            Integer memberId = MapUtils.getInteger(requestBody, "memberId", 0);
+            Map<String, Object> params = user.toViewMap();
+            params.put("memberId", memberId);
+            PagingResult paged = getJdbcQuery(request)
+                    .queryForPage("MemberCareRecord", "memberCareByMember", pageNum, pageSize, params);
+            return JsonMessageBuilder.OK().withPayload(paged.toData()).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
     }
 
     @RequestMapping(value = "/birthday/executecare.json")
@@ -212,7 +235,6 @@ public class MvcController extends BaseController {
         }
         return JsonMessageBuilder.OK().toMessage();
     }
-
 
     private UserAuthorEntity loadLoginUser(Map<String, Object> requestBody, HttpServletRequest request) {
         Integer userId = MapUtils.getInteger(requestBody, "userId", 0);
