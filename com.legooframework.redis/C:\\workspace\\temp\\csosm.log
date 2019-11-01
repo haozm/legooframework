@@ -1,0 +1,30 @@
+[DEBUG][2019-11-01 21:02:46][main]com.legooframework.model.core.osgi.LegooBundleFactoryBean [createInstance] - finish parse bundle-cfg: LegooBundle{name=legooCore, version=1.0.0, dependsItems=null, listenEvents=null}
+[DEBUG][2019-11-01 21:02:47][main]com.legooframework.model.core.osgi.LegooBundleFactoryBean [createInstance] - finish parse bundle-cfg: LegooBundle{name=redis, version=1.0.0, dependsItems=[DependsItem{name=legooCore, version=1.0.0, required=true}], listenEvents=null}
+[INFO ][2019-11-01 21:02:47][main]com.legooframework.model.core.osgi.BundleRuntimeFactory [lambda$afterPropertiesSet$1] - Registered Module is legooCore
+[INFO ][2019-11-01 21:02:47][main]com.legooframework.model.core.osgi.BundleRuntimeFactory [lambda$afterPropertiesSet$1] - Registered Module is redis
+[DEBUG][2019-11-01 21:02:47][main]com.legooframework.model.core.config.MonitorFileSystemFactory [createInstance] - file:/Users/haoxiaojie/Documents/ideaspace/com.legooframework/out/
+[DEBUG][2019-11-01 21:02:48][SpringContextShutdownHook]com.legooframework.model.core.config.MonitorFileSystemFactory [shutdown] - Close VFS:file:/Users/haoxiaojie/Documents/ideaspace/com.legooframework/out/
+[DEBUG][2019-11-01 21:08:45][main]com.legooframework.model.core.osgi.LegooBundleFactoryBean [createInstance] - finish parse bundle-cfg: LegooBundle{name=legooCore, version=1.0.0, dependsItems=null, listenEvents=null}
+[DEBUG][2019-11-01 21:08:45][main]com.legooframework.model.core.osgi.LegooBundleFactoryBean [createInstance] - finish parse bundle-cfg: LegooBundle{name=redis, version=1.0.0, dependsItems=[DependsItem{name=legooCore, version=1.0.0, required=true}], listenEvents=null}
+[INFO ][2019-11-01 21:08:45][main]com.legooframework.model.core.osgi.BundleRuntimeFactory [lambda$afterPropertiesSet$1] - Registered Module is legooCore
+[INFO ][2019-11-01 21:08:45][main]com.legooframework.model.core.osgi.BundleRuntimeFactory [lambda$afterPropertiesSet$1] - Registered Module is redis
+[DEBUG][2019-11-01 21:08:45][main]com.legooframework.model.core.config.MonitorFileSystemFactory [createInstance] - file:/Users/haoxiaojie/Documents/ideaspace/com.legooframework/out/
+[DEBUG][2019-11-01 21:08:47][SpringContextShutdownHook]com.legooframework.model.core.config.MonitorFileSystemFactory [shutdown] - Close VFS:file:/Users/haoxiaojie/Documents/ideaspace/com.legooframework/out/
+[DEBUG][2019-11-01 21:26:05][main]com.legooframework.model.core.osgi.LegooBundleFactoryBean [createInstance] - finish parse bundle-cfg: LegooBundle{name=legooCore, version=1.0.0, dependsItems=null, listenEvents=null}
+[DEBUG][2019-11-01 21:26:05][main]com.legooframework.model.core.osgi.LegooBundleFactoryBean [createInstance] - finish parse bundle-cfg: LegooBundle{name=redis, version=1.0.0, dependsItems=[DependsItem{name=legooCore, version=1.0.0, required=true}], listenEvents=null}
+[INFO ][2019-11-01 21:26:05][main]com.legooframework.model.core.osgi.BundleRuntimeFactory [lambda$afterPropertiesSet$1] - Registered Module is legooCore
+[INFO ][2019-11-01 21:26:05][main]com.legooframework.model.core.osgi.BundleRuntimeFactory [lambda$afterPropertiesSet$1] - Registered Module is redis
+[DEBUG][2019-11-01 21:26:06][main]com.legooframework.model.core.config.MonitorFileSystemFactory [createInstance] - file:/Users/haoxiaojie/Documents/ideaspace/com.legooframework/out/
+[DEBUG][2019-11-01 21:26:07][main]com.legooframework.model.core.config.MonitorFileSystemFactory [shutdown] - Close VFS:file:/Users/haoxiaojie/Documents/ideaspace/com.legooframework/out/
+[DEBUG][2019-11-01 21:29:41][main]com.legooframework.model.core.osgi.LegooBundleFactoryBean [createInstance] - finish parse bundle-cfg: LegooBundle{name=legooCore, version=1.0.0, dependsItems=null, listenEvents=null}
+[DEBUG][2019-11-01 21:29:41][main]com.legooframework.model.core.osgi.LegooBundleFactoryBean [createInstance] - finish parse bundle-cfg: LegooBundle{name=redis, version=1.0.0, dependsItems=[DependsItem{name=legooCore, version=1.0.0, required=true}], listenEvents=null}
+[INFO ][2019-11-01 21:29:41][main]com.legooframework.model.core.osgi.BundleRuntimeFactory [lambda$afterPropertiesSet$1] - Registered Module is legooCore
+[INFO ][2019-11-01 21:29:41][main]com.legooframework.model.core.osgi.BundleRuntimeFactory [lambda$afterPropertiesSet$1] - Registered Module is redis
+[DEBUG][2019-11-01 21:29:41][main]com.legooframework.model.core.config.MonitorFileSystemFactory [createInstance] - file:/Users/haoxiaojie/Documents/ideaspace/com.legooframework/out/
+[DEBUG][2019-11-01 21:29:42][SpringContextShutdownHook]com.legooframework.model.core.config.MonitorFileSystemFactory [shutdown] - Close VFS:file:/Users/haoxiaojie/Documents/ideaspace/com.legooframework/out/
+[DEBUG][2019-11-01 21:45:16][main]com.legooframework.model.core.osgi.LegooBundleFactoryBean [createInstance] - finish parse bundle-cfg: LegooBundle{name=legooCore, version=1.0.0, dependsItems=null, listenEvents=null}
+[DEBUG][2019-11-01 21:45:16][main]com.legooframework.model.core.osgi.LegooBundleFactoryBean [createInstance] - finish parse bundle-cfg: LegooBundle{name=redis, version=1.0.0, dependsItems=[DependsItem{name=legooCore, version=1.0.0, required=true}], listenEvents=null}
+[INFO ][2019-11-01 21:45:16][main]com.legooframework.model.core.osgi.BundleRuntimeFactory [lambda$afterPropertiesSet$1] - Registered Module is legooCore
+[INFO ][2019-11-01 21:45:16][main]com.legooframework.model.core.osgi.BundleRuntimeFactory [lambda$afterPropertiesSet$1] - Registered Module is redis
+[DEBUG][2019-11-01 21:45:16][main]com.legooframework.model.core.config.MonitorFileSystemFactory [createInstance] - file:/Users/haoxiaojie/Documents/ideaspace/com.legooframework/out/
+[DEBUG][2019-11-01 21:45:17][SpringContextShutdownHook]com.legooframework.model.core.config.MonitorFileSystemFactory [shutdown] - Close VFS:file:/Users/haoxiaojie/Documents/ideaspace/com.legooframework/out/

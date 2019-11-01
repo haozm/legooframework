@@ -18,8 +18,13 @@ public class RedisTemplateSupportTest {
 
     @Test
     public void testGetString() {
-        redisTemplate.opsForValue().set("java", "iamiromman");
+        // redisTemplate.opsForValue().set("java", "iamiromman");
         System.out.println(redisTemplate.opsForValue().get("java"));
+    }
+
+    @Test
+    public void testList() {
+        redisTemplate.opsForList().
     }
 
     @Autowired
