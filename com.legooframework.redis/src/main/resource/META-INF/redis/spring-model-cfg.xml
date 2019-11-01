@@ -5,17 +5,23 @@
     <bean id="redisBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/redis/legoo-model-cfg.xml"/>
     </bean>
+    <bean id="redisPassword" class="com.legooframework.model.redis.entity.RedisPasswordFactoryBean">
+        <constructor-arg name="password" value="iamironman"/>
+    </bean>
     <bean id="redisStandaloneConfiguration"
           class="org.springframework.data.redis.connection.RedisStandaloneConfiguration">
         <property name="hostName" value="127.0.0.1"/>
         <property name="port" value="6379"/>
-        <property name="password" value="iamironman"/>
+        <property name="password" ref="redisPassword"/>
     </bean>
     <bean id="jedisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
-        <property name="configuration" ref="redisStandaloneConfiguration"/>
+        <constructor-arg name="standaloneConfig" ref="redisStandaloneConfiguration"/>
         <property name="usePool" value="true"/>
     </bean>
     <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
         <property name="connectionFactory" ref="jedisConnectionFactory"/>
+    </bean>
+    <bean id="redisTemplateSupport" class="com.legooframework.model.redis.entity.RedisTemplateSupport">
+        <constructor-arg name="redisTemplate" ref="redisTemplate"/>
     </bean>
 </beans>
