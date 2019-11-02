@@ -1,10 +1,10 @@
 package com.legooframework.model.core.base.entity;
 
 import com.google.common.base.Charsets;
-import com.google.common.primitives.Chars;
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDateTime;
-
 
 public interface StringSerializer<T> {
     /**
@@ -38,4 +38,11 @@ public interface StringSerializer<T> {
         return value == null ? DEF_EMPTY : Hex.encodeHexString(value.getBytes(Charsets.UTF_8));
     }
 
+    default String decodeHex(String value) {
+        try {
+            return StringUtils.equals(DEF_EMPTY, value) ? null : new String(Hex.decodeHex(value), Charsets.UTF_8);
+        } catch (DecoderException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
