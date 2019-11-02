@@ -920,7 +920,7 @@
     </target>
 
     <target name="hxj">
-        <property name="model.name" value="takecare"/>
+        <property name="model.name" value="redis"/>
         <!--
          <mkdir dir="com.legooframework.entities/src/main/java/com/legooframework/model/${model.name}/entity"/>
          <mkdir dir="com.legooframework.entities/src/main/java/com/legooframework/model/${model.name}/event"/>
