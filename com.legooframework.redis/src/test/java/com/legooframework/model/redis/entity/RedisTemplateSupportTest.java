@@ -54,6 +54,17 @@ public class RedisTemplateSupportTest {
         //     System.out.println(redisTemplate.opsForList().range("list", 0, 3));
     }
 
+    @Test
+    public void testHash() {
+        Optional<List<CareRecordEntity>> list = careRecordEntityAction.query4List();
+        if (list.isPresent()) {
+            for (CareRecordEntity $it : list.get()) {
+                System.out.println($it.serializer());
+                redisTemplate.opsForHash().put("CareRecordEntity", $it.getId().toString(), $it.serializer());
+            }
+        }
+    }
+
     @Autowired
     private RedisTemplate redisTemplate;
     @Autowired

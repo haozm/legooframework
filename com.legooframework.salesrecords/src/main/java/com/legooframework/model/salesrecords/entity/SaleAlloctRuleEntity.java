@@ -215,7 +215,7 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
         params.put("noMemberRule", encodingRule(noMemberRule, sub_joiner, joiner));
         params.put("crossMemberRule", encodingRule(crossMemberRule, sub_joiner, joiner));
         params.put("crossNoMemberRule", encodingRule(crossNoMemberRule, sub_joiner, joiner));
-        params.put("startDate", startDate.toString("yyyy-MM-dd"));
+        params.put("startDate", startDate == null ? null : startDate.toString("yyyy-MM-dd"));
         return params;
     }
 

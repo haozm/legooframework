@@ -202,7 +202,6 @@ public class MvcController extends BaseController {
         }
     }
 
-
     @RequestMapping(value = "/90days/bymember.json")
     public JsonMessage loadSaleRecodesByMember(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
