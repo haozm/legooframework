@@ -33,7 +33,7 @@
             <bean class="org.springframework.data.redis.serializer.StringRedisSerializer"/>
         </property>
     </bean>
-    <bean id="redisTemplateSupport" class="com.legooframework.model.redis.entity.RedisTemplateSupport">
+    <bean id="redisTemplateSupport" class="com.legooframework.model.redis.entity.RedisCacheSupport">
         <constructor-arg name="redisTemplate" ref="redisTemplate"/>
     </bean>
 </beans>

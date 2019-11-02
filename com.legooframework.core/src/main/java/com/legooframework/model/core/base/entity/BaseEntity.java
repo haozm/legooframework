@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 
 // 实体类抽象建模
-public abstract class BaseEntity<T extends Serializable> implements Cloneable {
+public abstract class BaseEntity<T extends Serializable> implements Cloneable, StringSerializer{
 
     private final T id;
     private final Long tenantId;
@@ -207,6 +207,16 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    @Override
+    public String serializer() {
+        return null;
+    }
+
+    @Override
+    public Object deserializer(String serializer) {
+        return null;
     }
 
     @Override

@@ -55,7 +55,7 @@ CREATE TABLE ACP_EMPLOYEE_ALLOT_RULE (
   COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
 
-CREATE UNIQUE INDEX ACP_EMPLOYEE_ALLOT_RULE_company_id_IDX USING BTREE ON acp.ACP_EMPLOYEE_ALLOT_RULE (company_id,store_id);
+CREATE INDEX ACP_EMPLOYEE_ALLOT_RULE_company_id_IDX USING BTREE ON acp.ACP_EMPLOYEE_ALLOT_RULE (company_id,store_id);
 
 -- ADD BY HXJ
 -- order_type 1,2,3,4      is_detail:0 总账  1 明细张
