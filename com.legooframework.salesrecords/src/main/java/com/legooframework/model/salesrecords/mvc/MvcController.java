@@ -19,11 +19,13 @@ import com.legooframework.model.salesrecords.entity.SaleRecordEntity;
 import com.legooframework.model.salesrecords.entity.SaleRecordEntityAction;
 import com.legooframework.model.salesrecords.service.SaleRecordService;
 import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -172,25 +174,24 @@ public class MvcController extends BaseController {
         LoginContextHolder.setAnonymousCtx();
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
-            int auto_run = MapUtils.getIntValue(requestBody, "auto_run", 1);
             int coverted = MapUtils.getIntValue(requestBody, "coverted", 0);
-            String member_rule_str = MapUtils.getString(requestBody, "member_rule", null);
-            String no_member_rule_str = MapUtils.getString(requestBody, "no_member_rule", null);
-            String crs_member_rule_str = MapUtils.getString(requestBody, "crs_member_rule", null);
-            String crs_no_member_rule_str = MapUtils.getString(requestBody, "crs_no_member_rule", null);
+            String member_rule_str = MapUtils.getString(requestBody, "memberRule", null);
+            String no_member_rule_str = MapUtils.getString(requestBody, "noMemberRule", null);
+            String crs_member_rule_str = MapUtils.getString(requestBody, "crossMemberRule", null);
+            String crs_no_member_rule_str = MapUtils.getString(requestBody, "crossNoMemberRule", null);
             List<List<SaleAlloctRuleEntity.Rule>> memberRule = SaleAlloctRuleEntity.decodingRule(member_rule_str);
             List<List<SaleAlloctRuleEntity.Rule>> noMemberRule = SaleAlloctRuleEntity.decodingRule(no_member_rule_str);
             List<List<SaleAlloctRuleEntity.Rule>> crossMemberRule = SaleAlloctRuleEntity.decodingRule(crs_member_rule_str);
             List<List<SaleAlloctRuleEntity.Rule>> crossNoMemberRule = SaleAlloctRuleEntity.decodingRule(crs_no_member_rule_str);
             if (user.isStoreManager()) {
                 StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
-                getBean(SaleAlloctRuleEntityAction.class, request).insert4Store(store, auto_run == 1, memberRule, noMemberRule);
+                getBean(SaleAlloctRuleEntityAction.class, request).insert4Store(store, true, memberRule, noMemberRule);
             } else if (user.isAdmin()) {
                 OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
                 String startDate_str = MapUtils.getString(requestBody, "startDate",
                         LocalDate.now().dayOfMonth().withMinimumValue().toString("yyyy-MM-dd"));
                 LocalDate startDate = DateTimeUtils.parseYYYYMMDD(startDate_str);
-                getBean(SaleAlloctRuleEntityAction.class, request).insert4Company(company, auto_run == 1, memberRule, noMemberRule,
+                getBean(SaleAlloctRuleEntityAction.class, request).insert4Company(company, true, memberRule, noMemberRule,
                         crossMemberRule, crossNoMemberRule, coverted == 1, startDate);
             } else {
                 throw new RuntimeException("当前账户无权限操作....");
