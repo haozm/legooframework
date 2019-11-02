@@ -9,6 +9,8 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 
 public class CareRecordEntityAction extends BaseEntityAction<CareRecordEntity> {
 
@@ -25,6 +27,10 @@ public class CareRecordEntityAction extends BaseEntityAction<CareRecordEntity> {
             logger.debug(String.format("batchInsert(...) size is %d", takeCareLogs.size()));
     }
 
+    public Optional<List<CareRecordEntity>> query4List() {
+        return super.queryForEntities("query4list", null, getRowMapper());
+    }
+
     @Override
     protected RowMapper<CareRecordEntity> getRowMapper() {
         return new RowMapperImpl();
@@ -32,8 +38,8 @@ public class CareRecordEntityAction extends BaseEntityAction<CareRecordEntity> {
 
     private static class RowMapperImpl implements RowMapper<CareRecordEntity> {
         @Override
-        public CareRecordEntity mapRow(ResultSet resultSet, int i) throws SQLException {
-            return new CareRecordEntity(resultSet.getLong("id"), resultSet);
+        public CareRecordEntity mapRow(ResultSet res, int i) throws SQLException {
+            return new CareRecordEntity(res.getLong("id"), res);
         }
     }
 }

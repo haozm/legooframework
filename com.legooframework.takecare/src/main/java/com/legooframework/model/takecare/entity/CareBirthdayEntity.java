@@ -4,6 +4,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
+import com.legooframework.model.core.base.entity.StringSerializer;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.covariant.entity.MemberEntity;
 import org.joda.time.LocalDate;
@@ -27,7 +28,6 @@ public class CareBirthdayEntity extends BaseEntity<Integer> implements BatchSett
     private final int calendarType;
     private final LocalDate birthday, thisYearBirthday;
     private final LocalDate careDate;
-
 
     CareBirthdayEntity(MemberEntity member, String followUpContent) {
         super(0);

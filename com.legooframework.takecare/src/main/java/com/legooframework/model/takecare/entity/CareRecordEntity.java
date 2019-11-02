@@ -3,19 +3,22 @@ package com.legooframework.model.takecare.entity;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.legooframework.model.core.base.entity.BaseEntity;
+import com.legooframework.model.core.base.entity.StringSerializer;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.covariant.entity.*;
 import com.legooframework.model.covariant.service.MemberAgg;
 import com.legooframework.model.takecare.service.CareNinetyTaskAgg;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.StringJoiner;
 
-public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
+public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter, StringSerializer<CareRecordEntity> {
 
     private final Integer employeeId, storeId, companyId, memberId;
     private Integer careId, subCareId;
@@ -30,6 +33,20 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
     private final String message;
     private final String[] imgUrls;
 
+    @Override
+    public String serializer() {
+        StringJoiner sj = new StringJoiner("|");
+        sj.setEmptyValue(DEF_EMPTY).add(getId().toString()).add(serializer(companyId)).add(serializer(storeId))
+                .add(serializer(employeeId)).add(serializer(memberId)).add(serializer(careId)).add(serializer(subCareId))
+                .add(sendInfo01).add(sendInfo02).add(serializer(businessType.getValue())).add(serializer(sendChannel.getValue()))
+                .add(encodeHex(context)).add(serializer(error)).add(encodeHex(message));
+        return sj.toString();
+    }
+
+    @Override
+    public CareRecordEntity deserializer(String serializer) {
+        return null;
+    }
 
     private CareRecordEntity(Integer careId, int subCareId, Integer companyId, Integer storeId, Integer employeeId,
                              BusinessType businessType, SendChannel sendChannel, Integer memberId,
@@ -140,7 +157,7 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
                 task.getMemberId().orElse(null), task.getWxUser().isPresent() ? task.getWxUser().get().getUserName() : null,
                 task.getWxUser().isPresent() ? task.getWxUser().get().getDevicesId() : null, task.getTargetContent(), imgUrls, false, null);
     }
-    
+
     public static CareRecordEntity sendSmsNinetyCare4Member(CareNinetyTaskAgg task, UserAuthorEntity user) {
         return new CareRecordEntity(task.getTask().getPlanId(), task.getTask().getId(), task.getTask().getCompanyId(), task.getTask().getStoreId(),
                 user == null ? 0 : user.getId(), BusinessType.NINETYPLAN, SendChannel.SMS,

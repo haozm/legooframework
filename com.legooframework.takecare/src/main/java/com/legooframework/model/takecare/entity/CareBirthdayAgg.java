@@ -4,6 +4,7 @@ import com.google.common.base.MoreObjects;
 import com.legooframework.model.covariant.service.MemberAgg;
 
 import java.util.List;
+import java.util.StringJoiner;
 
 public class CareBirthdayAgg {
 
@@ -49,4 +50,5 @@ public class CareBirthdayAgg {
                 .add("takeCareRecords", takeCareRecords.size())
                 .toString();
     }
+
 }

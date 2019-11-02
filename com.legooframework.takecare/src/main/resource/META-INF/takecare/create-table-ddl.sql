@@ -1,8 +1,8 @@
 
 -- modiy 表结构
 ALTER TABLE acp.crm_birthdaycareplan ADD company_id INT(11) NULL;
-ALTER TABLE acp.crm_birthdaycareplan ADD createTime NOT NULL DEFAULT CURRENT_TIMESTAMP;
-ALTER TABLE acp.crm_birthdaycareplan ADD editTime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+ALTER TABLE acp.crm_birthdaycareplan ADD createTime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE acp.crm_birthdaycareplan ADD editTime DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
 UPDATE acp.crm_birthdaycareplan SET company_id= (SELECT cm.company_id from acp.crm_member as cm where cm.id = member_id);
 ALTER TABLE acp.crm_birthdaycareplan MODIFY COLUMN company_id INT(11) NOT NULL;
 ALTER TABLE acp.crm_birthdaycareplan ADD calendarType INT(11) NULL;
@@ -41,3 +41,6 @@ CREATE TABLE TAKECARE_RECORD_LOG
 ) DEFAULT CHARSET = utf8mb4
   COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
+
+CREATE INDEX TAKECARE_RECORD_LOG_ANY_IDX USING BTREE ON acp.TAKECARE_RECORD_LOG (company_id,store_id,employee_id,member_id);
+CREATE INDEX TAKECARE_RECORD_LOG_care_IDX USING BTREE ON acp.TAKECARE_RECORD_LOG (care_id);
