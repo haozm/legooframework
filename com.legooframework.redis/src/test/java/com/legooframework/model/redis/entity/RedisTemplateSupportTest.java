@@ -1,8 +1,6 @@
 package com.legooframework.model.redis.entity;
 
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.takecare.entity.CareRecordEntity;
-import com.legooframework.model.takecare.entity.CareRecordEntityAction;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,16 +10,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
 
-import java.util.List;
-import java.util.Optional;
-
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
-        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-acp-cfg.xml",
+        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-nodb-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/covariant/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/takecare/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/redis/spring-model-cfg.xml"}
 )
 public class RedisTemplateSupportTest {
@@ -34,13 +27,13 @@ public class RedisTemplateSupportTest {
 
     @Test
     public void testGetString() {
-        Optional<List<CareRecordEntity>> list = careRecordEntityAction.query4List();
-        if (list.isPresent()) {
-            for (CareRecordEntity $it : list.get()) {
-                System.out.println($it.serializer());
-                redisTemplate.opsForValue().setIfPresent(String.format("CareRecordEntity-%d", $it.getId()), $it.serializer());
-            }
-        }
+//        Optional<List<CareRecordEntity>> list = careRecordEntityAction.query4List();
+//        if (list.isPresent()) {
+//            for (CareRecordEntity $it : list.get()) {
+//                System.out.println($it.serializer());
+//                redisTemplate.opsForValue().setIfPresent(String.format("CareRecordEntity-%d", $it.getId()), $it.serializer());
+//            }
+//        }
     }
 
     @Test
@@ -56,18 +49,20 @@ public class RedisTemplateSupportTest {
 
     @Test
     public void testHash() {
-        Optional<List<CareRecordEntity>> list = careRecordEntityAction.query4List();
-        if (list.isPresent()) {
-            for (CareRecordEntity $it : list.get()) {
-                System.out.println($it.serializer());
-                redisTemplate.opsForHash().put("CareRecordEntity", $it.getId().toString(), $it.serializer());
-            }
+        for (int i = 0; i < 100; i++) {
+            redisTemplate.opsForHash().put("CareRecordEntity", String.format("key-%d", i), String.format("value - %d", i));
         }
+//        Optional<List<CareRecordEntity>> list = careRecordEntityAction.query4List();
+//        if (list.isPresent()) {
+//            for (CareRecordEntity $it : list.get()) {
+//                System.out.println($it.serializer());
+//                redisTemplate.opsForHash().put("CareRecordEntity", $it.getId().toString(), $it.serializer());
+//            }
+//        }
     }
 
     @Autowired
     private RedisTemplate redisTemplate;
-    @Autowired
-    private CareRecordEntityAction careRecordEntityAction;
+//   ßßßßate CareRecordEntityAction careRecordEntityAction;
 
 }

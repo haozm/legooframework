@@ -15,12 +15,11 @@ import java.beans.PropertyDescriptor;
 import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Optional;
 
 // 实体类抽象建模
-public abstract class BaseEntity<T extends Serializable> implements Cloneable, StringSerializer{
+public abstract class BaseEntity<T extends Serializable> implements Cloneable, StringSerializer {
 
     private final T id;
     private final Long tenantId;
@@ -190,20 +189,6 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable, S
         return Objects.equal(tenantId, baseEnity.tenantId);
     }
 
-    public static int Guid = 10000;
-
-    public static String generateId() {
-        Guid += 1;
-        long now = System.currentTimeMillis();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy");
-        String time = dateFormat.format(now);
-        String info = now + "";
-        int ran = 0;
-        if (Guid > 99999) Guid = 10000;
-        ran = Guid;
-        return time + info.substring(2, info.length()) + ran;
-    }
-
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
@@ -211,11 +196,6 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable, S
 
     @Override
     public String serializer() {
-        return null;
-    }
-
-    @Override
-    public Object deserializer(String serializer) {
         return null;
     }
 
