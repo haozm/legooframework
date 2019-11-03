@@ -16,9 +16,12 @@ import org.springframework.util.ResourceUtils;
 )
 public class RedisEntityCacheTest {
 
+
+   // MessageListenerAdapter
+
     @Test
     public void cacheEnity() {
-        CacheEntity cacheEntity = new CacheEntity(1, "haoxiaojie", 2, LocalDate.now(), "guangz");
+        CacheEntity cacheEntity = new CacheEntity(5, "haoxiaojie", 5, LocalDate.now(), "guangz");
         System.out.println(cacheEntity.getClass().getSimpleName());
         System.out.println(cacheEntity.serializer());
         redisEntityCache.cacheEnity(cacheEntity);
