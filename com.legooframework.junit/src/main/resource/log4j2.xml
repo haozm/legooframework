@@ -4,6 +4,7 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="[%-5level][%d{yyyy-MM-dd HH:mm:ss}][%t]%class{36} [%M] - %msg%xEx%n"/>
         </Console>
+        <!--
         <RollingFile name="Daily_rolling_file" fileName="C:\\workspace\\temp\\csosm.log"
                      filePattern="C:\\workspace\\temp\\csosm_%d{yyyy-MM-dd}.log">
             <PatternLayout pattern="[%-5level][%d{yyyy-MM-dd HH:mm:ss}][%t]%class{36} [%M] - %msg%xEx%n"/>
@@ -11,6 +12,7 @@
                 <TimeBasedTriggeringPolicy interval="1"/>
             </Policies>
         </RollingFile>
+        -->
     </Appenders>
     <Loggers>
         <Root level="ERROR">
@@ -18,11 +20,9 @@
         </Root>
         <Logger name="com.legooframework" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="Daily_rolling_file"/>
         </Logger>
         <Logger name="com.csosm" level="DEBUG" additivity="false">
             <AppenderRef ref="Console"/>
-            <AppenderRef ref="Daily_rolling_file"/>
         </Logger>
         <Logger name="org.springframework.integration.logger" level="INFO" additivity="false">
             <AppenderRef ref="Console"/>
