@@ -1,6 +1,7 @@
 package com.legooframework.model.redis.entity;
 
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,6 +61,15 @@ public class RedisTemplateSupportTest {
 //            }
 //        }
     }
+
+    @Test
+    public void testZSet() {
+        for (int i = 0; i < 20; i++) {
+            double vale = RandomUtils.nextInt(1, 1000);
+            // redisTemplate.opsForZSet().add()
+        }
+    }
+
 
     @Autowired
     private RedisTemplate redisTemplate;

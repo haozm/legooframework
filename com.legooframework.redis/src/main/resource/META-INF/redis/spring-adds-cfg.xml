@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:task="http://www.springframework.org/schema/task"
+       xmlns:redis="http://www.springframework.org/schema/redis"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
+                           http://www.springframework.org/schema/redis https://www.springframework.org/schema/redis/spring-redis.xsd">
+    <task:executor id="redis-executor" pool-size="2-16" queue-capacity="128"/>
+    <bean id="redisKeyEventMessageListener" class="com.legooframework.model.redis.entity.RedisKeyEventMessageListener"/>
+    <redis:listener-container task-executor="redis-executor">
+        <redis:listener ref="redisKeyEventMessageListener" topic="__keyevent@*__:*"/>
+        <redis:listener ref="redisKeyEventMessageListener" topic="message.aa"/>
+    </redis:listener-container>
+</beans>
