@@ -15,9 +15,9 @@ import java.util.Map;
 public abstract class DateTimeUtils {
 
     private static DateTimeFormatter YYYY_MM_DD_HH_MM_SS = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
-    private static DateTimeFormatter YYYYMMDDHHMMSS = DateTimeFormat.forPattern("yyyyMMddHHmmss");
+    public final static DateTimeFormatter YYYYMMDDHHMMSS = DateTimeFormat.forPattern("yyyyMMddHHmmss");
     private static DateTimeFormatter YYYY_MM_DD = DateTimeFormat.forPattern("yyyy-MM-dd");
-    private static DateTimeFormatter YYYYMMDD = DateTimeFormat.forPattern("yyyyMMdd");
+    public final static DateTimeFormatter YYYYMMDD = DateTimeFormat.forPattern("yyyyMMdd");
 
     public static LocalDateTime parseDef(String datatime) {
         return LocalDateTime.parse(datatime, YYYY_MM_DD_HH_MM_SS);
