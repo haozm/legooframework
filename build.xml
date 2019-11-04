@@ -469,9 +469,9 @@
             <param name="vfs.root" value="file:${resources.dir}"/>
         </antcall>
         <delete dir="${webapp.root}/smsresult/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/smsresult/WEB-INF/lib" encoding="UTF-8">
+        <copy todir="${webapp.root}/smsresult/WEB-INF/lib">
             <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-smsprovider-*.jar，legoo-smsresult-*.jar"/>
+                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-smsprovider-*.jar,legoo-smsresult-*.jar"/>
         </copy>
         <delete dir="${webapp.root}/smsresult/WEB-INF/classes" includes="**/*.*"/>
         <copy todir="${webapp.root}/smsresult/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
