@@ -240,11 +240,11 @@
             <reference refid="ent_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="jar-smsprovider">
+    <target name="install-smsprovider-jar">
         <path id="smsprovider_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar"/>
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar"/>
         </path>
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.smsprovider"/>
@@ -449,7 +449,7 @@
             <fileset dir="${resources.dir}" includes="**/core/**,**/wechatcircle/**,**/entities/**,**/crmadapter/**"/>
         </copy>
     </target>
-    <target name="jar-smsresult">
+    <target name="install-smsresult-jar">
         <path id="smsresult_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
@@ -461,7 +461,7 @@
             <reference refid="smsresult_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="install-web-smsresult">
+    <target name="install-smsresult-war">
         <antcall target="webapp-new">
             <param name="app.name" value="smsresult"/>
             <param name="spring.profiles.active" value="${spring.profiles.active}"/>
