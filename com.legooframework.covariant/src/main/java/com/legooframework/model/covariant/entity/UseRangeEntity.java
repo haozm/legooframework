@@ -3,7 +3,7 @@ package com.legooframework.model.covariant.entity;
 import com.google.common.base.MoreObjects;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
-import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,14 +15,14 @@ public abstract class UseRangeEntity extends BaseEntity<Long> {
     private boolean enabled;
 
     protected UseRangeEntity(OrgEntity company) {
-        super(0L, DateTime.now());
+        super(0L, LocalDateTime.now());
         this.companyId = company.getId();
         this.storeId = 0;
         this.enabled = true;
     }
 
     protected UseRangeEntity(StoEntity store) {
-        super(0L, DateTime.now());
+        super(0L, LocalDateTime.now());
         this.companyId = store.getCompanyId();
         this.storeId = store.getId();
         this.enabled = true;

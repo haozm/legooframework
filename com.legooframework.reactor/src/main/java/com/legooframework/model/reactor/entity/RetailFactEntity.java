@@ -9,7 +9,6 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import org.apache.commons.lang3.ArrayUtils;
-import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 
 import java.math.BigDecimal;
@@ -31,7 +30,7 @@ public class RetailFactEntity extends BaseEntity<Long> {
     private final double integral;
     private final Member member;
 
-    RetailFactEntity(Long id, DateTime createtime, List<SaleGoods> saleGoods, ResultSet res) {
+    RetailFactEntity(Long id, LocalDateTime createtime, List<SaleGoods> saleGoods, ResultSet res) {
         super(id, createtime);
         try {
             this.retailId = ResultSetUtil.getOptString(res, "retailid", null);
