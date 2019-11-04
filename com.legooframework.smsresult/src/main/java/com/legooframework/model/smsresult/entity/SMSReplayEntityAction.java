@@ -62,14 +62,14 @@ public class SMSReplayEntityAction extends BaseEntityAction<SMSReplayEntity> {
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<SMSReplayEntity> {
+    private static class RowMapperImpl implements RowMapper<SMSReplayEntity> {
         @Override
         public SMSReplayEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SMSReplayEntity(res.getLong("id"), res);
         }
     }
 
-    class BlackRowMapperImpl implements RowMapper<SMSReplayEntity> {
+    private static class BlackRowMapperImpl implements RowMapper<SMSReplayEntity> {
         @Override
         public SMSReplayEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SMSReplayEntity(res);

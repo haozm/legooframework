@@ -2,7 +2,6 @@ package com.legooframework.model.smsprovider.entity;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import org.apache.commons.collections4.CollectionUtils;
@@ -36,8 +35,8 @@ public class SMSProviderEntity extends BaseEntity<String> {
     /**
      * 发送短信通道
      *
-     * @param smsChannel
-     * @return
+     * @param smsChannel 短信通道
+     * @return String
      */
     public String getHttpSendUrl(SMSChannel smsChannel) {
         List<SMSSubAccountEntity> subList = this.subAccounts.stream()

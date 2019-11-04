@@ -2,6 +2,7 @@ package com.legooframework.model.redis.entity;
 
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import org.apache.commons.lang3.RandomUtils;
+import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -50,8 +51,10 @@ public class RedisTemplateSupportTest {
 
     @Test
     public void testHash() {
+
         for (int i = 0; i < 100; i++) {
-            redisTemplate.opsForHash().put("CareRecordEntity", String.format("key-%d", i), String.format("value - %d", i));
+            CacheEntity cacheEntity = new CacheEntity(i, String.format("HXJ-%d", i), i % 2, LocalDate.now(), String.format("GZ-%d", i));
+            redisTemplate.opsForHash().put(CacheEntity.class.getSimpleName(), String.format("key-%d", i), cacheEntity);
         }
 //        Optional<List<CareRecordEntity>> list = careRecordEntityAction.query4List();
 //        if (list.isPresent()) {

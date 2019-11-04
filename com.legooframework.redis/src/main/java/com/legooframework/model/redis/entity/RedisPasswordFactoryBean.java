@@ -19,6 +19,5 @@ public class RedisPasswordFactoryBean extends AbstractFactoryBean<RedisPassword>
         return RedisPassword.of(password);
     }
 
-
     private final String password;
 }

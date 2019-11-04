@@ -31,13 +31,13 @@ public class RedisEntityCache {
     public void cacheEnityNotNull(BaseEntity<?> entity) {
         Preconditions.checkArgument(null != entity, "BaseEntity<?> entity 不可以为空值");
         getCache().ifPresent(hash -> hash.put(entity.getClass().getSimpleName(),
-                String.valueOf(entity.getId()), entity.serializer()));
+                String.valueOf(entity.getId()), entity.toString()));
     }
 
     public void cacheEnity(BaseEntity<?> entity) {
         if (null == entity) return;
         getCache().ifPresent(hash -> hash.put(entity.getClass().getSimpleName(),
-                String.valueOf(entity.getId()), entity.serializer()));
+                String.valueOf(entity.getId()), entity.toString()));
     }
 
     public void cacheEnity(BaseEntity<?> entity, int timeout, TimeUnit unit) {
@@ -45,14 +45,14 @@ public class RedisEntityCache {
         getRedisTemplate().ifPresent(redis -> {
             String key = entity.getClass().getSimpleName();
             boolean haskey = redis.hasKey(key);
-            redis.opsForHash().put(key, String.valueOf(entity.getId()), entity.serializer());
+            redis.opsForHash().put(key, String.valueOf(entity.getId()), entity.toString());
             if (!haskey) redis.expire(key, timeout, unit);
         });
     }
 
     public void cacheEnity(Optional<BaseEntity<?>> optional) {
         getCache().ifPresent(hash -> optional.ifPresent(opt -> hash.put(opt.getClass().getSimpleName(),
-                String.valueOf(opt.getId()), opt.serializer())));
+                String.valueOf(opt.getId()), opt.toString())));
     }
 
     public void clear(Class<? extends BaseEntity> clazz, Serializable id) {

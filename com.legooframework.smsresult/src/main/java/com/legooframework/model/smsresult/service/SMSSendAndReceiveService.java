@@ -95,7 +95,7 @@ public class SMSSendAndReceiveService extends BundleService {
             logger.trace(String.format("http://******/ext=%s&mobile=%s&content=%s", smsExt, mobile, content));
         Mono<String> mono = WebClient.create().method(HttpMethod.POST)
                 .uri(sendApi, pathVariables)
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(String.class);
         String send_rsp = mono.block(Duration.ofSeconds(30L));
         if (logger.isDebugEnabled())
@@ -138,7 +138,7 @@ public class SMSSendAndReceiveService extends BundleService {
                     MapUtils.getString(pathVariables, "end"), MapUtils.getString(pathVariables, "mobile")));
         Mono<String> mono = WebClient.create().method(HttpMethod.GET)
                 .uri(postUrl, pathVariables)
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(String.class);
         String records = mono.block(Duration.ofSeconds(30L));
         if (logger.isDebugEnabled())

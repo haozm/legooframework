@@ -52,7 +52,7 @@ public class SMSReplayedService extends BundleService {
         Map<String, Object> pathVariables = Maps.newHashMap();
         Mono<String> mono = WebClient.create().method(HttpMethod.GET)
                 .uri(replayApi, pathVariables)
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
+                .contentType(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(String.class);
         String send_rsp = mono.block(Duration.ofSeconds(30L));
         if (logger.isDebugEnabled())

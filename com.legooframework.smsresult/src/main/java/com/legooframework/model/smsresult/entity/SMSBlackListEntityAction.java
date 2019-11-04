@@ -47,7 +47,7 @@ public class SMSBlackListEntityAction extends BaseEntityAction<SMSBlackListEntit
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<SMSBlackListEntity> {
+    private static class RowMapperImpl implements RowMapper<SMSBlackListEntity> {
         @Override
         public SMSBlackListEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SMSBlackListEntity(res.getString("id"), res);

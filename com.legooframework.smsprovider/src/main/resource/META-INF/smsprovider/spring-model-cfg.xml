@@ -19,18 +19,17 @@
     <bean id="smsProviderCacheManager" class="com.legooframework.model.core.cache.CaffeineCacheManager">
         <property name="caffeineSpecs">
             <util:map key-type="java.lang.String" value-type="java.lang.String">
-                <entry key="smsProviderCache" value="initialCapacity=8,maximumSize=16,expireAfterAccess=64m"/>
+                <entry key="smsProviderCache" value="initialCapacity=4,maximumSize=8,expireAfterAccess=64m"/>
             </util:map>
         </property>
     </bean>
-    <bean id="smsBaseProviderEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+    <bean id="smsBaseProviderAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
           abstract="true">
         <property name="statementFactory" ref="smsProviderStatementFactory"/>
         <property name="dataSource" ref="smsProviderDataSource"/>
     </bean>
-    <bean id="smsProviderEntityAction"
-          class="com.legooframework.model.smsprovider.entity.SMSProviderEntityAction"
-          parent="smsBaseProviderEntityAction">
+    <bean id="smsProviderEntityAction" class="com.legooframework.model.smsprovider.entity.SMSProviderEntityAction"
+          parent="smsBaseProviderAction">
         <property name="cacheManager" ref="smsProviderCacheManager"/>
     </bean>
 </beans>
