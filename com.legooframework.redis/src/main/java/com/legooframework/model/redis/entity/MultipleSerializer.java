@@ -15,12 +15,7 @@ public class MultipleSerializer implements RedisSerializer<Object> {
 
     @Override
     public byte[] serialize(Object source) throws SerializationException {
-        if (source == null) return new byte[0];
-        if (source instanceof JsonSerializer) {
-            return jsonRedisSerializer.serialize(source);
-        } else {
-            return stringRedisSerializer.serialize(source);
-        }
+        return new byte[0];
     }
 
     @Override

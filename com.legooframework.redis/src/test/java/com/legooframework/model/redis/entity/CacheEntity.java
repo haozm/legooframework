@@ -3,17 +3,20 @@ package com.legooframework.model.redis.entity;
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.Maps;
+import com.google.gson.*;
 import com.legooframework.model.core.base.entity.BaseEntity;
+import com.legooframework.model.core.utils.DateTimeUtils;
 import org.joda.time.LocalDate;
 
-import java.lang.reflect.Constructor;
+import java.lang.reflect.Type;
 import java.util.Map;
 
-public class CacheEntity extends BaseEntity<Integer> implements JsonSerializer {
+public class CacheEntity extends BaseEntity<Integer> {
 
     private String name, address;
     private int sex;
     private LocalDate biredy;
+    private Asd asd;
 
     CacheEntity(Integer id, String name, int sex, LocalDate biredy, String address) {
         super(id);
@@ -21,6 +24,7 @@ public class CacheEntity extends BaseEntity<Integer> implements JsonSerializer {
         this.address = address;
         this.sex = sex;
         this.biredy = biredy;
+        asd = new Asd("nihao ");
     }
 
     CacheEntity(String ser) {
@@ -31,7 +35,7 @@ public class CacheEntity extends BaseEntity<Integer> implements JsonSerializer {
         Map<String, String> params = Maps.newHashMap();
         params.put("name", name);
         params.put("sex", String.valueOf(sex));
-        params.put("biredy", biredy.toString("yyyy-MM-dd"));
+        params.put("biredy", biredy.toString("yyyyMMdd"));
         return Joiner.on(',').withKeyValueSeparator("=").join(params);
     }
 
@@ -45,16 +49,25 @@ public class CacheEntity extends BaseEntity<Integer> implements JsonSerializer {
                 .toString();
     }
 
+    static class LocalDateSerializer implements JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
+
+        public JsonElement serialize(LocalDate src, Type typeOfSrc, JsonSerializationContext context) {
+            return new JsonPrimitive(src.toString("yyyyMMdd"));
+        }
+
+        public LocalDate deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+                throws JsonParseException {
+            return DateTimeUtils.parseShortYYYYMMDD(json.getAsJsonPrimitive().getAsString());
+        }
+    }
+
 
     public static void main(String[] args) throws Exception {
-        CacheEntity asd = new CacheEntity(1, "hjaopx", 2, LocalDate.now(), "guagnz");
-        String str = asd.toString();
-        System.out.println(str);
-        Class<?> clazz = Class.forName("com.legooframework.model.redis.entity.CacheEntity");
-        Constructor<?>[] constructors = clazz.getConstructors();
-        for (Constructor a : constructors) {
-            System.out.println(a);
-        }
-        System.out.println("end");
+        CacheEntity entity = new CacheEntity(1, "hjaopx", 2, LocalDate.now(), "guagnz");
+        GsonBuilder builder = new GsonBuilder();
+        builder = builder.registerTypeAdapter(LocalDate.class, new LocalDateSerializer());
+        //builder = builder.registerTypeAdapter(Asd.class, new AsdSerializer());
+        Gson gson = builder.create();
+        System.out.println(gson.toJson(entity));
     }
 }

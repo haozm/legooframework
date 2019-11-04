@@ -10,6 +10,7 @@ import com.legooframework.model.core.jdbc.ResultSetUtil;
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 
 import java.beans.PropertyDescriptor;
 import java.io.Serializable;
@@ -25,19 +26,19 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
     private final Long tenantId;
     // 创建者与创建时间
     private final Long creator;
-    private final DateTime createTime;
+    private final LocalDateTime createTime;
     // 最后一次修改者与修改时间
     private Long editor;
-    private DateTime editTime;
+    private LocalDateTime editTime;
 
     protected BaseEntity(T id) {
         this.id = id;
         this.tenantId = null;
         this.creator = null;
-        this.createTime = DateTime.now();
+        this.createTime = LocalDateTime.now();
     }
 
-    protected BaseEntity(T id, DateTime createTime) {
+    protected BaseEntity(T id, LocalDateTime createTime) {
         Preconditions.checkNotNull(id, "实体唯一标识ID不可以为空值.");
         this.id = id;
         this.creator = -1L;
@@ -52,10 +53,10 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
         this.id = id;
         this.creator = creator;
         this.tenantId = tenantId;
-        this.createTime = DateTime.now();
+        this.createTime = LocalDateTime.now();
     }
 
-    protected BaseEntity(T id, Long tenantId, Long creator, DateTime createTime, Long editor, DateTime editTime) {
+    protected BaseEntity(T id, Long tenantId, Long creator, LocalDateTime createTime, Long editor, LocalDateTime editTime) {
         this.id = id;
         this.tenantId = tenantId;
         this.creator = creator;
@@ -69,10 +70,10 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
         try {
             this.tenantId = ResultSetUtil.getOptObject(res, "tenantId", Long.class).orElse(null);
             this.creator = ResultSetUtil.getOptObject(res, "creator", Long.class).orElse(null);
-            this.createTime = ResultSetUtil.getDateTime(res, "createTime");
+            this.createTime = ResultSetUtil.getLocalDateTime(res, "createTime");
             this.editor = ResultSetUtil.getOptObject(res, "editor", Long.class).orElse(null);
             this.editTime = ResultSetUtil.getDateTime(res, "editTime") == null ? this.createTime :
-                    ResultSetUtil.getDateTime(res, "editTime");
+                    ResultSetUtil.getLocalDateTime(res, "editTime");
         } catch (SQLException e) {
             throw new RuntimeException("Restore BaseEntity has SQLException", e);
         }
@@ -83,10 +84,10 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
         try {
             this.tenantId = ResultSetUtil.getOptObject(res, "tenantId", Long.class).orElse(null);
             this.creator = creator;
-            this.createTime = ResultSetUtil.getDateTime(res, "createTime");
+            this.createTime = ResultSetUtil.getLocalDateTime(res, "createTime");
             this.editor = ResultSetUtil.getOptObject(res, "editor", Long.class).orElse(null);
             this.editTime = ResultSetUtil.getDateTime(res, "editTime") == null ? this.createTime :
-                    ResultSetUtil.getDateTime(res, "editTime");
+                    ResultSetUtil.getLocalDateTime(res, "editTime");
         } catch (SQLException e) {
             throw new RuntimeException("Restore BaseEntity has SQLException", e);
         }
@@ -100,11 +101,11 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
         return creator;
     }
 
-    protected void setEditTime(DateTime editTime) {
+    protected void setEditTime(LocalDateTime editTime) {
         this.editTime = editTime;
     }
 
-    public DateTime getCreateTime() {
+    public LocalDateTime getCreateTime() {
         return createTime;
     }
 
@@ -126,7 +127,7 @@ public abstract class BaseEntity<T extends Serializable> implements Cloneable {
         return Optional.ofNullable(editor);
     }
 
-    public Optional<DateTime> getEditTime() {
+    public Optional<LocalDateTime> getEditTime() {
         return Optional.ofNullable(editTime);
     }
 
