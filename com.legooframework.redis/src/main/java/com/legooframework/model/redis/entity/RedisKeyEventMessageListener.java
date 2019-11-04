@@ -16,7 +16,6 @@ public class RedisKeyEventMessageListener implements MessageListener {
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
-
         logger.debug(String.format("pattern:%s, channle:%s, body:%s", serializer.deserialize(pattern),
                 serializer.deserialize(message.getChannel()), serializer.deserialize(message.getBody())));
     }
