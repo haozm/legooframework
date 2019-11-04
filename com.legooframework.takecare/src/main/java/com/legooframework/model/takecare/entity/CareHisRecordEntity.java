@@ -14,29 +14,12 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.StringJoiner;
 
-public class CareHisRecordEntity extends BaseEntity<Integer> implements BatchSetter, StringSerializer<CareRecordEntity> {
+public class CareHisRecordEntity extends BaseEntity<Integer> implements BatchSetter {
 
     private String followUpContent, memberFeedback, planName, shoppingGuideSummary;
     private LocalDateTime followUpTime, updateTime;
     private int followUpWay, planType, planId, status, operateType;
     private Integer memberId, storeId, employeeId;
-
-    @Override
-    public String serializer() {
-        StringJoiner sj = new StringJoiner("|");
-        sj.setEmptyValue(DEF_EMPTY).add(getId().toString()).add(serializer(storeId))
-                .add(serializer(employeeId)).add(serializer(memberId)).add(serializer(followUpWay)).add(serializer(planType))
-                .add(serializer(planId)).add(serializer(status)).add(serializer(operateType))
-                .add(serializer(followUpTime)).add(serializer(updateTime))
-                .add(encodeHex(followUpContent)).add(encodeHex(memberFeedback)).add(encodeHex(planName))
-                .add(encodeHex(shoppingGuideSummary));
-        return sj.toString();
-    }
-
-    @Override
-    public CareRecordEntity deserializer(String serializer) {
-        return null;
-    }
 
     private CareHisRecordEntity(int planId, String followUpContent, String memberFeedback, BusinessType businessType,
                                 String shoppingGuideSummary, LocalDateTime followUpTime, SendChannel followUpWay,

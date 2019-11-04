@@ -32,8 +32,8 @@ public class CacheEntity extends BaseEntity<Integer> {
     @Override
     public String serializer() {
         StringJoiner sj = new StringJoiner("|");
-        sj.setEmptyValue(DEF_EMPTY).add(serializer(getId())).add(encodeHex(name))
-                .add(serializer(sex)).add(serializer(biredy)).add(encodeHex(address));
+        sj.setEmptyValue(DEF_EMPTY).add(serializer(getId())).add(serializerHex(name))
+                .add(serializer(sex)).add(serializer(biredy)).add(serializerHex(address));
         return sj.toString();
     }
 

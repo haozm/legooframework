@@ -5,7 +5,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 
-public interface StringSerializer<T> {
+public interface StringSerializer {
     /**
      * 序列化
      *
@@ -31,7 +31,7 @@ public interface StringSerializer<T> {
         return value == null ? DEF_EMPTY : value.toString("yyyyMMdd");
     }
 
-    default String encodeHex(String value) {
+    default String serializerHex(String value) {
         return value == null ? DEF_EMPTY : Hex.encodeHexString(value.getBytes(Charsets.UTF_8));
     }
 
