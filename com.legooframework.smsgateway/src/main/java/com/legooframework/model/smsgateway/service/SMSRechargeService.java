@@ -1,17 +1,13 @@
 package com.legooframework.model.smsgateway.service;
 
 import com.google.common.base.Preconditions;
-import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
+import com.legooframework.model.covariant.entity.OrgEntity;
+import com.legooframework.model.covariant.entity.OrgEntityAction;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import com.legooframework.model.smsgateway.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.integration.support.MessageBuilder;
-import org.springframework.messaging.Message;
 
-import java.util.List;
 import java.util.Optional;
 
 public class SMSRechargeService extends BundleService {
@@ -27,7 +23,7 @@ public class SMSRechargeService extends BundleService {
     public void rechargeByCompany(Integer companyId, long rechargeAmount, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByCompany(%s,%s)", companyId, rechargeAmount));
-        CrmOrganizationEntity company = getCompany(companyId);
+        OrgEntity company = getCompany(companyId);
         RechargeRuleEntity rule = getRechargeRule(company, rechargeAmount);
         RechargeRes rechargeRes = rechargeByCompany(companyId, rechargeAmount, rule, rechargeType);
         addBalance(rechargeRes);
@@ -44,7 +40,7 @@ public class SMSRechargeService extends BundleService {
     void freecharge(Integer companyId, String storeGroupId, Integer storId, int totalQuantity) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("freecharge(%s,%s,%s,%s)", companyId, storeGroupId, storId, totalQuantity));
-        CrmOrganizationEntity company = getCompany(companyId);
+        OrgEntity company = getCompany(companyId);
         CrmStoreEntity store = storId == null ? null : getStore(companyId, storId);
         RechargeRes rechargeRes = getBean(RechargeDetailEntityAction.class).freecharge(company, store, storeGroupId, totalQuantity);
         addBalance(rechargeRes);
@@ -69,9 +65,7 @@ public class SMSRechargeService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByCompanyOnce(%s,%s,%s,%s)", companyId, rechargeAmount,
                     unitPrice, remarke));
-        Optional<CrmOrganizationEntity> company_opt = getBean(CrmOrganizationEntityAction.class).findCompanyById(companyId);
-        Preconditions.checkState(company_opt.isPresent());
-        CrmOrganizationEntity company = company_opt.get();
+        OrgEntity company = getCompany(companyId);
         RechargeRuleEntity rule = createTemporaryRule(company, rechargeAmount, unitPrice, remarke);
         RechargeRes rechargeRes = rechargeByCompany(companyId, rechargeAmount, rule, rechargeType);
         addBalance(rechargeRes);
@@ -87,7 +81,7 @@ public class SMSRechargeService extends BundleService {
     public void rechargeByStoreGroup(Integer companyId, String storeGroupId, long rechargeAmount, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByStoreGroup(%s,%s,%s)", companyId, storeGroupId, rechargeAmount));
-        CrmOrganizationEntity company = getCompany(companyId);
+        OrgEntity company = getCompany(companyId);
         RechargeRuleEntity rule = getRechargeRule(company, rechargeAmount);
         RechargeRes rechargeRes = null;
         switch (rechargeType) {
@@ -107,7 +101,7 @@ public class SMSRechargeService extends BundleService {
                                          String remarke, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByOrgOnce(%s,%s,%s)", companyId, storeGroupId, rechargeAmount));
-        CrmOrganizationEntity company = getCompany(companyId);
+        OrgEntity company = getCompany(companyId);
         RechargeRuleEntity rule = createTemporaryRule(company, rechargeAmount, unitPrice, remarke);
         RechargeRes rechargeRes = null;
         switch (rechargeType) {
@@ -133,7 +127,7 @@ public class SMSRechargeService extends BundleService {
     public void rechargeByStore(Integer companyId, Integer storeId, long rechargeAmount, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByStore(%s,%s,%s)", companyId, storeId, rechargeAmount));
-        CrmOrganizationEntity company = getCompany(companyId);
+        OrgEntity company = getCompany(companyId);
         CrmStoreEntity store = getStore(companyId, storeId);
         RechargeRuleEntity rule = getRechargeRule(company, rechargeAmount);
         RechargeRes rechargeRes = null;
@@ -164,9 +158,7 @@ public class SMSRechargeService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByStoreOnce(%s,%s,%s,%s,%s)", companyId, storeId, rechargeAmount,
                     unitPrice, remarke));
-        Optional<CrmOrganizationEntity> company_opt = getBean(CrmOrganizationEntityAction.class).findCompanyById(companyId);
-        Preconditions.checkState(company_opt.isPresent());
-        CrmOrganizationEntity company = company_opt.get();
+        OrgEntity company = getBean(OrgEntityAction.class).loadComById(companyId);
         RechargeRuleEntity rule = createTemporaryRule(company, rechargeAmount, unitPrice, remarke);
         CrmStoreEntity store = getStore(companyId, storeId);
         RechargeRes rechargeRes = null;
@@ -183,14 +175,14 @@ public class SMSRechargeService extends BundleService {
         addBalance(rechargeRes);
     }
 
-    private RechargeRuleEntity getRechargeRule(CrmOrganizationEntity company, long rechargeAmount) {
+    private RechargeRuleEntity getRechargeRule(OrgEntity company, long rechargeAmount) {
         RechargeRuleSet ruleSet = getBean(RechargeRuleEntityAction.class).loadAllRuleSet();
         Optional<RechargeRuleEntity> rule = ruleSet.getSuitableRule(company, rechargeAmount);
         Preconditions.checkState(rule.isPresent(), "无合适的规则适用于本次扣费");
         return rule.get();
     }
 
-    private RechargeRuleEntity createTemporaryRule(CrmOrganizationEntity company, long rechargeAmount, double unitPrice,
+    private RechargeRuleEntity createTemporaryRule(OrgEntity company, long rechargeAmount, double unitPrice,
                                                    String remarke) {
         String ruleId = getBean(RechargeRuleEntityAction.class).addTemporaryRule(rechargeAmount * 100 - 100,
                 rechargeAmount * 100 + 100,
@@ -202,9 +194,7 @@ public class SMSRechargeService extends BundleService {
     }
 
     private RechargeRes rechargeByCompany(Integer companyId, long rechargeAmount, RechargeRuleEntity rule, RechargeType rechargeType) {
-        Optional<CrmOrganizationEntity> company_opt = getBean(CrmOrganizationEntityAction.class).findCompanyById(companyId);
-        Preconditions.checkState(company_opt.isPresent());
-        CrmOrganizationEntity company = company_opt.get();
+        OrgEntity company = getCompany(companyId);
         RechargeRes rechargeRes = null;
         switch (rechargeType) {
             case Recharge:

@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
+import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import org.apache.commons.collections4.CollectionUtils;
@@ -40,7 +41,7 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param rechargeAmount
      * @return
      */
-    public RechargeRes recharge(CrmOrganizationEntity company, CrmStoreEntity store, String storeGroupId,
+    public RechargeRes recharge(OrgEntity company, CrmStoreEntity store, String storeGroupId,
                                 RechargeRuleEntity rechargeRule, long rechargeAmount) {
         Preconditions.checkNotNull(company);
         Preconditions.checkArgument(rechargeAmount > 0);
@@ -92,7 +93,7 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param rechargeAmount
      * @return
      */
-    public RechargeRes precharge(CrmOrganizationEntity company, CrmStoreEntity store, String storeGroupId,
+    public RechargeRes precharge(OrgEntity company, CrmStoreEntity store, String storeGroupId,
                                  RechargeRuleEntity rechargeRule, long rechargeAmount) {
         Preconditions.checkNotNull(company);
         Preconditions.checkArgument(rechargeAmount > 0);
@@ -119,7 +120,7 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param totalQuantity 数量
      * @return RechargeRes 充值结果
      */
-    public RechargeRes freecharge(CrmOrganizationEntity company, CrmStoreEntity store, String storeGroupId,
+    public RechargeRes freecharge(OrgEntity company, CrmStoreEntity store, String storeGroupId,
                                   int totalQuantity) {
         Preconditions.checkNotNull(company);
         RechargeDetailEntity recharge;

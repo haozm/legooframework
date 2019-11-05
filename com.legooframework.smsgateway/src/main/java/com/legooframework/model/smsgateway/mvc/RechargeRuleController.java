@@ -8,6 +8,8 @@ import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
+import com.legooframework.model.covariant.entity.OrgEntity;
+import com.legooframework.model.covariant.entity.OrgEntityAction;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
 import com.legooframework.model.smsgateway.entity.RechargeRuleEntity;
@@ -53,17 +55,14 @@ public class RechargeRuleController extends BaseController {
             logger.debug(String.format("loadAllRules(url=%s,param=%s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setCtx(getLoginContext());
         Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
-        CrmOrganizationEntity company = null;
+        OrgEntity company = null;
         if (companyId != -1) {
-            Optional<CrmOrganizationEntity> companyOpt = getBean(CrmOrganizationEntityAction.class, request)
-                    .findCompanyById(companyId);
-            Preconditions.checkState(companyOpt.isPresent(), "不存在Id=%s 对应的公司...", companyId);
-            company = companyOpt.get();
+            company = getBean(OrgEntityAction.class, request).loadComById(companyId);
         }
         Optional<List<RechargeRuleEntity>> rulesOpt = getBean(RechargeRuleEntityAction.class, request).loadAllRules();
         if (!rulesOpt.isPresent()) return JsonMessageBuilder.OK().toMessage();
         List<RechargeRuleEntity> rules = rulesOpt.get();
-        final CrmOrganizationEntity com = company;
+        final OrgEntity com = company;
         rules = com == null ? rules.stream().filter(RechargeRuleEntity::isGlobalRule).collect(Collectors.toList()) :
                 rules.stream().filter(x -> x.isOwnerCompany(com)).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(rules)) return JsonMessageBuilder.OK().toMessage();
@@ -92,13 +91,11 @@ public class RechargeRuleController extends BaseController {
             logger.debug(String.format("loadAllRules(url=%s,param=%s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setCtx(getLoginContext());
         Integer companyId = MapUtils.getInteger(requestBody, "companyId");
-        Optional<CrmOrganizationEntity> companyOpt = getBean(CrmOrganizationEntityAction.class, request)
-                .findCompanyById(companyId);
-        Preconditions.checkState(companyOpt.isPresent(), "不存在Id=%s 对应的公司...", companyId);
+        OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(companyId);
         Optional<List<RechargeRuleEntity>> rulesOpt = getBean(RechargeRuleEntityAction.class, request).loadAllRules();
         if (!rulesOpt.isPresent()) return JsonMessageBuilder.OK().toMessage();
         List<RechargeRuleEntity> rules = rulesOpt.get();
-        rules = rules.stream().filter(x -> x.isOwnerCompany(companyOpt.get()))
+        rules = rules.stream().filter(x -> x.isOwnerCompany(company))
                 .filter(RechargeRuleEntity::isEnabled).filter(RechargeRuleEntity::isNotExpired)
                 .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(rules)) return JsonMessageBuilder.OK().toMessage();
@@ -106,7 +103,7 @@ public class RechargeRuleController extends BaseController {
         List<Map<String, Object>> resList = Lists.newArrayList();
         rules.forEach(r -> {
             Map<String, Object> map = r.toViewMap();
-            if (!r.isGlobalRule()) map.put("companyName", companyOpt.get().getName());
+            if (!r.isGlobalRule()) map.put("companyName", company.getName());
             resList.add(map);
         });
         return JsonMessageBuilder.OK().withPayload(resList).toMessage();
@@ -154,12 +151,10 @@ public class RechargeRuleController extends BaseController {
                 "非法的入参[min=%s,max=%s]", minVal, maxVal);
         double unitPrice = MapUtils.getDouble(requestBody, "unitPrice");
         Preconditions.checkArgument(unitPrice > 0, "短信单价值%s 非法...", unitPrice);
-        CrmOrganizationEntity company = null;
+        OrgEntity company = null;
         Integer companyId = MapUtils.getInteger(requestBody, "companyId");
         if (null != companyId) {
-            Optional<CrmOrganizationEntity> comOpt = getBean(CrmOrganizationEntityAction.class, request).findCompanyById(companyId);
-            Preconditions.checkState(comOpt.isPresent(), "Id=%s对应的公司不存在...", companyId);
-            company = comOpt.get();
+            company = getBean(OrgEntityAction.class, request).loadComById(companyId);
         }
         String remarks = MapUtils.getString(requestBody, "remarks");
         LocalDate expiredDate = null;

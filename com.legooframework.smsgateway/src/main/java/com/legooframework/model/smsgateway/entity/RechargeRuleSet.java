@@ -2,7 +2,7 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
+import com.legooframework.model.covariant.entity.OrgEntity;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.Comparator;
@@ -31,7 +31,7 @@ public class RechargeRuleSet {
      * @param rechargeAmount
      * @return
      */
-    public Optional<RechargeRuleEntity> getSuitableRule(CrmOrganizationEntity company, long rechargeAmount) {
+    public Optional<RechargeRuleEntity> getSuitableRule(OrgEntity company, long rechargeAmount) {
         List<RechargeRuleEntity> list = this.rules.stream()
                 .filter(x -> x.isSuitable(company, rechargeAmount)).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(list)) return Optional.empty();

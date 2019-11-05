@@ -41,6 +41,10 @@ public class OrgEntity extends BaseEntity<Integer> implements ToReplace {
         return shortName;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public Map<String, Object> toParamMap(String... excludes) {
         Map<String, Object> params = Maps.newHashMap();

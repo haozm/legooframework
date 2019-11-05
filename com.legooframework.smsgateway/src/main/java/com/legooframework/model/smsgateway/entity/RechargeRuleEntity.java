@@ -8,7 +8,7 @@ import com.google.common.collect.Range;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.core.utils.CommonsUtils;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
+import com.legooframework.model.covariant.entity.OrgEntity;
 import org.joda.time.LocalDate;
 
 import java.math.BigDecimal;
@@ -29,7 +29,7 @@ public class RechargeRuleEntity extends BaseEntity<String> {
     private String remarks;
     private LocalDate expiredDate;
 
-    RechargeRuleEntity(Long min, Long max, double unitPrice, CrmOrganizationEntity company, String remarks,
+    RechargeRuleEntity(Long min, Long max, double unitPrice, OrgEntity company, String remarks,
                        boolean temporary, LocalDate expiredDate) {
         this(min, max, unitPrice, company == null ? null : company.getId(), temporary, remarks, expiredDate);
     }
@@ -96,7 +96,7 @@ public class RechargeRuleEntity extends BaseEntity<String> {
         return enabled;
     }
 
-    boolean isSuitable(CrmOrganizationEntity company, long rechargeAmount) {
+    boolean isSuitable(OrgEntity company, long rechargeAmount) {
         return enabled && isOwnerCompany(company) && this.range.contains(rechargeAmount)
                 && !isTemporary() && isNotExpired();
     }
@@ -105,7 +105,7 @@ public class RechargeRuleEntity extends BaseEntity<String> {
         super(id);
     }
 
-    public boolean isOwnerCompany(CrmOrganizationEntity company) {
+    public boolean isOwnerCompany(OrgEntity company) {
         if (this.companyId == -1) return true;
         return this.companyId.equals(company.getId());
     }

@@ -8,7 +8,7 @@ import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.utils.CommonsUtils;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
+import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 
 import java.sql.PreparedStatement;
@@ -149,36 +149,36 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
                 LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity rechargeByStoreGroup(CrmOrganizationEntity company, String storeGroupId,
+    static RechargeDetailEntity rechargeByStoreGroup(OrgEntity company, String storeGroupId,
                                                      RechargeRuleEntity rechargeRule, long rechargeAmount) {
         return new RechargeDetailEntity(company.getId(), -1, storeGroupId, RechargeScope.StoreGroup,
                 rechargeRule, rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity prechargeByStoreGroup(CrmOrganizationEntity company, String storeGroupId,
+    static RechargeDetailEntity prechargeByStoreGroup(OrgEntity company, String storeGroupId,
                                                       RechargeRuleEntity rechargeRule, long rechargeAmount) {
         return new RechargeDetailEntity(company.getId(), -1, storeGroupId, RechargeScope.StoreGroup,
                 rechargeRule, rechargeAmount, RechargeType.Precharge, 0, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity freechargeByStoreGroup(CrmOrganizationEntity company, String storeGroupId, int totalQuantity) {
+    static RechargeDetailEntity freechargeByStoreGroup(OrgEntity company, String storeGroupId, int totalQuantity) {
         return new RechargeDetailEntity(company.getId(), -1, storeGroupId, RechargeScope.StoreGroup,
                 null, 0L, RechargeType.FreeCharge, totalQuantity, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity rechargeByCompany(CrmOrganizationEntity company, RechargeRuleEntity rechargeRule,
+    static RechargeDetailEntity rechargeByCompany(OrgEntity company, RechargeRuleEntity rechargeRule,
                                                   long rechargeAmount) {
         return new RechargeDetailEntity(company.getId(), -1, null, RechargeScope.Company, rechargeRule,
                 rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity prechargeByCompany(CrmOrganizationEntity company, RechargeRuleEntity rechargeRule,
+    static RechargeDetailEntity prechargeByCompany(OrgEntity company, RechargeRuleEntity rechargeRule,
                                                    long rechargeAmount) {
         return new RechargeDetailEntity(company.getId(), -1, null, RechargeScope.Company, rechargeRule,
                 rechargeAmount, RechargeType.Precharge, 0, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity freechargeByCompany(CrmOrganizationEntity company, int totalQuantity) {
+    static RechargeDetailEntity freechargeByCompany(OrgEntity company, int totalQuantity) {
         return new RechargeDetailEntity(company.getId(), -1, null, RechargeScope.Company, null,
                 0L, RechargeType.FreeCharge, totalQuantity, LoginContextHolder.get());
     }

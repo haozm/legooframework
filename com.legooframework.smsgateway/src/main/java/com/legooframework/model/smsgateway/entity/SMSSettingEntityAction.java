@@ -5,7 +5,7 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -27,7 +27,7 @@ public class SMSSettingEntityAction extends BaseEntityAction<SMSSettingEntity> {
         super("smsGateWayCache");
     }
 
-    public Optional<List<SMSSettingEntity>> checkSmsPrefix(CrmStoreEntity store, String smsPrefix) {
+    public Optional<List<SMSSettingEntity>> checkSmsPrefix(StoEntity store, String smsPrefix) {
         Map<String, Object> params = Maps.newHashMap();
         params.put("smsPrefix", smsPrefix);
         Optional<List<SMSSettingEntity>> exit_list = super.queryForEntities("findBySMSPrefix", params, new RowMapperImpl());
@@ -39,7 +39,7 @@ public class SMSSettingEntityAction extends BaseEntityAction<SMSSettingEntity> {
         return Optional.ofNullable(CollectionUtils.isEmpty(sub_list) ? null : sub_list);
     }
 
-    public void changeSmsPrefix(CrmStoreEntity store, String smsPrefix) {
+    public void changeSmsPrefix(StoEntity store, String smsPrefix) {
         LoginContext user = LoginContextHolder.get();
         checkSmsPrefix(store, smsPrefix);
         SMSSettingEntity smsSetting = loadByStoreId(store.getCompanyId(), store.getId());

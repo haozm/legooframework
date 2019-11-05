@@ -3,6 +3,7 @@ package com.legooframework.model.smsgateway.entity;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
+import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.LocalDate;
@@ -53,7 +54,7 @@ public class RechargeRuleEntityAction extends BaseEntityAction<RechargeRuleEntit
      * @param remarks   备注
      * @return 字串
      */
-    public String addRule(Long min, Long max, double unitPrice, CrmOrganizationEntity company,
+    public String addRule(Long min, Long max, double unitPrice, OrgEntity company,
                           String remarks, LocalDate expiredDate) {
         RechargeRuleEntity instance;
         if (null == company) {
@@ -79,7 +80,7 @@ public class RechargeRuleEntityAction extends BaseEntityAction<RechargeRuleEntit
      * @param remarks   备注
      * @return 字串 春梦
      */
-    public String addTemporaryRule(Long min, Long max, double unitPrice, CrmOrganizationEntity company,
+    public String addTemporaryRule(Long min, Long max, double unitPrice, OrgEntity company,
                                    String remarks, LocalDate expiredDate) {
         Preconditions.checkNotNull(company, "入参 CrmOrganizationEntity company 不可以为空值...");
         RechargeRuleEntity instance = new RechargeRuleEntity(min, max, unitPrice, company, remarks, true,

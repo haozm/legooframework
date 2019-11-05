@@ -28,6 +28,7 @@ public class UserAuthorEntity extends BaseEntity<Integer> implements ToReplace {
     private Integer companyId, orgId, storeId;
     private final static Ordering<Integer> ORDER_INT = Ordering.natural();
 
+
     UserAuthorEntity(Integer id, ResultSet res) {
         super(id);
         try {
@@ -105,8 +106,12 @@ public class UserAuthorEntity extends BaseEntity<Integer> implements ToReplace {
         return CollectionUtils.isNotEmpty(roleIds) && ArrayUtils.contains(new int[]{4, 8, 9, 10}, roleIds.get(0));
     }
 
-    private boolean hasStore() {
+    public boolean hasStore() {
         return isStoreManager() || isShoppingGuide();
+    }
+
+    public boolean hasStores() {
+        return CollectionUtils.isNotEmpty(this.subStoreIds);
     }
 
     @Override
