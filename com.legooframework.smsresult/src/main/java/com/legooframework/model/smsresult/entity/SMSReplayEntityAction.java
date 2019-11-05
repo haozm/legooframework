@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 public class SMSReplayEntityAction extends BaseEntityAction<SMSReplayEntity> {
+
     private static final Logger logger = LoggerFactory.getLogger(SMSReplayEntityAction.class);
 
     public SMSReplayEntityAction() {

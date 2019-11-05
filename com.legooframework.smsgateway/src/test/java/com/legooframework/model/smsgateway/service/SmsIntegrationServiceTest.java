@@ -53,7 +53,7 @@ public class SmsIntegrationServiceTest {
                 .uri("http://yg.csosm.com:6060/smsresult/api/smses/batch/sending.json?_format={format}",
                         "flat", payload)
                 .contentType(MediaType.APPLICATION_JSON)
-                .syncBody(params)
+                .bodyValue(params)
                 .retrieve().bodyToMono(String.class);
         String res = mono.block(Duration.ofSeconds(30));
         System.out.println(res);

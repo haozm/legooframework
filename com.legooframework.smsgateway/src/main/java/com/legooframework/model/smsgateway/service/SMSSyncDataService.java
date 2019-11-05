@@ -45,8 +45,8 @@ public class SMSSyncDataService extends BundleService {
             params.put("companyIds", StringUtils.join(companyIds.get(), ','));
             Mono<String> mono = WebClient.create().method(HttpMethod.POST)
                     .uri(getSmsBlackApi())
-                    .contentType(MediaType.APPLICATION_JSON_UTF8)
-                    .syncBody(params)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(params)
                     .retrieve().bodyToMono(String.class);
             String http_return = mono.block(Duration.ofSeconds(30));
             if (logger.isDebugEnabled())
@@ -91,8 +91,8 @@ public class SMSSyncDataService extends BundleService {
         params.put("smsIds", StringUtils.join(smsIds, ','));
         Mono<String> mono = WebClient.create().method(HttpMethod.POST)
                 .uri(getFinalStateApi())
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .syncBody(params)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(params)
                 .retrieve().bodyToMono(String.class);
         String http_return = mono.block(Duration.ofSeconds(30));
         if (logger.isDebugEnabled())

@@ -78,8 +78,8 @@ public class JWTokenAction {
         _params.put("bundle", "com.legooframework.jwtoken");
         Mono<String> mono = WebClient.create().method(HttpMethod.POST)
                 .uri(postUrl, pathVariables)
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .syncBody(_params)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(_params)
                 .retrieve().bodyToMono(String.class);
         String payload = mono.block();
         Preconditions.checkNotNull(payload, "数据无返回，通信异常...");
@@ -101,8 +101,7 @@ public class JWTokenAction {
     }
 
     private JsonElement parseJson(String jsonString) {
-        JsonParser parser = new JsonParser();
-        JsonObject jsonObject = parser.parse(jsonString).getAsJsonObject();
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
         String code = jsonObject.get("code").getAsString();
         if (!StringUtils.equals("0000", code)) {
             throw new RuntimeException(String.format("ERROE:%s , MSG:%s ", code, jsonObject.get("msg").getAsString()));

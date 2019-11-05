@@ -10,31 +10,50 @@ import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
+import org.springframework.beans.factory.config.AbstractFactoryBean;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
-import org.springframework.data.redis.serializer.SerializationException;
 
 import java.io.IOException;
 
-public class EntityRedisSerializer implements RedisSerializer<Object> {
+public class RedisSerializerFactory extends AbstractFactoryBean<RedisSerializer<Object>> {
+
+
+    @Override
+    public Class<RedisSerializer> getObjectType() {
+        return RedisSerializer.class;
+    }
+
+    @Override
+    protected RedisSerializer<Object> createInstance() throws Exception {
+        ObjectMapper objectMapper = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(LocalDateTime.class, new LocalDateTimeJsonSerializer());
+        module.addDeserializer(LocalDateTime.class, new LocalDateTimeJsonDeserializer());
+        module.addSerializer(LocalDate.class, new LocalDateJsonSerializer());
+        module.addDeserializer(LocalDate.class, new LocalDateJsonDeserializer());
+        objectMapper.registerModule(module);
+        return new GenericJackson2JsonRedisSerializer(objectMapper);
+    }
 
     private static final DateTimeFormatter YYYYMMDDHHMMSS = DateTimeFormat.forPattern("yyyyMMddHHmmss");
     private static final DateTimeFormatter YYYYMMDD = DateTimeFormat.forPattern("yyyyMMdd");
 
-    class LocalDateTimeJsonSerializer extends JsonSerializer<LocalDateTime> {
+    private static class LocalDateTimeJsonSerializer extends JsonSerializer<LocalDateTime> {
         @Override
         public void serialize(LocalDateTime dateTime, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
             jsonGenerator.writeString(dateTime.toString(YYYYMMDDHHMMSS));
         }
     }
 
-    class LocalDateJsonSerializer extends JsonSerializer<LocalDate> {
+    private static class LocalDateJsonSerializer extends JsonSerializer<LocalDate> {
         @Override
         public void serialize(LocalDate date, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
             jsonGenerator.writeString(date.toString(YYYYMMDD));
         }
     }
 
-    class LocalDateTimeJsonDeserializer extends JsonDeserializer<LocalDateTime> {
+    private static class LocalDateTimeJsonDeserializer extends JsonDeserializer<LocalDateTime> {
         @Override
         public LocalDateTime deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
 
@@ -51,7 +70,7 @@ public class EntityRedisSerializer implements RedisSerializer<Object> {
         }
     }
 
-    class LocalDateJsonDeserializer extends JsonDeserializer<LocalDate> {
+    private static class LocalDateJsonDeserializer extends JsonDeserializer<LocalDate> {
         @Override
         public LocalDate deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException, JsonProcessingException {
             try {
@@ -64,25 +83,6 @@ public class EntityRedisSerializer implements RedisSerializer<Object> {
                 throw new RuntimeException(e);
             }
         }
-    }
-
-    @Override
-    public byte[] serialize(Object o) throws SerializationException {
-
-        ObjectMapper mapper = new ObjectMapper();
-        SimpleModule module = new SimpleModule();
-        module.addSerializer(LocalDateTime.class, new LocalDateTimeJsonSerializer());
-        module.addDeserializer(LocalDateTime.class, new LocalDateTimeJsonDeserializer());
-        module.addSerializer(LocalDate.class, new LocalDateJsonSerializer());
-        module.addDeserializer(LocalDate.class, new LocalDateJsonDeserializer());
-
-        mapper.registerModule(module);
-        return new byte[0];
-    }
-
-    @Override
-    public Object deserialize(byte[] bytes) throws SerializationException {
-        return null;
     }
 
 }

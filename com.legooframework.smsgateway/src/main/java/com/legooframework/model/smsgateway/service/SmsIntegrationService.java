@@ -373,8 +373,8 @@ public class SmsIntegrationService extends BundleService {
             params.put("payload", StringUtils.join(sms_set, "||"));
             Mono<String> mono = WebClient.create().method(HttpMethod.POST)
                     .uri(getSendSmsApi(), "flat")
-                    .contentType(MediaType.APPLICATION_JSON_UTF8)
-                    .syncBody(params)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(params)
                     .retrieve().bodyToMono(String.class);
             String result_rsp = mono.block(Duration.ofSeconds(30));
             if (logger.isDebugEnabled())

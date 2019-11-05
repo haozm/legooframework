@@ -2,6 +2,9 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <bean id="jwtokenBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
+        <property name="resource" value="classpath:META-INF/jwtoken/legoo-model-cfg.xml"/>
+    </bean>
     <bean id="jwTokenAction" class="com.legooframework.model.jwtoken.entity.JWTokenAction">
         <property name="tokenUrl" value="${token.domain}"/>
     </bean>

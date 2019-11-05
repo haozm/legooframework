@@ -16,7 +16,6 @@ public class CacheEntity extends BaseEntity<Integer> {
     private String name, address;
     private int sex;
     private LocalDate biredy;
-    private Asd asd;
 
     CacheEntity(Integer id, String name, int sex, LocalDate biredy, String address) {
         super(id);
@@ -24,7 +23,6 @@ public class CacheEntity extends BaseEntity<Integer> {
         this.address = address;
         this.sex = sex;
         this.biredy = biredy;
-        asd = new Asd("nihao ");
     }
 
     CacheEntity(String ser) {

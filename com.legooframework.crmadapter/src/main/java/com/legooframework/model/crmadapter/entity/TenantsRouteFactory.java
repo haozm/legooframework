@@ -86,7 +86,7 @@ public class TenantsRouteFactory extends FileReloadSupport<File> {
                 .uri(postUrl, pathVariables)
                 .contentType(MediaType.APPLICATION_JSON)
                 .header(BaseEntityAction.KEY_HEADER, token)
-                .syncBody(_params)
+                .bodyValue(_params)
                 .retrieve().bodyToMono(String.class);
         String payload = mono.block();
         Preconditions.checkNotNull(payload, "数据无返回，通信异常...");
@@ -130,8 +130,8 @@ public class TenantsRouteFactory extends FileReloadSupport<File> {
 
         Mono<String> mono = WebClient.create().method(HttpMethod.POST)
                 .uri(postUrl, pathVariables)
-                .contentType(MediaType.APPLICATION_JSON_UTF8)
-                .syncBody(_params)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(_params)
                 .retrieve().bodyToMono(String.class);
         String payload = mono.block(Duration.ofSeconds(10));
         Preconditions.checkNotNull(payload, "%s数据无返回，通信异常...", postUrl);
