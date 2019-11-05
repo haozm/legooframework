@@ -92,7 +92,7 @@ public class SaleAlloctRuleEntity extends BaseEntity<Integer> implements BatchSe
                                  List<List<Rule>> crossNoMemberRule, LocalDate startDate) {
         super(0);
         this.companyId = companyId;
-        this.storeId = storeId;
+        this.storeId = storeId == null ? 0 : storeId;
         this.autoRun = autoRun;
         this.memberRule = memberRule;
         sortAndCheck(this.memberRule, 1);
