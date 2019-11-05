@@ -56,7 +56,7 @@ public class SaleAlloctRuleEntityAction extends BaseEntityAction<SaleAlloctRuleE
         Optional<List<SaleAlloctRuleEntity>> all_rule = loadAllByCompany(company.getId());
         if (all_rule.isPresent()) {
             Optional<SaleAlloctRuleEntity> exits = all_rule.get().stream().filter(x -> x.isSameRule(rule)).findFirst();
-            exits.ifPresent(this::deleteById);
+            exits.ifPresent(x -> this.deleteById(x.getId()));
         }
         super.updateAction(rule, "insert");
         if (coverted) {
@@ -65,6 +65,12 @@ public class SaleAlloctRuleEntityAction extends BaseEntityAction<SaleAlloctRuleE
                 logger.debug(String.format("公司 %s 重写规则，应用到下级所有门店....", company.getId()));
         }
         evict(company.getId());
+    }
+
+    @Override
+    public int deleteById(Object id) {
+        return Objects.requireNonNull(getJdbcTemplate())
+                .update("UPDATE acp.ACP_EMPLOYEE_ALLOT_RULE SET delete_flag = 1 WHERE id = ?", id);
     }
 
     public Optional<List<Map<String, Object>>> loadEnabledCompanies() {
