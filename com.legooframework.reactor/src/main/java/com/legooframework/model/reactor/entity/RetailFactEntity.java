@@ -77,7 +77,7 @@ public class RetailFactEntity extends BaseEntity<Long> {
         } else {
             params.put("积分变化", String.format("扣除积分 %s", Math.abs(this.addIntegral)));
         }
-        params.put("储值余额", this.reserve);
+        params.put("储值余额", format_money.format(this.reserve));
         params.put("会员等级", this.vipType == null ? "--" : vipType);
         params.put("消费日期", fmtCreatetime == null ? "--" : fmtCreatetime);
         List<String> details = saleGoods.stream().map(SaleGoods::toReplaceStr).collect(Collectors.toList());
