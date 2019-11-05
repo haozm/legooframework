@@ -32,6 +32,13 @@
   </#if>
             ]]></body>
         </sql>
+        <sql id="batchUpdateStatus" dynamic="true">
+            <body><![CDATA[
+        UPDATE acp.crm_birthdaycareplan
+           SET planState = 2, care_date = NOW()
+         WHERE id IN (${careIds?join(",")})
+            ]]></body>
+        </sql>
         <sql id="batchInsert">
             <body><![CDATA[
    INSERT INTO acp.crm_birthdaycareplan

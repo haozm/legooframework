@@ -2,6 +2,8 @@ package com.legooframework.model.takecare.entity;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.covariant.entity.EmpEntity;
 import com.legooframework.model.covariant.entity.SendChannel;
@@ -57,6 +59,15 @@ public class CareBirthdayEntityAction extends BaseEntityAction<CareBirthdayEntit
 
     public void batchInsertCare(Collection<CareBirthdayEntity> birthdayCares) {
         if (CollectionUtils.isEmpty(birthdayCares)) return;
+        List<CareBirthdayEntity> change_state_list = birthdayCares.stream().filter(CareBirthdayEntity::isChangeState)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(change_state_list)) {
+            Map<String, Object> params = Maps.newHashMap();
+            params.put("careIds", change_state_list.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+            super.update("batchUpdateStatus", params);
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("batchUpdateStatus(...) size is %d finisded..", birthdayCares.size()));
+        }
         List<CareBirthdayEntity> un_save_list = birthdayCares.stream().filter(x -> !x.hasSaved()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(un_save_list)) {
             super.batchInsert("batchInsert", un_save_list);

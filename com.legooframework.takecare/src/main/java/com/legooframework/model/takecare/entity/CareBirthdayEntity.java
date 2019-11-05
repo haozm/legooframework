@@ -20,6 +20,7 @@ public class CareBirthdayEntity extends BaseEntity<Integer> implements BatchSett
     private final Integer companyId, storeId, memberId;
     // 计划状态：1 - 未开始，2 - 已完成
     private Integer planState, careId;
+    private boolean changeState = false;
     private Date followUpTime, updateTime;
     private int operateType = 0;
     // 内容
@@ -55,7 +56,14 @@ public class CareBirthdayEntity extends BaseEntity<Integer> implements BatchSett
     }
 
     void finished() {
-        this.planState = 2;
+        if (this.planState == 1) {
+            this.planState = 2;
+            changeState = true;
+        }
+    }
+
+    boolean isChangeState() {
+        return changeState;
     }
 
     Integer getStoreId() {
