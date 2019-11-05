@@ -25,10 +25,9 @@ public class CareBirthdayAgg {
         return this.birthdayCare.hasSaved();
     }
 
-    public boolean needSavedCare() {
-        return !this.birthdayCare.hasSaved() || this.birthdayCare.isChangeState();
+    public boolean hasChangeState() {
+        return this.birthdayCare.isChangeState();
     }
-
 
     public CareBirthdayEntity getBirthdayCare() {
         return birthdayCare;

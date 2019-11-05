@@ -106,6 +106,7 @@ public class TakeCareService extends BundleService {
                 birthday_care_aggs.add(careAgg);
             }
         }
+
         // 过滤异常生日情况
         if (CollectionUtils.isNotEmpty(birthday_care_err_aggs)) {
             List<CareBirthdayEntity> un_saved_care = birthday_care_err_aggs.stream().filter(x -> !x.hasSavedCare())
@@ -116,14 +117,30 @@ public class TakeCareService extends BundleService {
         }
         if (CollectionUtils.isEmpty(birthday_care_aggs)) return;
 
+
         List<CareBirthdayAgg> saved_care_aggs = birthday_care_aggs.stream().filter(CareBirthdayAgg::hasSavedCare)
                 .collect(Collectors.toList());
-        List<CareBirthdayAgg> un_saved_care_aggs = birthday_care_aggs.stream().filter(CareBirthdayAgg::needSavedCare)
+        List<CareBirthdayAgg> update_care_aggs = birthday_care_aggs.stream().filter(CareBirthdayAgg::hasChangeState)
+                .collect(Collectors.toList());
+        List<CareBirthdayAgg> un_saved_care_aggs = birthday_care_aggs.stream().filter(x -> !x.hasSavedCare())
                 .collect(Collectors.toList());
         List<CareRecordEntity> all_care_logs = Lists.newArrayList();
         if (CollectionUtils.isNotEmpty(saved_care_aggs)) {
             List<CareRecordEntity> careLogs = Lists.newArrayList();
             saved_care_aggs.stream().map(CareBirthdayAgg::getTakeCareRecords).forEach(careLogs::addAll);
+            getBean(CareRecordEntityAction.class).batchInsert(careLogs);
+            all_care_logs.addAll(careLogs);
+        }
+        if (CollectionUtils.isNotEmpty(update_care_aggs)) {
+            List<CareBirthdayEntity> cares = update_care_aggs.stream().map(CareBirthdayAgg::getBirthdayCare)
+                    .collect(Collectors.toList());
+            getBean(CareBirthdayEntityAction.class).batchUpdateCare(cares);
+            
+            List<CareRecordEntity> careLogs = Lists.newArrayList();
+            for (CareBirthdayAgg $agg : un_saved_care_aggs) {
+                getBean(CareBirthdayEntityAction.class).singleInsertCare($agg.getBirthdayCare());
+                careLogs.addAll($agg.getTakeCareRecords());
+            }
             getBean(CareRecordEntityAction.class).batchInsert(careLogs);
             all_care_logs.addAll(careLogs);
         }

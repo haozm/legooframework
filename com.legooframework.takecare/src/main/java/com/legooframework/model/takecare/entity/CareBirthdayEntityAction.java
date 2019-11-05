@@ -57,7 +57,7 @@ public class CareBirthdayEntityAction extends BaseEntityAction<CareBirthdayEntit
         return new CareBirthdayAgg(care, careLogs, hisCareLogs, agg);
     }
 
-    public void batchInsertCare(Collection<CareBirthdayEntity> birthdayCares) {
+    public void batchUpdateCare(Collection<CareBirthdayEntity> birthdayCares) {
         if (CollectionUtils.isEmpty(birthdayCares)) return;
         List<CareBirthdayEntity> change_state_list = birthdayCares.stream().filter(CareBirthdayEntity::isChangeState)
                 .collect(Collectors.toList());
@@ -68,6 +68,10 @@ public class CareBirthdayEntityAction extends BaseEntityAction<CareBirthdayEntit
             if (logger.isDebugEnabled())
                 logger.debug(String.format("batchUpdateStatus(...) size is %d finisded..", birthdayCares.size()));
         }
+    }
+
+    public void batchInsertCare(Collection<CareBirthdayEntity> birthdayCares) {
+        if (CollectionUtils.isEmpty(birthdayCares)) return;
         List<CareBirthdayEntity> un_save_list = birthdayCares.stream().filter(x -> !x.hasSaved()).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(un_save_list)) {
             super.batchInsert("batchInsert", un_save_list);
