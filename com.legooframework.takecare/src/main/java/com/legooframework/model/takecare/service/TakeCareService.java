@@ -118,7 +118,7 @@ public class TakeCareService extends BundleService {
 
         List<CareBirthdayAgg> saved_care_aggs = birthday_care_aggs.stream().filter(CareBirthdayAgg::hasSavedCare)
                 .collect(Collectors.toList());
-        List<CareBirthdayAgg> un_saved_care_aggs = birthday_care_aggs.stream().filter(x -> !x.hasSavedCare())
+        List<CareBirthdayAgg> un_saved_care_aggs = birthday_care_aggs.stream().filter(CareBirthdayAgg::needSavedCare)
                 .collect(Collectors.toList());
         List<CareRecordEntity> all_care_logs = Lists.newArrayList();
         if (CollectionUtils.isNotEmpty(saved_care_aggs)) {
