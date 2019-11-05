@@ -102,6 +102,7 @@ public class TakeCareService extends BundleService {
             if (careAgg.getBirthdayCare().hasError()) {
                 birthday_care_err_aggs.add(careAgg);
             } else {
+                careAgg.finished();
                 birthday_care_aggs.add(careAgg);
             }
         }

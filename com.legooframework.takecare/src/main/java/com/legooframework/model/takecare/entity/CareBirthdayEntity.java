@@ -54,6 +54,10 @@ public class CareBirthdayEntity extends BaseEntity<Integer> implements BatchSett
         return !(this.planState == 2 || this.planState == 1);
     }
 
+    void finished() {
+        this.planState = 2;
+    }
+
     Integer getStoreId() {
         return storeId;
     }
@@ -132,7 +136,6 @@ public class CareBirthdayEntity extends BaseEntity<Integer> implements BatchSett
         params.put("memberFeedback", memberFeedback);
         return params;
     }
-
 
     @Override
     public String toString() {

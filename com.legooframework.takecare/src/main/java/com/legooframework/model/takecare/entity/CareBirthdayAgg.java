@@ -33,6 +33,10 @@ public class CareBirthdayAgg {
         return birthdayCare.hasError();
     }
 
+    public void finished() {
+        birthdayCare.finished();
+    }
+
     public List<CareHisRecordEntity> getHisCareRecords() {
         hisCareRecords.forEach(x -> x.setPlanId(birthdayCare));
         return hisCareRecords;
