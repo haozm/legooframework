@@ -171,7 +171,7 @@ public class UpcomingTaskDetailEntity extends TaskStatusSupportEntity implements
             UpcomingTaskDetailEntity clone = (UpcomingTaskDetailEntity) cloneMe();
             clone.setTaskStatus(TaskStatus.Finished);
             clone.finishedDateTime = LocalDateTime.now();
-            clone.setEditTime(DateTime.now());
+            clone.setEditTime(LocalDateTime.now());
             return Optional.of(clone);
         }
         return Optional.empty();
