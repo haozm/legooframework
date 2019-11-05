@@ -64,7 +64,7 @@ public class CareBirthdayEntityAction extends BaseEntityAction<CareBirthdayEntit
         if (CollectionUtils.isNotEmpty(change_state_list)) {
             Map<String, Object> params = Maps.newHashMap();
             params.put("careIds", change_state_list.stream().map(BaseEntity::getId).collect(Collectors.toList()));
-            super.update("batchUpdateStatus", params);
+            super.updateAction("batchUpdateStatus", params);
             if (logger.isDebugEnabled())
                 logger.debug(String.format("batchUpdateStatus(...) size is %d finisded..", birthdayCares.size()));
         }
