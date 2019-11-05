@@ -51,7 +51,7 @@ public class CareBirthdayEntity extends BaseEntity<Integer> implements BatchSett
     }
 
     public boolean hasError() {
-        return this.planState != 2;
+        return !(this.planState == 2 || this.planState == 1);
     }
 
     Integer getStoreId() {
