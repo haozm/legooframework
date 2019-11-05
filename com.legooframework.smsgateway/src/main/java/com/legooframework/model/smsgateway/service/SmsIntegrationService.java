@@ -10,6 +10,7 @@ import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.CommonsUtils;
 import com.legooframework.model.core.utils.WebUtils;
+import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.*;
@@ -89,7 +90,7 @@ public class SmsIntegrationService extends BundleService {
      * @param user 我的而用户
      * @return 行走的银行
      */
-    private String charge(LoginContext user, List<SMSEntity> smses, BusinessType businessType, CrmStoreEntity store,
+    private String charge(LoginContext user, List<SMSEntity> smses, BusinessType businessType, StoEntity store,
                           String smsCtx) {
         TransactionStatus ts = startTx(null);
         String summaryId;
@@ -177,7 +178,7 @@ public class SmsIntegrationService extends BundleService {
      * @param store        所属门店
      * @param smsContext   短信摘要
      */
-    private String chargingAction(List<SMSEntity> smses, final BusinessType businessType, final CrmStoreEntity store,
+    private String chargingAction(List<SMSEntity> smses, final BusinessType businessType, final StoEntity store,
                                   String smsContext) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(smses), "待发送的短信数不可以为空...");
         LoginContext user = LoginContextHolder.get();

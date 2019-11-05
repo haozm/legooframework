@@ -4,7 +4,7 @@ import com.google.common.base.MoreObjects;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import org.apache.commons.lang3.StringUtils;
@@ -36,7 +36,7 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         this.businessType = businessType;
     }
 
-    public static SendMsg4InitEntity createInstance(CrmStoreEntity store, SMSEntity sms, String smsBatchNo, SMSChannel smsChannel,
+    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, String smsBatchNo, SMSChannel smsChannel,
                                                     boolean freeSend, BusinessType businessType) {
         return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, smsBatchNo, smsChannel,
                 freeSend, businessType);

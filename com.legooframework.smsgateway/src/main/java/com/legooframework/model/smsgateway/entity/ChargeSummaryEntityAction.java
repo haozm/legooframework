@@ -1,6 +1,7 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.legooframework.model.core.base.entity.BaseEntityAction;
+import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import org.slf4j.Logger;
@@ -25,7 +26,7 @@ public class ChargeSummaryEntityAction extends BaseEntityAction<ChargeSummaryEnt
      * @param smsQuantity 短信数量
      * @return 存储批次号
      */
-    public String insert(CrmStoreEntity store, SMSSendRuleEntity businessRule, BusinessType businessType, String smsBatchNo,
+    public String insert(StoEntity store, SMSSendRuleEntity businessRule, BusinessType businessType, String smsBatchNo,
                          long smsQuantity, long wxQuantity, boolean isAuto, String smsContext) {
         ChargeSummaryEntity billingSummary = ChargeSummaryEntity.createInstance(store, businessRule, businessType, smsBatchNo,
                 isAuto, smsQuantity < 0 ? 0 : smsQuantity, wxQuantity < 0 ? 0 : wxQuantity, smsContext);
@@ -40,7 +41,7 @@ public class ChargeSummaryEntityAction extends BaseEntityAction<ChargeSummaryEnt
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<ChargeSummaryEntity> {
+    private static class RowMapperImpl implements RowMapper<ChargeSummaryEntity> {
         @Override
         public ChargeSummaryEntity mapRow(ResultSet res, int i) throws SQLException {
             return new ChargeSummaryEntity(res.getString("id"), res);

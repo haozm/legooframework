@@ -58,7 +58,7 @@ public class SMSKeywordEntityAction extends BaseEntityAction<SMSKeywordEntity> {
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<SMSKeywordEntity> {
+    private static class RowMapperImpl implements RowMapper<SMSKeywordEntity> {
         @Override
         public SMSKeywordEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SMSKeywordEntity(res.getLong("id"), res);

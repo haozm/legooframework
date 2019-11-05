@@ -6,12 +6,11 @@ import com.google.common.base.Preconditions;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -25,7 +24,7 @@ public class ChargeDetailEntity extends BaseEntity<String> implements BatchSette
     private long deductionNum, reimburseNum;
     private final RechargeScope rechargeScope;
 
-    ChargeDetailEntity(String smsBatchNo, CrmStoreEntity store, RechargeBalanceEntity balance) {
+    ChargeDetailEntity(String smsBatchNo, StoEntity store, RechargeBalanceEntity balance) {
         super(UUID.randomUUID().toString().toUpperCase(), store.getCompanyId().longValue(), -1L);
         this.smsBatchNo = smsBatchNo;
         this.companyId = store.getCompanyId();

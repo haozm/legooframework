@@ -29,8 +29,7 @@ public class CallStorageData {
 
     public void setTotal(String jsonString) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(jsonString), "待解析的JSON字符串不可以为空值...");
-        JsonParser parser = new JsonParser();
-        JsonObject jsonObject = parser.parse(jsonString).getAsJsonObject();
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
         if (jsonObject.isJsonNull()) throw new RuntimeException(String.format("解析Json=%s 发生异常", jsonString));
         String code = jsonObject.get("code").getAsString();
         if (!StringUtils.equals("0000", code)) throw new RuntimeException(String.format("解析Json=%s 发生异常", jsonString));
@@ -52,11 +51,10 @@ public class CallStorageData {
 
     public void setDatas(String jsonString) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(jsonString), "待解析的JSON字符串不可以为空值...");
-        JsonParser parser = new JsonParser();
-        JsonElement jsonElement = parser.parse(jsonString);
+        JsonElement jsonElement = JsonParser.parseString(jsonString);
         JsonArray jsonArray = null;
         if (jsonElement.isJsonObject()) {
-            JsonObject jsonObject = parser.parse(jsonString).getAsJsonObject();
+            JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
             if (jsonObject.isJsonNull()) throw new RuntimeException("解析Json_Date 发生异常,jsonString={}");
             String code = jsonObject.get("code").getAsString();
             if (!StringUtils.equals("0000", code))

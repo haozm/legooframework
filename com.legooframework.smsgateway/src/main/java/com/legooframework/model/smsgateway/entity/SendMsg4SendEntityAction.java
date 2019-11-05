@@ -84,7 +84,7 @@ public class SendMsg4SendEntityAction extends BaseEntityAction<SendMsg4SendEntit
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<SendMsg4SendEntity> {
+    private static class RowMapperImpl implements RowMapper<SendMsg4SendEntity> {
         @Override
         public SendMsg4SendEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SendMsg4SendEntity(res.getString("id"), res);

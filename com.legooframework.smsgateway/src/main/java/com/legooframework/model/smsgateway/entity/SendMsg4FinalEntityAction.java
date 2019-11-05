@@ -46,7 +46,7 @@ public class SendMsg4FinalEntityAction extends BaseEntityAction<SendMsg4FinalEnt
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<SendMsg4FinalEntity> {
+    private static class RowMapperImpl implements RowMapper<SendMsg4FinalEntity> {
         @Override
         public SendMsg4FinalEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SendMsg4FinalEntity(res.getString("id"), res);

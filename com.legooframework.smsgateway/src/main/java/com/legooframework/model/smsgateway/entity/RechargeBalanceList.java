@@ -3,7 +3,7 @@ package com.legooframework.model.smsgateway.entity;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class RechargeBalanceList {
         this.deductionList = Lists.newArrayList();
     }
 
-    public List<ChargeDetailEntity> deduction(CrmStoreEntity store, final String sms_batch_no, long be_used_size) {
+    public List<ChargeDetailEntity> deduction(StoEntity store, final String sms_batch_no, long be_used_size) {
         Preconditions.checkState(be_used_size > 0);
         Preconditions.checkState(unusedNum >= be_used_size, "可用短信数量%s低于待发送短信数量%s,扣费失败...", unusedNum, be_used_size);
         long temp_size = 0;

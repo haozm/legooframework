@@ -77,7 +77,7 @@ public class SMSSendRuleEntityAction extends BaseEntityAction<SMSSendRuleEntity>
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<SMSSendRuleEntity> {
+    private static class RowMapperImpl implements RowMapper<SMSSendRuleEntity> {
         @Override
         public SMSSendRuleEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SMSSendRuleEntity(res.getString("id"), res);

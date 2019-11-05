@@ -7,7 +7,7 @@ import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 
 import java.sql.ResultSet;
@@ -25,11 +25,11 @@ public class ChargeSummaryEntity extends BaseEntity<String> {
     private final BusinessType businessType;
     private boolean finishSend;
 
-    private ChargeSummaryEntity(CrmStoreEntity store, BusinessType businessType, boolean freeSend, String smsBatchNo,
+    private ChargeSummaryEntity(StoEntity store, BusinessType businessType, boolean freeSend, String smsBatchNo,
                                 long smsQuantity, long wxQuantity, long cteator, SendMode sendMode, String smsContext) {
         super(UUID.randomUUID().toString().toUpperCase(), store.getCompanyId().longValue(), cteator);
         this.companyId = store.getCompanyId();
-        this.companyName = store.getCompanyName();
+        this.companyName = "公司";
         this.storeId = store.getId();
         this.storeName = store.getName();
         this.smsQuantity = smsQuantity;
@@ -42,11 +42,11 @@ public class ChargeSummaryEntity extends BaseEntity<String> {
         this.finishSend = false;
     }
 
-    private ChargeSummaryEntity(CrmStoreEntity store, BusinessType businessType, String smsBatchNo,
+    private ChargeSummaryEntity(StoEntity store, BusinessType businessType, String smsBatchNo,
                                 long smsQuantity, long wxQuantity, long cteator, SendMode sendMode, String smsContext) {
         super(UUID.randomUUID().toString(), store.getCompanyId().longValue(), cteator);
         this.companyId = store.getCompanyId();
-        this.companyName = store.getCompanyName();
+        this.companyName = "公司";
         this.storeId = store.getId();
         this.storeName = store.getName();
         this.smsQuantity = smsQuantity;
@@ -59,7 +59,7 @@ public class ChargeSummaryEntity extends BaseEntity<String> {
         this.finishSend = false;
     }
 
-    static ChargeSummaryEntity createInstance(CrmStoreEntity store, SMSSendRuleEntity businessRule, BusinessType businessType,
+    static ChargeSummaryEntity createInstance(StoEntity store, SMSSendRuleEntity businessRule, BusinessType businessType,
                                               String smsBatchNo, boolean isAuto, long smsQuantity, long wxQuantity, String smsContext) {
         Preconditions.checkArgument(!(smsQuantity <= 0 && wxQuantity <= 0), "本次发送短信或者微信数量不可都为0");
         LoginContext user = isAuto ? null : LoginContextHolder.get();

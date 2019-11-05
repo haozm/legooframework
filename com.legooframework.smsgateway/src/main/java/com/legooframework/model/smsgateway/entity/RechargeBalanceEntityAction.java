@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
+import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
@@ -78,7 +79,7 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
      * @param store
      * @return
      */
-    public RechargeBalanceList loadOrderEnabledByStore(CrmStoreEntity store) {
+    public RechargeBalanceList loadOrderEnabledByStore(StoEntity store) {
         Optional<List<RechargeBalanceEntity>> optional = loadAllByCompanyId(store.getCompanyId());
         Preconditions.checkState(optional.isPresent(), "当前门店以及公司没有可供支配的短信余额...");
         List<RechargeBalanceEntity> list = optional.get().stream().filter(x -> x.contains(store))

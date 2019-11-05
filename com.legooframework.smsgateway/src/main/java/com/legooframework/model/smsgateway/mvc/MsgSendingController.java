@@ -3,13 +3,14 @@ package com.legooframework.model.smsgateway.mvc;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
+import com.legooframework.model.covariant.entity.StoEntity;
+import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.crmadapter.entity.*;
 import com.legooframework.model.crmadapter.service.CrmPermissionHelper;
 import com.legooframework.model.membercare.entity.AutoRunChannel;
@@ -21,7 +22,6 @@ import com.legooframework.model.smsgateway.service.SmsTempCacheService;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsprovider.entity.SMSProviderEntity;
 import com.legooframework.model.smsprovider.entity.SMSProviderEntityAction;
-import com.sun.corba.se.spi.ior.ObjectKey;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.EnumUtils;
@@ -45,7 +45,7 @@ import java.util.stream.Stream;
 
 @RestController
 @RequestMapping(value = "/smssending")
-public class MsgSendingController extends BaseController {
+public class MsgSendingController extends SmsBaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(MsgSendingController.class);
 
@@ -60,25 +60,24 @@ public class MsgSendingController extends BaseController {
     @PostMapping(value = "/manual/test/sms.json")
     public JsonMessage sendingMessage4Test(@RequestBody Map<String, Object> requestBody, HttpServletRequest request)
             throws Exception {
-        LoginContext user = LoginContextHolder.get();
+        LoginContextHolder.setAnonymousCtx();
+        UserAuthorEntity user = loadLoginUser(requestBody, request);
         String template = MapUtils.getString(requestBody, "template");
         boolean encoding = MapUtils.getBoolean(requestBody, "encoding", true);
         BusinessType businessType = holdBusinessTypeParam(requestBody);
-        Integer companyId = user.getTenantId().intValue();
-        Integer employeeId = user.getLoginId().intValue();
-        Authenticationor org_info = getBean(CrmPermissionHelper.class, request).authentication(requestBody);
+        Integer companyId = user.getCompanyId();
+        Integer employeeId = user.getId();
         String mobiles_str = MapUtils.getString(requestBody, "mobiles");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(mobiles_str), "短信号码不可以为空值...");
         String[] mobiles = StringUtils.split(mobiles_str, ',');
         Integer memberId = MapUtils.getInteger(requestBody, "memberId");
         int autoRunChannel_val = MapUtils.getInteger(requestBody, "autoRunChannel", 2);
         AutoRunChannel autoRunChannel = AutoRunChannel.parse(autoRunChannel_val);
-        boolean authorization = MapUtils.getBooleanValue(requestBody, "authorization", false);
 
         String payload = String.format("%s,%s,%s||%s", user.getTenantId(), memberId, autoRunChannel.getChannel(), template);
         List<SendMessageTemplate> job_temps = getBean(MsgTemplateProxyAction.class, request)
                 .batchReplaceMemberTemplate(companyId, employeeId, Lists.newArrayList(payload), encoding,
-                        authorization, request);
+                        true, request);
 
         Preconditions.checkState(CollectionUtils.isNotEmpty(job_temps) && job_temps.size() == 1,
                 "短信内容渲染失败，数量为 0....");
@@ -209,7 +208,7 @@ public class MsgSendingController extends BaseController {
      * @throws Exception 异常
      */
     private String sendMessage(List<SendMessageTemplate> send_smses, BusinessType businessType, String template,
-                               CrmStoreEntity store, SendMode sendMode, LoginContext user, HttpServletRequest request)
+                               StoEntity store, SendMode sendMode, LoginContext user, HttpServletRequest request)
             throws Exception {
         List<SMSEntity> smses = Lists.newArrayListWithCapacity(send_smses.size());
         send_smses.forEach(x -> smses.addAll(SMSEntity.createSMSMsg(x)));

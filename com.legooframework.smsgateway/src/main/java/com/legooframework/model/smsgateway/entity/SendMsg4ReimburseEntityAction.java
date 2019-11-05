@@ -45,7 +45,7 @@ public class SendMsg4ReimburseEntityAction extends BaseEntityAction<SendMsg4Reim
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<SendMsg4ReimburseEntity> {
+    private static class RowMapperImpl implements RowMapper<SendMsg4ReimburseEntity> {
         @Override
         public SendMsg4ReimburseEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SendMsg4ReimburseEntity(res.getString("id"), res);

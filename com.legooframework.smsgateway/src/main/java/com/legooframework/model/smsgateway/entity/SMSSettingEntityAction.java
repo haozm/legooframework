@@ -89,13 +89,12 @@ public class SMSSettingEntityAction extends BaseEntityAction<SMSSettingEntity> {
         return settings.get();
     }
 
-
     @Override
     protected RowMapper<SMSSettingEntity> getRowMapper() {
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<SMSSettingEntity> {
+    private static class RowMapperImpl implements RowMapper<SMSSettingEntity> {
         @Override
         public SMSSettingEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SMSSettingEntity(res);

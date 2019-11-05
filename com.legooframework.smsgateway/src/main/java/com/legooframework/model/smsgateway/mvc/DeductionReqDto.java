@@ -2,7 +2,7 @@ package com.legooframework.model.smsgateway.mvc;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.SMSEntity;
 import com.legooframework.model.smsgateway.entity.SendMode;
@@ -13,11 +13,11 @@ public class DeductionReqDto {
 
     private final BusinessType businessType;
     private final List<SMSEntity> smses;
-    private final CrmStoreEntity store;
+    private final StoEntity store;
     private final String smsContext;
     private final SendMode sendMode;
 
-    public DeductionReqDto(CrmStoreEntity store, BusinessType businessType, List<SMSEntity> smses, String smsContext,
+    public DeductionReqDto(StoEntity store, BusinessType businessType, List<SMSEntity> smses, String smsContext,
                            SendMode sendMode) {
         Preconditions.checkNotNull(businessType, "业务类型businessType 非法为空值");
         this.businessType = businessType;
@@ -35,7 +35,7 @@ public class DeductionReqDto {
         return smses;
     }
 
-    public CrmStoreEntity getStore() {
+    public StoEntity getStore() {
         return store;
     }
 
