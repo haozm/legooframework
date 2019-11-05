@@ -95,11 +95,11 @@ public class RechargeDetailControllerTest {
             sms_list.add(SMSEntity.createSMSMsg(UUID.randomUUID().toString(), null, "1371027", null, String.format(ssm, i)
                     , 0));
         }
-        DeductionReqDto rechargeDto = new DeductionReqDto(store, BusinessType.TOUCHED90, sms_list,
-                "计，任天堂Switch成了去年销量最高的游戏", SendMode.ManualBatch);
-        Message<DeductionReqDto> message = MessageBuilder.withPayload(rechargeDto)
-                .setHeader("user", user)
-                .build();
+//        DeductionReqDto rechargeDto = new DeductionReqDto(store, BusinessType.TOUCHED90, sms_list,
+//                "计，任天堂Switch成了去年销量最高的游戏", SendMode.ManualBatch);
+//        Message<DeductionReqDto> message = MessageBuilder.withPayload(rechargeDto)
+//                .setHeader("user", user)
+//                .build();
         // msgt.send(BundleService.CHANNEL_SMS_CHARGE, message);
     }
 

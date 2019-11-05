@@ -33,13 +33,13 @@ public class ChargeDetailEntityActionTest {
         SMSSendRuleEntity rule = businessRuleEntityAction.loadByType(BusinessType.TOUCHED90);
         CrmOrganizationEntity com = organizationEntityAction.findCompanyById(1).get();
         CrmStoreEntity store = storeEntityAction.findById(com, 8).get();
-        RechargeBalanceList balanceList = balanceEntityAction.loadOrderEnabledByStore(store);
-        System.out.println(balanceList);
-        List<ChargeDetailEntity> asd = balanceList.deduction(store, "1_5_201981212771212", 40000);
-        System.out.println(asd);
+//        RechargeBalanceList balanceList = balanceEntityAction.loadOrderEnabledByStore(store);
+//        System.out.println(balanceList);
+//        List<ChargeDetailEntity> asd = balanceList.deduction(store, "1_5_201981212771212", 40000);
+//        System.out.println(asd);
 //        ChargeDetailEntity bill = new ChargeDetailEntity("1_5_201981212771212",  store, RechargeBalanceEntity balance);
 //        asd.add();
-        billingDetailEntityAction.batchInsert(asd);
+        //  billingDetailEntityAction.batchInsert(asd);
     }
 
     @Autowired

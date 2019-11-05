@@ -52,12 +52,12 @@ public class SmsSendingServiceTest {
         LoginContext user = app.getBean(CrmReadService.class).loadByLoginName(100098, "00003HBCYMTJ");
         Optional<CrmOrganizationEntity> company = app.getBean(CrmOrganizationEntityAction.class).findCompanyById(100098);
         Optional<CrmStoreEntity> store = app.getBean(CrmStoreEntityAction.class).findById(company.get(), 1315);
-        DeductionReqDto reqDto = new DeductionReqDto(store.get(), BusinessType.TOUCHED90, smses, "【测试公司】回家吃饭，你妈妈喊你了.回复TD退订",
-                SendMode.ManualBatch);
+//        DeductionReqDto reqDto = new DeductionReqDto(store.get(), BusinessType.TOUCHED90, smses, "【测试公司】回家吃饭，你妈妈喊你了.回复TD退订",
+//                SendMode.ManualBatch);
 //        Message<DeductionReqDto> message = MessageBuilder.withPayload(reqDto).setHeader("user", user)
 //                .setHeader("action", "charge").build();
 //        Message<?> mess = app.getBean("smsMessagingTemplate", MessagingTemplate.class).sendAndReceive("channel_sms_billing", message);
         //  System.out.println(mess.getPayload());
-        app.getBean(SmsIntegrationService.class).billingAndSettlement(user, "charge", reqDto);
+        //app.getBean(SmsIntegrationService.class).billingAndSettlement(user, "charge", reqDto);
     }
 }

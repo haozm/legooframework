@@ -6,10 +6,10 @@ import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.WebUtils;
-import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.covariant.entity.StoEntity;
+import com.legooframework.model.covariant.entity.StoEntityAction;
 import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.crmadapter.entity.*;
 import com.legooframework.model.crmadapter.service.CrmPermissionHelper;
@@ -62,11 +62,11 @@ public class MsgSendingController extends SmsBaseController {
             throws Exception {
         LoginContextHolder.setAnonymousCtx();
         UserAuthorEntity user = loadLoginUser(requestBody, request);
+        Preconditions.checkState(user.hasStore());
+        StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
         String template = MapUtils.getString(requestBody, "template");
         boolean encoding = MapUtils.getBoolean(requestBody, "encoding", true);
         BusinessType businessType = holdBusinessTypeParam(requestBody);
-        Integer companyId = user.getCompanyId();
-        Integer employeeId = user.getId();
         String mobiles_str = MapUtils.getString(requestBody, "mobiles");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(mobiles_str), "短信号码不可以为空值...");
         String[] mobiles = StringUtils.split(mobiles_str, ',');
@@ -76,7 +76,7 @@ public class MsgSendingController extends SmsBaseController {
 
         String payload = String.format("%s,%s,%s||%s", user.getTenantId(), memberId, autoRunChannel.getChannel(), template);
         List<SendMessageTemplate> job_temps = getBean(MsgTemplateProxyAction.class, request)
-                .batchReplaceMemberTemplate(companyId, employeeId, Lists.newArrayList(payload), encoding,
+                .batchReplaceMemberTemplate(user.getCompanyId(), user.getId(), Lists.newArrayList(payload), encoding,
                         true, request);
 
         Preconditions.checkState(CollectionUtils.isNotEmpty(job_temps) && job_temps.size() == 1,
@@ -87,8 +87,9 @@ public class MsgSendingController extends SmsBaseController {
         Stream.of(mobiles).forEach(x -> send_smses.add(job_temps.get(0).changeMobile(x)));
         if (logger.isDebugEnabled())
             logger.debug(String.format("本次测试短信发送数量:%s", send_smses.size()));
+
         String res = sendMessage(send_smses, businessType, encoding ? WebUtils.decodeUrl(template) : template,
-                org_info.getStore(), SendMode.ManualSingle, user, request);
+                store, SendMode.ManualSingle, user, request);
         return JsonMessageBuilder.OK().withPayload(res).toMessage();
     }
 
@@ -149,6 +150,7 @@ public class MsgSendingController extends SmsBaseController {
      */
     @PostMapping(value = "/manual/send/message.json")
     public JsonMessage sendMessageAction(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) throws Exception {
+        UserAuthorEntity user = loadLoginUser(requestBody, request);
         SendMessageDto sendMessageDto = SmsGatewayProxyAction.deCoding(requestBody);
         getBean(SmsTempCacheService.class, request).put(sendMessageDto.getBatchNo(), sendMessageDto.getPayloads());
         if (!sendMessageDto.isEnd()) return JsonMessageBuilder.OK().toMessage();
@@ -157,8 +159,7 @@ public class MsgSendingController extends SmsBaseController {
 
         Optional<CrmOrganizationEntity> company = getBean(CrmOrganizationEntityAction.class, request).findCompanyById(sendMessageDto.getCompanyId());
         Preconditions.checkState(company.isPresent(), "id=%s 对应的公司不存在 ...");
-        Optional<CrmStoreEntity> store = getBean(CrmStoreEntityAction.class, request).findById(company.get(), sendMessageDto.getStoreId());
-        Preconditions.checkState(store.isPresent(), "门店ID=%s 不存在...", sendMessageDto.getStoreId());
+        StoEntity store = getBean(StoEntityAction.class, request).loadById(sendMessageDto.getStoreId());
 
         List<SendMessageTemplate> msg_formated_list = getBean(MsgTemplateProxyAction.class, request)
                 .batchReplaceMemberTemplate(sendMessageDto.getCompanyId(), sendMessageDto.getEmployeeId(),
@@ -166,8 +167,8 @@ public class MsgSendingController extends SmsBaseController {
 
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         try {
-            String sms_batchno = sendMessage(msg_formated_list, sendMessageDto.getBusinessType(), null, store.get(),
-                    sendMessageDto.getSendMode(), LoginContextHolder.get(), request);
+            String sms_batchno = sendMessage(msg_formated_list, sendMessageDto.getBusinessType(), null, store,
+                    sendMessageDto.getSendMode(), user, request);
             if (logger.isDebugEnabled())
                 logger.debug(String.format("本次待发送数量共计:%s,发送结果：%s", msg_formated_list.size(), sms_batchno));
             return JsonMessageBuilder.OK().withPayload(sms_batchno).toMessage();
@@ -208,7 +209,7 @@ public class MsgSendingController extends SmsBaseController {
      * @throws Exception 异常
      */
     private String sendMessage(List<SendMessageTemplate> send_smses, BusinessType businessType, String template,
-                               StoEntity store, SendMode sendMode, LoginContext user, HttpServletRequest request)
+                               StoEntity store, SendMode sendMode, UserAuthorEntity user, HttpServletRequest request)
             throws Exception {
         List<SMSEntity> smses = Lists.newArrayListWithCapacity(send_smses.size());
         send_smses.forEach(x -> smses.addAll(SMSEntity.createSMSMsg(x)));
