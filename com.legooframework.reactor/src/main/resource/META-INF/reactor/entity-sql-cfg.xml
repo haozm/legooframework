@@ -9,7 +9,7 @@
 	       MAX(crt.vipname) AS 'vipname', MAX(crt.birthday) AS 'birthday', MAX(crt.createcardtime) AS 'createcardtime',
 	       MAX(crt.phone) AS 'phone', MAX(crt.sex) AS 'sex' , MAX(crt.old_store_id) AS 'old_store_id',
 	       MAX(crt.viptype) AS 'viptype',MAX(crt.company) AS 'companypy', MAX(crt.employeeids) AS 'employeeids',
-	       MAX(crt.integral) AS 'integral',
+	       MAX(crt.integral) AS 'integral',MAX(crt.addintegral) AS 'addintegral', MAX(crt.reserve) AS 'reserve',
 	       GROUP_CONCAT(CONCAT_WS('^^',crt.id,crt.goodsid,crt.saleprice,crt.cardprice,crt.goodnum,crt.goodname) ORDER BY crt.saleprice SEPARATOR '$$') AS 'saleInfo'
       FROM acp.crm_retail_table AS crt
      WHERE crt.goodnum > 0

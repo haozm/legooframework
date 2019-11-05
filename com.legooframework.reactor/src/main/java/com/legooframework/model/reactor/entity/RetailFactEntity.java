@@ -27,7 +27,7 @@ public class RetailFactEntity extends BaseEntity<Long> {
     private final LocalDateTime createCardTime, createtime;
     private final List<SaleGoods> saleGoods;
     private final Integer storeId, companyId, employeeId;
-    private final double integral;
+    private final double integral, addIntegral, reserve;
     private final Member member;
 
     RetailFactEntity(Long id, LocalDateTime createtime, List<SaleGoods> saleGoods, ResultSet res) {
@@ -43,6 +43,8 @@ public class RetailFactEntity extends BaseEntity<Long> {
             this.vipType = ResultSetUtil.getOptString(res, "viptype", null);
             this.saleGoods = Lists.newArrayList(saleGoods);
             this.integral = ResultSetUtil.getOptObject(res, "integral", BigDecimal.class).orElse(new BigDecimal(0.0D)).doubleValue();
+            this.addIntegral = ResultSetUtil.getOptObject(res, "addIntegral", BigDecimal.class).orElse(new BigDecimal(0.0D)).doubleValue();
+            this.reserve = ResultSetUtil.getOptObject(res, "reserve", BigDecimal.class).orElse(new BigDecimal(0.0D)).doubleValue();
             this.companypy = ResultSetUtil.getOptString(res, "companypy", null);
             this.employeeIds = ResultSetUtil.getOptString(res, "employeeids", null);
             this.createCardTime = ResultSetUtil.getLocalDateTime(res, "createcardtime");
@@ -70,6 +72,11 @@ public class RetailFactEntity extends BaseEntity<Long> {
         params.put("会员生日", Strings.nullToEmpty(this.birthday));
         params.put("开卡日期", this.createCardTime == null ? "----" : this.createCardTime.toString("yyyy-MM-dd"));
         params.put("当前积分", this.integral);
+        if (addIntegral >= 0.0) {
+            params.put("积分变化", String.format("新增积分 %s", this.addIntegral));
+        } else {
+            params.put("积分变化", String.format("扣除积分 %s", this.addIntegral));
+        }
         params.put("会员等级", this.vipType == null ? "--" : vipType);
         params.put("消费日期", fmtCreatetime == null ? "--" : fmtCreatetime);
         List<String> details = saleGoods.stream().map(SaleGoods::toReplaceStr).collect(Collectors.toList());
