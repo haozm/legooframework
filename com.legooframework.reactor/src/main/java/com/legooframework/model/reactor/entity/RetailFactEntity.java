@@ -75,7 +75,7 @@ public class RetailFactEntity extends BaseEntity<Long> {
         if (addIntegral >= 0.0) {
             params.put("积分变化", String.format("新增积分 %s", this.addIntegral));
         } else {
-            params.put("积分变化", String.format("扣除积分 %s", this.addIntegral));
+            params.put("积分变化", String.format("扣除积分 %s", Math.abs(this.addIntegral)));
         }
         params.put("会员等级", this.vipType == null ? "--" : vipType);
         params.put("消费日期", fmtCreatetime == null ? "--" : fmtCreatetime);
