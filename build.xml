@@ -233,7 +233,7 @@
             <reference refid="batch_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="intall-entity-jar">
+    <target name="install-entity-jar">
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.entities"/>
             <param name="short.name" value="entities"/>
