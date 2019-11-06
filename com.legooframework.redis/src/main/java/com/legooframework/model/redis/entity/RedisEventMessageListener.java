@@ -6,11 +6,11 @@ import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
-public class RedisKeyEventMessageListener implements MessageListener {
+public class RedisEventMessageListener implements MessageListener {
 
-    private static final Logger logger = LoggerFactory.getLogger(RedisKeyEventMessageListener.class);
+    private static final Logger logger = LoggerFactory.getLogger(RedisEventMessageListener.class);
 
-    public RedisKeyEventMessageListener() {
+    public RedisEventMessageListener() {
         this.serializer = RedisSerializer.string();
     }
 

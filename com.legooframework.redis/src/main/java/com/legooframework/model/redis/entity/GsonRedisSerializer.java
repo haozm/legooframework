@@ -52,7 +52,6 @@ public class GsonRedisSerializer implements RedisSerializer<Object>, Initializin
         this.builder.registerTypeAdapter(localDateSerializer.getType(), localDateSerializer);
         this.builder.registerTypeAdapter(localDateTimeSerializer.getType(), new LocalDateTimeSerializer());
         this.builder.serializeNulls();
-
     }
 
     @Override
