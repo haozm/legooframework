@@ -2,9 +2,7 @@ package com.legooframework.model.templatemgs.mvc;
 
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.utils.WebUtils;
-import com.legooframework.model.membercare.entity.AutoRunChannel;
-import com.legooframework.model.membercare.entity.SendMessageTemplate;
-import org.apache.commons.collections4.CollectionUtils;
+import com.legooframework.model.smsgateway.entity.SendMessageTemplate;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;

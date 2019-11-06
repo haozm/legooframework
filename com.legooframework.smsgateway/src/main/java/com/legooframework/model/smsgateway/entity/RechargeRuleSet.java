@@ -27,9 +27,9 @@ public class RechargeRuleSet {
     /**
      * 选择优惠力度最大的作为扣费标准
      *
-     * @param company
-     * @param rechargeAmount
-     * @return
+     * @param company        OX
+     * @param rechargeAmount OOXX
+     * @return OOX
      */
     public Optional<RechargeRuleEntity> getSuitableRule(OrgEntity company, long rechargeAmount) {
         List<RechargeRuleEntity> list = this.rules.stream()

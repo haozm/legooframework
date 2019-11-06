@@ -22,12 +22,12 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class SmsGatewayProxyAction extends BaseEntityAction<EmptyEntity> {
+public class SmsGatewayProxyAction extends HttpProxyAction<EmptyEntity> {
 
     private static final Logger logger = LoggerFactory.getLogger(SmsGatewayProxyAction.class);
 
     public SmsGatewayProxyAction() {
-        super(null);
+        super();
     }
 
     /**
@@ -58,7 +58,7 @@ public class SmsGatewayProxyAction extends BaseEntityAction<EmptyEntity> {
         if (payloads.size() == 1) {
             Map<String, Object> params = enCoding(companyId, storeId, employeeId, payloads, template, businessType, authorization,
                     batchNo, true, SendMode.ManualSingle);
-            Optional<JsonElement> jsonElement = super.postWithToken(companyId, "smsgateway.sendMessageUrl", token, params);
+            Optional<JsonElement> jsonElement = super.postAction("smsgateway.sendMessageUrl", token, params);
             return jsonElement.map(JsonElement::getAsString).orElse(null);
         }
 
@@ -69,12 +69,12 @@ public class SmsGatewayProxyAction extends BaseEntityAction<EmptyEntity> {
         if (payload_size == 1) {
             Map<String, Object> params = enCoding(companyId, storeId, employeeId, payload_list.get(0), template, businessType,
                     authorization, batchNo, true, SendMode.ManualBatch);
-            jsonElement = super.postWithToken(companyId, "smsgateway.sendMessageUrl", token, params);
+            jsonElement = super.postAction("smsgateway.sendMessageUrl", token, params);
         } else {
             for (List<String> $it : payload_list) {
                 Map<String, Object> params = enCoding(companyId, storeId, employeeId, $it, template, businessType, authorization,
                         batchNo, index == payload_size - 1, SendMode.ManualBatch);
-                jsonElement = super.postWithToken(companyId, "smsgateway.sendMessageUrl", token, params);
+                jsonElement = super.postAction("smsgateway.sendMessageUrl", token, params);
                 index++;
             }
         }

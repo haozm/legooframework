@@ -4,12 +4,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
+import com.legooframework.model.core.jdbc.JdbcQuerySupport;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.covariant.entity.*;
 import com.legooframework.model.membercare.entity.BusinessType;
-import com.legooframework.model.membercare.entity.SendMessageTemplate;
 import com.legooframework.model.smsgateway.entity.*;
 import com.legooframework.model.smsgateway.service.BundleService;
 import com.legooframework.model.smsgateway.service.SmsTempCacheService;
@@ -60,6 +60,7 @@ public class MsgSendingController extends SmsBaseController {
             Preconditions.checkState(user.hasStore());
             StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
             String template = MapUtils.getString(requestBody, "template");
+            OrgEntity company = loadCompanyById(user.getCompanyId(), request);
             boolean encoding = MapUtils.getBoolean(requestBody, "encoding", true);
             BusinessType businessType = holdBusinessTypeParam(requestBody);
             String mobiles_str = MapUtils.getString(requestBody, "mobiles");
@@ -68,21 +69,17 @@ public class MsgSendingController extends SmsBaseController {
             Integer memberId = MapUtils.getInteger(requestBody, "memberId");
             int autoRunChannel_val = MapUtils.getInteger(requestBody, "autoRunChannel", 2);
             AutoRunChannel autoRunChannel = AutoRunChannel.parse(autoRunChannel_val);
-
             String payload = String.format("%s,%s,%s||%s", user.getTenantId(), memberId, autoRunChannel.getChannel(), template);
-            List<SendMessageTemplate> job_temps = getBean(MsgTemplateProxyAction.class, request)
-                    .batchReplaceMemberTemplate(user.getCompanyId(), user.getId(), Lists.newArrayList(payload), encoding,
-                            true, request);
-
+            JobDetailTemplate4Replace template4Replace = new JobDetailTemplate4Replace(user.getCompanyId(), user.getId(), payload, false);
+            getBean(SmsTempCacheService.class, request).replaceTemplateAction(company, user.getId(), Lists.newArrayList(template4Replace));
+            List<SendMessageTemplate> job_temps = template4Replace.getJobDetails();
             Preconditions.checkState(CollectionUtils.isNotEmpty(job_temps) && job_temps.size() == 1,
                     "短信内容渲染失败，数量为 0....");
-
             Preconditions.checkState(job_temps.get(0).isOK(), "%s 短信内容渲染失败....", job_temps.get(0).getContext());
             List<SendMessageTemplate> send_smses = Lists.newArrayListWithCapacity(mobiles.length);
             Stream.of(mobiles).forEach(x -> send_smses.add(job_temps.get(0).changeMobile(x)));
             if (logger.isDebugEnabled())
                 logger.debug(String.format("本次测试短信发送数量:%s", send_smses.size()));
-
             String res = sendMessage(send_smses, businessType, encoding ? WebUtils.decodeUrl(template) : template,
                     store, SendMode.ManualSingle, user, request);
             return JsonMessageBuilder.OK().withPayload(res).toMessage();
@@ -91,10 +88,9 @@ public class MsgSendingController extends SmsBaseController {
         }
     }
 
-
     /**
      * 预览短信或者微信信息
-     * payload = jobId,memberId|jobId,memberId||template
+     * payload = jobId,memberId,AutoRunChannel|jobId,memberId,AutoRunChannel||template
      *
      * @param requestBody 请求实体
      * @param request     请求
@@ -105,22 +101,19 @@ public class MsgSendingController extends SmsBaseController {
         LoginContextHolder.setAnonymousCtx();
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
-            Integer companyId = user.getCompanyId();
             Preconditions.checkState(user.hasStore());
+            Integer companyId = user.getCompanyId();
+            OrgEntity company = loadCompanyById(companyId, request);
             Integer employeeId = user.getId();
-            boolean authorization = MapUtils.getBooleanValue(requestBody, "authorization", false);
-            String payload = MapUtils.getString(requestBody, "payload");
-            boolean encoding = MapUtils.getBoolean(requestBody, "encoding", false);
-
             BusinessType businessType = holdBusinessTypeParam(requestBody);
-            List<SendMessageTemplate> send_smses = getBean(MsgTemplateProxyAction.class, request)
-                    .batchReplaceMemberTemplate(companyId, employeeId, Lists.newArrayList(payload), encoding, authorization, request);
-            Preconditions.checkState(send_smses.size() > 0, "短信模板占位符替换失败...");
-            SMSSettingEntity smsSetting = getBean(SMSSettingEntityAction.class, request).loadByStoreId(companyId,
-                    user.getStoreId().orElse(0));
+            SMSSettingEntity smsSetting = getBean(SMSSettingEntityAction.class, request)
+                    .loadByStoreId(companyId, user.getStoreId().orElse(0));
             final SMSSendRuleEntity sendRule = getBean(SMSSendRuleEntityAction.class, request).loadByType(businessType);
-
             SMSProviderEntity smsProvider = getBean(SMSProviderEntityAction.class, request).loadSMSSupplier();
+            String payload = MapUtils.getString(requestBody, "payload");
+            JobDetailTemplate4Replace template4Replace = new JobDetailTemplate4Replace(companyId, employeeId, payload, false);
+            getBean(SmsTempCacheService.class, request).replaceTemplateAction(company, employeeId, Lists.newArrayList(template4Replace));
+            List<SendMessageTemplate> send_smses = template4Replace.getJobDetails();
             SendMessageTemplate template = send_smses.get(0);
             if (!template.isOK())
                 return JsonMessageBuilder.ERROR(String.format("存在无法替换的关键字：%s", template.getContext())).toMessage();
@@ -156,16 +149,18 @@ public class MsgSendingController extends SmsBaseController {
         LoginContextHolder.setAnonymousCtx();
         try {
             SendMessageDto sendMessageDto = SmsGatewayProxyAction.deCoding(requestBody);
+            OrgEntity company = loadCompanyById(user.getCompanyId(), request);
             getBean(SmsTempCacheService.class, request).put(sendMessageDto.getBatchNo(), sendMessageDto.getPayloads());
             if (!sendMessageDto.isEnd()) return JsonMessageBuilder.OK().toMessage();
             Optional<List<String>> send_smses_payload = getBean(SmsTempCacheService.class, request).get(sendMessageDto.getBatchNo());
             if (!send_smses_payload.isPresent()) return JsonMessageBuilder.OK().toMessage();
-
             StoEntity store = loadStoreById(sendMessageDto.getStoreId(), request);
+            JobDetailTemplate4Replace template4Replace = new JobDetailTemplate4Replace(user.getCompanyId(), user.getId(),
+                    "", false);
 
-            List<SendMessageTemplate> msg_formated_list = getBean(MsgTemplateProxyAction.class, request)
-                    .batchReplaceMemberTemplate(sendMessageDto.getCompanyId(), sendMessageDto.getEmployeeId(),
-                            sendMessageDto.getPayloads(), true, sendMessageDto.isAuthorization(), request);
+            getBean(SmsTempCacheService.class, request)
+                    .replaceTemplateAction(company, user.getId(), Lists.newArrayList(template4Replace));
+            List<SendMessageTemplate> msg_formated_list = template4Replace.getJobDetails();
 
             String sms_batchno = sendMessage(msg_formated_list, sendMessageDto.getBusinessType(), null, store,
                     sendMessageDto.getSendMode(), user, request);
@@ -230,5 +225,10 @@ public class MsgSendingController extends SmsBaseController {
     @Override
     protected PlatformTransactionManager getTransactionManager(HttpServletRequest request) {
         return getBean("transactionManager", PlatformTransactionManager.class, request);
+    }
+
+
+    private JdbcQuerySupport getJdbcQuerySupport(HttpServletRequest request) {
+        return getBean("smsJdbcQuerySupport", JdbcQuerySupport.class, request);
     }
 }

@@ -3,6 +3,7 @@ package com.legooframework.model.smsgateway.service;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.legooframework.model.core.base.service.BaseService;
+import com.legooframework.model.core.jdbc.JdbcQuerySupport;
 import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.OrgEntityAction;
@@ -16,6 +17,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.UUID;
 
 public abstract class BundleService extends BaseService {
@@ -31,6 +33,10 @@ public abstract class BundleService extends BaseService {
 
     StoEntity getStore(Integer companyId, Integer storeId) {
         return getBean(StoEntityAction.class).loadById(storeId);
+    }
+
+    JdbcQuerySupport getJdbcQuerySupport() {
+        return getBean("smsJdbcQuerySupport", JdbcQuerySupport.class);
     }
 
     OrgEntity getCompany(Integer companyId) {

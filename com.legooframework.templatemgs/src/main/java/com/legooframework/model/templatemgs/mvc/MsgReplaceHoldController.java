@@ -14,7 +14,7 @@ import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
 import com.legooframework.model.membercare.entity.AutoRunChannel;
-import com.legooframework.model.membercare.entity.SendMessageTemplate;
+import com.legooframework.model.smsgateway.entity.SendMessageTemplate;
 import com.legooframework.model.templatemgs.entity.MsgReplaceHoldEntity;
 import com.legooframework.model.templatemgs.entity.MsgReplaceHoldEntityAction;
 import com.legooframework.model.templatemgs.entity.MsgReplaceHoldList;
@@ -31,8 +31,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @RestController
