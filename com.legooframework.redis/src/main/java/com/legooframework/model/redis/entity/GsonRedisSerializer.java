@@ -3,6 +3,7 @@ package com.legooframework.model.redis.entity;
 import com.google.common.base.Charsets;
 import com.google.gson.*;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.joda.time.format.DateTimeFormat;
@@ -13,6 +14,7 @@ import org.springframework.lang.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.StringJoiner;
 
 public class GsonRedisSerializer implements RedisSerializer<Object> {
@@ -22,6 +24,8 @@ public class GsonRedisSerializer implements RedisSerializer<Object> {
 
     private final Gson gson;
     final static String PREFIX = "GSON";
+    final static String PREFIX_CHAR = "GSON@";
+    final static byte[] PREFIX_BYTES = PREFIX_CHAR.getBytes(Charsets.UTF_8);
 
     GsonRedisSerializer() {
         GsonBuilder builder = new GsonBuilder();
@@ -46,21 +50,26 @@ public class GsonRedisSerializer implements RedisSerializer<Object> {
 
     @Override
     public Object deserialize(byte[] bytes) throws SerializationException {
-        return null;
+        String source = new String(bytes, Charsets.UTF_8);
+        String[] args = StringUtils.split(source, "@", 2);
+        try {
+            Class<?> clazz = Class.forName(args[0]);
+            return gson.fromJson(args[1], clazz);
+        } catch (ClassNotFoundException e) {
+            throw new SerializationException(String.format("Not found Class %s", args[0]));
+        }
     }
 
-    static void asd(byte[] source) {
-        final int length = PREFIX.getBytes(Charsets.UTF_8).length;
-        byte[] prefix = new byte[length];
-        System.arraycopy(source, 0, prefix, 0, prefix.length);
-
+    static Optional<byte[]> hasGsonSerializer(byte[] source) {
+        final int length = PREFIX_BYTES.length;
+        final int source_len = source.length;
+        byte[] prefix_args = new byte[length];
+        System.arraycopy(source, 0, prefix_args, 0, length);
+        if (Arrays.equals(PREFIX_BYTES, prefix_args)) {
+            return Optional.of(ArrayUtils.subarray(source, length, source_len));
+        }
+        return Optional.empty();
     }
-
-    public static void main(String[] args) {
-        byte[] source = "GSON@_@asdniahsod asdiashd oasd asdasd".getBytes(Charsets.UTF_8);
-        GsonRedisSerializer.asd(source);
-    }
-
 
     private static class LocalDateSerializer implements JsonSerializer<LocalDate>, JsonDeserializer<LocalDate> {
 

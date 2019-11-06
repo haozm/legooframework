@@ -3,6 +3,8 @@ package com.legooframework.model.redis.entity;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
 
+import java.util.Optional;
+
 public class MultipleSerializer implements RedisSerializer<Object> {
 
     private RedisSerializer jsonRedisSerializer = RedisSerializer.json();
@@ -10,6 +12,7 @@ public class MultipleSerializer implements RedisSerializer<Object> {
     private RedisSerializer gsonRedisSerializer = new GsonRedisSerializer();
 
     @Override
+    @SuppressWarnings("unchecked")
     public byte[] serialize(Object source) throws SerializationException {
         if (source == null) {
             return new byte[0];
@@ -23,6 +26,7 @@ public class MultipleSerializer implements RedisSerializer<Object> {
 
     @Override
     public Object deserialize(byte[] bytes) throws SerializationException {
-        return null;
+        Optional<byte[]> source = GsonRedisSerializer.hasGsonSerializer(bytes);
+        return source.map(value -> gsonRedisSerializer.deserialize(value)).orElse(null);
     }
 }

@@ -52,10 +52,12 @@ public class RedisTemplateSupportTest {
     @Test
     public void testHash() {
 
-        for (int i = 0; i < 100; i++) {
-            CacheEntity cacheEntity = new CacheEntity(i, String.format("HXJ-%d", i), i % 2, LocalDate.now(), String.format("GZ-%d", i));
-            redisTemplate.opsForHash().put(CacheEntity.class.getSimpleName(), String.format("key-%d", i), cacheEntity);
-        }
+//        for (int i = 0; i < 100; i++) {
+//            CacheEntity cacheEntity = new CacheEntity(i, String.format("HXJ-%d", i), i % 2, LocalDate.now(), String.format("GZ-%d", i));
+//            redisTemplate.opsForHash().put(CacheEntity.class.getSimpleName(), String.format("key-%d", i), cacheEntity);
+//        }
+
+        System.out.println(redisTemplate.opsForHash().get(CacheEntity.class.getSimpleName(), "key-1"));
 //        Optional<List<CareRecordEntity>> list = careRecordEntityAction.query4List();
 //        if (list.isPresent()) {
 //            for (CareRecordEntity $it : list.get()) {
