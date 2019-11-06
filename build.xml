@@ -256,7 +256,7 @@
         <path id="covariant_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar"/>
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar"/>
         </path>
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.covariant"/>
@@ -347,15 +347,17 @@
         <delete dir="${webapp.root}/reactor/WEB-INF/lib" includes="*.jar"/>
         <copy todir="${webapp.root}/reactor/WEB-INF/lib" encoding="UTF-8">
             <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar,legoo-reactor-*.jar"/>
+                     includes="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-reactor-*.jar"/>
         </copy>
         <delete dir="${webapp.root}/reactor/WEB-INF/classes" includes="**/*.xml"/>
         <copy todir="${webapp.root}/reactor/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}" includes="**/core/**,**/batchsupport/**,**/covariant/**,**/reactor/**"/>
+            <fileset dir="${config.dir}"
+                     includes="**/core/**,**/batchsupport/**,**/entities/**,**/covariant/**,**/reactor/**"/>
         </copy>
         <delete dir="${webapp.root}/reactor/resources" includes="**/*.*"/>
         <copy todir="${webapp.root}/reactor/resources" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${resources.dir}" includes="**/core/**,**/batchsupport/**,**/covariant/**,**/reactor/**"/>
+            <fileset dir="${resources.dir}"
+                     includes="**/core/**,**/batchsupport/**,**/entities/**,**/covariant/**,**/reactor/**"/>
         </copy>
     </target>
     <target name="install-statistical-jar">
