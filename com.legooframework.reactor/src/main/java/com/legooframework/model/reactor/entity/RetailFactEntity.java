@@ -73,7 +73,7 @@ public class RetailFactEntity extends BaseEntity<Long> {
         params.put("会员生日", Strings.nullToEmpty(this.birthday));
         params.put("开卡日期", this.createCardTime == null ? "----" : this.createCardTime.toString("yyyy-MM-dd"));
         params.put("当前积分", this.integral);
-        params.put("当前积分无小数", Math.round(this.integral));
+        params.put("当前积分无小数点", Math.round(this.integral));
         if (addIntegral >= 0.0) {
             params.put("积分变化", String.format("新增积分 %s", this.addIntegral));
         } else {
