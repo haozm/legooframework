@@ -2,7 +2,7 @@ package com.legooframework.model.smsgateway.mvc;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.legooframework.model.core.web.BaseController;
+import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.dict.dto.KvDictDto;
@@ -12,7 +12,10 @@ import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -23,7 +26,7 @@ import java.util.stream.Stream;
 
 @RestController(value = "smsDictController")
 @RequestMapping(value = "/dict")
-public class DictController extends BaseController {
+public class DictController extends SmsBaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(DictController.class);
 
@@ -32,11 +35,15 @@ public class DictController extends BaseController {
                                      HttpServletRequest request) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("[URI = %s] And RequestBody = %s", request.getRequestURI(), params));
-        getLoginContext();
-        String group = MapUtils.getString(params, "group");
-        if (StringUtils.isEmpty(group)) return JsonMessageBuilder.OK().toMessage();
-        List<KvDictDto> list = findByGroup(group, request);
-        return JsonMessageBuilder.OK().withPayload(list).toMessage();
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            String group = MapUtils.getString(params, "group");
+            if (StringUtils.isEmpty(group)) return JsonMessageBuilder.OK().toMessage();
+            List<KvDictDto> list = findByGroup(group, request);
+            return JsonMessageBuilder.OK().withPayload(list).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
     }
 
     @PostMapping(value = "/groups/detail.json")
@@ -45,13 +52,17 @@ public class DictController extends BaseController {
         if (logger.isDebugEnabled())
             logger.debug(String.format("[URI = %s] And RequestBody = %s", request.getRequestURI(), params));
         if (MapUtils.isEmpty(params)) return JsonMessageBuilder.OK().toMessage();
-        getLoginContext();
-        String groups = MapUtils.getString(params, "groups");
-        if (StringUtils.isEmpty(groups)) return JsonMessageBuilder.OK().toMessage();
-        String[] items = StringUtils.split(groups, ',');
-        Map<String, Object> data = Maps.newHashMap();
-        Stream.of(items).forEach(x -> data.put(x, findByGroup(x, request)));
-        return JsonMessageBuilder.OK().withPayload(data).toMessage();
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            String groups = MapUtils.getString(params, "groups");
+            if (StringUtils.isEmpty(groups)) return JsonMessageBuilder.OK().toMessage();
+            String[] items = StringUtils.split(groups, ',');
+            Map<String, Object> data = Maps.newHashMap();
+            Stream.of(items).forEach(x -> data.put(x, findByGroup(x, request)));
+            return JsonMessageBuilder.OK().withPayload(data).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
     }
 
     private List<KvDictDto> findByGroup(String groupName, HttpServletRequest request) {

@@ -1,14 +1,7 @@
 package com.legooframework.model.smsgateway.entity;
 
-import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntityAction;
 import com.legooframework.model.dict.entity.KvDictEntityAction;
-import com.legooframework.model.membercare.entity.BusinessType;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +10,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.UUID;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
@@ -35,23 +26,23 @@ public class SMSTransportLogEntityActionTest {
         String ssm = "按照NPD的统计，任天堂Switch成了去年销量最高的游戏主机，这既证明老任的商业策略成功，" +
                 "也暗示本世代爆料显示，下一代Xbox共有两款，" +
                 "一款代号Anaconda（蟒蛇），Navi核心GPU[%s]";
-        CrmOrganizationEntity com = organizationEntityAction.findCompanyById(1).get();
-        CrmStoreEntity store = storeEntityAction.findById(com, 1314).get();
-        // KvDictEntity businessType = dictEntityAction.findByValue("SMS_BUS_TYPE", "90TOUCHED").get();
-        final SMSSendRuleEntity sendRule = smsSendRuleEntityAction.loadByType(BusinessType.TOUCHED90);
-        final String batch = "0000111122223333";
-        List<SMSEntity> sms_list = Lists.newArrayList();
-        for (int i = 0; i < 10; i++) {
-            sms_list.add(SMSEntity.createSMSMsg(UUID.randomUUID().toString(), -1, "13710276623", null, String.format(ssm, i),
-                    RandomUtils.nextInt()));
-        }
+//        CrmOrganizationEntity com = organizationEntityAction.findCompanyById(1).get();
+//        CrmStoreEntity store = storeEntityAction.findById(com, 1314).get();
+//        // KvDictEntity businessType = dictEntityAction.findByValue("SMS_BUS_TYPE", "90TOUCHED").get();
+//        final SMSSendRuleEntity sendRule = smsSendRuleEntityAction.loadByType(BusinessType.TOUCHED90);
+//        final String batch = "0000111122223333";
+//        List<SMSEntity> sms_list = Lists.newArrayList();
+//        for (int i = 0; i < 10; i++) {
+//            sms_list.add(SMSEntity.createSMSMsg(UUID.randomUUID().toString(), -1, "13710276623", null, String.format(ssm, i),
+//                    RandomUtils.nextInt()));
+//        }
 
-        List<SendMsg4InitEntity> alo = Lists.newArrayList();
-        sms_list.forEach(x -> {
-            //CrmStoreEntity store, SMSEntity sms, String smsBatchNo, SMSSendRuleEntity sendRule
-           // alo.add(SendMsg4InitEntity.createManualBatch(store, x, batch, sendRule));
-        });
-        action.batchInsert(alo);
+//        List<SendMsg4InitEntity> alo = Lists.newArrayList();
+//        sms_list.forEach(x -> {
+//            //CrmStoreEntity store, SMSEntity sms, String smsBatchNo, SMSSendRuleEntity sendRule
+//           // alo.add(SendMsg4InitEntity.createManualBatch(store, x, batch, sendRule));
+//        });
+//        action.batchInsert(alo);
     }
 
     @Test
@@ -64,10 +55,10 @@ public class SMSTransportLogEntityActionTest {
     KvDictEntityAction dictEntityAction;
     @Autowired
     SMSSendRuleEntityAction smsSendRuleEntityAction;
-    @Autowired
-    CrmOrganizationEntityAction organizationEntityAction;
-    @Autowired
-    CrmStoreEntityAction storeEntityAction;
+//    @Autowired
+//    CrmOrganizationEntityAction organizationEntityAction;
+//    @Autowired
+//    CrmStoreEntityAction storeEntityAction;
     @Autowired
     private SendMsg4InitEntityAction action;
 }

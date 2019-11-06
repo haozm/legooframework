@@ -3,7 +3,7 @@ package com.legooframework.model.smsgateway.service;
 import com.google.common.base.Preconditions;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.OrgEntityAction;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.smsgateway.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +41,7 @@ public class SMSRechargeService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("freecharge(%s,%s,%s,%s)", companyId, storeGroupId, storId, totalQuantity));
         OrgEntity company = getCompany(companyId);
-        CrmStoreEntity store = storId == null ? null : getStore(companyId, storId);
+        StoEntity store = storId == null ? null : getStore(companyId, storId);
         RechargeRes rechargeRes = getBean(RechargeDetailEntityAction.class).freecharge(company, store, storeGroupId, totalQuantity);
         addBalance(rechargeRes);
     }
@@ -128,7 +128,7 @@ public class SMSRechargeService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByStore(%s,%s,%s)", companyId, storeId, rechargeAmount));
         OrgEntity company = getCompany(companyId);
-        CrmStoreEntity store = getStore(companyId, storeId);
+        StoEntity store = getStore(companyId, storeId);
         RechargeRuleEntity rule = getRechargeRule(company, rechargeAmount);
         RechargeRes rechargeRes = null;
         switch (rechargeType) {
@@ -160,7 +160,7 @@ public class SMSRechargeService extends BundleService {
                     unitPrice, remarke));
         OrgEntity company = getBean(OrgEntityAction.class).loadComById(companyId);
         RechargeRuleEntity rule = createTemporaryRule(company, rechargeAmount, unitPrice, remarke);
-        CrmStoreEntity store = getStore(companyId, storeId);
+        StoEntity store = getStore(companyId, storeId);
         RechargeRes rechargeRes = null;
         switch (rechargeType) {
             case Recharge:

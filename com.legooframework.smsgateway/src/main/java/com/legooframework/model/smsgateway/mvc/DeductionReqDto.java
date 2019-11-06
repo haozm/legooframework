@@ -17,8 +17,8 @@ public class DeductionReqDto {
     private final String smsContext;
     private final SendMode sendMode;
 
-    public DeductionReqDto(StoEntity store, BusinessType businessType, List<SMSEntity> smses, String smsContext,
-                           SendMode sendMode) {
+    DeductionReqDto(StoEntity store, BusinessType businessType, List<SMSEntity> smses, String smsContext,
+                    SendMode sendMode) {
         Preconditions.checkNotNull(businessType, "业务类型businessType 非法为空值");
         this.businessType = businessType;
         this.smses = smses;

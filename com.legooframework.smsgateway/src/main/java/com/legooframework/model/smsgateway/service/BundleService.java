@@ -6,7 +6,8 @@ import com.legooframework.model.core.base.service.BaseService;
 import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.OrgEntityAction;
-import com.legooframework.model.crmadapter.entity.*;
+import com.legooframework.model.covariant.entity.StoEntity;
+import com.legooframework.model.covariant.entity.StoEntityAction;
 import com.legooframework.model.smsgateway.entity.ChargeSummaryEntityAction;
 import com.legooframework.model.smsgateway.entity.RechargeDetailEntityAction;
 import org.springframework.integration.core.MessagingTemplate;
@@ -15,58 +16,25 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public abstract class BundleService extends BaseService {
 
     public static String CHANNEL_SMS_BILLING = "channel_sms_billing";
-    public static String CHANNEL_SMS_SENDED = "channel_sms_sended";
-    public static String CHANNEL_SMS_SENDING = "channel_sms_sending";
+    static String CHANNEL_SMS_SENDED = "channel_sms_sended";
+    static String CHANNEL_SMS_SENDING = "channel_sms_sending";
 
     @Override
     protected Bundle getLocalBundle() {
         return getBean("smsGateWayBundle", Bundle.class);
     }
 
-    CrmStoreEntity getStore(Integer companyId, Integer storeId) {
-        Optional<CrmOrganizationEntity> company = getBean(CrmOrganizationEntityAction.class)
-                .findCompanyById(companyId);
-        Preconditions.checkState(company.isPresent(), "ID=%s 对应的公司不存在...", companyId);
-        Optional<CrmStoreEntity> stores = getBean(CrmStoreEntityAction.class).findById(company.get(), storeId);
-        Preconditions.checkState(stores.isPresent(), "ID=%s 对应的门店不存在...", storeId);
-        return stores.get();
+    StoEntity getStore(Integer companyId, Integer storeId) {
+        return getBean(StoEntityAction.class).loadById(storeId);
     }
 
     OrgEntity getCompany(Integer companyId) {
         return getBean(OrgEntityAction.class).loadComById(companyId);
-    }
-
-    Optional<List<CrmStoreEntity>> getStores(Integer companyId, List<Integer> storeIds) {
-        Optional<CrmOrganizationEntity> company = getBean(CrmOrganizationEntityAction.class)
-                .findCompanyById(companyId);
-        Preconditions.checkState(company.isPresent(), "ID=%s 对应的公司不存在...", companyId);
-        return getBean(CrmStoreEntityAction.class).findByIds(company.get(), storeIds);
-    }
-
-    Optional<List<CrmStoreEntity>> getSubStores(Integer companyId, Integer orgId) {
-        Optional<CrmOrganizationEntity> company = getBean(CrmOrganizationEntityAction.class)
-                .findCompanyById(companyId);
-        Preconditions.checkState(company.isPresent(), "ID=%s 对应的公司不存在...", companyId);
-        Optional<CrmOrganizationEntity> org = getBean(CrmOrganizationEntityAction.class)
-                .loadOrganization(company.get(), orgId);
-        Preconditions.checkState(org.isPresent());
-        return getBean(CrmStoreEntityAction.class).loadStoresByOrg(org.get());
-    }
-
-    CrmEmployeeEntity getEmployee(Integer companyId, Integer employeeId) {
-        Optional<CrmOrganizationEntity> company = getBean(CrmOrganizationEntityAction.class)
-                .findCompanyById(companyId);
-        Preconditions.checkState(company.isPresent(), "ID=%s 对应的公司不存在...", companyId);
-        Optional<CrmEmployeeEntity> employee = getBean(CrmEmployeeEntityAction.class).findById(company.get(), employeeId);
-        Preconditions.checkState(employee.isPresent(), "ID=%s 对应的职员不存在...", employeeId);
-        return employee.get();
     }
 
     RechargeDetailEntityAction getRechargeAction() {

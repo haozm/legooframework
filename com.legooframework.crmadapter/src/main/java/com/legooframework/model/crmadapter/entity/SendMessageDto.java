@@ -1,7 +1,6 @@
 package com.legooframework.model.crmadapter.entity;
 
 import com.google.common.base.MoreObjects;
-import com.legooframework.model.membercare.entity.AutoRunChannel;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.SendMode;
 

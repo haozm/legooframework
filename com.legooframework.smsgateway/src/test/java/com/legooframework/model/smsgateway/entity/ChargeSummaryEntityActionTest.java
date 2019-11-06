@@ -1,12 +1,7 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntityAction;
 import com.legooframework.model.dict.entity.KvDictEntityAction;
-import com.legooframework.model.membercare.entity.BusinessType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,9 +26,9 @@ public class ChargeSummaryEntityActionTest {
     public void insert() {
         LoginContextHolder.setAnonymousCtx();
         //Optional<KvDictEntity> buty = kvDictEntityAction.findByValue("SMS_BUS_TYPE", "90TOUCHED");
-        SMSSendRuleEntity rule = businessRuleEntityAction.loadByType(BusinessType.TOUCHED90);
-        CrmOrganizationEntity com = organizationEntityAction.findCompanyById(1).get();
-        CrmStoreEntity store = storeEntityAction.findById(com, 5).get();
+//        SMSSendRuleEntity rule = businessRuleEntityAction.loadByType(BusinessType.TOUCHED90);
+//        CrmOrganizationEntity com = organizationEntityAction.findCompanyById(1).get();
+//        CrmStoreEntity store = storeEntityAction.findById(com, 5).get();
 //        billingSummaryEntityAction.insertManual(store, rule,
 //                String.format("%s_%s_201981212771212", store.getCompanyId(), store.getId()),
 //                9966, "asdasdasdasdasd");
@@ -48,10 +43,10 @@ public class ChargeSummaryEntityActionTest {
 
     @Resource(name = "smsKvDictEntityAction")
     KvDictEntityAction kvDictEntityAction;
-    @Autowired
-    CrmOrganizationEntityAction organizationEntityAction;
-    @Autowired
-    CrmStoreEntityAction storeEntityAction;
+//    @Autowired
+//    CrmOrganizationEntityAction organizationEntityAction;
+//    @Autowired
+//    CrmStoreEntityAction storeEntityAction;
     @Autowired
     SMSSendRuleEntityAction businessRuleEntityAction;
     @Autowired

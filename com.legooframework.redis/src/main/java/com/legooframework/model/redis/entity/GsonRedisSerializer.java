@@ -19,6 +19,7 @@ public class GsonRedisSerializer implements RedisSerializer<Object> {
     private final static DateTimeFormatter YYYYMMDDHHMMSS = DateTimeFormat.forPattern("yyyyMMddHHmmss");
 
     private final Gson gson;
+    final static byte[] PREFIX = new byte[]{0xF, 0xF};
 
     GsonRedisSerializer() {
         GsonBuilder builder = new GsonBuilder();

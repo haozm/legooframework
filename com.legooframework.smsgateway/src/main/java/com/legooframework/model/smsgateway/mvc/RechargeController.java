@@ -29,7 +29,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping(value = "/recharge")
-public class RechargeController extends BaseController {
+public class RechargeController extends SmsBaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(RechargeController.class);
 

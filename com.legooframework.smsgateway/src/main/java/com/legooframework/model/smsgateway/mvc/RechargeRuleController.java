@@ -5,13 +5,9 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.DateTimeUtils;
-import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.covariant.entity.OrgEntity;
-import com.legooframework.model.covariant.entity.OrgEntityAction;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
 import com.legooframework.model.smsgateway.entity.RechargeRuleEntity;
 import com.legooframework.model.smsgateway.entity.RechargeRuleEntityAction;
 import org.apache.commons.collections4.CollectionUtils;
@@ -32,7 +28,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/rechargerule")
-public class RechargeRuleController extends BaseController {
+public class RechargeRuleController extends SmsBaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(RechargeRuleController.class);
 
@@ -57,7 +53,7 @@ public class RechargeRuleController extends BaseController {
         Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
         OrgEntity company = null;
         if (companyId != -1) {
-            company = getBean(OrgEntityAction.class, request).loadComById(companyId);
+            company = loadCompanyById(companyId, request);
         }
         Optional<List<RechargeRuleEntity>> rulesOpt = getBean(RechargeRuleEntityAction.class, request).loadAllRules();
         if (!rulesOpt.isPresent()) return JsonMessageBuilder.OK().toMessage();
@@ -91,7 +87,7 @@ public class RechargeRuleController extends BaseController {
             logger.debug(String.format("loadAllRules(url=%s,param=%s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setCtx(getLoginContext());
         Integer companyId = MapUtils.getInteger(requestBody, "companyId");
-        OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(companyId);
+        OrgEntity company = loadCompanyById(companyId, request);
         Optional<List<RechargeRuleEntity>> rulesOpt = getBean(RechargeRuleEntityAction.class, request).loadAllRules();
         if (!rulesOpt.isPresent()) return JsonMessageBuilder.OK().toMessage();
         List<RechargeRuleEntity> rules = rulesOpt.get();
@@ -154,7 +150,7 @@ public class RechargeRuleController extends BaseController {
         OrgEntity company = null;
         Integer companyId = MapUtils.getInteger(requestBody, "companyId");
         if (null != companyId) {
-            company = getBean(OrgEntityAction.class, request).loadComById(companyId);
+            company = loadCompanyById(companyId, request);
         }
         String remarks = MapUtils.getString(requestBody, "remarks");
         LocalDate expiredDate = null;

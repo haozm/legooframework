@@ -21,6 +21,7 @@
 
     <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/batchsupport/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/entities/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/covariant/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/salesrecords/spring-model-cfg.xml"/>
 

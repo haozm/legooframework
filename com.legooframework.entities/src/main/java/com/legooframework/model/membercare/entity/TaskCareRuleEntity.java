@@ -10,6 +10,7 @@ import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
 import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.smsgateway.entity.AutoRunChannel;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 

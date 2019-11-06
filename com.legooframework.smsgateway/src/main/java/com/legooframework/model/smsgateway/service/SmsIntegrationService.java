@@ -11,7 +11,6 @@ import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.CommonsUtils;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.covariant.entity.StoEntity;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.*;
 import com.legooframework.model.smsgateway.filter.SmsSendInterceptor;
@@ -168,7 +167,6 @@ public class SmsIntegrationService extends BundleService {
         }
         return chargeSummary.get().getSmsBatchNo();
     }
-
 
     /**
      * 短信发送计费服务

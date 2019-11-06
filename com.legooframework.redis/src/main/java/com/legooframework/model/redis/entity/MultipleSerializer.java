@@ -16,8 +16,9 @@ public class MultipleSerializer implements RedisSerializer<Object> {
         }
         if (source instanceof GsonSerializer) {
             return gsonRedisSerializer.serialize(source);
+        } else {
+            return stringRedisSerializer.serialize(source);
         }
-        return new byte[0];
     }
 
     @Override

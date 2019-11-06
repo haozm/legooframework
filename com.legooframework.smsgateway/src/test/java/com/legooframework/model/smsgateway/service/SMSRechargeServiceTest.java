@@ -2,8 +2,6 @@ package com.legooframework.model.smsgateway.service;
 
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntityAction;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntityAction;
 import com.legooframework.model.smsgateway.entity.RechargeDetailEntityAction;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -58,10 +56,10 @@ public class SMSRechargeServiceTest {
 //        System.out.println(res);
     }
 
-    @Autowired
-    CrmOrganizationEntityAction companyAction;
-    @Autowired
-    CrmStoreEntityAction storeAction;
+//    @Autowired
+//    CrmOrganizationEntityAction companyAction;
+//    @Autowired
+//    CrmStoreEntityAction storeAction;
     @Autowired
     RechargeDetailEntityAction rechargeDetailEntityAction;
     @Autowired

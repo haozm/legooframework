@@ -9,7 +9,7 @@ import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.utils.CommonsUtils;
 import com.legooframework.model.covariant.entity.OrgEntity;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -133,17 +133,17 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         return res;
     }
 
-    static RechargeDetailEntity rechargeByStore(CrmStoreEntity store, RechargeRuleEntity rechargeRule, long rechargeAmount) {
+    static RechargeDetailEntity rechargeByStore(StoEntity store, RechargeRuleEntity rechargeRule, long rechargeAmount) {
         return new RechargeDetailEntity(store.getCompanyId(), store.getId(), null,
                 RechargeScope.Store, rechargeRule, rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity prechargeByStore(CrmStoreEntity store, RechargeRuleEntity rechargeRule, long rechargeAmount) {
+    static RechargeDetailEntity prechargeByStore(StoEntity store, RechargeRuleEntity rechargeRule, long rechargeAmount) {
         return new RechargeDetailEntity(store.getCompanyId(), store.getId(), null,
                 RechargeScope.Store, rechargeRule, rechargeAmount, RechargeType.Precharge, 0, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity freechargeByStore(CrmStoreEntity store, int totalQuantity) {
+    static RechargeDetailEntity freechargeByStore(StoEntity store, int totalQuantity) {
         return new RechargeDetailEntity(store.getCompanyId(), store.getId(), null,
                 RechargeScope.Store, null, 0L, RechargeType.FreeCharge, totalQuantity,
                 LoginContextHolder.get());

@@ -3,17 +3,11 @@ package com.legooframework.model.smsgateway.mvc;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
-import com.legooframework.model.covariant.entity.StoEntity;
-import com.legooframework.model.covariant.entity.StoEntityAction;
-import com.legooframework.model.covariant.entity.UserAuthorEntity;
-import com.legooframework.model.crmadapter.entity.*;
-import com.legooframework.model.crmadapter.service.CrmPermissionHelper;
-import com.legooframework.model.membercare.entity.AutoRunChannel;
+import com.legooframework.model.covariant.entity.*;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.membercare.entity.SendMessageTemplate;
 import com.legooframework.model.smsgateway.entity.*;
@@ -61,36 +55,40 @@ public class MsgSendingController extends SmsBaseController {
     public JsonMessage sendingMessage4Test(@RequestBody Map<String, Object> requestBody, HttpServletRequest request)
             throws Exception {
         LoginContextHolder.setAnonymousCtx();
-        UserAuthorEntity user = loadLoginUser(requestBody, request);
-        Preconditions.checkState(user.hasStore());
-        StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
-        String template = MapUtils.getString(requestBody, "template");
-        boolean encoding = MapUtils.getBoolean(requestBody, "encoding", true);
-        BusinessType businessType = holdBusinessTypeParam(requestBody);
-        String mobiles_str = MapUtils.getString(requestBody, "mobiles");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(mobiles_str), "短信号码不可以为空值...");
-        String[] mobiles = StringUtils.split(mobiles_str, ',');
-        Integer memberId = MapUtils.getInteger(requestBody, "memberId");
-        int autoRunChannel_val = MapUtils.getInteger(requestBody, "autoRunChannel", 2);
-        AutoRunChannel autoRunChannel = AutoRunChannel.parse(autoRunChannel_val);
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            Preconditions.checkState(user.hasStore());
+            StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
+            String template = MapUtils.getString(requestBody, "template");
+            boolean encoding = MapUtils.getBoolean(requestBody, "encoding", true);
+            BusinessType businessType = holdBusinessTypeParam(requestBody);
+            String mobiles_str = MapUtils.getString(requestBody, "mobiles");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(mobiles_str), "短信号码不可以为空值...");
+            String[] mobiles = StringUtils.split(mobiles_str, ',');
+            Integer memberId = MapUtils.getInteger(requestBody, "memberId");
+            int autoRunChannel_val = MapUtils.getInteger(requestBody, "autoRunChannel", 2);
+            AutoRunChannel autoRunChannel = AutoRunChannel.parse(autoRunChannel_val);
 
-        String payload = String.format("%s,%s,%s||%s", user.getTenantId(), memberId, autoRunChannel.getChannel(), template);
-        List<SendMessageTemplate> job_temps = getBean(MsgTemplateProxyAction.class, request)
-                .batchReplaceMemberTemplate(user.getCompanyId(), user.getId(), Lists.newArrayList(payload), encoding,
-                        true, request);
+            String payload = String.format("%s,%s,%s||%s", user.getTenantId(), memberId, autoRunChannel.getChannel(), template);
+            List<SendMessageTemplate> job_temps = getBean(MsgTemplateProxyAction.class, request)
+                    .batchReplaceMemberTemplate(user.getCompanyId(), user.getId(), Lists.newArrayList(payload), encoding,
+                            true, request);
 
-        Preconditions.checkState(CollectionUtils.isNotEmpty(job_temps) && job_temps.size() == 1,
-                "短信内容渲染失败，数量为 0....");
+            Preconditions.checkState(CollectionUtils.isNotEmpty(job_temps) && job_temps.size() == 1,
+                    "短信内容渲染失败，数量为 0....");
 
-        Preconditions.checkState(job_temps.get(0).isOK(), "%s 短信内容渲染失败....", job_temps.get(0).getContext());
-        List<SendMessageTemplate> send_smses = Lists.newArrayListWithCapacity(mobiles.length);
-        Stream.of(mobiles).forEach(x -> send_smses.add(job_temps.get(0).changeMobile(x)));
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("本次测试短信发送数量:%s", send_smses.size()));
+            Preconditions.checkState(job_temps.get(0).isOK(), "%s 短信内容渲染失败....", job_temps.get(0).getContext());
+            List<SendMessageTemplate> send_smses = Lists.newArrayListWithCapacity(mobiles.length);
+            Stream.of(mobiles).forEach(x -> send_smses.add(job_temps.get(0).changeMobile(x)));
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("本次测试短信发送数量:%s", send_smses.size()));
 
-        String res = sendMessage(send_smses, businessType, encoding ? WebUtils.decodeUrl(template) : template,
-                store, SendMode.ManualSingle, user, request);
-        return JsonMessageBuilder.OK().withPayload(res).toMessage();
+            String res = sendMessage(send_smses, businessType, encoding ? WebUtils.decodeUrl(template) : template,
+                    store, SendMode.ManualSingle, user, request);
+            return JsonMessageBuilder.OK().withPayload(res).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
     }
 
 
@@ -104,38 +102,42 @@ public class MsgSendingController extends SmsBaseController {
      */
     @PostMapping(value = "/manual/preview/msg.json")
     public JsonMessage previewSms(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
-        LoginContext user = LoginContextHolder.get();
-        Integer companyId = user.getTenantId().intValue();
-        Authenticationor authenticationor = getBean(CrmPermissionHelper.class, request).authentication(requestBody);
-        Preconditions.checkState(authenticationor.hasStore(), "需指定发送短信所在门店");
-        Integer employeeId = authenticationor.getUser().getLoginId().intValue();
-        boolean authorization = MapUtils.getBooleanValue(requestBody, "authorization", false);
-        String payload = MapUtils.getString(requestBody, "payload");
-        boolean encoding = MapUtils.getBoolean(requestBody, "encoding", false);
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            Integer companyId = user.getCompanyId();
+            Preconditions.checkState(user.hasStore());
+            Integer employeeId = user.getId();
+            boolean authorization = MapUtils.getBooleanValue(requestBody, "authorization", false);
+            String payload = MapUtils.getString(requestBody, "payload");
+            boolean encoding = MapUtils.getBoolean(requestBody, "encoding", false);
 
-        BusinessType businessType = holdBusinessTypeParam(requestBody);
-        List<SendMessageTemplate> send_smses = getBean(MsgTemplateProxyAction.class, request)
-                .batchReplaceMemberTemplate(companyId, employeeId, Lists.newArrayList(payload), encoding, authorization, request);
-        Preconditions.checkState(send_smses.size() > 0, "短信模板占位符替换失败...");
-        SMSSettingEntity smsSetting = getBean(SMSSettingEntityAction.class, request).loadByStoreId(companyId,
-                authenticationor.getStore().getId());
-        final SMSSendRuleEntity sendRule = getBean(SMSSendRuleEntityAction.class, request).loadByType(businessType);
+            BusinessType businessType = holdBusinessTypeParam(requestBody);
+            List<SendMessageTemplate> send_smses = getBean(MsgTemplateProxyAction.class, request)
+                    .batchReplaceMemberTemplate(companyId, employeeId, Lists.newArrayList(payload), encoding, authorization, request);
+            Preconditions.checkState(send_smses.size() > 0, "短信模板占位符替换失败...");
+            SMSSettingEntity smsSetting = getBean(SMSSettingEntityAction.class, request).loadByStoreId(companyId,
+                    user.getStoreId().orElse(0));
+            final SMSSendRuleEntity sendRule = getBean(SMSSendRuleEntityAction.class, request).loadByType(businessType);
 
-        SMSProviderEntity smsProvider = getBean(SMSProviderEntityAction.class, request).loadSMSSupplier();
-        SendMessageTemplate template = send_smses.get(0);
-        if (!template.isOK())
-            return JsonMessageBuilder.ERROR(String.format("存在无法替换的关键字：%s", template.getContext())).toMessage();
-        String context = null;
-        if (sendRule.isMarketChannel()) {
-            String sms_suffix = smsProvider.getSmsSuffix(SMSChannel.MarketChannel).orElse(null);
-            context = sendRule.addPrefixAndSuffix(template.getContext(), smsSetting.getSmsPrefix(), sms_suffix);
-        } else {
-            context = sendRule.addPrefix(template.getContext(), smsSetting.getSmsPrefix());
+            SMSProviderEntity smsProvider = getBean(SMSProviderEntityAction.class, request).loadSMSSupplier();
+            SendMessageTemplate template = send_smses.get(0);
+            if (!template.isOK())
+                return JsonMessageBuilder.ERROR(String.format("存在无法替换的关键字：%s", template.getContext())).toMessage();
+            String context = null;
+            if (sendRule.isMarketChannel()) {
+                String sms_suffix = smsProvider.getSmsSuffix(SMSChannel.MarketChannel).orElse(null);
+                context = sendRule.addPrefixAndSuffix(template.getContext(), smsSetting.getSmsPrefix(), sms_suffix);
+            } else {
+                context = sendRule.addPrefix(template.getContext(), smsSetting.getSmsPrefix());
+            }
+
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("本次待预览短信短信:%s", context));
+            return JsonMessageBuilder.OK().withPayload(context).toMessage();
+        } finally {
+            LoginContextHolder.clear();
         }
-
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("本次待预览短信短信:%s", context));
-        return JsonMessageBuilder.OK().withPayload(context).toMessage();
     }
 
     /**
@@ -151,22 +153,20 @@ public class MsgSendingController extends SmsBaseController {
     @PostMapping(value = "/manual/send/message.json")
     public JsonMessage sendMessageAction(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) throws Exception {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
-        SendMessageDto sendMessageDto = SmsGatewayProxyAction.deCoding(requestBody);
-        getBean(SmsTempCacheService.class, request).put(sendMessageDto.getBatchNo(), sendMessageDto.getPayloads());
-        if (!sendMessageDto.isEnd()) return JsonMessageBuilder.OK().toMessage();
-        Optional<List<String>> send_smses_payload = getBean(SmsTempCacheService.class, request).get(sendMessageDto.getBatchNo());
-        if (!send_smses_payload.isPresent()) return JsonMessageBuilder.OK().toMessage();
-
-        Optional<CrmOrganizationEntity> company = getBean(CrmOrganizationEntityAction.class, request).findCompanyById(sendMessageDto.getCompanyId());
-        Preconditions.checkState(company.isPresent(), "id=%s 对应的公司不存在 ...");
-        StoEntity store = getBean(StoEntityAction.class, request).loadById(sendMessageDto.getStoreId());
-
-        List<SendMessageTemplate> msg_formated_list = getBean(MsgTemplateProxyAction.class, request)
-                .batchReplaceMemberTemplate(sendMessageDto.getCompanyId(), sendMessageDto.getEmployeeId(),
-                        sendMessageDto.getPayloads(), true, sendMessageDto.isAuthorization(), request);
-
-        LoginContextHolder.setIfNotExitsAnonymousCtx();
+        LoginContextHolder.setAnonymousCtx();
         try {
+            SendMessageDto sendMessageDto = SmsGatewayProxyAction.deCoding(requestBody);
+            getBean(SmsTempCacheService.class, request).put(sendMessageDto.getBatchNo(), sendMessageDto.getPayloads());
+            if (!sendMessageDto.isEnd()) return JsonMessageBuilder.OK().toMessage();
+            Optional<List<String>> send_smses_payload = getBean(SmsTempCacheService.class, request).get(sendMessageDto.getBatchNo());
+            if (!send_smses_payload.isPresent()) return JsonMessageBuilder.OK().toMessage();
+
+            StoEntity store = loadStoreById(sendMessageDto.getStoreId(), request);
+
+            List<SendMessageTemplate> msg_formated_list = getBean(MsgTemplateProxyAction.class, request)
+                    .batchReplaceMemberTemplate(sendMessageDto.getCompanyId(), sendMessageDto.getEmployeeId(),
+                            sendMessageDto.getPayloads(), true, sendMessageDto.isAuthorization(), request);
+
             String sms_batchno = sendMessage(msg_formated_list, sendMessageDto.getBusinessType(), null, store,
                     sendMessageDto.getSendMode(), user, request);
             if (logger.isDebugEnabled())

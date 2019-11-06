@@ -1,6 +1,5 @@
 package com.legooframework.model.smsgateway.entity;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import org.apache.commons.collections4.CollectionUtils;

@@ -2,13 +2,11 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.covariant.entity.OrgEntity;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +16,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.ToIntFunction;
-import java.util.stream.Collectors;
 
 public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailEntity> {
 
@@ -41,7 +38,7 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param rechargeAmount
      * @return
      */
-    public RechargeRes recharge(OrgEntity company, CrmStoreEntity store, String storeGroupId,
+    public RechargeRes recharge(OrgEntity company, StoEntity store, String storeGroupId,
                                 RechargeRuleEntity rechargeRule, long rechargeAmount) {
         Preconditions.checkNotNull(company);
         Preconditions.checkArgument(rechargeAmount > 0);
@@ -93,7 +90,7 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param rechargeAmount
      * @return
      */
-    public RechargeRes precharge(OrgEntity company, CrmStoreEntity store, String storeGroupId,
+    public RechargeRes precharge(OrgEntity company, StoEntity store, String storeGroupId,
                                  RechargeRuleEntity rechargeRule, long rechargeAmount) {
         Preconditions.checkNotNull(company);
         Preconditions.checkArgument(rechargeAmount > 0);
@@ -120,7 +117,7 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param totalQuantity 数量
      * @return RechargeRes 充值结果
      */
-    public RechargeRes freecharge(OrgEntity company, CrmStoreEntity store, String storeGroupId,
+    public RechargeRes freecharge(OrgEntity company, StoEntity store, String storeGroupId,
                                   int totalQuantity) {
         Preconditions.checkNotNull(company);
         RechargeDetailEntity recharge;
@@ -155,11 +152,9 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param store
      * @return
      */
-    public Optional<List<RechargeDetailEntity>> loadStoreBalance(CrmStoreEntity store) {
+    public Optional<List<RechargeDetailEntity>> loadStoreBalance(StoEntity store) {
         Preconditions.checkNotNull(store, "入参 CrmStoreEntity store 为 null....");
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("companyId", store.getCompanyId());
-        params.put("storeId", store.getId());
+        Map<String, Object> params = store.toParamMap();
         Optional<List<RechargeDetailEntity>> res = super.queryForEntities("loadStoreBalance", params, getRowMapper());
         if (logger.isDebugEnabled())
             logger.debug(String.format("loadStoreBalance(%s) return %s", store.getId(), res.orElse(null)));

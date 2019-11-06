@@ -3,6 +3,7 @@ package com.legooframework.model.membercare.entity;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.legooframework.model.core.utils.WebUtils;
+import com.legooframework.model.smsgateway.entity.AutoRunChannel;
 import org.apache.commons.lang3.StringUtils;
 
 public class SendMessageTemplate implements Cloneable {
