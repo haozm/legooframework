@@ -368,7 +368,7 @@
         <path id="statistical_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-covariant-*.jar"/>
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar"/>
         </path>
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.statistical"/>
@@ -385,15 +385,16 @@
         </antcall>
         <delete dir="${webapp.root}/statistical/WEB-INF/lib" includes="*.jar"/>
         <copy todir="${webapp.root}/statistical/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-covariant-*.jar,legoo-statistical-*.jar"/>
+            <fileset dir="${lib.dir}"
+                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-statistical-*.jar"/>
         </copy>
         <delete dir="${webapp.root}/statistical/WEB-INF/classes" includes="**/*.xml"/>
         <copy todir="${webapp.root}/statistical/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}" includes="**/core/**,**/covariant/**,**/statistical/**"/>
+            <fileset dir="${config.dir}" includes="**/core/**,**/entities/**,**/covariant/**,**/statistical/**"/>
         </copy>
         <delete dir="${webapp.root}/statistical/resources" includes="**/*.xml"/>
         <copy todir="${webapp.root}/statistical/resources" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${resources.dir}" includes="**/core/**,**/covariant/**,**/statistical/**"/>
+            <fileset dir="${resources.dir}" includes="**/core/**,**/entities/**,**/covariant/**,**/statistical/**"/>
         </copy>
     </target>
     <target name="jar-wechatcmd">
