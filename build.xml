@@ -268,7 +268,7 @@
         <path id="takecare_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-covariant-*.jar"/>
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar"/>
         </path>
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.takecare"/>
@@ -285,15 +285,16 @@
         </antcall>
         <delete dir="${webapp.root}/takecare/WEB-INF/lib" includes="*.jar"/>
         <copy todir="${webapp.root}/takecare/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-covariant-*.jar,legoo-takecare-*.jar"/>
+            <fileset dir="${lib.dir}"
+                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-takecare-*.jar"/>
         </copy>
         <delete dir="${webapp.root}/takecare/WEB-INF/classes" includes="**/*.xml"/>
         <copy todir="${webapp.root}/takecare/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}" includes="**/core/**,**/covariant/**,**/takecare/**"/>
+            <fileset dir="${config.dir}" includes="**/core/**,**/entities/**,**/covariant/**,**/takecare/**"/>
         </copy>
         <delete dir="${webapp.root}/takecare/resources" includes="**/*.*"/>
         <copy todir="${webapp.root}/takecare/resources" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${resources.dir}" includes="**/core/**,**/covariant/**,**/takecare/**"/>
+            <fileset dir="${resources.dir}" includes="**/core/**,**/entities/**,**/covariant/**,**/takecare/**"/>
         </copy>
     </target>
     <target name="install-autotask-jar">
@@ -329,7 +330,8 @@
         <path id="reactor_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-batchsupport-*.jar"/>
+            <fileset dir="${lib.dir}"
+                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-batchsupport-*.jar"/>
         </path>
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.reactor"/>

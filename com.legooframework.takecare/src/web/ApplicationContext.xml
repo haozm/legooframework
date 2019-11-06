@@ -13,6 +13,7 @@
         <property name="dataSource" ref="dataSource"/>
     </bean>
     <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/entities/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/covariant/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/takecare/spring-model-cfg.xml"/>
 
