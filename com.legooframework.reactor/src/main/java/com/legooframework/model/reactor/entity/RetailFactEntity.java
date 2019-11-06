@@ -66,27 +66,31 @@ public class RetailFactEntity extends BaseEntity<Long> {
 
     Map<String, Object> toReplaceMap() {
         DecimalFormat format_money = new DecimalFormat("#,###.00");
+        DecimalFormat format01_money = new DecimalFormat("#,###");
         Map<String, Object> params = Maps.newHashMap();
         params.put("会员姓名", Strings.nullToEmpty(this.vipName));
         params.put("会员电话", Strings.nullToEmpty(this.phone));
         params.put("会员生日", Strings.nullToEmpty(this.birthday));
         params.put("开卡日期", this.createCardTime == null ? "----" : this.createCardTime.toString("yyyy-MM-dd"));
         params.put("当前积分", this.integral);
+        params.put("当前积分无小数", Math.round(this.integral));
         if (addIntegral >= 0.0) {
             params.put("积分变化", String.format("新增积分 %s", this.addIntegral));
         } else {
             params.put("积分变化", String.format("扣除积分 %s", Math.abs(this.addIntegral)));
         }
         params.put("储值余额", format_money.format(this.reserve));
+        params.put("储值余额无小数点", format01_money.format(Math.round(this.reserve)));
         params.put("会员等级", this.vipType == null ? "--" : vipType);
         params.put("消费日期", fmtCreatetime == null ? "--" : fmtCreatetime);
         List<String> details = saleGoods.stream().map(SaleGoods::toReplaceStr).collect(Collectors.toList());
         params.put("本次消费明细", Joiner.on("; ").join(details));
         double total_price = saleGoods.stream().mapToDouble(SaleGoods::getSalePrice).sum();
         params.put("本次消费总额", format_money.format(total_price));
+        params.put("本次消费总额无小数点", format01_money.format(Math.round(total_price)));
         int goodNums = saleGoods.stream().mapToInt(SaleGoods::getGoodNum).sum();
         params.put("本次消费数量", goodNums);
-        params.put("会员卡号", this.member == null ? "" : Strings.nullToEmpty(this.member.cardNum));
+        params.put("会员卡号", this.member == null ? "--" : Strings.nullToEmpty(this.member.cardNum));
         return params;
     }
 
