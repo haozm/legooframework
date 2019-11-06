@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 
 // 实体类抽象建模
-public abstract class BaseEntity<T extends Serializable> implements Cloneable {
+public abstract class BaseEntity<T extends Serializable> implements Cloneable, GsonSerializer {
 
     private final T id;
     private final Long tenantId;

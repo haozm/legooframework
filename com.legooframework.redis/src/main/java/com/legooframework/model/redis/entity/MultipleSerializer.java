@@ -8,7 +8,12 @@ import java.util.Optional;
 public class MultipleSerializer implements RedisSerializer<Object> {
 
     private RedisSerializer stringRedisSerializer = RedisSerializer.string();
-    private RedisSerializer gsonRedisSerializer = new GsonRedisSerializer();
+
+    public void setGsonRedisSerializer(RedisSerializer gsonRedisSerializer) {
+        this.gsonRedisSerializer = gsonRedisSerializer;
+    }
+
+    private RedisSerializer gsonRedisSerializer;
 
     @Override
     @SuppressWarnings("unchecked")

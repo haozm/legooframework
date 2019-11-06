@@ -2,7 +2,6 @@ package com.legooframework.model.redis.entity;
 
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import org.apache.commons.lang3.RandomUtils;
-import org.joda.time.LocalDate;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -57,7 +56,7 @@ public class RedisTemplateSupportTest {
 //            redisTemplate.opsForHash().put(CacheEntity.class.getSimpleName(), String.format("key-%d", i), cacheEntity);
 //        }
 
-        System.out.println(redisTemplate.opsForHash().get(CacheEntity.class.getSimpleName(), "key-1"));
+      System.out.println(redisTemplate.opsForHash().get(CacheEntity.class.getSimpleName(), "key-1"));
 //        Optional<List<CareRecordEntity>> list = careRecordEntityAction.query4List();
 //        if (list.isPresent()) {
 //            for (CareRecordEntity $it : list.get()) {

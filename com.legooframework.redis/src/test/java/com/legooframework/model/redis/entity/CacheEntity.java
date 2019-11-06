@@ -1,12 +1,9 @@
 package com.legooframework.model.redis.entity;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
+import com.legooframework.model.core.base.entity.GsonSerializer;
 import org.joda.time.LocalDate;
-
-import java.util.Map;
 
 public class CacheEntity extends BaseEntity<Integer> implements GsonSerializer {
 
@@ -22,21 +19,9 @@ public class CacheEntity extends BaseEntity<Integer> implements GsonSerializer {
         this.biredy = biredy;
     }
 
-    CacheEntity(String ser) {
-        super(0);
-    }
-
-    public String toJsonString() {
-        Map<String, String> params = Maps.newHashMap();
-        params.put("name", name);
-        params.put("sex", String.valueOf(sex));
-        params.put("biredy", biredy.toString("yyyyMMdd"));
-        return Joiner.on(',').withKeyValueSeparator("=").join(params);
-    }
-
     @Override
     public String toString() {
-        return MoreObjects.toStringHelper(this.getClass().getName())
+        return MoreObjects.toStringHelper(this)
                 .add("name", name)
                 .add("address", address)
                 .add("sex", sex)

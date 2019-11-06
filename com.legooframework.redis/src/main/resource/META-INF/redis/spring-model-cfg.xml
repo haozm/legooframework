@@ -18,7 +18,10 @@
         <constructor-arg name="standaloneConfig" ref="redisStandaloneConfiguration"/>
         <property name="usePool" value="true"/>
     </bean>
-    <bean id="multipleSerializer" class="com.legooframework.model.redis.entity.MultipleSerializer"/>
+    <bean id="gsonRedisSerializer" class="com.legooframework.model.redis.entity.GsonRedisSerializer"/>
+    <bean id="multipleSerializer" class="com.legooframework.model.redis.entity.MultipleSerializer">
+        <property name="gsonRedisSerializer" ref="gsonRedisSerializer"/>
+    </bean>
     <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
         <property name="connectionFactory" ref="redisConnectionFactory"/>
         <property name="keySerializer">
