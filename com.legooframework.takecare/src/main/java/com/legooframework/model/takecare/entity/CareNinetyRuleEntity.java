@@ -150,7 +150,7 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
 
     @Override
     public Map<String, Object> toViewMap() {
-        Map<String, Object> params = super.toViewMap();
+        Map<String, Object> params = Maps.newHashMap();
         params.put("companyId", companyId);
         params.put("storeId", storeId);
         params.put("toHour", toHour);
