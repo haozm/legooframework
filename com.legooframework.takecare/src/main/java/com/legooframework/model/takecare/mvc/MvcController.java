@@ -193,6 +193,13 @@ public class MvcController extends BaseController {
                         .loadByStore(store);
                 return JsonMessageBuilder.OK().withPayload(entity.map(CareNinetyRuleEntity::toViewMap).orElse(null)).toMessage();
             } else if (user.isAdmin()) {
+                Integer storeId = MapUtils.getInteger(requestBody, "storeId", 0);
+                if (storeId != 0) {
+                    StoEntity store = getBean(StoEntityAction.class, request).loadById(storeId);
+                    Optional<CareNinetyRuleEntity> entity = getBean(CareNinetyRuleEntityAction.class, request)
+                            .loadByStore(store);
+                    return JsonMessageBuilder.OK().withPayload(entity.map(CareNinetyRuleEntity::toViewMap).orElse(null)).toMessage();
+                }
                 OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
                 Optional<CareNinetyRuleEntity> entity = getBean(CareNinetyRuleEntityAction.class, request)
                         .loadByCompany(company);
