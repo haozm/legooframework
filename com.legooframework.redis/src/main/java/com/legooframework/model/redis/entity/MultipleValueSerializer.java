@@ -1,14 +1,17 @@
 package com.legooframework.model.redis.entity;
 
 import com.legooframework.model.core.base.entity.GsonSerializer;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
 
+import java.util.Collection;
 import java.util.Optional;
 
 public class MultipleValueSerializer implements RedisSerializer<Object> {
 
     private RedisSerializer stringRedisSerializer = RedisSerializer.string();
+    private RedisSerializer javaRedisSerializer = RedisSerializer.java();
 
     public void setGsonRedisSerializer(RedisSerializer gsonRedisSerializer) {
         this.gsonRedisSerializer = gsonRedisSerializer;
@@ -22,9 +25,16 @@ public class MultipleValueSerializer implements RedisSerializer<Object> {
         if (source == null) return new byte[0];
         if (source instanceof GsonSerializer) {
             return gsonRedisSerializer.serialize(source);
+        } else if (source instanceof Collection) {
+            if (CollectionUtils.isEmpty((Collection<?>) source)) return new byte[0];
+            Object next = ((Collection<?>) source).iterator().next();
+            if (next instanceof GsonSerializer) {
+
+            }
         } else {
             return stringRedisSerializer.serialize(source.toString());
         }
+        return new byte[0];
     }
 
     @Override

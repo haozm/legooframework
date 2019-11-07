@@ -32,7 +32,7 @@ public class RedisCacheManagerFactoryBean extends AbstractFactoryBean<RedisCache
         String preifx = MapUtils.getString(values, "prefix", null);
         RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(ttl == 0L ? Duration.ZERO : Duration.ofSeconds(ttl))
-                .disableCachingNullValues().serializeValuesWith(serializationPair);
+                .disableCachingNullValues().disableKeyPrefix().serializeValuesWith(serializationPair);
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
                 .cacheDefaults(cacheConfig).transactionAware().build();
