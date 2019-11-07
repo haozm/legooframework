@@ -1,5 +1,6 @@
 package com.legooframework.model.redis.entity;
 
+import com.legooframework.model.core.base.entity.GsonSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.SerializationException;
 

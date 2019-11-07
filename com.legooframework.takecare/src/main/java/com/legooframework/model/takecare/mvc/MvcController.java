@@ -11,10 +11,9 @@ import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
-import com.legooframework.model.covariant.entity.BusinessType;
-import com.legooframework.model.covariant.entity.SendChannel;
-import com.legooframework.model.covariant.entity.UserAuthorEntity;
-import com.legooframework.model.covariant.entity.UserAuthorEntityAction;
+import com.legooframework.model.covariant.entity.*;
+import com.legooframework.model.takecare.entity.CareNinetyRuleEntity;
+import com.legooframework.model.takecare.entity.CareNinetyRuleEntityAction;
 import com.legooframework.model.takecare.entity.Constant;
 import com.legooframework.model.takecare.service.CareNinetyTaskAgg;
 import com.legooframework.model.takecare.service.TakeCareService;
@@ -178,6 +177,83 @@ public class MvcController extends BaseController {
             LoginContextHolder.clear();
         }
     }
+
+    @RequestMapping(value = "/ninety/rule/reader.json")
+    @ResponseBody
+    public JsonMessage loadNinetyCareRule(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("loadNinetyCareRule(requestBody=%s,url=%s) start", requestBody,
+                    request.getRequestURL().toString()));
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            if (user.isStoreManager() || user.isShoppingGuide()) {
+                StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(null));
+                Optional<CareNinetyRuleEntity> entity = getBean(CareNinetyRuleEntityAction.class, request)
+                        .loadByStore(store);
+                return JsonMessageBuilder.OK().withPayload(entity.map(CareNinetyRuleEntity::toViewMap).orElse(null)).toMessage();
+            } else if (user.isAdmin()) {
+                OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
+                Optional<CareNinetyRuleEntity> entity = getBean(CareNinetyRuleEntityAction.class, request)
+                        .loadByCompany(company);
+                return JsonMessageBuilder.OK().withPayload(entity.map(CareNinetyRuleEntity::toViewMap).orElse(null)).toMessage();
+            }
+            return JsonMessageBuilder.OK().toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
+    //    int toHour, int toNode1,
+//    int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
+//    String remark, int limitDays, double minAmount, double limitAmount
+    @RequestMapping(value = "/ninety/rule/save.json")
+    @ResponseBody
+    public JsonMessage saveNinetyCareRule(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("saveNinetyCareRule(requestBody=%s,url=%s) start", requestBody, request.getRequestURL().toString()));
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            int toHour = MapUtils.getIntValue(requestBody, "toHour", 0);
+            int toNode1 = MapUtils.getIntValue(requestBody, "toNode1", 0);
+            int toNode3 = MapUtils.getIntValue(requestBody, "toNode3", 0);
+            int toNode7 = MapUtils.getIntValue(requestBody, "toNode7", 0);
+            int toNode15 = MapUtils.getIntValue(requestBody, "toNode15", 0);
+            int toNode30 = MapUtils.getIntValue(requestBody, "toNode30", 0);
+            int toNode60 = MapUtils.getIntValue(requestBody, "toNode60", 0);
+            int toNode90 = MapUtils.getIntValue(requestBody, "toNode90", 0);
+            int limitDays = MapUtils.getIntValue(requestBody, "limitDays", 0);
+            double minAmount = MapUtils.getDoubleValue(requestBody, "minAmount", 0.00D);
+            double limitAmount = MapUtils.getDoubleValue(requestBody, "limitAmount", 0.00D);
+            String remark = MapUtils.getString(requestBody, "remark", null);
+            boolean appNext = MapUtils.getIntValue(requestBody, "appNext", 0) == 1;
+            if (user.isStoreManager() || user.isShoppingGuide()) {
+                StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(null));
+                getBean(CareNinetyRuleEntityAction.class, request).saveByStore(store, toHour, toNode1,
+                        toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
+                        remark, limitDays, minAmount, limitAmount);
+            } else if (user.isAdmin()) {
+                OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
+                getBean(CareNinetyRuleEntityAction.class, request).saveByCompany(company, toHour, toNode1,
+                        toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
+                        remark, limitDays, minAmount, limitAmount, appNext);
+            } else {
+                String storeIds_str = MapUtils.getString(requestBody, "storeIds", null);
+                Preconditions.checkArgument(storeIds_str != null, "入参 storeIds 不可以为空值");
+                List<Integer> storeIds = Stream.of(StringUtils.split(storeIds_str)).mapToInt(Integer::parseInt)
+                        .boxed().collect(Collectors.toList());
+                Optional<List<StoEntity>> stores_opt = getBean(StoEntityAction.class, request).findByIds(storeIds);
+                stores_opt.ifPresent(x -> getBean(CareNinetyRuleEntityAction.class, request).saveByStores(x, toHour, toNode1,
+                        toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
+                        remark, limitDays, minAmount, limitAmount));
+            }
+            return JsonMessageBuilder.OK().toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
 
     @RequestMapping(value = "/ninety/single/carelog.json")
     @ResponseBody

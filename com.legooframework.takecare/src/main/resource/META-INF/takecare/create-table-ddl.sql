@@ -44,3 +44,10 @@ CREATE TABLE TAKECARE_RECORD_LOG
 
 CREATE INDEX TAKECARE_RECORD_LOG_ANY_IDX USING BTREE ON acp.TAKECARE_RECORD_LOG (company_id,store_id,employee_id,member_id);
 CREATE INDEX TAKECARE_RECORD_LOG_care_IDX USING BTREE ON acp.TAKECARE_RECORD_LOG (care_id);
+
+-- 90rule 设定增加列
+ALTER TABLE acp.crm_90_node_map ADD min_amount DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+ALTER TABLE acp.crm_90_node_map ADD limit_days INT(11) DEFAULT 0 NOT NULL;
+ALTER TABLE acp.crm_90_node_map ADD limit_amount DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
+alter table acp.crm_90_node_map drop primary key;
+alter table  acp.crm_90_node_map add id int(11) unsigned not Null auto_increment primary key;

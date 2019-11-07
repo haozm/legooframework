@@ -48,5 +48,7 @@
           parent="takeCareAbsEntityAction"/>
     <bean id="takeCareNinetyAction" class="com.legooframework.model.takecare.entity.CareNinetyEntityAction"
           parent="takeCareAbsEntityAction"/>
+    <bean id="takeCareNinetyRuleAction" class="com.legooframework.model.takecare.entity.CareNinetyRuleEntityAction"
+          parent="takeCareAbsEntityAction"/>
     <bean id="takeCareService" class="com.legooframework.model.takecare.service.TakeCareService"/>
 </beans>

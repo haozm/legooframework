@@ -4,6 +4,9 @@ import org.joda.time.LocalDate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.cache.RedisCache;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
@@ -15,9 +18,11 @@ import org.springframework.util.ResourceUtils;
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/redis/spring-model-cfg.xml"}
 )
 public class RedisEntityCacheTest {
-
-
+    // RedisCache
+//    RedisCacheManager
+    // RedisCacheConfiguration
     // MessageListenerAdapter
+//    RedisCacheManager.RedisCacheManagerBuilder
 
     @Test
     public void cacheEnity() {

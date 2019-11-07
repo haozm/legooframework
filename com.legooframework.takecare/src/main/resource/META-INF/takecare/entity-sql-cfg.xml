@@ -91,4 +91,31 @@
             ]]></body>
         </sql>
     </model>
+    <model id="CareNinetyRuleEntity">
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+    SELECT cnm.store_id, cnm.to_H, cnm.to_1, cnm.to_3, cnm.to_7, cnm.to_15, cnm.to_30, cnm.to_60, cnm.to_90, cnm.createtime,
+           cnm.remark, cnm.enable, cnm.company_id, cnm.min_amount, cnm.limit_days, cnm.limit_amount
+      FROM acp.crm_90_node_map AS cnm
+   <#if (sql=="findByCompany")>
+     WHERE cnm.company_id = :companyId
+       AND cnm.store_id = 0
+  ORDER BY cnm.createtime DESC
+     LIMIT 1
+   <#elseif (sql=="findByStore")>
+     WHERE cnm.company_id = :companyId
+       AND cnm.store_id = :storeId
+  ORDER BY cnm.createtime DESC
+     LIMIT 1
+   </#if>
+            ]]></body>
+        </sql>
+        <sql id="batchInsert">
+            <body><![CDATA[
+    INSERT INTO acp.crm_90_node_map
+                (store_id, to_H, to_1, to_3, to_7, to_15, to_30, to_60, to_90, createtime,    remark, enable, company_id, min_amount, limit_days, limit_amount)
+         VALUES (       ?,    ?,    ?,    ?,     ?,     ?,    ?,     ?,     ?, CURRENT_TIMESTAMP,  ?,      ?,          ?,           ?,          ?,           ?)
+            ]]></body>
+        </sql>
+    </model>
 </sqls>
