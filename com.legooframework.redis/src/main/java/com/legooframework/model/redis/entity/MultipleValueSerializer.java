@@ -6,7 +6,7 @@ import org.springframework.data.redis.serializer.SerializationException;
 
 import java.util.Optional;
 
-public class MultipleSerializer implements RedisSerializer<Object> {
+public class MultipleValueSerializer implements RedisSerializer<Object> {
 
     private RedisSerializer stringRedisSerializer = RedisSerializer.string();
 

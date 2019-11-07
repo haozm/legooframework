@@ -248,7 +248,7 @@ public class MvcController extends BaseController {
                             toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
                             remark, limitDays, minAmount, limitAmount, appNext);
                 } else {
-                    List<Integer> storeIds = Stream.of(StringUtils.split(storeIds_str)).mapToInt(Integer::parseInt)
+                    List<Integer> storeIds = Stream.of(StringUtils.split(storeIds_str, ',')).mapToInt(Integer::parseInt)
                             .boxed().collect(Collectors.toList());
                     Optional<List<StoEntity>> stores_opt = getBean(StoEntityAction.class, request).findByIds(storeIds);
                     stores_opt.ifPresent(x -> getBean(CareNinetyRuleEntityAction.class, request).saveByStores(x, toHour, toNode1,

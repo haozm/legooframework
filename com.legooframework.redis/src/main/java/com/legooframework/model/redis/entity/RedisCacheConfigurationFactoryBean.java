@@ -18,18 +18,17 @@ public class RedisCacheConfigurationFactoryBean extends AbstractFactoryBean<Redi
     protected RedisCacheConfiguration createInstance() throws Exception {
         RedisCacheConfiguration configuration = RedisCacheConfiguration.defaultCacheConfig();
         if (ttl != 0) configuration.entryTtl(Duration.ofSeconds(ttl));
-        if (!Strings.isNullOrEmpty(prefix)) configuration.prefixKeysWith(prefix).usePrefix();
-        if (serializationPair != null) {
-            
-        }
-        return null;
+        if (!Strings.isNullOrEmpty(prefix)) configuration.prefixKeysWith(prefix);
+        configuration.disableCachingNullValues();
+        if (serializationPair != null) configuration.serializeValuesWith(serializationPair);
+        return configuration;
     }
 
     private long ttl;
     private String prefix;
-    private RedisSerializationContext.SerializationPair serializationPair;
+    private RedisSerializationContext.SerializationPair<Object> serializationPair;
 
-    public void setSerializationPair(RedisSerializationContext.SerializationPair serializationPair) {
+    public void setSerializationPair(RedisSerializationContext.SerializationPair<Object> serializationPair) {
         this.serializationPair = serializationPair;
     }
 
