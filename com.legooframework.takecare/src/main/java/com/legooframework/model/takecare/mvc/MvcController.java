@@ -204,9 +204,9 @@ public class MvcController extends BaseController {
         }
     }
 
-    //    int toHour, int toNode1,
-//    int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
-//    String remark, int limitDays, double minAmount, double limitAmount
+    // int toHour, int toNode1,
+// int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
+// String remark, int limitDays, double minAmount, double limitAmount
     @RequestMapping(value = "/ninety/rule/save.json")
     @ResponseBody
     public JsonMessage saveNinetyCareRule(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
