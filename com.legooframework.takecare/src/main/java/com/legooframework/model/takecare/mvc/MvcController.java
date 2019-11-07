@@ -240,20 +240,21 @@ public class MvcController extends BaseController {
                 getBean(CareNinetyRuleEntityAction.class, request).saveByStore(store, toHour, toNode1,
                         toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
                         remark, limitDays, minAmount, limitAmount);
-            } else if (user.isAdmin()) {
-                OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
-                getBean(CareNinetyRuleEntityAction.class, request).saveByCompany(company, toHour, toNode1,
-                        toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
-                        remark, limitDays, minAmount, limitAmount, appNext);
             } else {
                 String storeIds_str = MapUtils.getString(requestBody, "storeIds", null);
-                Preconditions.checkArgument(storeIds_str != null, "入参 storeIds 不可以为空值");
-                List<Integer> storeIds = Stream.of(StringUtils.split(storeIds_str)).mapToInt(Integer::parseInt)
-                        .boxed().collect(Collectors.toList());
-                Optional<List<StoEntity>> stores_opt = getBean(StoEntityAction.class, request).findByIds(storeIds);
-                stores_opt.ifPresent(x -> getBean(CareNinetyRuleEntityAction.class, request).saveByStores(x, toHour, toNode1,
-                        toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
-                        remark, limitDays, minAmount, limitAmount));
+                if (Strings.isNullOrEmpty(storeIds_str)) {
+                    OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
+                    getBean(CareNinetyRuleEntityAction.class, request).saveByCompany(company, toHour, toNode1,
+                            toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
+                            remark, limitDays, minAmount, limitAmount, appNext);
+                } else {
+                    List<Integer> storeIds = Stream.of(StringUtils.split(storeIds_str)).mapToInt(Integer::parseInt)
+                            .boxed().collect(Collectors.toList());
+                    Optional<List<StoEntity>> stores_opt = getBean(StoEntityAction.class, request).findByIds(storeIds);
+                    stores_opt.ifPresent(x -> getBean(CareNinetyRuleEntityAction.class, request).saveByStores(x, toHour, toNode1,
+                            toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
+                            remark, limitDays, minAmount, limitAmount));
+                }
             }
             return JsonMessageBuilder.OK().toMessage();
         } finally {
