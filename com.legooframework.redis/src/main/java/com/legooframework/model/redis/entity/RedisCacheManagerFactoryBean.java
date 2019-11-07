@@ -14,7 +14,7 @@ import java.util.Map;
 
 public class RedisCacheManagerFactoryBean extends AbstractFactoryBean<RedisCacheManager> {
 
-    private final static String DEFAULTCONFIG_VALUE = "ttl=3000,nullValue=false,prefix=null";
+    private final static String DEFAULTCONFIG_VALUE = "ttl=600,nullValue=false,prefix=null";
 
     @Override
     public Class<RedisCacheManager> getObjectType() {

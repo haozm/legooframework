@@ -28,6 +28,7 @@
 
     <bean id="redisCacheManager" class="com.legooframework.model.redis.entity.RedisCacheManagerFactoryBean">
         <property name="valueSerialization" ref="multipleValueSerializer"/>
+        <property name="redisConnectionFactory" ref="redisConnectionFactory"/>
     </bean>
 
     <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
