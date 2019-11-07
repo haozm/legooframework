@@ -26,9 +26,8 @@
         <property name="gsonRedisSerializer" ref="gsonRedisSerializer"/>
     </bean>
 
-    <bean id="redisCacheConfiguration" class="com.legooframework.model.redis.entity.RedisCacheConfigurationFactoryBean">
-        <property name="ttl" value="3600"/>
-        <property name="serializationPair" value="serializationPair"/>
+    <bean id="redisCacheManager" class="com.legooframework.model.redis.entity.RedisCacheManagerFactoryBean">
+        <property name="valueSerialization" ref="multipleValueSerializer"/>
     </bean>
 
     <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">

@@ -11,8 +11,8 @@
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="com.legooframework.core" />
-    <orderEntry type="module" module-name="com.legooframework.entities" />
     <orderEntry type="module" module-name="com.legooframework.smsprovider" />
     <orderEntry type="library" name="extlib" level="project" />
+    <orderEntry type="module" module-name="com.legooframework.entities" />
   </component>
 </module>

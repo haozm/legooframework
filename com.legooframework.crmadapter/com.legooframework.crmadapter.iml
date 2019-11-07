@@ -13,7 +13,6 @@
     <orderEntry type="module" module-name="com.legooframework.entities" />
     <orderEntry type="module" module-name="com.legooframework.junit" />
     <orderEntry type="module" module-name="com.legooframework.core" />
-    <orderEntry type="module" module-name="com.legooframework.jwtoken" />
     <orderEntry type="library" name="extlib" level="project" />
   </component>
 </module>

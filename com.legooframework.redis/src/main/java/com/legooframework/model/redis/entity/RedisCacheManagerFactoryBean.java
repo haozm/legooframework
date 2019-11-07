@@ -9,12 +9,12 @@ import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 
+import java.time.Duration;
 import java.util.Map;
 
 public class RedisCacheManagerFactoryBean extends AbstractFactoryBean<RedisCacheManager> {
 
-    private RedisCacheConfiguration defaultCacheConfiguration;
-    private final static String DEFAULTCONFIG_VALUE = "ttl=600,nullValue=false,prefix=null";
+    private final static String DEFAULTCONFIG_VALUE = "ttl=3000,nullValue=false,prefix=null";
 
     @Override
     public Class<RedisCacheManager> getObjectType() {
@@ -26,14 +26,17 @@ public class RedisCacheManagerFactoryBean extends AbstractFactoryBean<RedisCache
         RedisSerializationContext.SerializationPair<Object> serializationPair =
                 RedisSerializationContext.SerializationPair.fromSerializer(valueSerialization);
         String _defaultConfig = Strings.isNullOrEmpty(defaultConfig) ? DEFAULTCONFIG_VALUE : defaultConfig;
-        Map<String, String> values = Splitter.on(',').withKeyValueSeparator('=').split(defaultConfig);
+        Map<String, String> values = Splitter.on(',').withKeyValueSeparator('=').split(_defaultConfig);
         long ttl = MapUtils.getLongValue(values, "ttl", 0);
         boolean nullValue = MapUtils.getBooleanValue(values, "nullValue", true);
         String preifx = MapUtils.getString(values, "prefix", null);
-
-        return null;
+        RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(ttl == 0L ? Duration.ZERO : Duration.ofSeconds(ttl))
+                .disableCachingNullValues().serializeValuesWith(serializationPair);
+        return RedisCacheManager.RedisCacheManagerBuilder
+                .fromConnectionFactory(redisConnectionFactory)
+                .cacheDefaults(cacheConfig).transactionAware().build();
     }
-
 
     private RedisConnectionFactory redisConnectionFactory;
     private MultipleValueSerializer valueSerialization;
@@ -41,5 +44,9 @@ public class RedisCacheManagerFactoryBean extends AbstractFactoryBean<RedisCache
 
     public void setValueSerialization(MultipleValueSerializer valueSerialization) {
         this.valueSerialization = valueSerialization;
+    }
+
+    public void setRedisConnectionFactory(RedisConnectionFactory redisConnectionFactory) {
+        this.redisConnectionFactory = redisConnectionFactory;
     }
 }

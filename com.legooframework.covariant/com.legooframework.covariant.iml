@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="com.legooframework.core" />
     <orderEntry type="module" module-name="com.legooframework.junit" />
     <orderEntry type="library" name="extlib" level="project" />
+    <orderEntry type="module" module-name="com.legooframework.entities" />
   </component>
 </module>

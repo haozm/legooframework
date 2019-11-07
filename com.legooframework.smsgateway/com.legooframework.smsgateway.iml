@@ -11,10 +11,10 @@
     <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="com.legooframework.entities" />
-    <orderEntry type="module" module-name="com.legooframework.crmadapter" />
     <orderEntry type="module" module-name="com.legooframework.core" />
     <orderEntry type="module" module-name="com.legooframework.smsprovider" />
     <orderEntry type="module" module-name="com.legooframework.dict" />
     <orderEntry type="library" name="extlib" level="project" />
+    <orderEntry type="module" module-name="com.legooframework.covariant" />
   </component>
 </module>
