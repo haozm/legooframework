@@ -50,4 +50,14 @@ ALTER TABLE acp.crm_90_node_map ADD min_amount DECIMAL(10,2) DEFAULT 0.00 NOT NU
 ALTER TABLE acp.crm_90_node_map ADD limit_days INT(11) DEFAULT 0 NOT NULL;
 ALTER TABLE acp.crm_90_node_map ADD limit_amount DECIMAL(10,2) DEFAULT 0.00 NOT NULL;
 alter table acp.crm_90_node_map drop primary key;
-alter table  acp.crm_90_node_map add id int(11) unsigned not Null auto_increment primary key;
+alter table acp.crm_90_node_map add id int(11) unsigned not Null auto_increment primary key;
+
+ALTER TABLE acp.crm_90_node_map ADD to_H_delay TINYINT UNSIGNED DEFAULT 0 NOT NULL;
+ALTER TABLE acp.crm_90_node_map ADD to_1_delay TINYINT UNSIGNED DEFAULT 1 NOT NULL;
+ALTER TABLE acp.crm_90_node_map ADD to_3_delay TINYINT UNSIGNED DEFAULT 1 NOT NULL;
+ALTER TABLE acp.crm_90_node_map ADD to_7_delay TINYINT UNSIGNED DEFAULT 1 NOT NULL;
+ALTER TABLE acp.crm_90_node_map ADD to_15_delay TINYINT UNSIGNED DEFAULT 1 NOT NULL;
+ALTER TABLE acp.crm_90_node_map ADD to_30_delay TINYINT UNSIGNED DEFAULT 1 NOT NULL;
+ALTER TABLE acp.crm_90_node_map ADD to_60_delay TINYINT UNSIGNED DEFAULT 1 NOT NULL;
+ALTER TABLE acp.crm_90_node_map ADD to_90_delay TINYINT UNSIGNED DEFAULT 1 NOT NULL;
+

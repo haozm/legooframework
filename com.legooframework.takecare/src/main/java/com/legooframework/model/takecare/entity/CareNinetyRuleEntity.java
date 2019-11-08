@@ -22,38 +22,101 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
     private Integer companyId, storeId;
     private boolean enabled;
     private int toHour, toNode1, toNode3, toNode7, toNode15, toNode30, toNode60, toNode90, limitDays;
+    private int toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay, toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay;
     private LocalDateTime createTime;
     private String remark;
     private BigDecimal minAmount, limitAmount;
 
     private CareNinetyRuleEntity(Integer companyId, Integer storeId, boolean enabled, int toHour, int toNode1,
                                  int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
-                                 String remark, int limitDays, BigDecimal minAmount, BigDecimal limitAmount) {
+                                 String remark, int limitDays, BigDecimal minAmount, BigDecimal limitAmount,
+                                 int toNode1Delay, int toNode3Delay, int toNode7Delay,
+                                 int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
         super(0);
         this.companyId = companyId;
         this.storeId = storeId;
         this.enabled = enabled;
         Preconditions.checkArgument(toHour >= 0 && toHour < 24, "小时跨度需小于24小时....");
         this.toHour = toHour;
+        if (this.toHour == 0) this.toHourDelay = 0;
         this.toNode1 = toNode1;
-        if (toNode3 > 0)
-            Preconditions.checkArgument(Ints.max(toNode3, toNode1) == toNode3, "第2节点异常");
+        this.toNode1Delay = toNode1Delay;
+        if (this.toNode1 > 0) {
+            Preconditions.checkArgument(toNode1Delay >= 0, "第一节点延期异常");
+        } else {
+            this.toNode1 = 0;
+            this.toNode1Delay = 0;
+        }
+        int sum_01 = this.toNode1 + this.toNode1Delay;
         this.toNode3 = toNode3;
-        if (toNode7 > 0)
-            Preconditions.checkArgument(Ints.max(toNode3, toNode7, toNode1) == toNode7, "第3节点异常");
+        this.toNode3Delay = toNode3Delay;
+        int sum_03 = this.toNode3 + this.toNode3Delay;
+        if (this.toNode3 > 0) {
+            Preconditions.checkArgument(Ints.max(this.toNode1, this.toNode3) == this.toNode3, "第2节点异常");
+            Preconditions.checkArgument(Ints.max(sum_01, sum_03) == sum_03, "第1节点延期异常");
+        } else {
+            this.toNode3 = 0;
+            this.toNode3Delay = 0;
+        }
         this.toNode7 = toNode7;
-        if (toNode15 > 0)
-            Preconditions.checkArgument(Ints.max(toNode3, toNode7, toNode15, toNode1) == toNode15, "第4节点异常");
+        this.toNode7Delay = toNode7Delay;
+        int sum_07 = this.toNode7 + this.toNode7Delay;
+        if (this.toNode7 > 0) {
+            Preconditions.checkArgument(Ints.max(this.toNode3, this.toNode7, this.toNode1) == toNode7, "第3节点异常");
+            Preconditions.checkArgument(Ints.max(sum_01, sum_03, sum_07) == sum_07, "第3节点延期异常");
+        } else {
+            this.toNode7 = 0;
+            this.toNode7Delay = 0;
+        }
+
         this.toNode15 = toNode15;
-        if (toNode30 > 0)
-            Preconditions.checkArgument(Ints.max(toNode3, toNode7, toNode30, toNode15, toNode1) == toNode30, "第5节点异常");
+        this.toNode15Delay = toNode15Delay;
+        int sum_15 = this.toNode15 + this.toNode15Delay;
+        if (this.toNode15 > 0) {
+            Preconditions.checkArgument(Ints.max(this.toNode3, this.toNode7, this.toNode15, this.toNode1) == this.toNode15, "第4节点异常");
+            Preconditions.checkArgument(Ints.max(sum_01, sum_03, sum_07, sum_15) == sum_15, "第4节点延期异常");
+        } else {
+            this.toNode15 = 0;
+            this.toNode15Delay = 0;
+        }
+
+
         this.toNode30 = toNode30;
-        if (toNode60 > 0)
-            Preconditions.checkArgument(Ints.max(toNode3, toNode60, toNode7, toNode30, toNode15, toNode1) == toNode60, "第6节点异常");
+        this.toNode30Delay = toNode30Delay;
+        int sum_30 = this.toNode30 + this.toNode30Delay;
+        if (this.toNode30 > 0) {
+            Preconditions.checkArgument(Ints.max(this.toNode3, this.toNode7, this.toNode30, this.toNode15, this.toNode1) == toNode30, "第5节点异常");
+            Preconditions.checkArgument(Ints.max(sum_01, sum_03, sum_07, sum_30, sum_15) == sum_30, "第5节点延期异常");
+        } else {
+            this.toNode30 = 0;
+            this.toNode30Delay = 0;
+        }
+
         this.toNode60 = toNode60;
-        if (toNode90 > 0)
-            Preconditions.checkArgument(Ints.max(toNode3, toNode60, toNode90, toNode7, toNode30, toNode15, toNode1) == toNode90, "第7节点异常");
+        this.toNode60Delay = toNode60Delay;
+        int sum_60 = this.toNode60 + this.toNode60Delay;
+        if (this.toNode60 > 0) {
+            Preconditions.checkArgument(Ints.max(this.toNode3, this.toNode60, this.toNode7, this.toNode30, this.toNode15, this.toNode1) == toNode60,
+                    "第6节点异常");
+            Preconditions.checkArgument(Ints.max(sum_01, sum_03, sum_60, sum_07, sum_30, sum_15) == sum_60, "第6节点延期异常");
+        } else {
+            this.toNode60 = 0;
+            this.toNode60Delay = 0;
+        }
+
+
         this.toNode90 = toNode90;
+        this.toNode90Delay = toNode90Delay;
+        int sum_90 = this.toNode90 + this.toNode90Delay;
+        if (this.toNode90 > 0) {
+            Preconditions.checkArgument(Ints.max(this.toNode3, this.toNode60, this.toNode90, this.toNode7, this.toNode30, this.toNode15, this.toNode1) == this.toNode90,
+                    "第7节点异常");
+            Preconditions.checkArgument(Ints.max(sum_01, sum_90, sum_03, sum_60, sum_07, sum_30, sum_15) == sum_90, "第7节点延期异常");
+        } else {
+            this.toNode90 = 0;
+            this.toNode90Delay = 0;
+        }
+
         this.createTime = LocalDateTime.now();
         this.remark = remark;
         Preconditions.checkArgument(limitDays >= 0);
@@ -90,16 +153,24 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
 
     static CareNinetyRuleEntity createByCompany(OrgEntity company, int toHour, int toNode1,
                                                 int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
-                                                String remark, int limitDays, double minAmount, double limitAmount) {
+                                                String remark, int limitDays, double minAmount, double limitAmount,
+                                                int toNode1Delay, int toNode3Delay, int toNode7Delay,
+                                                int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
         return new CareNinetyRuleEntity(company.getId(), 0, true, toHour, toNode1, toNode3, toNode7, toNode15,
-                toNode30, toNode60, toNode90, remark, limitDays, new BigDecimal(minAmount), new BigDecimal(limitAmount));
+                toNode30, toNode60, toNode90, remark, limitDays, new BigDecimal(minAmount), new BigDecimal(limitAmount),
+                toNode1Delay, toNode3Delay, toNode7Delay,
+                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
     }
 
     static CareNinetyRuleEntity createByStore(StoEntity store, int toHour, int toNode1,
                                               int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
-                                              String remark, int limitDays, double minAmount, double limitAmount) {
+                                              String remark, int limitDays, double minAmount, double limitAmount,
+                                              int toNode1Delay, int toNode3Delay, int toNode7Delay,
+                                              int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
         return new CareNinetyRuleEntity(store.getCompanyId(), store.getId(), true, toHour, toNode1, toNode3, toNode7, toNode15,
-                toNode30, toNode60, toNode90, remark, limitDays, new BigDecimal(minAmount), new BigDecimal(limitAmount));
+                toNode30, toNode60, toNode90, remark, limitDays, new BigDecimal(minAmount), new BigDecimal(limitAmount),
+                toNode1Delay, toNode3Delay, toNode7Delay,
+                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
     }
 
     Integer getCompanyId() {

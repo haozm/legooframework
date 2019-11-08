@@ -224,12 +224,19 @@ public class MvcController extends BaseController {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
             int toHour = MapUtils.getIntValue(requestBody, "toHour", 0);
             int toNode1 = MapUtils.getIntValue(requestBody, "toNode1", 0);
+            int toNode1Delay = MapUtils.getIntValue(requestBody, "toNode1Delay", 1);
             int toNode3 = MapUtils.getIntValue(requestBody, "toNode3", 0);
+            int toNode3Delay = MapUtils.getIntValue(requestBody, "toNode3Delay", 1);
             int toNode7 = MapUtils.getIntValue(requestBody, "toNode7", 0);
+            int toNode7Delay = MapUtils.getIntValue(requestBody, "toNode7Delay", 0);
             int toNode15 = MapUtils.getIntValue(requestBody, "toNode15", 0);
+            int toNode15Delay = MapUtils.getIntValue(requestBody, "toNode15Delay", 0);
             int toNode30 = MapUtils.getIntValue(requestBody, "toNode30", 0);
+            int toNode30Delay = MapUtils.getIntValue(requestBody, "toNode30Delay", 0);
             int toNode60 = MapUtils.getIntValue(requestBody, "toNode60", 0);
+            int toNode60Delay = MapUtils.getIntValue(requestBody, "toNode60Delay", 0);
             int toNode90 = MapUtils.getIntValue(requestBody, "toNode90", 0);
+            int toNode90Delay = MapUtils.getIntValue(requestBody, "toNode90Delay", 0);
             int limitDays = MapUtils.getIntValue(requestBody, "limitDays", 0);
             double minAmount = MapUtils.getDoubleValue(requestBody, "minAmount", 0.00D);
             double limitAmount = MapUtils.getDoubleValue(requestBody, "limitAmount", 0.00D);
@@ -239,21 +246,24 @@ public class MvcController extends BaseController {
                 StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(null));
                 getBean(CareNinetyRuleEntityAction.class, request).saveByStore(store, toHour, toNode1,
                         toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
-                        remark, limitDays, minAmount, limitAmount);
+                        remark, limitDays, minAmount, limitAmount, toNode1Delay, toNode3Delay, toNode7Delay,
+                        toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
             } else {
                 String storeIds_str = MapUtils.getString(requestBody, "storeIds", null);
                 if (Strings.isNullOrEmpty(storeIds_str)) {
                     OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
                     getBean(CareNinetyRuleEntityAction.class, request).saveByCompany(company, toHour, toNode1,
                             toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
-                            remark, limitDays, minAmount, limitAmount, appNext);
+                            remark, limitDays, minAmount, limitAmount, toNode1Delay, toNode3Delay, toNode7Delay,
+                            toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay, appNext);
                 } else {
                     List<Integer> storeIds = Stream.of(StringUtils.split(storeIds_str, ',')).mapToInt(Integer::parseInt)
                             .boxed().collect(Collectors.toList());
                     Optional<List<StoEntity>> stores_opt = getBean(StoEntityAction.class, request).findByIds(storeIds);
                     stores_opt.ifPresent(x -> getBean(CareNinetyRuleEntityAction.class, request).saveByStores(x, toHour, toNode1,
                             toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
-                            remark, limitDays, minAmount, limitAmount));
+                            remark, limitDays, minAmount, limitAmount, toNode1Delay, toNode3Delay, toNode7Delay,
+                            toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay));
                 }
             }
             return JsonMessageBuilder.OK().toMessage();
