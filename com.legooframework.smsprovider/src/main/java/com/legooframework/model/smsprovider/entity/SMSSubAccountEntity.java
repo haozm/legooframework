@@ -6,6 +6,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -18,6 +19,7 @@ public class SMSSubAccountEntity extends BaseEntity<String> {
     private SMSChannel channel;
     private final String httpSendUrl, httpStatusUrl, httpReplayUrl;
     private boolean enabled;
+    private final boolean encryptPwd;
     private boolean encoding = false;
     private String httpSendUrlEncode, httpStatusUrlEncode, httpReplayUrlEncode;
     private String smsSuffix;
@@ -27,27 +29,20 @@ public class SMSSubAccountEntity extends BaseEntity<String> {
         try {
             this.apikey = ResultSetUtil.getString(res, "apikey");
             this.username = ResultSetUtil.getString(res, "username");
-//            this.supplierName = ResultSetUtil.getString(res, "supplierName");
-//            this.supplierEnabled = ResultSetUtil.getBooleanByInt(res, "supplierEnabled");
             String _pwd = ResultSetUtil.getString(res, "password");
-            boolean _md5pwd = false;
-            if (_pwd.startsWith("{MD5}")) {
-                this.password = ResultSetUtil.getString(res, "password").substring(5);
-                _md5pwd = true;
-            } else {
-                this.password = _pwd;
-            }
-            this.httpStatusUrl = ResultSetUtil.getString(res, "httpStatusUrl");
+            this.encryptPwd = StringUtils.startsWith(_pwd, "{MD5}");
+            this.password = this.encryptPwd ? _pwd.substring(5) : _pwd;
             this.httpSendUrl = ResultSetUtil.getString(res, "httpSendUrl");
+            this.httpStatusUrl = ResultSetUtil.getString(res, "httpStatusUrl");
             this.httpReplayUrl = ResultSetUtil.getString(res, "httpReplayUrl");
             this.channel = SMSChannel.paras(ResultSetUtil.getObject(res, "smsChannel", Integer.class));
             this.encoding = true;
             this.enabled = ResultSetUtil.getBooleanByInt(res, "enabled");
             this.smsSuffix = ResultSetUtil.getOptString(res, "smsSuffix", null);
             Joiner.MapJoiner joiner = Joiner.on('&').withKeyValueSeparator('=');
-            this.httpSendUrlEncode = createHttpSendUrl(joiner, _md5pwd);
-            this.httpStatusUrlEncode = createHttpStatusByMobilesUrl(joiner, _md5pwd);
-            this.httpReplayUrlEncode = createHttpReplayUrl(joiner, _md5pwd);
+            this.httpSendUrlEncode = createHttpSendUrl(joiner);
+            this.httpStatusUrlEncode = createHttpStatusByMobilesUrl(joiner);
+            this.httpReplayUrlEncode = createHttpReplayUrl(joiner);
         } catch (SQLException e) {
             throw new RuntimeException("Restore SMSSubAccountEntity has SQLException", e);
         }
@@ -57,11 +52,11 @@ public class SMSSubAccountEntity extends BaseEntity<String> {
         return this.channel == channel;
     }
 
-    String getHttpSendUrl() {
+    public String getHttpSendUrl() {
         return httpSendUrlEncode;
     }
 
-    String getHttpReplayUrl() {
+    public String getHttpReplyUrl() {
         return httpReplayUrlEncode;
     }
 
@@ -69,47 +64,44 @@ public class SMSSubAccountEntity extends BaseEntity<String> {
         return enabled;
     }
 
-    private String createHttpSendUrl(Joiner.MapJoiner joiner, boolean md5pwd) {
+    private String createHttpSendUrl(Joiner.MapJoiner joiner) {
         Map<String, String> params = Maps.newHashMap();
         params.put("apikey", apikey);
         params.put("username", username);
-        if (md5pwd)
-            params.put("password_md5", password);
-        else
-            params.put("password", password);
+        params.put(encryptPwd ? "password_md5" : "password", password);
         params.put("encode", "UTF-8");
         return String.format("%s?%s&mobile={mobile}&content={content}", httpSendUrl, joiner.join(params));
     }
 
-    private String createHttpReplayUrl(Joiner.MapJoiner joiner, boolean md5pwd) {
+    private String createHttpReplayUrl(Joiner.MapJoiner joiner) {
         Map<String, String> params = Maps.newHashMap();
         params.put("apikey", apikey);
         params.put("username", username);
-        if (md5pwd)
-            params.put("password_md5", password);
-        else
-            params.put("password", password);
+        params.put(encryptPwd ? "password_md5" : "password", password);
         params.put("encode", "UTF-8");
         return String.format("%s&%s", httpReplayUrl, joiner.join(params));
     }
 
-    private String createHttpStatusByMobilesUrl(Joiner.MapJoiner joiner, boolean md5pwd) {
+    private String createHttpStatusByMobilesUrl(Joiner.MapJoiner joiner) {
         Map<String, String> params = Maps.newHashMap();
         params.put("apikey", apikey);
         params.put("username", username);
-        if (md5pwd)
-            params.put("password_md5", password);
-        else
-            params.put("password", password);
+        params.put(encryptPwd ? "password_md5" : "password", password);
         return String.format("%s?%s", httpStatusUrl, joiner.join(params));
     }
 
-    String getHttpStatusByMobilesUrl() {
+    public String getHttpStatusUrl() {
         return String.format("%s&from={start}&to={end}&mobile={mobile}", httpStatusUrlEncode);
     }
 
     Optional<String> getSmsSuffix() {
         return Optional.ofNullable(Strings.isNullOrEmpty(smsSuffix) ? null : smsSuffix);
+    }
+
+    public String fmtContent(String content) {
+        if (!getSmsSuffix().isPresent()) return content;
+        if (StringUtils.endsWith(content, this.smsSuffix)) return content;
+        return content + this.smsSuffix;
     }
 
     @Override

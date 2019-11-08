@@ -31,8 +31,22 @@ public class SMSProviderEntityAction extends BaseEntityAction<SMSProviderEntity>
     List<SMSSubAccountEntity> loadEnabledSubAccounts() {
         List<SMSSubAccountEntity> accounts = loadAllSubAccounts();
         accounts = accounts.stream().filter(SMSSubAccountEntity::isEnabled).collect(Collectors.toList());
-        Preconditions.checkState(CollectionUtils.isNotEmpty(accounts), "可使用的通道未定义....");
+        Preconditions.checkState(CollectionUtils.isNotEmpty(accounts), "无可激活的通道定义....");
         return accounts;
+    }
+
+    public Optional<List<SMSSubAccountEntity>> findEnabledSubAccounts() {
+        List<SMSSubAccountEntity> accounts = loadAllSubAccounts();
+        accounts = accounts.stream().filter(SMSSubAccountEntity::isEnabled).collect(Collectors.toList());
+        return Optional.ofNullable(CollectionUtils.isEmpty(accounts) ? null : accounts);
+    }
+
+    public SMSSubAccountEntity loadSubAccountByChannel(SMSChannel channel) {
+        List<SMSSubAccountEntity> accounts = loadAllSubAccounts();
+        Optional<SMSSubAccountEntity> optional = accounts.stream().filter(SMSSubAccountEntity::isEnabled).filter(x -> x.isChannel(channel))
+                .findFirst();
+        Preconditions.checkState(optional.isPresent(), "无SMSChannel=%s 对应的通道.....", channel);
+        return optional.get();
     }
 
     List<SMSSubAccountEntity> loadAllSubAccounts() {
@@ -67,14 +81,14 @@ public class SMSProviderEntityAction extends BaseEntityAction<SMSProviderEntity>
         return new SMSProviderRowMapperImpl();
     }
 
-    class SMSSubAccountRowMapperImpl implements RowMapper<SMSSubAccountEntity> {
+    private static class SMSSubAccountRowMapperImpl implements RowMapper<SMSSubAccountEntity> {
         @Override
         public SMSSubAccountEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SMSSubAccountEntity(res.getString("id"), res);
         }
     }
 
-    class SMSProviderRowMapperImpl implements RowMapper<SMSProviderEntity> {
+    private static class SMSProviderRowMapperImpl implements RowMapper<SMSProviderEntity> {
         @Override
         public SMSProviderEntity mapRow(ResultSet res, int i) throws SQLException {
             return new SMSProviderEntity(res.getString("id"), res);

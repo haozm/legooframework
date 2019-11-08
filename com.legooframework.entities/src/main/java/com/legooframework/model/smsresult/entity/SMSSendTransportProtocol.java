@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.StringJoiner;
 
 /**
  * 短信发送  协议  解析包
@@ -28,15 +29,15 @@ public class SMSSendTransportProtocol {
         Preconditions.checkNotNull(sendStatus, "待发送的短信发送模式不可以为空...");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(phoneNo), "待发送的短信的手机号码不可以为空...");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(smsId), "待发送的短信的短信ID...");
-        String payload = new StringBuilder(smsId).append("|")
-                .append(companyId == null ? -1 : companyId).append("|")
-                .append(storeId == null ? -1 : storeId).append("|")
-                .append(channel.getChannel()).append("|")
-                .append(sendStatus.getStatus()).append("|")
-                .append(phoneNo).append("|")
-                .append(wordCount).append("|")
-                .append(smsSum).append("|1|")
-                .append(WebUtils.encodeUrl(content)).toString();
+        StringJoiner joiner = new StringJoiner("|");
+        String payload = joiner.add(String.valueOf(companyId == null ? -1 : companyId))
+                .add(String.valueOf(storeId == null ? -1 : storeId))
+                .add(String.valueOf(channel.getChannel()))
+                .add(String.valueOf(sendStatus.getStatus()))
+                .add(phoneNo)
+                .add(String.valueOf(wordCount))
+                .add(String.valueOf(smsSum)).add("1")
+                .add(WebUtils.encodeUrl(content)).toString();
         if (logger.isTraceEnabled())
             logger.trace(String.format("encoding4Flat(...) res is %s", payload));
         return payload;

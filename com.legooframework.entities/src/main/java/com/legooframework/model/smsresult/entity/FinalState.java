@@ -4,8 +4,12 @@ import com.google.common.base.MoreObjects;
 
 public enum FinalState {
 
-    WAITING(0, "待发送状态"), DELIVRD(1, "发送成功"), UNDELIV(2, "发送失败"),
-    SENDEDERROR(97, "发送异常"), SENDEDOK(98, "发送完毕"), SENDING(99, "短信发送中");
+    WAITING(0, "待发送状态"),
+    DELIVRD(1, "发送成功"),
+    UNDELIV(2, "发送失败"),
+    SENDEDERROR(97, "发送异常"),
+    SENDEDOK(98, "发送完毕"),
+    SENDING(99, "短信发送中");
 
     private final int state;
     private final String desc;

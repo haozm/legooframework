@@ -62,7 +62,7 @@ public class SMSProviderEntity extends BaseEntity<String> {
                 .filter(SMSSubAccountEntity::isEnabled)
                 .filter(x -> x.isChannel(SMSChannel.MarketChannel)).collect(Collectors.toList());
         if (subList.isEmpty()) return Optional.empty();
-        List<String> list = subAccounts.stream().map(SMSSubAccountEntity::getHttpReplayUrl).collect(Collectors.toList());
+        List<String> list = subAccounts.stream().map(SMSSubAccountEntity::getHttpReplyUrl).collect(Collectors.toList());
         return Optional.ofNullable(CollectionUtils.isEmpty(list) ? null : list);
     }
 
@@ -77,7 +77,7 @@ public class SMSProviderEntity extends BaseEntity<String> {
                 .filter(SMSSubAccountEntity::isEnabled)
                 .filter(x -> x.isChannel(channel)).collect(Collectors.toList());
         Preconditions.checkState(CollectionUtils.isNotEmpty(subList), "当前无合适通道用于%s...", channel);
-        return subList.get(0).getHttpStatusByMobilesUrl();
+        return subList.get(0).getHttpStatusUrl();
     }
 
     @Override

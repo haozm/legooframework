@@ -8,8 +8,8 @@ public enum SendStatus {
     SMS4Storage(1, "短信等待发送"),
     SMS4Sending(2, "短信网关发送中"),
     SendedGateWay(3, "短信网关提交完成"),
-    SendedByWechat(5, "微信平台发送完毕"),
     SMS4SendError(4, "短信发送异常"),
+    SendedByWechat(5, "微信平台发送完毕"),
     SMS4Concaled(9, "短信取消发送");
 
     private final int status;
