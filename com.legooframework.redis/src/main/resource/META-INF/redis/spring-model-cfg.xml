@@ -22,7 +22,7 @@
     <bean id="stringRedisSerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer"/>
 
     <bean id="redisCacheManager" class="com.legooframework.model.redis.entity.RedisCacheManagerFactoryBean">
-        <property name="redisConnectionFactory" ref="redisConnectionFactory"/>
+        <constructor-arg name="redisConnectionFactory" ref="redisConnectionFactory"/>
     </bean>
 
     <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
