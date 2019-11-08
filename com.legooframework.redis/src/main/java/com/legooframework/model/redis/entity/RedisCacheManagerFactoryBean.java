@@ -8,6 +8,7 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializer;
 
 import java.time.Duration;
 import java.util.Map;
@@ -23,7 +24,7 @@ public class RedisCacheManagerFactoryBean extends AbstractFactoryBean<RedisCache
 
     @Override
     protected RedisCacheManager createInstance() throws Exception {
-        RedisSerializationContext.SerializationPair<Object> serializationPair =
+        RedisSerializationContext.SerializationPair<String> serializationPair =
                 RedisSerializationContext.SerializationPair.fromSerializer(valueSerialization);
         String _defaultConfig = Strings.isNullOrEmpty(defaultConfig) ? DEFAULTCONFIG_VALUE : defaultConfig;
         Map<String, String> values = Splitter.on(',').withKeyValueSeparator('=').split(_defaultConfig);
@@ -32,19 +33,15 @@ public class RedisCacheManagerFactoryBean extends AbstractFactoryBean<RedisCache
         String preifx = MapUtils.getString(values, "prefix", null);
         RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(ttl == 0L ? Duration.ZERO : Duration.ofSeconds(ttl))
-                .disableCachingNullValues().disableKeyPrefix().serializeValuesWith(serializationPair);
+                .disableCachingNullValues().prefixKeysWith("hxj").serializeValuesWith(serializationPair);
         return RedisCacheManager.RedisCacheManagerBuilder
                 .fromConnectionFactory(redisConnectionFactory)
                 .cacheDefaults(cacheConfig).transactionAware().build();
     }
 
     private RedisConnectionFactory redisConnectionFactory;
-    private MultipleValueSerializer valueSerialization;
+    private RedisSerializer<String> valueSerialization = RedisSerializer.string();
     private String defaultConfig;
-
-    public void setValueSerialization(MultipleValueSerializer valueSerialization) {
-        this.valueSerialization = valueSerialization;
-    }
 
     public void setRedisConnectionFactory(RedisConnectionFactory redisConnectionFactory) {
         this.redisConnectionFactory = redisConnectionFactory;

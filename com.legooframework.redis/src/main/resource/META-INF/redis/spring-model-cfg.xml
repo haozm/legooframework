@@ -19,25 +19,18 @@
         <property name="usePool" value="true"/>
     </bean>
 
-    <bean id="keySerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer"/>
-    <bean id="gsonRedisSerializer" class="com.legooframework.model.redis.entity.GsonRedisSerializer"/>
-    <bean id="multipleValueSerializer" class="com.legooframework.model.redis.entity.MultipleValueSerializer">
-        <property name="gsonRedisSerializer" ref="gsonRedisSerializer"/>
-    </bean>
+    <bean id="stringRedisSerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer"/>
 
     <bean id="redisCacheManager" class="com.legooframework.model.redis.entity.RedisCacheManagerFactoryBean">
-        <property name="valueSerialization" ref="multipleValueSerializer"/>
         <property name="redisConnectionFactory" ref="redisConnectionFactory"/>
     </bean>
 
     <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
         <property name="connectionFactory" ref="redisConnectionFactory"/>
-        <property name="keySerializer" ref="keySerializer"/>
-        <property name="hashKeySerializer" ref="keySerializer"/>
-        <property name="hashValueSerializer" ref="multipleValueSerializer"/>
-        <property name="valueSerializer">
-            <bean class="org.springframework.data.redis.serializer.StringRedisSerializer"/>
-        </property>
+        <property name="keySerializer" ref="stringRedisSerializer"/>
+        <property name="hashKeySerializer" ref="stringRedisSerializer"/>
+        <property name="hashValueSerializer" ref="stringRedisSerializer"/>
+        <property name="valueSerializer" ref="stringRedisSerializer"/>
     </bean>
     <bean id="redisTemplateSupport" class="com.legooframework.model.redis.entity.RedisEntityCache">
         <constructor-arg name="redisTemplate" ref="redisTemplate"/>

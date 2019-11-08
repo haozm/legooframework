@@ -1,5 +1,6 @@
 package com.legooframework.model.redis.entity;
 
+import com.legooframework.model.core.utils.GsonUtil;
 import org.joda.time.LocalDate;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,7 +29,9 @@ public class RedisCacheManagerFactoryBeanTest {
     public void getCache() {
         Cache cache = redisCacheManager.getCache("Cactana");
         CacheEntity cacheEntity = new CacheEntity(1, String.format("HXJ-%d", 1), 1 % 2, LocalDate.now(), String.format("GZ-%d", 1));
-        cache.put("hao", cacheEntity);
+        cache.put(String.format("CacheEntity-%d", cacheEntity.getId()), GsonUtil.serialize(cacheEntity));
+
+        System.out.println(cache.get(String.format("CacheEntity-%d", cacheEntity.getId()), String.class));
     }
 
     @Autowired

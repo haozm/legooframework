@@ -1,15 +1,10 @@
 package com.legooframework.model.redis.entity;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.base.entity.GsonSerializer;
+import com.legooframework.model.core.utils.GsonUtil;
 import org.joda.time.LocalDate;
-
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Arrays;
-import java.util.List;
 
 public class CacheEntity extends BaseEntity<Integer> implements GsonSerializer {
 
@@ -37,15 +32,10 @@ public class CacheEntity extends BaseEntity<Integer> implements GsonSerializer {
 
 
     public static void main(String[] args) {
-        List<String> list = Lists.newArrayList();
-        list.add("ASDads");
-
-        Type genericType = list.getClass().getGenericSuperclass();
-        if (genericType instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType) genericType;
-            Type[] types = pt.getActualTypeArguments();
-            System.out.println(Arrays.toString(types));
-        }
-        System.out.println(genericType);
+        CacheEntity cacheEntity = new CacheEntity(1, String.format("HXJ-%d", 1), 2 % 2, LocalDate.now(), String.format("GZ-%d", 2));
+        System.out.println(GsonUtil.serialize(cacheEntity));
+        String json = GsonUtil.serialize(cacheEntity);
+        cacheEntity = GsonUtil.deserialize(json, CacheEntity.class);
+        System.out.println(cacheEntity);
     }
 }
