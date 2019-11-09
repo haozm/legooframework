@@ -29,6 +29,7 @@ public class RedisTemplateSupportTest {
 
     @Test
     public void testGetString() {
+        System.out.println(redisTemplate.opsForValue().get("hao"));
 //        Optional<List<CareRecordEntity>> list = careRecordEntityAction.query4List();
 //        if (list.isPresent()) {
 //            for (CareRecordEntity $it : list.get()) {
@@ -78,6 +79,5 @@ public class RedisTemplateSupportTest {
 
     @Autowired
     private RedisTemplate redisTemplate;
-//   ßßßßate CareRecordEntityAction careRecordEntityAction;
 
 }

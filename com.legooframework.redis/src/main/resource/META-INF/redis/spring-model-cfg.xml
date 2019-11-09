@@ -8,14 +8,14 @@
     <bean id="redisPassword" class="com.legooframework.model.redis.entity.RedisPasswordFactoryBean">
         <constructor-arg name="password" value="changeme"/>
     </bean>
-    <bean id="redisStandaloneConfiguration"
+    <bean id="redisConfiguration"
           class="org.springframework.data.redis.connection.RedisStandaloneConfiguration">
         <property name="hostName" value="127.0.0.1"/>
         <property name="port" value="6379"/>
         <property name="password" ref="redisPassword"/>
     </bean>
     <bean id="redisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
-        <constructor-arg name="standaloneConfig" ref="redisStandaloneConfiguration"/>
+        <constructor-arg name="standaloneConfig" ref="redisConfiguration"/>
         <property name="usePool" value="true"/>
     </bean>
 
