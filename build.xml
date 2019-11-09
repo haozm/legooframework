@@ -410,19 +410,6 @@
         </antcall>
     </target>
 
-    <target name="jar-smsgateway">
-        <path id="smsgateway_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-dict-*.jar,legoo-crmadapter-*.jar,legoo-smsprovider-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.smsgateway"/>
-            <param name="short.name" value="smsgateway"/>
-            <reference refid="smsgateway_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
     <target name="install-wechatcircle-jar">
         <path id="wechatcircle_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
@@ -683,7 +670,7 @@
             <reference refid="base_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="install-web-smsgateway">
+    <target name="install-smsgateway-war">
         <antcall target="webapp-new">
             <param name="app.name" value="smsgateway"/>
             <param name="spring.profiles.active" value="${spring.profiles.active}"/>
