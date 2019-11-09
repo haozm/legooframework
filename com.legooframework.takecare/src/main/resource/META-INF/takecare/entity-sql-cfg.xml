@@ -95,7 +95,8 @@
         <sql id="query4list" dynamic="true">
             <body><![CDATA[
     SELECT cnm.store_id, cnm.to_H, cnm.to_1, cnm.to_3, cnm.to_7, cnm.to_15, cnm.to_30, cnm.to_60, cnm.to_90, cnm.createtime,
-           cnm.remark, cnm.enable, cnm.company_id, cnm.min_amount, cnm.limit_days, cnm.limit_amount
+           cnm.remark, cnm.enable, cnm.company_id, cnm.min_amount, cnm.limit_days, cnm.limit_amount,
+           cnm.to_H_delay, cnm.to_1_delay, cnm.to_3_delay, cnm.to_7_delay, cnm.to_15_delay, cnm.to_30_delay, cnm.to_60_delay, cnm.to_90_delay
       FROM acp.crm_90_node_map AS cnm
    <#if (sql=="findByCompany")>
      WHERE cnm.company_id = :companyId
@@ -113,8 +114,10 @@
         <sql id="batchInsert">
             <body><![CDATA[
     INSERT INTO acp.crm_90_node_map
-                (store_id, to_H, to_1, to_3, to_7, to_15, to_30, to_60, to_90, createtime,    remark, enable, company_id, min_amount, limit_days, limit_amount)
-         VALUES (       ?,    ?,    ?,    ?,     ?,     ?,    ?,     ?,     ?, CURRENT_TIMESTAMP,  ?,      ?,          ?,           ?,          ?,           ?)
+                (store_id, to_H, to_1, to_3, to_7, to_15, to_30, to_60, to_90, createtime,    remark, enable, company_id, min_amount, limit_days, limit_amount,
+                to_H_delay, to_1_delay, to_3_delay, to_7_delay, to_15_delay, to_30_delay, to_60_delay, to_90_delay )
+         VALUES (       ?,    ?,    ?,    ?,     ?,     ?,    ?,     ?,     ?, CURRENT_TIMESTAMP,  ?,      ?,          ?,           ?,          ?,           ?,
+                         ?,          ?,          ?,           ?,           ?,          ?,           ?,            ?)
             ]]></body>
         </sql>
     </model>

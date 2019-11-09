@@ -149,6 +149,15 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
         ps.setObject(13, minAmount);
         ps.setObject(14, limitDays);
         ps.setObject(15, limitAmount);
+
+        ps.setObject(16, toHourDelay);
+        ps.setObject(17, toNode1Delay);
+        ps.setObject(18, toNode3Delay);
+        ps.setObject(19, toNode7Delay);
+        ps.setObject(20, toNode15Delay);
+        ps.setObject(21, toNode30Delay);
+        ps.setObject(22, toNode60Delay);
+        ps.setObject(23, toNode90Delay);
     }
 
     static CareNinetyRuleEntity createByCompany(OrgEntity company, int toHour, int toNode1,
@@ -207,6 +216,16 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
             this.toNode30 = resultSet.getInt("to_30");
             this.toNode60 = resultSet.getInt("to_60");
             this.toNode90 = resultSet.getInt("to_90");
+
+            this.toHourDelay = resultSet.getInt("to_H_delay");
+            this.toNode1Delay = resultSet.getInt("to_1_delay");
+            this.toNode3Delay = resultSet.getInt("to_3_delay");
+            this.toNode7Delay = resultSet.getInt("to_7_delay");
+            this.toNode15Delay = resultSet.getInt("to_15_delay");
+            this.toNode30Delay = resultSet.getInt("to_30_delay");
+            this.toNode60Delay = resultSet.getInt("to_60_delay");
+            this.toNode90Delay = resultSet.getInt("to_90_delay");
+
             this.createTime = LocalDateTime.fromDateFields(resultSet.getTimestamp("createtime"));
             this.remark = resultSet.getString("remark");
             this.limitDays = resultSet.getInt("limit_days");
@@ -232,6 +251,14 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
         params.put("toNode30", toNode30);
         params.put("toNode60", toNode60);
         params.put("toNode90", toNode90);
+        params.put("toHourDelay", toHourDelay);
+        params.put("toNode1Delay", toNode1Delay);
+        params.put("toNode3Delay", toNode3Delay);
+        params.put("toNode7Delay", toNode7Delay);
+        params.put("toNode15Delay", toNode15Delay);
+        params.put("toNode30Delay", toNode30Delay);
+        params.put("toNode60Delay", toNode60Delay);
+        params.put("toNode90Delay", toNode90Delay);
         params.put("limitDays", limitDays);
         params.put("enabled", enabled);
         params.put("remark", remark);

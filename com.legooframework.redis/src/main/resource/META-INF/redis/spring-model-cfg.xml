@@ -6,7 +6,7 @@
         <property name="resource" value="classpath:META-INF/redis/legoo-model-cfg.xml"/>
     </bean>
     <bean id="redisPassword" class="com.legooframework.model.redis.entity.RedisPasswordFactoryBean">
-        <constructor-arg name="password" value="iamironman"/>
+        <constructor-arg name="password" value="changeme"/>
     </bean>
     <bean id="redisStandaloneConfiguration"
           class="org.springframework.data.redis.connection.RedisStandaloneConfiguration">
@@ -19,20 +19,18 @@
         <property name="usePool" value="true"/>
     </bean>
 
-    <bean id="stringRedisSerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer"/>
+    <bean id="redisStringSerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer"/>
 
-    <bean id="redisCacheManager" class="com.legooframework.model.redis.entity.RedisCacheManagerFactoryBean">
+    <!--<bean id="redisCacheManager" class="com.legooframework.model.redis.entity.RedisCacheManagerFactoryBean"
+          depends-on="redisConnectionFactory">
         <constructor-arg name="redisConnectionFactory" ref="redisConnectionFactory"/>
-    </bean>
+    </bean>-->
 
     <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
         <property name="connectionFactory" ref="redisConnectionFactory"/>
-        <property name="keySerializer" ref="stringRedisSerializer"/>
-        <property name="hashKeySerializer" ref="stringRedisSerializer"/>
-        <property name="hashValueSerializer" ref="stringRedisSerializer"/>
-        <property name="valueSerializer" ref="stringRedisSerializer"/>
-    </bean>
-    <bean id="redisTemplateSupport" class="com.legooframework.model.redis.entity.RedisEntityCache">
-        <constructor-arg name="redisTemplate" ref="redisTemplate"/>
+        <property name="keySerializer" ref="redisStringSerializer"/>
+        <property name="hashKeySerializer" ref="redisStringSerializer"/>
+        <property name="hashValueSerializer" ref="redisStringSerializer"/>
+        <property name="valueSerializer" ref="redisStringSerializer"/>
     </bean>
 </beans>

@@ -32,14 +32,14 @@ public class CareNinetyRuleEntityActionTest {
 
     @Test
     public void saveByCompany() {
-        OrgEntity com = orgEntityAction.loadComById(1);
-        careNinetyRuleEntityAction.saveByCompany(com, 0, 1, 2, 3, 4, 5, 6, 0, "公司", 30, 12.00D, 35.00D, true);
+//        OrgEntity com = orgEntityAction.loadComById(1);
+//        careNinetyRuleEntityAction.saveByCompany(com, 0, 1, 2, 3, 4, 5, 6, 0, "公司", 30, 12.00D, 35.00D, true);
     }
 
     @Test
     public void saveByStore() {
-        StoEntity store = stoEntityAction.loadById(1120);
-        careNinetyRuleEntityAction.saveByStore(store, 0, 1, 2, 3, 4, 5, 6, 0, "门店1120", 30, 12.00D, 35.00D);
+//        StoEntity store = stoEntityAction.loadById(1120);
+//        careNinetyRuleEntityAction.saveByStore(store, 0, 1, 2, 3, 4, 5, 6, 0, "门店1120", 30, 12.00D, 35.00D);
     }
 
 

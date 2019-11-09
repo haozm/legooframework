@@ -30,7 +30,6 @@ public class RedisCacheManagerFactoryBeanTest {
         Cache cache = redisCacheManager.getCache("Cactana");
         CacheEntity cacheEntity = new CacheEntity(1, String.format("HXJ-%d", 1), 1 % 2, LocalDate.now(), String.format("GZ-%d", 1));
         cache.put(String.format("CacheEntity-%d", cacheEntity.getId()), GsonUtil.serialize(cacheEntity));
-
         System.out.println(cache.get(String.format("CacheEntity-%d", cacheEntity.getId()), String.class));
     }
 

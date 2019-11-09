@@ -6,8 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.cache.RedisCache;
-import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -21,7 +19,7 @@ import org.springframework.util.ResourceUtils;
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/redis/spring-model-cfg.xml"}
 )
 public class RedisTemplateSupportTest {
-   //  RedisCacheConfiguration
+    //  RedisCacheConfiguration
     // RedisCache
     @Before
     public void setUp() throws Exception {
@@ -59,7 +57,7 @@ public class RedisTemplateSupportTest {
 //            redisTemplate.opsForHash().put(CacheEntity.class.getSimpleName(), String.format("key-%d", i), cacheEntity);
 //        }
 
-      System.out.println(redisTemplate.opsForHash().get(CacheEntity.class.getSimpleName(), "key-1"));
+        System.out.println(redisTemplate.opsForHash().get(CacheEntity.class.getSimpleName(), "key-1"));
 //        Optional<List<CareRecordEntity>> list = careRecordEntityAction.query4List();
 //        if (list.isPresent()) {
 //            for (CareRecordEntity $it : list.get()) {
