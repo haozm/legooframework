@@ -5,6 +5,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
+import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
@@ -17,12 +18,16 @@ import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +35,17 @@ import java.util.stream.Stream;
 public class MvcController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(MvcController.class);
+
+
+    @GetMapping(value = "/welcome.json")
+    @ResponseBody
+    public JsonMessage welcome(HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("welcome(url=%s)", request.getRequestURI()));
+        Bundle bundle = getBean("smsResultBundle", Bundle.class, request);
+        return JsonMessageBuilder.OK().withPayload(bundle.toDesc()).toMessage();
+    }
+
 
     /**
      * 接受短信进行存储,用户稍后发送 协议如下
