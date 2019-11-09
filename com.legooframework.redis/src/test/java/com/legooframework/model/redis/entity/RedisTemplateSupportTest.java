@@ -42,12 +42,11 @@ public class RedisTemplateSupportTest {
 
     @Test
     public void testList() {
-//        redisTemplate.opsForList().
-//        redisTemplate.opsForList().leftPush("list", "hao");
-//        redisTemplate.opsForList().leftPush("list", "xiao");
-//        redisTemplate.opsForList().leftPush("list", "jie");
-//        redisTemplate.opsForList().leftPush("list", "nihao");
-        //     System.out.println(redisTemplate.opsForList().size("list"));
+        redisTemplate.opsForList().leftPush("list", "hao");
+        redisTemplate.opsForList().leftPush("list", "xiao");
+        redisTemplate.opsForList().leftPush("list", "jie");
+        redisTemplate.opsForList().leftPush("list", "nihao");
+        System.out.println(redisTemplate.opsForList().size("list"));
         //     System.out.println(redisTemplate.opsForList().range("list", 0, 3));
     }
 
@@ -73,7 +72,8 @@ public class RedisTemplateSupportTest {
     public void testZSet() {
         for (int i = 0; i < 20; i++) {
             double vale = RandomUtils.nextInt(1, 1000);
-            // redisTemplate.opsForZSet().add()
+            redisTemplate.opsForZSet().add("set01", String.valueOf(vale), vale);
+//            redisTemplate.opsForZSet().
         }
     }
 

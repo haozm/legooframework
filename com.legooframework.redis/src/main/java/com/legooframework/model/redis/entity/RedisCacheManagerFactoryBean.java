@@ -60,6 +60,11 @@ public class RedisCacheManagerFactoryBean extends AbstractFactoryBean<RedisCache
     }
 
     private String defaultConfig;
+
+    public void setCacheConfigs(Map<String, String> cacheConfigs) {
+        this.cacheConfigs = cacheConfigs;
+    }
+
     private Map<String, String> cacheConfigs;
 
     /**
@@ -71,17 +76,17 @@ public class RedisCacheManagerFactoryBean extends AbstractFactoryBean<RedisCache
      */
     private RedisCacheConfiguration buildCacheConfig(String nameSpace) {
         Map<String, String> values = Splitter.on(',').trimResults().withKeyValueSeparator('=').split(nameSpace);
-        long ttl = MapUtils.getLongValue(values, "ttl", 0);
+        long ttl = MapUtils.getLongValue(values, "ttl", 0L);
         boolean enabledNull = MapUtils.getBooleanValue(values, "enabledNull", false);
         String preifx = MapUtils.getString(values, "prefix", null);
         RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(ttl == 0L ? Duration.ZERO : Duration.ofSeconds(ttl))
                 .serializeKeysWith(serializationPair);
-        if (!enabledNull) cacheConfig.disableCachingNullValues();
+        if (!enabledNull) cacheConfig = cacheConfig.disableCachingNullValues();
         if (Strings.isNullOrEmpty(preifx)) {
-            cacheConfig.disableKeyPrefix();
+            cacheConfig = cacheConfig.disableKeyPrefix();
         } else {
-            cacheConfig.prefixKeysWith(preifx);
+            cacheConfig = cacheConfig.prefixKeysWith(preifx);
         }
         return cacheConfig;
     }

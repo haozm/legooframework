@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:util="http://www.springframework.org/schema/util"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
     <bean id="redisBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/redis/legoo-model-cfg.xml"/>
     </bean>
@@ -14,17 +16,24 @@
     </bean>
     <bean id="redisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
         <constructor-arg name="standaloneConfig" ref="redisConfiguration"/>
-<!--        <property name="usePool" value="true"/>-->
+        <property name="usePool" value="true"/>
     </bean>
 
     <bean id="redisStringSerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer"/>
 
-    <!--<bean id="redisCacheManager" class="com.legooframework.model.redis.entity.RedisCacheManagerFactoryBean"
+    <util:map id="redisCacheCfgs" key-type="java.lang.String" value-type="java.lang.String">
+        <entry key="tempCache" value="ttl=10"/>
+        <entry key="fixedCache" value="ttl=6000"/>
+    </util:map>
+
+    <bean id="redisCacheManager" class="com.legooframework.model.redis.entity.RedisCacheManagerFactoryBean"
           depends-on="redisConnectionFactory">
         <constructor-arg name="redisConnectionFactory" ref="redisConnectionFactory"/>
-    </bean>-->
+        <property name="cacheConfigs" ref="redisCacheCfgs"/>
+    </bean>
 
-    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate">
+    <bean id="redisTemplate" class="org.springframework.data.redis.core.RedisTemplate"
+          depends-on="redisConnectionFactory">
         <property name="connectionFactory" ref="redisConnectionFactory"/>
         <property name="keySerializer" ref="redisStringSerializer"/>
         <property name="hashKeySerializer" ref="redisStringSerializer"/>
