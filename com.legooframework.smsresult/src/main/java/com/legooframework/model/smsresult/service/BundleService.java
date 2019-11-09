@@ -19,4 +19,8 @@ public abstract class BundleService extends BaseService {
     SMSProviderEntityAction getSmsProviderAction() {
         return getBean(SMSProviderEntityAction.class);
     }
+
+    com.legooframework.model.smsprovider.service.BundleService getSmsService() {
+        return getBean(com.legooframework.model.smsprovider.service.BundleService.class);
+    }
 }

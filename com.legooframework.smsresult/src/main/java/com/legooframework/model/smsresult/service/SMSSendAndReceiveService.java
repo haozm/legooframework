@@ -34,39 +34,37 @@ import java.util.concurrent.Semaphore;
 public class SMSSendAndReceiveService extends BundleService {
 
     private static final Logger logger = LoggerFactory.getLogger(SMSSendAndReceiveService.class);
-    private final Semaphore semaphore = new Semaphore(30);
+    private final Semaphore semaphore = new Semaphore(24);
 
-    public void sendToSmsGateWay(@Payload Map<String, Object> payload) {
+    public void sending(@Payload Map<String, Object> payload) {
 //        {id=3a1743ea-fa32-484a-b24f-a574cda69819, companyId=100098,
 //        smsExt=6376813803, smsChannle=2, phoneNo=13826050862, smsContext=【梦特娇尚新】妈妈喊你回家吃饭 退订回T}
         final Semaphore _lock = semaphore;
         LoginContextHolder.setAnonymousCtx();
         try {
             _lock.acquire();
-            SMSProviderEntity supplier = getSmsProviderAction().loadSMSSupplier();
             SMSChannel smsChannel = SMSChannel.paras(MapUtils.getIntValue(payload, "smsChannle"));
-            String sendApi = supplier.getHttpSendUrl(smsChannel);
-            String replay = sendSMSToPlatform(sendApi, MapUtils.getString(payload, "phoneNo"),
+            String replay = getSmsService().send(smsChannel, MapUtils.getString(payload, "phoneNo"),
                     WebUtils.encodeUrl(MapUtils.getString(payload, "smsContext")),
-                    MapUtils.getLong(payload, "smsExt"));
+                    MapUtils.getLong(payload, "smsExt"), true);
             Preconditions.checkArgument(!Strings.isNullOrEmpty(replay), "短信网关响应报文为空...");
             if (StringUtils.startsWith(replay, "success:")) {
-                finshSend(payload, replay.substring(8), replay);
+                this.finshSend(payload, replay.substring(8), replay);
             } else if (StringUtils.startsWith(replay, "error:")) {
-                errorSend(payload, replay);
+                this.errorSend(payload, replay);
             } else {
-                errorSend(payload, "GATEWATERROR");
+                this.errorSend(payload, "GATEWATERROR");
             }
         } catch (Exception e) {
             logger.error(String.format("sendToSmsGateWay(%s) has error", payload), e);
-            errorSend(payload, e.getMessage());
+            this.errorSend(payload, e.getMessage());
         } finally {
             LoginContextHolder.clear();
             _lock.release();
         }
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         try {
-            getMessagingTemplate().send("sending_result_channel", MessageBuilder.withPayload(payload).build());
+            getMessagingTemplate().send("channel_sms_result", MessageBuilder.withPayload(payload).build());
         } finally {
             LoginContextHolder.clear();
         }

@@ -3,10 +3,7 @@ package com.legooframework.model.smsresult.entity;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
-import com.legooframework.model.smsgateway.entity.SendStatus;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.MapUtils;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -20,41 +17,25 @@ public class SMSSendAndReceiveEntityAction extends BaseEntityAction<SMSSendAndRe
 
     private static final Logger logger = LoggerFactory.getLogger(SMSSendAndReceiveEntityAction.class);
 
-    private final String INSERT_SQL =
-            "INSERT INTO SMS_SENDING_LOG (id, company_id, store_id, sms_channel, send_status, phone_no, sms_count," +
-                    " word_count, sms_context, sms_ext, tenant_id, final_state ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
-
     public SMSSendAndReceiveEntityAction() {
         super(null);
     }
 
     private final List<SMSSendAndReceiveEntity> SENDING_QUEUE = Collections.synchronizedList(Lists.newArrayListWithExpectedSize(500));
 
-    public synchronized void add4Insert(SMSSendAndReceiveEntity instance) {
-        this.SENDING_QUEUE.add(instance);
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("add4Insert(sms) size is %s", SENDING_QUEUE.size()));
+    public void insert(SMSSendAndReceiveEntity instance) {
+        String INSERT_SQL = "INSERT INTO SMS_SENDING_LOG (id, company_id, store_id, sms_channel, send_status, phone_no, sms_count," +
+                " word_count, sms_context, sms_ext, tenant_id, final_state ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+        Objects.requireNonNull(getJdbcTemplate()).update(INSERT_SQL, instance::setValues);
+        if (logger.isDebugEnabled()) logger.debug(String.format("insert(sms %s )  OK", instance.getId()));
     }
 
-    public synchronized void batchInsert() {
-        if (CollectionUtils.isEmpty(this.SENDING_QUEUE)) return;
-        List<SMSSendAndReceiveEntity> list = Lists.newArrayList(this.SENDING_QUEUE);
-        this.SENDING_QUEUE.clear();
-        Objects.requireNonNull(getJdbcTemplate()).batchUpdate(INSERT_SQL, list, list.size(), (ps, val) -> {
-            ps.setObject(1, val.getId());
-            ps.setObject(2, val.getCompanyId());
-            ps.setObject(3, val.getStoreId());
-            ps.setObject(4, val.getSmsChannel().getChannel());
-            ps.setObject(5, val.getSendStatus().getStatus());
-            ps.setObject(6, val.getMobile());
-            ps.setObject(7, val.getSendSms().getSmsNum());
-            ps.setObject(8, val.getSendSms().getWordCount());
-            ps.setObject(9, val.getSendSms().getContent());
-            ps.setObject(10, val.getSmsExt());
-            ps.setObject(11, val.getCompanyId());
-            ps.setObject(12, val.getFinalState().getState());
-        });
-        if (logger.isDebugEnabled()) logger.debug(String.format("batchInsert(sms) size is %s.", list.size()));
+    public void batchInsert(Collection<SMSSendAndReceiveEntity> instances) {
+        if (CollectionUtils.isEmpty(instances)) return;
+        String INSERT_SQL = "INSERT INTO SMS_SENDING_LOG (id, company_id, store_id, sms_channel, send_status, phone_no, sms_count," +
+                " word_count, sms_context, sms_ext, tenant_id, final_state ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+        Objects.requireNonNull(getJdbcTemplate()).batchUpdate(INSERT_SQL, instances, 500, (ps, instance) -> instance.setValues(ps));
+        if (logger.isDebugEnabled()) logger.debug(String.format("batchInsert(sms) size is %s.", instances.size()));
     }
 
     /**

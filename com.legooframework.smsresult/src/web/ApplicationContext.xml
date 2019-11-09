@@ -2,10 +2,16 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:task="http://www.springframework.org/schema/task"
        xmlns:jee="http://www.springframework.org/schema/jee"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
-                           http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd">
+                           http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
+                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+                           http://www.springframework.org/schema/integration/jdbc https://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd">
     <context:property-placeholder location="classpath:jdbc.properties"/>
 
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
@@ -19,6 +25,32 @@
     <import resource="classpath:META-INF/entities/spring-model-cfg.xml"/>
     <import resource="classpath:META-INF/smsprovider/spring-model-cfg.xml"/>
     <import resource="classpath:META-INF/smsresult/spring-model-cfg.xml"/>
+    <task:executor id="sms-service-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>
+    <task:scheduler id="sms-service-scheduler" pool-size="8"/>
+    <!-- ================== SMS SENDING CHANNEL ================== -->
+    <int:publish-subscribe-channel id="channel_sms_splitter"/>
+    <int:channel id="channel_sms_gateway">
+        <int:queue/>
+    </int:channel>
+    <int:publish-subscribe-channel id="channel_sms_result"/>
+    <int-jdbc:inbound-channel-adapter channel="channel_sms_splitter"
+                                      data-source="smsResultDataSource"
+                                      auto-startup="true"
+                                      update="UPDATE SMS_SENDING_LOG SET final_state = 99 WHERE id IN ( :id )"
+                                      query="SELECT id AS 'id', company_id AS 'companyId',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', sms_context AS 'smsContext' FROM SMS_SENDING_LOG WHERE final_state = 0 ORDER BY createTime LIMIT 1024">
+        <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
+    </int-jdbc:inbound-channel-adapter>
+    <int:splitter input-channel="channel_sms_splitter" output-channel="channel_sms_gateway"/>
+    <int:outbound-channel-adapter ref="smsSendAndReceiveService" method="sending" auto-startup="true"
+                                  channel="channel_sms_gateway">
+        <int:poller max-messages-per-poll="256" fixed-rate="500" receive-timeout="5000"
+                    task-executor="sms-service-executor"/>
+    </int:outbound-channel-adapter>
+    <int-jdbc:outbound-gateway
+            update="UPDATE SMS_SENDING_LOG SET final_state = :payload[finalState], send_msg_id = :payload[sendMsgId], send_date = :payload[sendDate], remarks = :payload[remarks] WHERE id = :payload[id]"
+            request-channel="channel_sms_result" requires-reply="false"
+            reply-channel="nullChannel" data-source="smsResultDataSource"/>
+
     <beans profile="devp">
         <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/smsgateway"/>
     </beans>

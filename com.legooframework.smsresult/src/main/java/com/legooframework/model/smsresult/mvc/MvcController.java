@@ -42,9 +42,9 @@ public class MvcController extends BaseController {
      */
     @PostMapping(value = "/smses/batch/sending.json")
     @ResponseBody
-    public JsonMessage acceptSms4Sending(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+    public JsonMessage batchSendingSms(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug("acceptSms4Sending(payload=...) start");
+            logger.debug("batchSendingSms(payload=...) start");
         LoginContextHolder.setAnonymousCtx();
         String smsId = null;
         try {
@@ -54,21 +54,21 @@ public class MvcController extends BaseController {
             List<String> result = Lists.newArrayListWithCapacity(payload_sms.length);
             for (String $it : payload_sms) {
                 try {
-                    String[] sms = StringUtils.split($it, '|');
-                    if (logger.isDebugEnabled())
-                        logger.debug("[HXJ-SMS]" + Arrays.toString(sms));
-                    smsId = sms[0];
-                    SMSSendAndReceiveEntity instance = SMSSendTransportProtocol.decodingByFlat(sms);
-                    getBean(SMSSendAndReceiveEntityAction.class, request).add4Insert(instance);
+                    String[] sms_args = StringUtils.split($it, '|');
+                    if (logger.isTraceEnabled())
+                        logger.trace("[SMS-GATEWAT]" + Arrays.toString(sms_args));
+                    smsId = sms_args[0];
+                    SMSSendAndReceiveEntity instance = SMSSendTransportProtocol.decodingByFlat(sms_args);
+                    getBean(SMSSendAndReceiveEntityAction.class, request).insert(instance);
                     result.add(String.format("%s|0000|OK", instance.getId()));
                 } catch (Exception e) {
-                    logger.error("acceptSms4Sending(...) has error", e);
-                    result.add(String.format("%s|9999|短信内容解码异常", smsId));
+                    logger.error(String.format("batchSendingSms(%s) has error", $it), e);
+                    result.add(String.format("%s|9999|短信存储异常", smsId));
                 }
             }
             return JsonMessageBuilder.OK().withPayload(StringUtils.join(result, "||")).toMessage();
         } catch (Exception e) {
-            logger.error("acceptSms4Sending(%s) has error", e);
+            logger.error("batchSendingSms(%s) has error", e);
             return JsonMessageBuilder.ERROR("9999", "请求数据异常").toMessage();
         } finally {
             LoginContextHolder.clear();

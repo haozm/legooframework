@@ -2,32 +2,50 @@ package com.legooframework.model.smsresult.entity;
 
 import com.google.common.base.Preconditions;
 import com.legooframework.model.core.base.entity.BaseEntity;
+import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsgateway.entity.SMSEntity;
 import com.legooframework.model.smsgateway.entity.SendStatus;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.Map;
 
-public class SMSSendAndReceiveEntity extends BaseEntity<String> {
+public class SMSSendAndReceiveEntity extends BaseEntity<String> implements BatchSetter {
 
     private final Integer companyId, storeId;
     private final SMSEntity sendSms;
     private final SMSChannel smsChannel;
     private final SendStatus sendStatus;
     private final Long smsExt;
-    private FinalState finalState;
     //  提交返回
     private String sendMsgId;
     private Date sendDate;
     private String remarks;
     // 其他参数
+    private FinalState finalState;
     private String finalStateDesc;
     private Date finalStateDate;
+
+    @Override
+    public void setValues(PreparedStatement ps) throws SQLException {
+        ps.setObject(1, getId());
+        ps.setObject(2, getCompanyId());
+        ps.setObject(3, getStoreId());
+        ps.setObject(4, getSmsChannel().getChannel());
+        ps.setObject(5, getSendStatus().getStatus());
+        ps.setObject(6, getMobile());
+        ps.setObject(7, getSendSms().getSmsNum());
+        ps.setObject(8, getSendSms().getWordCount());
+        ps.setObject(9, getSendSms().getContent());
+        ps.setObject(10, getSmsExt());
+        ps.setObject(11, getCompanyId());
+        ps.setObject(12, getFinalState().getState());
+    }
 
     SMSSendAndReceiveEntity(Integer companyId, Integer storeId, SMSEntity sendSms, int smsChannel, int sendStatus, long smsExt) {
         super(sendSms.getSmsId(), companyId.longValue(), -1L);
