@@ -2,14 +2,8 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:util="http://www.springframework.org/schema/util"
-       xmlns:task="http://www.springframework.org/schema/task"
-       xmlns:int="http://www.springframework.org/schema/integration"
-       xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
-                           http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
-                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
-                           http://www.springframework.org/schema/integration/jdbc https://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd">
+                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
     <bean id="smsResultBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/smsresult/legoo-model-cfg.xml"/>
     </bean>
@@ -45,7 +39,6 @@
     <bean id="smsSendAndReceiveService" class="com.legooframework.model.smsresult.service.SMSSendAndReceiveService"/>
     <bean id="smsReplayedService" class="com.legooframework.model.smsresult.service.SMSReplayedService"/>
     <bean id="smsRltMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
-
 
 
     <!-- ================== SMS RESULAT ================== -->
