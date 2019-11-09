@@ -32,5 +32,5 @@
           parent="smsBaseProviderAction">
         <property name="cacheManager" ref="smsProviderCacheManager"/>
     </bean>
-    <bean id="smsBundleService" class="com.legooframework.model.smsprovider.service.BundleService"/>
+    <bean id="smsService" class="com.legooframework.model.smsprovider.service.SmsService"/>
 </beans>

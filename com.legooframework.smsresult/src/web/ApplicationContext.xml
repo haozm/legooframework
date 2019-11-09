@@ -26,7 +26,6 @@
     <import resource="classpath:META-INF/smsprovider/spring-model-cfg.xml"/>
     <import resource="classpath:META-INF/smsresult/spring-model-cfg.xml"/>
     <task:executor id="sms-service-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>
-    <task:scheduler id="sms-service-scheduler" pool-size="8"/>
     <!-- ================== SMS SENDING CHANNEL ================== -->
     <int:publish-subscribe-channel id="channel_sms_splitter"/>
     <int:channel id="channel_sms_gateway">
@@ -41,7 +40,7 @@
         <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
     </int-jdbc:inbound-channel-adapter>
     <int:splitter input-channel="channel_sms_splitter" output-channel="channel_sms_gateway"/>
-    <int:outbound-channel-adapter ref="smsSendAndReceiveService" method="sending" auto-startup="true"
+    <int:outbound-channel-adapter ref="smsResultService" method="sending" auto-startup="true"
                                   channel="channel_sms_gateway">
         <int:poller max-messages-per-poll="256" fixed-rate="500" receive-timeout="5000"
                     task-executor="sms-service-executor"/>

@@ -36,10 +36,8 @@
     <bean id="smsReplayEntityAction" class="com.legooframework.model.smsresult.entity.SMSReplayEntityAction"
           parent="smsResultEntityAction"/>
 
-    <bean id="smsSendAndReceiveService" class="com.legooframework.model.smsresult.service.SMSSendAndReceiveService"/>
-    <bean id="smsReplayedService" class="com.legooframework.model.smsresult.service.SMSReplayedService"/>
-    <bean id="smsRltMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
-
+    <bean id="smsResultService" class="com.legooframework.model.smsresult.service.SmsResultService"/>
+    <bean id="smsResultMsgTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
 
     <!-- ================== SMS RESULAT ================== -->
     <!--

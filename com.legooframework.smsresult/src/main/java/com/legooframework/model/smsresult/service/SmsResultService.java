@@ -31,9 +31,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 
-public class SMSSendAndReceiveService extends BundleService {
+public class SmsResultService extends BundleService {
 
-    private static final Logger logger = LoggerFactory.getLogger(SMSSendAndReceiveService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SmsResultService.class);
     private final Semaphore semaphore = new Semaphore(24);
 
     public void sending(@Payload Map<String, Object> payload) {
@@ -46,7 +46,7 @@ public class SMSSendAndReceiveService extends BundleService {
             SMSChannel smsChannel = SMSChannel.paras(MapUtils.getIntValue(payload, "smsChannle"));
             String replay = getSmsService().send(smsChannel, MapUtils.getString(payload, "phoneNo"),
                     WebUtils.encodeUrl(MapUtils.getString(payload, "smsContext")),
-                    MapUtils.getLong(payload, "smsExt"), true);
+                    MapUtils.getLong(payload, "smsExt"));
             Preconditions.checkArgument(!Strings.isNullOrEmpty(replay), "短信网关响应报文为空...");
             if (StringUtils.startsWith(replay, "success:")) {
                 this.finshSend(payload, replay.substring(8), replay);
@@ -161,6 +161,42 @@ public class SMSSendAndReceiveService extends BundleService {
         return Optional.of(mapList);
     }
 
+
+    public void refresh4BlackList() {
+        LoginContextHolder.setAnonymousCtx();
+        Optional<List<SMSReplayEntity>> list = getBean(SMSReplayEntityAction.class).load4TDEntities();
+        List<SMSBlackListEntity> black_list = Lists.newArrayList();
+        list.ifPresent(x -> x.forEach(y -> black_list.add(SMSBlackListEntity.creatInstance(y))));
+        getBean(SMSBlackListEntityAction.class).batchInsert(black_list);
+    }
+
+    public void pullSmsGateWayReply() {
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
+        SMSProviderEntity provider = getSmsProviderAction().loadSMSSupplier();
+        Optional<List<String>> postUrls = provider.getHttpReplayUrl();
+        postUrls.ifPresent(urls -> urls.forEach(url -> {
+            try {
+                sendAndReceive(url);
+            } catch (Exception e) {
+                logger.error("pullSmsGateWayReplay has error ", e);
+            } finally {
+                LoginContextHolder.clear();
+            }
+        }));
+    }
+
+    private void sendAndReceive(String replayApi) {
+        Map<String, Object> pathVariables = Maps.newHashMap();
+        Mono<String> mono = WebClient.create().method(HttpMethod.GET)
+                .uri(replayApi, pathVariables)
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(String.class);
+        String send_rsp = mono.block(Duration.ofSeconds(30L));
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("replay_rsp=%s", send_rsp));
+        if (StringUtils.equals("no record", send_rsp) || StringUtils.startsWith(send_rsp, "error:")) return;
+        getBean(SMSReplayEntityAction.class).batchInsert(send_rsp);
+    }
 }
 
 
