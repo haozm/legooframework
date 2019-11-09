@@ -10,13 +10,11 @@
     </bean>
     <bean id="redisConfiguration"
           class="org.springframework.data.redis.connection.RedisStandaloneConfiguration">
-        <property name="hostName" value="127.0.0.1"/>
-        <property name="port" value="6379"/>
         <property name="password" ref="redisPassword"/>
     </bean>
     <bean id="redisConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory">
         <constructor-arg name="standaloneConfig" ref="redisConfiguration"/>
-        <property name="usePool" value="true"/>
+<!--        <property name="usePool" value="true"/>-->
     </bean>
 
     <bean id="redisStringSerializer" class="org.springframework.data.redis.serializer.StringRedisSerializer"/>

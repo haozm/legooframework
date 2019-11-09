@@ -10,6 +10,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
+import redis.clients.jedis.Client;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -76,6 +77,14 @@ public class RedisTemplateSupportTest {
         }
     }
 
+    @Test
+    public void connent() {
+        redis.clients.jedis.Client client = new Client();
+        client.setHost("localhost");
+        client.setPort(6379);
+        client.setPassword("changeme");
+        client.set("hao", "xhoa");
+    }
 
     @Autowired
     private RedisTemplate redisTemplate;
