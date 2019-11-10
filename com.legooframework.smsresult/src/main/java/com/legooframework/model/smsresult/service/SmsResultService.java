@@ -102,63 +102,35 @@ public class SmsResultService extends BundleService {
     }
 
     // LIST CHANNEL_SYNC_STATE
-    public void syncFromSmsGateWay(@Payload Map<String, Object> payload) {
+    public void syncState(@Payload Map<String, Object> payload) {
         // {id=51300364-1a85-4764-905a-0000ea5f6dc0, companyId=100098, smsExt=4776124108, smsChannle=2, phoneNo=18575106652}
         LoginContextHolder.setAnonymousCtx();
-        final Semaphore _lock = this.semaphore;
         try {
-            _lock.acquire();
-            SMSProviderEntity supplier = getSmsProviderAction().loadSMSSupplier();
             SMSChannel smsChannel = SMSChannel.paras(MapUtils.getIntValue(payload, "smsChannle"));
-            String postUrl = supplier.getHttpStatusByMobilesUrl(smsChannel);
             Date sendDate = (Date) MapUtils.getObject(payload, "sendDate");
             Date startTime = LocalDateTime.fromDateFields(sendDate).plusMinutes(-10).toDate();
-            Optional<List<Map<String, Object>>> rsp_payload = syncGateWayState(postUrl, MapUtils.getString(payload, "phoneNo"),
-                    startTime, DateTime.now().toDate());
-            rsp_payload.ifPresent(items -> items.forEach(item -> {
-                getMessagingTemplate().send("result_result_channel", MessageBuilder.withPayload(item).build());
-            }));
+            Optional<String> optional = getSmsService().sync(smsChannel, MapUtils.getString(payload, "phoneNo"), startTime, DateTime.now().toDate());
+            if (!optional.isPresent()) return;
+            String[] payloads = StringUtils.split(optional.get(), ';');
+            if (ArrayUtils.isEmpty(payloads)) return;
+            List<Map<String, Object>> mapList = Lists.newArrayListWithCapacity(payloads.length);
+            for (String $it : payloads) {
+                String[] items = StringUtils.split($it, ',');
+                Map<String, Object> params = Maps.newHashMap();
+                params.put("sendMsgId", items[0]);
+                params.put("phoneNo", items[1]);
+                params.put("finalStateDesc", items[2]);
+                params.put("finalStateDate", DateTimeUtils.parseDateTime(items[3]).toDate());
+                params.put("finalState", StringUtils.equals(items[2], "DELIVRD") ? FinalState.DELIVRD.getState() :
+                        FinalState.UNDELIV.getState());
+                mapList.add(params);
+            }
+            getBean(SMSResultEntityAction.class).updateState(mapList);
         } catch (Exception e) {
-            logger.error(String.format("syncFromSmsGateWay(%s) has error", payload), e);
+            logger.error(String.format("syncState(%s) has error", payload), e);
         } finally {
-            _lock.release();
             LoginContextHolder.clear();
         }
-    }
-
-    private Optional<List<Map<String, Object>>> syncGateWayState(String postUrl, String mobile, Date start, Date end) {
-        Map<String, Object> pathVariables = Maps.newHashMap();
-        pathVariables.put("start", start.getTime() / 1000);
-        pathVariables.put("end", end.getTime() / 1000);
-        pathVariables.put("mobile", mobile);
-        if (logger.isTraceEnabled())
-            logger.trace(String.format("http://****/fehc&from=%s&to=%s&mobile=%s", MapUtils.getString(pathVariables, "start"),
-                    MapUtils.getString(pathVariables, "end"), MapUtils.getString(pathVariables, "mobile")));
-        Mono<String> mono = WebClient.create().method(HttpMethod.GET)
-                .uri(postUrl, pathVariables)
-                .contentType(MediaType.APPLICATION_JSON)
-                .retrieve().bodyToMono(String.class);
-        String records = mono.block(Duration.ofSeconds(30L));
-        if (logger.isDebugEnabled())
-            logger.debug("[FEHCHED-SMS-STATE]" + records);
-        if (StringUtils.equals("no record", records) || StringUtils.startsWith(records, "error:"))
-            return Optional.empty();
-        //45732168869581,13824401814,UNDELIV,2019-05-23 14:24:55
-        String[] payloads = StringUtils.split(records, ';');
-        if (ArrayUtils.isEmpty(payloads)) return Optional.empty();
-        List<Map<String, Object>> mapList = Lists.newArrayListWithCapacity(payloads.length);
-        for (String payload : payloads) {
-            String[] items = StringUtils.split(payload, ',');
-            Map<String, Object> params = Maps.newHashMap();
-            params.put("sendMsgId", items[0]);
-            params.put("phoneNo", items[1]);
-            params.put("finalStateDesc", items[2]);
-            params.put("finalStateDate", DateTimeUtils.parseDateTime(items[3]).toDate());
-            params.put("finalState", StringUtils.equals(items[2], "DELIVRD") ? FinalState.DELIVRD.getState() :
-                    FinalState.UNDELIV.getState());
-            mapList.add(params);
-        }
-        return Optional.of(mapList);
     }
 
 

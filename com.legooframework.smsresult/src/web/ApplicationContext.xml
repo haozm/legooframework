@@ -52,8 +52,27 @@
     </int:outbound-channel-adapter>
     <int-jdbc:outbound-gateway
             update="UPDATE SMS_SENDING_LOG SET final_state = :payload[finalState], send_msg_id = :payload[sendMsgId], send_date = :payload[sendDate], remarks = :payload[remarks] WHERE id = :payload[id]"
-            request-channel="channel_sms_result" requires-reply="false"
-            reply-channel="nullChannel" data-source="smsResultDataSource"/>
+            request-channel="channel_sms_result" requires-reply="false" reply-channel="nullChannel"
+            data-source="smsResultDataSource"/>
+
+    <!-- ================== SMS SYNC STATUS ================== -->
+    <int:publish-subscribe-channel id="channel_sync_source"/>
+    <int-jdbc:inbound-channel-adapter
+            query="SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate' FROM SMS_SENDING_LOG WHERE final_state = 98 AND send_date > DATE_SUB( NOW(), INTERVAL 12 HOUR ) ORDER BY createTime LIMIT 4096"
+            channel="channel_sync_source" data-source="smsResultDataSource" auto-startup="true">
+        <int:poller fixed-delay="10" time-unit="SECONDS"/>
+    </int-jdbc:inbound-channel-adapter>
+    <int:splitter input-channel="channel_sync_source" output-channel="channel_sync_state"/>
+    <int:channel id="channel_sync_state">
+        <int:queue/>
+        <int:interceptors>
+            <int:wire-tap channel="channel_logger"/>
+        </int:interceptors>
+    </int:channel>
+    <int:outbound-channel-adapter channel="channel_sync_state" ref="smsResultService" method="syncState"
+                                  auto-startup="true">
+        <int:poller max-messages-per-poll="512" fixed-delay="1" time-unit="SECONDS"/>
+    </int:outbound-channel-adapter>
 
     <beans profile="devp">
         <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/smsgateway"/>

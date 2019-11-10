@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -50,6 +51,20 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
         if (logger.isDebugEnabled())
             logger.debug(String.format("loadByIds() size is %s", res.map(List::size).orElse(0)));
         return res;
+    }
+
+    public void updateState(Collection<Map<String, Object>> statusMaps) {
+        if (CollectionUtils.isEmpty(statusMaps)) return;
+        String update_sql = "UPDATE SMS_SENDING_LOG SET final_state = ?, final_state_date = ?, final_state_desc = ? WHERE phone_no = ? AND send_msg_id = ? AND final_state = 98";
+        int[][] size = Objects.requireNonNull(getJdbcTemplate()).batchUpdate(update_sql, statusMaps, 512, (ps, map) -> {
+            ps.setObject(1, MapUtils.getInteger(map, "finalState"));
+            ps.setObject(2, MapUtils.getObject(map, "finalStateDate"));
+            ps.setObject(3, MapUtils.getString(map, "finalStateDesc"));
+            ps.setObject(4, MapUtils.getString(map, "phoneNo"));
+            ps.setObject(5, MapUtils.getLong(map, "sendMsgId"));
+        });
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("updateState() retuen size is  %d", statusMaps.size()));
     }
 
     @Override

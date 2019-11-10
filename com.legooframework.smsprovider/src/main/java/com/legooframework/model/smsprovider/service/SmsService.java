@@ -4,6 +4,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsprovider.entity.SMSSubAccountEntity;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -14,6 +15,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.util.Date;
 import java.util.Map;
+import java.util.Optional;
 
 public class SmsService extends BundleService {
 
@@ -78,7 +80,7 @@ public class SmsService extends BundleService {
      * @param end     结束时间
      * @return response
      */
-    public String sync(SMSChannel channel, String mobile, Date start, Date end) {
+    public Optional<String> sync(SMSChannel channel, String mobile, Date start, Date end) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("sync(SMSChannel=%d, mobile=%s, start=%s, end=%s) start...",
                     channel.getChannel(), mobile, start, end));
@@ -97,6 +99,8 @@ public class SmsService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("sync(SMSChannel=%d, mobile=%s, start=%s, end=%s) return %s [%s]",
                     channel.getChannel(), mobile, start, end, response, stopwatch));
-        return response;
+        if (StringUtils.equals("no record", response) || StringUtils.startsWith(response, "error:"))
+            return Optional.empty();
+        return Optional.of(response);
     }
 }
