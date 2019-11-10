@@ -23,17 +23,17 @@
             </util:map>
         </property>
     </bean>
-    <bean id="smsResultEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+    <bean id="smsAbsResultEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
           abstract="true">
         <property name="statementFactory" ref="smsResultStatementFactory"/>
         <property name="dataSource" ref="smsResultDataSource"/>
     </bean>
     <bean id="smsResultEntityAction" class="com.legooframework.model.smsresult.entity.SMSResultEntityAction"
-          parent="smsResultEntityAction"/>
+          parent="smsAbsResultEntityAction"/>
     <bean id="smsBlackListEntityAction" class="com.legooframework.model.smsresult.entity.SMSBlackListEntityAction"
-          parent="smsResultEntityAction"/>
+          parent="smsAbsResultEntityAction"/>
     <bean id="smsReplayEntityAction" class="com.legooframework.model.smsresult.entity.SMSReplayEntityAction"
-          parent="smsResultEntityAction"/>
+          parent="smsAbsResultEntityAction"/>
 
     <bean id="smsResultService" class="com.legooframework.model.smsresult.service.SmsResultService"/>
     <bean id="smsResultMsgTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
