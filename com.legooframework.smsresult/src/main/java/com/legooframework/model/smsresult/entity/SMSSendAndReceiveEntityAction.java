@@ -34,7 +34,7 @@ public class SMSSendAndReceiveEntityAction extends BaseEntityAction<SMSSendAndRe
         if (CollectionUtils.isEmpty(instances)) return;
         String INSERT_SQL = "INSERT INTO SMS_SENDING_LOG (id, company_id, store_id, sms_channel, send_status, phone_no, sms_count," +
                 " word_count, sms_context, sms_ext, tenant_id, final_state ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
-        Objects.requireNonNull(getJdbcTemplate()).batchUpdate(INSERT_SQL, instances, 500, (ps, instance) -> instance.setValues(ps));
+        Objects.requireNonNull(getJdbcTemplate()).batchUpdate(INSERT_SQL, instances, 256, (ps, instance) -> instance.setValues(ps));
         if (logger.isDebugEnabled()) logger.debug(String.format("batchInsert(sms) size is %s.", instances.size()));
     }
 

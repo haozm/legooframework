@@ -11,6 +11,7 @@ import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.smsresult.entity.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -49,7 +50,7 @@ public class MvcController extends BaseController {
 
     /**
      * 接受短信进行存储,用户稍后发送 协议如下
-     * {id,content,mobile,count,sum,cId,sId,channel,status}
+     * {smsId|companyId|storeId|channel|status|mobile|count|sum|encoding|content
      * %s|0000|OK  %s wei id
      *
      * @param requestBody 请求
@@ -68,6 +69,7 @@ public class MvcController extends BaseController {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(payload_smses), "短信发送有效数据为空...");
             String[] payload_sms = StringUtils.splitByWholeSeparator(payload_smses, "||");
             List<String> result = Lists.newArrayListWithCapacity(payload_sms.length);
+            List<SMSSendAndReceiveEntity> cacheList = Lists.newArrayList();
             for (String $it : payload_sms) {
                 try {
                     String[] sms_args = StringUtils.split($it, '|');
@@ -75,12 +77,20 @@ public class MvcController extends BaseController {
                         logger.trace("[SMS-GATEWAT]" + Arrays.toString(sms_args));
                     smsId = sms_args[0];
                     SMSSendAndReceiveEntity instance = SMSSendTransportProtocol.decodingByFlat(sms_args);
-                    getBean(SMSSendAndReceiveEntityAction.class, request).insert(instance);
+                    cacheList.add(instance);
                     result.add(String.format("%s|0000|OK", instance.getId()));
+                    if (cacheList.size() >= 512) {
+                        getBean(SMSSendAndReceiveEntityAction.class, request).batchInsert(cacheList);
+                        cacheList.clear();
+                    }
                 } catch (Exception e) {
                     logger.error(String.format("batchSendingSms(%s) has error", $it), e);
-                    result.add(String.format("%s|9999|短信存储异常", smsId));
+                    result.add(String.format("%s|9999|短信接受异常", smsId));
                 }
+            }
+            if (CollectionUtils.isNotEmpty(cacheList)) {
+                getBean(SMSSendAndReceiveEntityAction.class, request).batchInsert(cacheList);
+                cacheList.clear();
             }
             return JsonMessageBuilder.OK().withPayload(StringUtils.join(result, "||")).toMessage();
         } catch (Exception e) {
