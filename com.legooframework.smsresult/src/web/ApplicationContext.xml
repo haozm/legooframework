@@ -71,7 +71,7 @@
     </int:channel>
     <int:outbound-channel-adapter channel="channel_sync_state" ref="smsResultService" method="syncState"
                                   auto-startup="true">
-        <int:poller max-messages-per-poll="512" fixed-delay="1" time-unit="SECONDS"/>
+        <int:poller max-messages-per-poll="512" fixed-delay="5" time-unit="SECONDS"/>
     </int:outbound-channel-adapter>
 
     <beans profile="devp">
