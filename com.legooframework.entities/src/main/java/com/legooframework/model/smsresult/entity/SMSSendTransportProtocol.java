@@ -49,7 +49,7 @@ public class SMSSendTransportProtocol {
      * @param payload 协议就是一切
      * @return 我的网址
      */
-    public static SMSSendAndReceiveEntity decodingByFlat(String[] payload) {
+    public static SMSResultEntity decodingByFlat(String[] payload) {
         Preconditions.checkState(payload.length == 10, "报文格式异常,数据缺失");
         try {
             String smsId = payload[0];
@@ -64,7 +64,7 @@ public class SMSSendTransportProtocol {
             boolean encoding = StringUtils.equals("1", payload[8]);
             String content = encoding ? WebUtils.decodeUrl(payload[9]) : payload[9];
             SMSEntity sendSMS = SMSEntity.create4Sending(smsId, content, mobile, count, sum);
-            return new SMSSendAndReceiveEntity(companyId, storeId, sendSMS, channel, SendStatus.SendedGateWay.getStatus(),
+            return new SMSResultEntity(companyId, storeId, sendSMS, channel, SendStatus.SendedGateWay.getStatus(),
                     RandomUtils.nextLong(1L, 9999999999L));
         } catch (Exception e) {
             logger.error(String.format("decodingByFlat(%s) has exception", Arrays.toString(payload)), e);

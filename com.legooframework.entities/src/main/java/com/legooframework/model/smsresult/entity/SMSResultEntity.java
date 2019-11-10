@@ -15,7 +15,7 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.Map;
 
-public class SMSSendAndReceiveEntity extends BaseEntity<String> implements BatchSetter {
+public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
 
     private final Integer companyId, storeId;
     private final SMSEntity sendSms;
@@ -47,7 +47,7 @@ public class SMSSendAndReceiveEntity extends BaseEntity<String> implements Batch
         ps.setObject(12, getFinalState().getState());
     }
 
-    SMSSendAndReceiveEntity(Integer companyId, Integer storeId, SMSEntity sendSms, int smsChannel, int sendStatus, long smsExt) {
+    SMSResultEntity(Integer companyId, Integer storeId, SMSEntity sendSms, int smsChannel, int sendStatus, long smsExt) {
         super(sendSms.getSmsId(), companyId.longValue(), -1L);
         this.companyId = companyId;
         this.storeId = storeId;
@@ -62,7 +62,7 @@ public class SMSSendAndReceiveEntity extends BaseEntity<String> implements Batch
         this.finalStateDate = null;
     }
 
-    SMSSendAndReceiveEntity(String id, ResultSet res) {
+    SMSResultEntity(String id, ResultSet res) {
         super(id, res);
         try {
             this.companyId = ResultSetUtil.getObject(res, "companyId", Integer.class);

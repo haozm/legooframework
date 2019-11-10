@@ -28,8 +28,7 @@
         <property name="statementFactory" ref="smsResultStatementFactory"/>
         <property name="dataSource" ref="smsResultDataSource"/>
     </bean>
-    <bean id="smsGatewaySendEntityAction"
-          class="com.legooframework.model.smsresult.entity.SMSSendAndReceiveEntityAction"
+    <bean id="smsResultEntityAction" class="com.legooframework.model.smsresult.entity.SMSResultEntityAction"
           parent="smsResultEntityAction"/>
     <bean id="smsBlackListEntityAction" class="com.legooframework.model.smsresult.entity.SMSBlackListEntityAction"
           parent="smsResultEntityAction"/>

@@ -25,6 +25,7 @@
     <import resource="classpath:META-INF/entities/spring-model-cfg.xml"/>
     <import resource="classpath:META-INF/smsprovider/spring-model-cfg.xml"/>
     <import resource="classpath:META-INF/smsresult/spring-model-cfg.xml"/>
+
     <task:executor id="sms-service-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>
     <!-- ================== SMS SENDING CHANNEL ================== -->
     <int:publish-subscribe-channel id="channel_sms_splitter"/>

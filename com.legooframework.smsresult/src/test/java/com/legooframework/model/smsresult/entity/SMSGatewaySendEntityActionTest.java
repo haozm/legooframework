@@ -42,6 +42,6 @@ public class SMSGatewaySendEntityActionTest {
     }
 
     @Autowired
-    SMSSendAndReceiveEntityAction action;
+    SMSResultEntityAction action;
 
 }

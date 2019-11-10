@@ -69,18 +69,18 @@ public class MvcController extends BaseController {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(payload_smses), "短信发送有效数据为空...");
             String[] payload_sms = StringUtils.splitByWholeSeparator(payload_smses, "||");
             List<String> result = Lists.newArrayListWithCapacity(payload_sms.length);
-            List<SMSSendAndReceiveEntity> cacheList = Lists.newArrayList();
+            List<SMSResultEntity> cacheList = Lists.newArrayList();
             for (String $it : payload_sms) {
                 try {
                     String[] sms_args = StringUtils.split($it, '|');
                     if (logger.isTraceEnabled())
                         logger.trace("[SMS-GATEWAT]" + Arrays.toString(sms_args));
                     smsId = sms_args[0];
-                    SMSSendAndReceiveEntity instance = SMSSendTransportProtocol.decodingByFlat(sms_args);
+                    SMSResultEntity instance = SMSSendTransportProtocol.decodingByFlat(sms_args);
                     cacheList.add(instance);
                     result.add(String.format("%s|0000|OK", instance.getId()));
                     if (cacheList.size() >= 512) {
-                        getBean(SMSSendAndReceiveEntityAction.class, request).batchInsert(cacheList);
+                        getBean(SMSResultEntityAction.class, request).batchInsert(cacheList);
                         cacheList.clear();
                     }
                 } catch (Exception e) {
@@ -89,7 +89,7 @@ public class MvcController extends BaseController {
                 }
             }
             if (CollectionUtils.isNotEmpty(cacheList)) {
-                getBean(SMSSendAndReceiveEntityAction.class, request).batchInsert(cacheList);
+                getBean(SMSResultEntityAction.class, request).batchInsert(cacheList);
                 cacheList.clear();
             }
             return JsonMessageBuilder.OK().withPayload(StringUtils.join(result, "||")).toMessage();
@@ -118,13 +118,13 @@ public class MvcController extends BaseController {
             String smsIds = MapUtils.getString(requestBody, "smsIds");
             Preconditions.checkArgument(!Strings.isNullOrEmpty(smsIds), "带查询的短信资料不可以为空值...");
             List<String> smsIds_list = Stream.of(StringUtils.split(smsIds, ',')).collect(Collectors.toList());
-            Optional<List<SMSSendAndReceiveEntity>> final_smses_opt = getBean(SMSSendAndReceiveEntityAction.class, request)
+            Optional<List<SMSResultEntity>> final_smses_opt = getBean(SMSResultEntityAction.class, request)
                     .loadByIds(smsIds_list);
             List<String> res_list = Lists.newArrayList();
             String today_time = DateTime.now().toString("yyyy-MM-dd HH:mm:ss");
             if (final_smses_opt.isPresent()) {
                 smsIds_list.forEach(smsId -> {
-                    Optional<SMSSendAndReceiveEntity> opt = final_smses_opt.get().stream()
+                    Optional<SMSResultEntity> opt = final_smses_opt.get().stream()
                             .filter(x -> StringUtils.equals(x.getId(), smsId)).findFirst();
                     if (opt.isPresent()) {
                         if (opt.get().hasResult())
