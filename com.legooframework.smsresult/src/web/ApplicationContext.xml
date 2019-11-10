@@ -60,7 +60,7 @@
     <int-jdbc:inbound-channel-adapter
             query="SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate' FROM SMS_SENDING_LOG WHERE final_state = 98 AND send_date > DATE_SUB( NOW(), INTERVAL 12 HOUR ) ORDER BY createTime LIMIT 4096"
             channel="channel_sync_source" data-source="smsResultDataSource" auto-startup="true">
-        <int:poller fixed-delay="10" time-unit="SECONDS"/>
+        <int:poller fixed-delay="600" time-unit="SECONDS"/>
     </int-jdbc:inbound-channel-adapter>
     <int:splitter input-channel="channel_sync_source" output-channel="channel_sync_state"/>
     <int:channel id="channel_sync_state">
@@ -71,7 +71,7 @@
     </int:channel>
     <int:outbound-channel-adapter channel="channel_sync_state" ref="smsResultService" method="syncState"
                                   auto-startup="true">
-        <int:poller max-messages-per-poll="512" fixed-delay="5" time-unit="SECONDS"/>
+        <int:poller max-messages-per-poll="512" fixed-delay="10" time-unit="SECONDS"/>
     </int:outbound-channel-adapter>
 
     <beans profile="devp">
