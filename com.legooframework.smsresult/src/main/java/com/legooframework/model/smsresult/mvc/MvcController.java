@@ -50,7 +50,7 @@ public class MvcController extends BaseController {
 
     /**
      * 接受短信进行存储,用户稍后发送 协议如下
-     * {smsId|companyId|storeId|channel|status|mobile|count|sum|encoding|content
+     * smsId|companyId|storeId|channel|status|mobile|count|sum|encoding|content
      * %s|0000|OK  %s wei id
      *
      * @param requestBody 请求

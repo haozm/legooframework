@@ -28,9 +28,9 @@ public class SmsService extends BundleService {
      * @param mobile  手机号码
      * @param content 发送内容
      * @param smsExt  发送扩代码
-     * @return 发送结果
+     * @return 发送结果 以及发送账号
      */
-    public String send(SMSChannel channel, String mobile, String content, long smsExt) {
+    public SendedSmsDto send(SMSChannel channel, String mobile, String content, long smsExt) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("send(SMSChannel=%d, mobile=%s, smsExt=%d) start...",
                     channel.getChannel(), mobile, smsExt));
@@ -48,7 +48,7 @@ public class SmsService extends BundleService {
         stopwatch.stop(); // optional
         if (logger.isDebugEnabled())
             logger.debug(String.format("send(mobile=%s, smsExt=%d) return %s [%s]", mobile, smsExt, response, stopwatch));
-        return response;
+        return new SendedSmsDto(account, response);
     }
 
     /**

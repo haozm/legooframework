@@ -20,6 +20,7 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
     private final Integer companyId, storeId;
     private final SMSEntity sendSms;
     private final SMSChannel smsChannel;
+    private String account;
     private final SendStatus sendStatus;
     private final Long smsExt;
     //  提交返回
@@ -68,6 +69,7 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
             this.companyId = ResultSetUtil.getObject(res, "companyId", Integer.class);
             this.storeId = ResultSetUtil.getObject(res, "storeId", Integer.class);
             this.smsExt = ResultSetUtil.getObject(res, "smsExt", Long.class);
+            this.account = ResultSetUtil.getOptString(res, "sms_account", null);
             this.sendSms = SMSEntity.create4Sending(id, ResultSetUtil.getString(res, "smsContext"),
                     ResultSetUtil.getString(res, "phoneNo"), res.getInt("wordCount"), res.getInt("smsCount"));
             this.smsChannel = SMSChannel.paras(res.getInt("smsChannle"));

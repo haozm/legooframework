@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sqls>
-    <model id="SMSSendAndReceiveEntity">
+    <model id="SMSResultEntity">
         <sql id="insert">
             <body><![CDATA[
           INSERT INTO SMS_SENDING_LOG
@@ -15,6 +15,7 @@
                  sslt.store_id AS 'storeId',
                  sslt.company_id AS 'companyId',
                  sslt.sms_channel AS 'smsChannel',
+                 sslt.sms_account AS 'sms_account',
                  sslt.send_status AS 'sendStatus',
                  sslt.send_msg_id AS 'sendMsgId',
                  sslt.sms_channel AS 'smsChannle',

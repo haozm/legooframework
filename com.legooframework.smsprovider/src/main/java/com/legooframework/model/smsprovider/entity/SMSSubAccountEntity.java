@@ -60,6 +60,10 @@ public class SMSSubAccountEntity extends BaseEntity<String> {
         return httpReplayUrlEncode;
     }
 
+    public String getUsername() {
+        return username;
+    }
+
     boolean isEnabled() {
         return enabled;
     }

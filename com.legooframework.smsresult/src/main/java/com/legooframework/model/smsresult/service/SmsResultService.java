@@ -9,6 +9,7 @@ import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsprovider.entity.SMSProviderEntity;
+import com.legooframework.model.smsprovider.service.SendedSmsDto;
 import com.legooframework.model.smsresult.entity.*;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -44,20 +45,19 @@ public class SmsResultService extends BundleService {
         try {
             _lock.acquire();
             SMSChannel smsChannel = SMSChannel.paras(MapUtils.getIntValue(payload, "smsChannle"));
-            String replay = getSmsService().send(smsChannel, MapUtils.getString(payload, "phoneNo"),
+            SendedSmsDto replayDto = getSmsService().send(smsChannel, MapUtils.getString(payload, "phoneNo"),
                     WebUtils.encodeUrl(MapUtils.getString(payload, "smsContext")),
                     MapUtils.getLong(payload, "smsExt"));
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(replay), "短信网关响应报文为空...");
-            if (StringUtils.startsWith(replay, "success:")) {
-                this.finshSend(payload, replay.substring(8), replay);
-            } else if (StringUtils.startsWith(replay, "error:")) {
-                this.errorSend(payload, replay);
+            if (replayDto.isSuccess()) {
+                this.finshSend(payload, replayDto);
+            } else if (replayDto.isError()) {
+                this.errorSend(payload, replayDto.getAccount(), replayDto.getResponse().orElse(null));
             } else {
-                this.errorSend(payload, "GATEWATERROR");
+                this.errorSend(payload, replayDto.getAccount(), replayDto.getResponse().orElse(null));
             }
         } catch (Exception e) {
             logger.error(String.format("sendToSmsGateWay(%s) has error", payload), e);
-            this.errorSend(payload, e.getMessage());
+            this.errorSend(payload, null, e.getMessage());
         } finally {
             LoginContextHolder.clear();
             _lock.release();
@@ -70,18 +70,20 @@ public class SmsResultService extends BundleService {
         }
     }
 
-    private void finshSend(Map<String, Object> payload, String sendMsgId, String remarks) {
+    private void finshSend(Map<String, Object> payload, SendedSmsDto replayDto) {
         payload.put("finalState", FinalState.SENDEDOK.getState());
-        payload.put("sendMsgId", sendMsgId);
+        payload.put("sendMsgId", replayDto.getSmsSendId());
         payload.put("sendDate", DateTime.now().toDate());
-        payload.put("remarks", remarks);
+        payload.put("remarks", replayDto.getExitsRespons());
+        payload.put("account", replayDto.getAccount());
     }
 
-    private void errorSend(Map<String, Object> payload, String remarks) {
+    private void errorSend(Map<String, Object> payload, String account, String errMsg) {
         payload.put("finalState", FinalState.SENDEDERROR.getState());
         payload.put("sendMsgId", null);
         payload.put("sendDate", null);
-        payload.put("remarks", remarks);
+        payload.put("remarks", errMsg);
+        payload.put("account", account);
     }
 
     private String sendSMSToPlatform(String sendApi, String mobile, String content, Long smsExt) {

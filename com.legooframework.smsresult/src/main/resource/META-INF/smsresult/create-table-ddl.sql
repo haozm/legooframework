@@ -6,6 +6,7 @@ CREATE TABLE SMS_SENDING_LOG
     company_id       INT(11)          NOT NULL,
     store_id         INT(11)          NOT NULL,
     sms_channel      TINYINT UNSIGNED NOT NULL,
+    sms_account      VARCHAR(64)      NULL,
     sms_ext          BIGINT(10)       NOT NULL,
     send_status      TINYINT UNSIGNED NOT NULL,
     send_msg_id      VARCHAR(64)      NULL,

@@ -40,8 +40,14 @@
     <int-jdbc:inbound-channel-adapter channel="channel_sms_splitter"
                                       data-source="smsResultDataSource"
                                       auto-startup="true"
-                                      update="UPDATE SMS_SENDING_LOG SET final_state = 99 WHERE id IN ( :id )"
-                                      query="SELECT id AS 'id', company_id AS 'companyId',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', sms_context AS 'smsContext' FROM SMS_SENDING_LOG WHERE final_state = 0 ORDER BY createTime LIMIT 1024">
+                                      update="UPDATE SMS_SENDING_LOG SET final_state = 99 WHERE id IN ( :id )">
+        <int-jdbc:query><![CDATA[
+    SELECT id AS 'id', company_id AS 'companyId',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo',
+           sms_context AS 'smsContext'
+      FROM SMS_SENDING_LOG
+     WHERE final_state = 0
+  ORDER BY createTime LIMIT 1024
+        ]]></int-jdbc:query>
         <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
     </int-jdbc:inbound-channel-adapter>
     <int:splitter input-channel="channel_sms_splitter" output-channel="channel_sms_gateway"/>
@@ -50,10 +56,15 @@
         <int:poller max-messages-per-poll="256" fixed-rate="500" receive-timeout="5000"
                     task-executor="sms-service-executor"/>
     </int:outbound-channel-adapter>
-    <int-jdbc:outbound-gateway
-            update="UPDATE SMS_SENDING_LOG SET final_state = :payload[finalState], send_msg_id = :payload[sendMsgId], send_date = :payload[sendDate], remarks = :payload[remarks] WHERE id = :payload[id]"
-            request-channel="channel_sms_result" requires-reply="false" reply-channel="nullChannel"
-            data-source="smsResultDataSource"/>
+    <int-jdbc:outbound-gateway request-channel="channel_sms_result" requires-reply="false" reply-channel="nullChannel"
+                               data-source="smsResultDataSource">
+        <int-jdbc:update><![CDATA[
+    UPDATE SMS_SENDING_LOG
+       SET final_state = :payload[finalState], send_msg_id = :payload[sendMsgId], send_date = :payload[sendDate],
+           remarks = :payload[remarks], sms_account = :payload[account]
+     WHERE id = :payload[id]
+        ]]></int-jdbc:update>
+    </int-jdbc:outbound-gateway>
 
     <!-- ================== SMS SYNC STATUS ================== -->
     <int:publish-subscribe-channel id="channel_sync_source"/>
