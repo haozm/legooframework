@@ -114,26 +114,29 @@ public class MvcController extends BaseController {
             logger.debug(String.format("fetchingSMSState(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setAnonymousCtx();
         try {
-            String smsIds = MapUtils.getString(requestBody, "smsIds");
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(smsIds), "带查询的短信资料不可以为空值...");
-            List<String> smsIds_list = Stream.of(StringUtils.split(smsIds, ',')).collect(Collectors.toList());
-            Optional<List<SMSResultEntity>> final_smses_opt = getBean(SMSResultEntityAction.class, request)
-                    .loadByIds(smsIds_list);
+            String mode = MapUtils.getString(requestBody, "mode", "BYSMSId");
             List<String> res_list = Lists.newArrayList();
-            String today_time = DateTime.now().toString("yyyy-MM-dd HH:mm:ss");
-            if (final_smses_opt.isPresent()) {
-                smsIds_list.forEach(smsId -> {
-                    Optional<SMSResultEntity> opt = final_smses_opt.get().stream()
-                            .filter(x -> StringUtils.equals(x.getId(), smsId)).findFirst();
-                    if (opt.isPresent()) {
-                        if (opt.get().hasResult())
-                            res_list.add(opt.get().toFinalState());
-                    } else {
-                        res_list.add(String.format("%s|4|2|%s|%s", smsId, today_time, "error:NOTEXITS"));
-                    }
-                });
-            } else {
-                smsIds_list.forEach(smsId -> res_list.add(String.format("%s|4|2|%s|%s", smsId, today_time, "error:NOTEXITS")));
+            if (StringUtils.equals("BYSMSId", mode)) {
+                String smsIds = MapUtils.getString(requestBody, "payload");
+                Preconditions.checkArgument(!Strings.isNullOrEmpty(smsIds), "带查询的短信资料不可以为空值...");
+                List<String> smsIds_list = Stream.of(StringUtils.split(smsIds, ',')).collect(Collectors.toList());
+                Optional<List<SMSResultEntity>> final_smses_opt = getBean(SMSResultEntityAction.class, request)
+                        .loadByIds(smsIds_list);
+                String today_time = DateTime.now().toString("yyyy-MM-dd HH:mm:ss");
+                if (final_smses_opt.isPresent()) {
+                    smsIds_list.forEach(smsId -> {
+                        Optional<SMSResultEntity> opt = final_smses_opt.get().stream()
+                                .filter(x -> StringUtils.equals(x.getId(), smsId)).findFirst();
+                        if (opt.isPresent()) {
+                            if (opt.get().hasResult())
+                                res_list.add(opt.get().toFinalState());
+                        } else {
+                            res_list.add(String.format("%s|4|2|%s|%s", smsId, today_time, "error:NOTEXITS"));
+                        }
+                    });
+                } else {
+                    smsIds_list.forEach(smsId -> res_list.add(String.format("%s|4|2|%s|%s", smsId, today_time, "error:NOTEXITS")));
+                }
             }
             if (logger.isDebugEnabled())
                 logger.debug(String.format("fetchingSMSState() return %s", StringUtils.join(res_list, "|||")));
