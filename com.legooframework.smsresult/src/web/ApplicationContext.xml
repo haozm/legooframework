@@ -58,7 +58,7 @@
     <int:outbound-channel-adapter ref="smsResultService" method="sending" auto-startup="true"
                                   channel="channel_sms_gateway">
         <int:poller max-messages-per-poll="256" fixed-rate="500" receive-timeout="5000"
-                    task-executor="sms-smsresult                                                                                                       -executor"/>
+                    task-executor="sms-smsresult-executor"/>
     </int:outbound-channel-adapter>
     <int-jdbc:outbound-gateway request-channel="channel_sms_result" requires-reply="false" reply-channel="nullChannel"
                                data-source="smsResultDataSource">
