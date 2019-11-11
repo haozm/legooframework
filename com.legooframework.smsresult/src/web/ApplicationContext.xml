@@ -41,10 +41,8 @@
         </int:interceptors>
     </int:channel>
     <int:publish-subscribe-channel id="channel_sms_result"/>
-    <int-jdbc:inbound-channel-adapter channel="channel_sms_splitter"
-                                      data-source="smsResultDataSource"
-                                      auto-startup="true"
-                                      update="UPDATE SMS_SENDING_LOG SET final_state = 99 WHERE id IN ( :id )">
+    <int-jdbc:inbound-channel-adapter channel="channel_sms_splitter" data-source="smsResultDataSource"
+                                      auto-startup="true">
         <int-jdbc:query><![CDATA[
     SELECT id AS 'id', company_id AS 'companyId',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo',
            sms_context AS 'smsContext'
@@ -52,6 +50,9 @@
      WHERE final_state = 0
   ORDER BY createTime LIMIT 1024
         ]]></int-jdbc:query>
+        <int-jdbc:update><![CDATA[
+    UPDATE SMS_SENDING_LOG SET final_state = 99 WHERE id IN ( :id )
+        ]]></int-jdbc:update>
         <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
     </int-jdbc:inbound-channel-adapter>
     <int:splitter input-channel="channel_sms_splitter" output-channel="channel_sms_gateway"/>
@@ -81,7 +82,7 @@
          FROM SMS_SENDING_LOG
         WHERE final_state = 98
           AND TIMESTAMPDIFF(HOUR,send_date,NOW()) <= 6
-          AND TIMESTAMPDIFF(MINUTE,send_date,NOW()) >= 10
+          AND TIMESTAMPDIFF(MINUTE,send_date,NOW()) >= 5
      ORDER BY createTime
         LIMIT 4096
             ]]>

@@ -28,6 +28,11 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
         if (logger.isDebugEnabled()) logger.debug(String.format("insert(sms %s )  OK", instance.getId()));
     }
 
+    /**
+     * 批量插入
+     *
+     * @param instances OOXX
+     */
     public void batchInsert(Collection<SMSResultEntity> instances) {
         if (CollectionUtils.isEmpty(instances)) return;
         String INSERT_SQL = "INSERT INTO SMS_SENDING_LOG (id, company_id, store_id, sms_channel, send_status, phone_no, sms_count, \n" +
@@ -38,7 +43,7 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
 
     /**
      * @param smsIds 短信IDS
-     * @return Options
+     * @return Options OOXX
      */
     public Optional<List<SMSResultEntity>> loadByIds(Collection<String> smsIds) {
         if (CollectionUtils.isEmpty(smsIds)) return Optional.empty();

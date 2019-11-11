@@ -6,7 +6,6 @@ import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
-import com.legooframework.model.smsprovider.entity.SMSProviderEntity;
 import com.legooframework.model.smsprovider.entity.SMSSubAccountEntity;
 import com.legooframework.model.smsprovider.service.SendedSmsDto;
 import com.legooframework.model.smsprovider.service.SyncSmsDto;
@@ -19,21 +18,15 @@ import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
-import java.util.function.Consumer;
 
 public class SmsResultService extends BundleService {
 
@@ -96,9 +89,9 @@ public class SmsResultService extends BundleService {
         try {
             String account = MapUtils.getString(payload, "account");
             Date sendDate = (Date) MapUtils.getObject(payload, "sendDate");
-            Date startTime = LocalDateTime.fromDateFields(sendDate).plusMinutes(-10).toDate();
+            long start = LocalDateTime.fromDateFields(sendDate).plusMinutes(-10).toDate().getTime() / 1000;
             Optional<String> optional = getSmsService().sync(account, MapUtils.getString(payload, "phoneNo"),
-                    startTime, DateTime.now().toDate());
+                    start, DateTime.now().toDate().getTime() / 1000);
             if (!optional.isPresent()) return;
             String[] payloads = StringUtils.split(optional.get(), ';');
             if (ArrayUtils.isEmpty(payloads)) return;
