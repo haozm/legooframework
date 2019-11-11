@@ -139,15 +139,15 @@ public class SmsResultService extends BundleService {
         if (!subAccounts.isPresent()) return;
         List<CompletableFuture<Void>> cfs = Lists.newArrayListWithCapacity(subAccounts.get().size());
         for (SMSSubAccountEntity $it : subAccounts.get()) {
-            CompletableFuture.supplyAsync(() -> getSmsService().reply($it)).thenAccept(opt -> {
-                LoginContextHolder.setIfNotExitsAnonymousCtx();
-                try {
-                    if (opt.isPresent() && opt.get().getResponse().isPresent()) {
-                        getBean(SMSReplayEntityAction.class).batchInsert(opt.get().getResponse().get());
+            CompletableFuture.supplyAsync(() -> getSmsService().reply($it)).thenAcceptAsync(opt -> {
+                opt.flatMap(SyncSmsDto::getResponse).ifPresent(ctn -> {
+                    LoginContextHolder.setIfNotExitsAnonymousCtx();
+                    try {
+                        getBean(SMSReplayEntityAction.class).batchInsert(ctn);
+                    } finally {
+                        LoginContextHolder.clear();
                     }
-                } finally {
-                    LoginContextHolder.clear();
-                }
+                });
             });
         }
         if (CollectionUtils.isNotEmpty(cfs)) {

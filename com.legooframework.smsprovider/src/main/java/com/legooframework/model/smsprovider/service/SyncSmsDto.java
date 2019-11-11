@@ -23,7 +23,7 @@ public class SyncSmsDto {
     }
 
     public Optional<String> getResponse() {
-        if (StringUtils.equals("no record", response) || StringUtils.startsWith(response, "error:"))
+        if (!Strings.isNullOrEmpty(response) && StringUtils.equals("no record", response) || StringUtils.startsWith(response, "error:"))
             return Optional.empty();
         return Optional.of(response);
     }
