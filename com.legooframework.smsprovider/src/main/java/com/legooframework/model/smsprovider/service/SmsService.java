@@ -66,12 +66,12 @@ public class SmsService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("reply(account=%s) start...", account));
         Map<String, Object> pathVariables = Maps.newHashMap();
-        Mono<String> mono = WebClient.create().method(HttpMethod.GET)
+        Mono<String> mono = WebClient.create().method(HttpMethod.POST)
                 .uri(account.getHttpReplyUrl(), pathVariables)
                 .contentType(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(String.class);
         Stopwatch stopwatch = Stopwatch.createStarted();
-        String response = mono.block(Duration.ofSeconds(60L));
+        String response = mono.block(Duration.ofSeconds(60));
         stopwatch.stop(); // optional
         if (logger.isDebugEnabled())
             logger.debug(String.format("reply(account=%s) return %s [%s]", account, response, stopwatch));

@@ -111,12 +111,13 @@ public class SMSSubAccountEntity extends BaseEntity<String> {
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
-                .add("apikey", apikey)
+                .add("apikey", "********")
                 .add("username", username)
                 .add("password", "********")
                 .add("channel", channel)
                 .add("httpSendUrl", httpSendUrl)
                 .add("httpStatusUrl", httpStatusUrl)
+                .add("httpReplayUrl", httpReplayUrl)
                 .add("smsSuffix", smsSuffix)
                 .toString();
     }
