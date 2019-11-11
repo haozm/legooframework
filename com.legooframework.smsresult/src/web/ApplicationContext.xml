@@ -27,7 +27,7 @@
     <import resource="classpath:META-INF/smsresult/spring-model-cfg.xml"/>
 
     <task:executor id="sms-smsresult-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>
-    <task:scheduler id="smsresult-scheduler" pool-size="2-4"/>
+    <task:scheduler id="smsresult-scheduler" pool-size="4"/>
     <task:scheduled-tasks scheduler="smsresult-scheduler">
         <task:scheduled ref="smsResultService" method="replay" cron="0 0/10 * * * ?"/>
     </task:scheduled-tasks>
