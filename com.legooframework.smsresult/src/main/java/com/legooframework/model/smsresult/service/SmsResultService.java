@@ -133,7 +133,7 @@ public class SmsResultService extends BundleService {
         List<CompletableFuture<Void>> cfs = Lists.newArrayListWithCapacity(subAccounts.get().size());
         for (SMSSubAccountEntity $it : subAccounts.get()) {
             CompletableFuture.supplyAsync(() -> getSmsService().reply($it)).thenAcceptAsync(opt -> {
-                opt.flatMap(SyncSmsDto::getResponse).ifPresent(ctn -> {
+                opt.ifPresent(ctn -> {
                     LoginContextHolder.setIfNotExitsAnonymousCtx();
                     try {
                         getBean(SMSReplayEntityAction.class).batchInsert(ctn);
