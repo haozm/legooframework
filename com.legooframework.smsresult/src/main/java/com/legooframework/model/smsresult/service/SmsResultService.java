@@ -137,21 +137,24 @@ public class SmsResultService extends BundleService {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         Optional<List<SMSSubAccountEntity>> subAccounts = getSmsService().findEnabledSubAccounts();
         if (!subAccounts.isPresent()) return;
-        List<CompletableFuture<?>> cfs = Lists.newArrayListWithCapacity(subAccounts.get().size());
+        List<CompletableFuture<Void>> cfs = Lists.newArrayListWithCapacity(subAccounts.get().size());
         for (SMSSubAccountEntity $it : subAccounts.get()) {
-            CompletableFuture.supplyAsync(() -> {
+            CompletableFuture.supplyAsync(() -> getSmsService().reply($it)).thenAccept(opt -> {
                 LoginContextHolder.setIfNotExitsAnonymousCtx();
-                return getSmsService().reply($it);
-            }).thenAccept(opt -> {
-                if (opt.isPresent() && opt.get().getResponse().isPresent()) {
-                    getBean(SMSReplayEntityAction.class).batchInsert(opt.get().getResponse().get());
+                try {
+                    if (opt.isPresent() && opt.get().getResponse().isPresent()) {
+                        getBean(SMSReplayEntityAction.class).batchInsert(opt.get().getResponse().get());
+                    }
+                } finally {
+                    LoginContextHolder.clear();
                 }
-                LoginContextHolder.clear();
             });
         }
         if (CollectionUtils.isNotEmpty(cfs)) {
-            CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0])).join();
+            CompletableFuture.allOf(cfs.toArray(new CompletableFuture[]{})).join();
         }
+        if (logger.isDebugEnabled())
+            logger.debug("replay() ..... completable....");
     }
 
 }
