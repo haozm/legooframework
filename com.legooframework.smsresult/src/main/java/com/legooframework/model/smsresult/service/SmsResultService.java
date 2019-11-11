@@ -108,10 +108,11 @@ public class SmsResultService extends BundleService {
         // {id=51300364-1a85-4764-905a-0000ea5f6dc0, companyId=100098, smsExt=4776124108, smsChannle=2, phoneNo=18575106652}
         LoginContextHolder.setAnonymousCtx();
         try {
-            SMSChannel smsChannel = SMSChannel.paras(MapUtils.getIntValue(payload, "smsChannle"));
+            String account = MapUtils.getString(payload, "account");
             Date sendDate = (Date) MapUtils.getObject(payload, "sendDate");
             Date startTime = LocalDateTime.fromDateFields(sendDate).plusMinutes(-10).toDate();
-            Optional<String> optional = getSmsService().sync(smsChannel, MapUtils.getString(payload, "phoneNo"), startTime, DateTime.now().toDate());
+            Optional<String> optional = getSmsService().sync(account, MapUtils.getString(payload, "phoneNo"),
+                    startTime, DateTime.now().toDate());
             if (!optional.isPresent()) return;
             String[] payloads = StringUtils.split(optional.get(), ';');
             if (ArrayUtils.isEmpty(payloads)) return;

@@ -74,33 +74,33 @@ public class SmsService extends BundleService {
     /**
      * 查询指定时间段内的 短信号码发送情况
      *
-     * @param channel 短信通道
+     * @param account 账户信息
      * @param mobile  手机号码
      * @param start   开始时间
      * @param end     结束时间
      * @return response
      */
-    public Optional<String> sync(SMSChannel channel, String mobile, Date start, Date end) {
+    public Optional<String> sync(String account, String mobile, Date start, Date end) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("sync(SMSChannel=%d, mobile=%s, start=%s, end=%s) start...",
-                    channel.getChannel(), mobile, start, end));
-        SMSSubAccountEntity account = getSMSProvider().loadSubAccountByChannel(channel);
+            logger.debug(String.format("sync(account=%s, mobile=%s, start=%s, end=%s) start...",
+                    account, mobile, start, end));
+        SMSSubAccountEntity subAccount = getSMSProvider().loadSubAccountByAccount(account);
         Map<String, Object> pathVariables = Maps.newHashMap();
         pathVariables.put("start", start.getTime() / 1000);
         pathVariables.put("end", end.getTime() / 1000);
         pathVariables.put("mobile", mobile);
         Stopwatch stopwatch = Stopwatch.createStarted();
         Mono<String> mono = WebClient.create().method(HttpMethod.GET)
-                .uri(account.getHttpStatusUrl(), pathVariables)
+                .uri(subAccount.getHttpStatusUrl(), pathVariables)
                 .contentType(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(String.class);
         String response = mono.block(Duration.ofSeconds(20L));
         stopwatch.stop(); // optional
         if (logger.isDebugEnabled())
-            logger.debug(String.format("sync(SMSChannel=%d, mobile=%s, start=%s, end=%s) return %s [%s]",
-                    channel.getChannel(), mobile, start, end, response, stopwatch));
+            logger.debug(String.format("sync(account=%s, mobile=%s, start=%s, end=%s) return %s [%s]",
+                    account, mobile, start, end, response, stopwatch));
         if (StringUtils.equals("no record", response) || StringUtils.startsWith(response, "error:"))
             return Optional.empty();
-        return Optional.of(response);
+        return Optional.ofNullable(response);
     }
 }

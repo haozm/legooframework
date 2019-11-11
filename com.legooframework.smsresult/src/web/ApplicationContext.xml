@@ -72,7 +72,8 @@
                                       auto-startup="true">
         <int-jdbc:query>
             <![CDATA[
-        SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate'
+       SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate',
+              sms_account AS 'account'
          FROM SMS_SENDING_LOG
         WHERE final_state = 98
           AND TIMESTAMPDIFF(HOUR,send_date,NOW()) <= 6

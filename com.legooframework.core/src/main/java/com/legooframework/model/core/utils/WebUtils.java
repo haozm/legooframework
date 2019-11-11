@@ -39,8 +39,7 @@ public abstract class WebUtils extends org.springframework.web.util.WebUtils {
 
     public static Optional<JsonElement> parseJson(String jsonString) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(jsonString), "入参 String jsonString 不可为空值.... ");
-        JsonParser parser = new JsonParser();
-        JsonObject jsonObject = parser.parse(jsonString).getAsJsonObject();
+        JsonObject jsonObject = JsonParser.parseString(jsonString).getAsJsonObject();
         String code = jsonObject.get(ATT_CODE).getAsString();
         if (!StringUtils.equals(VAL_SUCC, code)) {
             throw new RuntimeException(String.format("ERROE:%s , MSG:%s ", code, jsonObject.get(ATT_MSG).getAsString()));

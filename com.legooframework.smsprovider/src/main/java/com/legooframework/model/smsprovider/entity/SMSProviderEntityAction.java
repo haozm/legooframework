@@ -3,6 +3,7 @@ package com.legooframework.model.smsprovider.entity;
 import com.google.common.base.Preconditions;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
@@ -46,6 +47,13 @@ public class SMSProviderEntityAction extends BaseEntityAction<SMSProviderEntity>
         Optional<SMSSubAccountEntity> optional = accounts.stream().filter(SMSSubAccountEntity::isEnabled).filter(x -> x.isChannel(channel))
                 .findFirst();
         Preconditions.checkState(optional.isPresent(), "无SMSChannel=%s 对应的通道.....", channel);
+        return optional.get();
+    }
+
+    public SMSSubAccountEntity loadSubAccountByAccount(String account) {
+        List<SMSSubAccountEntity> accounts = loadAllSubAccounts();
+        Optional<SMSSubAccountEntity> optional = accounts.stream().filter(x -> StringUtils.equals(x.getUsername(), account)).findFirst();
+        Preconditions.checkState(optional.isPresent(), "account=%s 对应的通道.....", account);
         return optional.get();
     }
 
