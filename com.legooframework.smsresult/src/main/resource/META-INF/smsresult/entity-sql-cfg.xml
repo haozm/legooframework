@@ -8,7 +8,7 @@
                VALUES (:id,:companyId, :storeId, :smsChannel, :sendStatus, :phoneNo,  :smsCount, :wordCount, :smsContext, :smsExt, :tenantId,           0,      -1, CURRENT_TIMESTAMP)
             ]]></body>
         </sql>
-        <sql id="loadByIds" macros="crud_fixed">
+        <sql id="query4list" macros="crud_fixed">
             <body><![CDATA[
           SELECT sslt.id AS 'id',
                  sslt.phone_no AS 'mobileNo',
@@ -31,7 +31,9 @@
                  sslt.sms_context AS 'smsContext',
                  <@crud_fixed_select "sslt" />
             FROM SMS_SENDING_LOG AS sslt
+        <#if (sql=="loadByIds")>
            WHERE sslt.id IN ( ${smsIds?join(",")} )
+        </#if>
             ]]></body>
         </sql>
     </model>
@@ -40,7 +42,7 @@
             <body><![CDATA[
         INSERT INTO SMS_REPLAY_LOG
                     (phone_no, sms_ext, send_msg_id, sms_context, sms_replay_date,sms_account)
-             VALUES (       ?,       ?,           ?,           ?,                ?,          ?)
+             VALUES (       ?,       ?,           ?,           ?,                ?,         ?)
             ]]></body>
         </sql>
         <sql id="load4TDEntities" macros="crud_fixed">

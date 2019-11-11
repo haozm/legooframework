@@ -49,7 +49,8 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
         if (CollectionUtils.isEmpty(smsIds)) return Optional.empty();
         Map<String, Object> params = Maps.newHashMap();
         params.put("smsIds", smsIds.stream().map(x -> String.format("'%s'", x)).collect(Collectors.toList()));
-        Optional<List<SMSResultEntity>> res = super.queryForEntities("loadByIds", params, getRowMapper());
+        params.put("sql", "loadByIds");
+        Optional<List<SMSResultEntity>> res = super.queryForEntities("query4list", params, getRowMapper());
         if (logger.isDebugEnabled())
             logger.debug(String.format("loadByIds() size is %s", res.map(List::size).orElse(0)));
         return res;

@@ -44,7 +44,8 @@ public class SMSProviderEntityAction extends BaseEntityAction<SMSProviderEntity>
 
     public SMSSubAccountEntity loadSubAccountByChannel(SMSChannel channel) {
         List<SMSSubAccountEntity> accounts = loadAllSubAccounts();
-        Optional<SMSSubAccountEntity> optional = accounts.stream().filter(SMSSubAccountEntity::isEnabled).filter(x -> x.isChannel(channel))
+        Optional<SMSSubAccountEntity> optional = accounts.stream().filter(SMSSubAccountEntity::isEnabled)
+                .filter(x -> x.isChannel(channel))
                 .findFirst();
         Preconditions.checkState(optional.isPresent(), "无SMSChannel=%s 对应的通道.....", channel);
         return optional.get();
@@ -52,7 +53,8 @@ public class SMSProviderEntityAction extends BaseEntityAction<SMSProviderEntity>
 
     public SMSSubAccountEntity loadSubAccountByAccount(String account) {
         List<SMSSubAccountEntity> accounts = loadAllSubAccounts();
-        Optional<SMSSubAccountEntity> optional = accounts.stream().filter(x -> StringUtils.equals(x.getUsername(), account)).findFirst();
+        Optional<SMSSubAccountEntity> optional = accounts.stream().filter(x ->
+                StringUtils.equals(x.getUsername(), account)).findFirst();
         Preconditions.checkState(optional.isPresent(), "account=%s 对应的通道.....", account);
         return optional.get();
     }
@@ -78,7 +80,8 @@ public class SMSProviderEntityAction extends BaseEntityAction<SMSProviderEntity>
             List<SMSProviderEntity> list = getCache().get().get(cache_key, List.class);
             if (CollectionUtils.isNotEmpty(list)) return list;
         }
-        Optional<List<SMSProviderEntity>> accounts = super.queryForEntities("loadAllProviders", null, new SMSProviderRowMapperImpl());
+        Optional<List<SMSProviderEntity>> accounts = super.queryForEntities("loadAllProviders", null,
+                new SMSProviderRowMapperImpl());
         Preconditions.checkState(accounts.isPresent(), "不存在发送渠道定义....");
         getCache().ifPresent(c -> accounts.ifPresent(l -> c.put(cache_key, l)));
         return accounts.get();

@@ -129,14 +129,14 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
 
     public String toFinalState() {
         if (FinalState.SENDEDERROR == getFinalState()) {
-            return String.format("%s|4|2|%s|%s", getId(), this.sendDate == null ? LocalDateTime.now().toString("yyyy-MM-dd HH:mm:ss") :
+            return String.format("%s|%s|4|2|%s|%s", getMobile(), getId(), this.sendDate == null ? LocalDateTime.now().toString("yyyy-MM-dd HH:mm:ss") :
                             DateFormatUtils.format(this.sendDate, "yyyy-MM-dd HH:mm:ss"),
                     this.remarks == null ? "error:SENDERROR" : this.remarks);
         }
         if (FinalState.DELIVRD == getFinalState()) {
-            return String.format("%s|3|1|%s|DELIVRD", getId(), DateFormatUtils.format(this.finalStateDate, "yyyy-MM-dd HH:mm:ss"));
+            return String.format("%s|%s|3|1|%s|DELIVRD", getMobile(), getId(), DateFormatUtils.format(this.finalStateDate, "yyyy-MM-dd HH:mm:ss"));
         }
-        return String.format("%s|4|2|%s|%s", getId(), DateFormatUtils.format(this.finalStateDate, "yyyy-MM-dd HH:mm:ss"),
+        return String.format("%s|%s|4|2|%s|%s", getMobile(), getId(), DateFormatUtils.format(this.finalStateDate, "yyyy-MM-dd HH:mm:ss"),
                 finalStateDesc == null ? "ERROR" : finalStateDesc);
     }
 
