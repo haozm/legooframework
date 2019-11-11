@@ -64,7 +64,7 @@ public class SmsService extends BundleService {
      */
     public Optional<SyncSmsDto> reply(SMSSubAccountEntity account) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("reply(account=%s) start...", account));
+            logger.debug(String.format("reply(account=%s,url=%s) start...", account.getUsername(), account.getHttpReplyUrl()));
         Map<String, Object> pathVariables = Maps.newHashMap();
         Mono<String> mono = WebClient.create().method(HttpMethod.POST)
                 .uri(account.getHttpReplyUrl(), pathVariables)
@@ -74,7 +74,8 @@ public class SmsService extends BundleService {
         String response = mono.block(Duration.ofSeconds(60));
         stopwatch.stop(); // optional
         if (logger.isDebugEnabled())
-            logger.debug(String.format("reply(account=%s) return %s [%s]", account, response, stopwatch));
+            logger.debug(String.format("reply(account=%s,url=%s) return %s [%s]", account.getUsername(),
+                    account.getHttpReplyUrl(), response, stopwatch));
         return Optional.ofNullable(Strings.isNullOrEmpty(response) ? null : new SyncSmsDto(response));
     }
 
