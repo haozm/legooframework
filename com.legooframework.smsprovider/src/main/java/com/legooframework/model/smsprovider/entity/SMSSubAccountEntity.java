@@ -83,7 +83,7 @@ public class SMSSubAccountEntity extends BaseEntity<String> {
         params.put("username", username);
         params.put(encryptPwd ? "password_md5" : "password", password);
         params.put("encode", "UTF-8");
-        return String.format("%s&%s", httpReplayUrl, joiner.join(params));
+        return String.format("%s?%s", httpReplayUrl, joiner.join(params));
     }
 
     private String createHttpStatusByMobilesUrl(Joiner.MapJoiner joiner) {
