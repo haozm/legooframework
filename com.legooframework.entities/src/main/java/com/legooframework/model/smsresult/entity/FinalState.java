@@ -39,8 +39,9 @@ public enum FinalState {
                 break;
             case 97:
                 res = FinalState.SENDEDERROR;
+                break;
             default:
-                throw new IllegalArgumentException(String.format("非法的入参....%s", val));
+                throw new IllegalArgumentException(String.format("非法的FinalState取值....%s", val));
         }
         return res;
     }
