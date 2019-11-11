@@ -33,8 +33,8 @@ public class SMSBatchSaveLogEntityActionTest {
         String ssm = "【动感曲线清溪店】尊贵的卿艳辉顾客您好：感谢您长期以来对我们的支持与信任，本月是您的生日，欢迎到店免费领取回复TD退订";
         List<SMSEntity> smses = Lists.newArrayList();
         for (int i = 0; i < 3000; i++) {
-            smses.add(SMSEntity.createSMSMsg(UUID.randomUUID().toString(), -1, "18588828127",
-                    null, String.format(ssm, i), 0));
+            smses.add(SMSEntity.createSMSMsgWithNoJob(UUID.randomUUID().toString(), -1, "18588828127",
+                    null, String.format(ssm, i)));
         }
         KvDictEntity businessType = kvDictEntityAction.findByValue("SMS_BUS_TYPE", "90TOUCHED").get();
         final SMSSendRuleEntity sendRule = smsSendRuleEntityAction.loadByType(BusinessType.TOUCHED90);

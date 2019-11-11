@@ -23,8 +23,8 @@ public class SmsSendingServiceTest {
         });
         List<SMSEntity> smses = Lists.newArrayList();
         for (int i = 0; i < 5; i++) {
-            SMSEntity msm = SMSEntity.createSMSMsg(UUID.randomUUID().toString(), 12, "18588828127", "hxj",
-                    "【测试公司】回家吃饭，你妈妈喊你了.回复TD退订", 0);
+            SMSEntity msm = SMSEntity.createSMSMsgWithNoJob(UUID.randomUUID().toString(), 12, "18588828127", "hxj",
+                    "【测试公司】回家吃饭，你妈妈喊你了.回复TD退订");
             smses.add(msm);
         }
 //        LoginContext user = app.getBean(CrmReadService.class).loadByLoginName(100098, "00003HBCYMTJ");

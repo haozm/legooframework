@@ -8,7 +8,6 @@ import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsprovider.entity.SMSSubAccountEntity;
 import com.legooframework.model.smsprovider.service.SendedSmsDto;
-import com.legooframework.model.smsprovider.service.SyncSmsDto;
 import com.legooframework.model.smsresult.entity.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -132,16 +131,14 @@ public class SmsResultService extends BundleService {
         if (!subAccounts.isPresent()) return;
         List<CompletableFuture<Void>> cfs = Lists.newArrayListWithCapacity(subAccounts.get().size());
         for (SMSSubAccountEntity $it : subAccounts.get()) {
-            CompletableFuture.supplyAsync(() -> getSmsService().reply($it)).thenAcceptAsync(opt -> {
-                opt.ifPresent(ctn -> {
-                    LoginContextHolder.setIfNotExitsAnonymousCtx();
-                    try {
-                        getBean(SMSReplayEntityAction.class).batchInsert(ctn);
-                    } finally {
-                        LoginContextHolder.clear();
-                    }
-                });
-            });
+            CompletableFuture.supplyAsync(() -> getSmsService().reply($it)).thenAccept(opt -> opt.ifPresent(dto -> {
+                LoginContextHolder.setIfNotExitsAnonymousCtx();
+                try {
+                    getBean(SMSReplayEntityAction.class).batchInsert(dto);
+                } finally {
+                    LoginContextHolder.clear();
+                }
+            }));
         }
         if (CollectionUtils.isNotEmpty(cfs)) {
             CompletableFuture.allOf(cfs.toArray(new CompletableFuture[]{})).join();

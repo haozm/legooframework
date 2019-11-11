@@ -1,6 +1,5 @@
 package com.legooframework.model.smsresult.entity;
 
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
@@ -29,7 +28,7 @@ public class SMSReplayEntityAction extends BaseEntityAction<SMSReplayEntity> {
     }
 
     public void batchInsert(SyncSmsDto syncSmsDto) {
-        if (syncSmsDto.getResponse().isPresent()) return;
+        if (!syncSmsDto.getResponse().isPresent()) return;
         String replay_str = syncSmsDto.getResponse().get();
         String[] args = StringUtils.split(replay_str, "|||");
         if (ArrayUtils.isEmpty(args)) return;

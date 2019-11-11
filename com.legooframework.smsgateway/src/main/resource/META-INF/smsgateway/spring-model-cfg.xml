@@ -136,6 +136,7 @@
     </bean>
 
     <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
+    <!--
     <task:scheduler id="sms-client-scheduler" pool-size="8"/>
     <task:executor id="sms-client-executor" pool-size="4-32" queue-capacity="512" rejection-policy="CALLER_RUNS"/>
     <task:scheduled-tasks scheduler="sms-client-scheduler">
@@ -168,4 +169,5 @@
         <int:poller max-messages-per-poll="800" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="5000"
                     task-executor="sms-client-executor"/>
     </int:outbound-channel-adapter>
+    -->
 </beans>

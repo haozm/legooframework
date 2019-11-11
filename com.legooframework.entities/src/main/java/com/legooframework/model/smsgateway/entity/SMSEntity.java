@@ -59,10 +59,15 @@ public class SMSEntity {
         this.deviceId = deviceId;
     }
 
-    public static SMSEntity createSMSMsg(String smsId, Integer memberId, String phoneNo,
-                                         String memberName, String content, Integer jobId) {
+    public static SMSEntity createSMSMsgWithJob(String smsId, Integer memberId, String phoneNo,
+                                                String memberName, String content, Integer jobId) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(StringUtils.trimToNull(content)), "短信内容为空,创建短信失败....");
         return new SMSEntity(smsId, content, phoneNo, memberId, memberName, jobId, true);
+    }
+
+    public static SMSEntity createSMSMsgWithNoJob(String smsId, Integer memberId, String phoneNo, String memberName, String content) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(StringUtils.trimToNull(content)), "短信内容为空,创建短信失败....");
+        return new SMSEntity(smsId, content, phoneNo, memberId, memberName, 0, true);
     }
 
     public static List<SMSEntity> createSMSMsg(SendMessageTemplate message) {
@@ -190,15 +195,15 @@ public class SMSEntity {
         this.smsNum = this.wordCount <= 70 ? 1 : (this.wordCount % 67 + 1);
     }
 
-    public String getEncodeCtx() {
+    String getEncodeCtx() {
         return WebUtils.encodeUrl(this.content);
     }
 
-    public String getMemberName() {
+    String getMemberName() {
         return memberName;
     }
 
-    public CommunicationChannel getCommunicationChannel() {
+    CommunicationChannel getCommunicationChannel() {
         return communicationChannel;
     }
 

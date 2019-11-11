@@ -12,7 +12,7 @@ import org.springframework.util.ResourceUtils;
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-db-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/covariant/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsgateway/spring-model-cfg.xml"}
 )
 public class RechargeDetailEntityActionTest {
@@ -37,7 +37,7 @@ public class RechargeDetailEntityActionTest {
 //        System.out.println(res.get());
     }
 
-//    @Autowired
+    //    @Autowired
 //    CrmOrganizationEntityAction companyAction;
     @Autowired
     StoEntityAction storeAction;
