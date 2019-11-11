@@ -1,7 +1,5 @@
 package com.legooframework.model.smsresult.service;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
@@ -9,6 +7,7 @@ import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsprovider.entity.SMSProviderEntity;
+import com.legooframework.model.smsprovider.entity.SMSSubAccountEntity;
 import com.legooframework.model.smsprovider.service.SendedSmsDto;
 import com.legooframework.model.smsresult.entity.*;
 import org.apache.commons.collections4.MapUtils;
@@ -30,6 +29,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
 
 public class SmsResultService extends BundleService {
@@ -86,23 +86,6 @@ public class SmsResultService extends BundleService {
         payload.put("account", account);
     }
 
-    private String sendSMSToPlatform(String sendApi, String mobile, String content, Long smsExt) {
-        Map<String, Object> pathVariables = Maps.newHashMap();
-        pathVariables.put("mobile", mobile);
-        pathVariables.put("ext", smsExt);
-        pathVariables.put("content", content);
-        if (logger.isTraceEnabled())
-            logger.trace(String.format("http://******/ext=%s&mobile=%s&content=%s", smsExt, mobile, content));
-        Mono<String> mono = WebClient.create().method(HttpMethod.POST)
-                .uri(sendApi, pathVariables)
-                .contentType(MediaType.APPLICATION_JSON)
-                .retrieve().bodyToMono(String.class);
-        String send_rsp = mono.block(Duration.ofSeconds(30L));
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("sendSMSToPlatform() and send_rsp=%s", send_rsp));
-        return send_rsp;
-    }
-
     // LIST CHANNEL_SYNC_STATE
     public void syncState(@Payload Map<String, Object> payload) {
         // {id=51300364-1a85-4764-905a-0000ea5f6dc0, companyId=100098, smsExt=4776124108, smsChannle=2, phoneNo=18575106652}
@@ -145,19 +128,23 @@ public class SmsResultService extends BundleService {
         getBean(SMSBlackListEntityAction.class).batchInsert(black_list);
     }
 
-    public void pullSmsGateWayReply() {
+    public void replay() {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
-        SMSProviderEntity provider = getSmsProviderAction().loadSMSSupplier();
-        Optional<List<String>> postUrls = provider.getHttpReplayUrl();
-        postUrls.ifPresent(urls -> urls.forEach(url -> {
-            try {
-                sendAndReceive(url);
-            } catch (Exception e) {
-                logger.error("pullSmsGateWayReplay has error ", e);
-            } finally {
-                LoginContextHolder.clear();
-            }
-        }));
+        Optional<List<SMSSubAccountEntity>> subAccounts = getSmsService().findEnabledSubAccounts();
+        if (!subAccounts.isPresent()) return;
+
+
+//        SMSProviderEntity provider = getSmsProviderAction().loadSMSSupplier();
+//        Optional<List<String>> postUrls = provider.getHttpReplayUrl();
+//        postUrls.ifPresent(urls -> urls.forEach(url -> {
+//            try {
+//                sendAndReceive(url);
+//            } catch (Exception e) {
+//                logger.error("replay has error ", e);
+//            } finally {
+//                LoginContextHolder.clear();
+//            }
+//        }));
     }
 
     private void sendAndReceive(String replayApi) {

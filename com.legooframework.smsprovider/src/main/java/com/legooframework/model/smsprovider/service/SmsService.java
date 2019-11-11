@@ -3,6 +3,7 @@ package com.legooframework.model.smsprovider.service;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Maps;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
+import com.legooframework.model.smsprovider.entity.SMSProviderEntityAction;
 import com.legooframework.model.smsprovider.entity.SMSSubAccountEntity;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -14,12 +15,17 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 public class SmsService extends BundleService {
 
     private static final Logger logger = LoggerFactory.getLogger(SmsService.class);
+
+    public Optional<List<SMSSubAccountEntity>> findEnabledSubAccounts() {
+        return getBean(SMSProviderEntityAction.class).findEnabledSubAccounts();
+    }
 
     /**
      * 基于通道 发送 短信

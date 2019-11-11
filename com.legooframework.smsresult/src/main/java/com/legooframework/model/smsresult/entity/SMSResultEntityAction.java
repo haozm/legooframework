@@ -1,6 +1,5 @@
 package com.legooframework.model.smsresult.entity;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import org.apache.commons.collections4.CollectionUtils;
@@ -21,8 +20,6 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
     public SMSResultEntityAction() {
         super(null);
     }
-
-    private final List<SMSResultEntity> SENDING_QUEUE = Collections.synchronizedList(Lists.newArrayListWithExpectedSize(500));
 
     public void insert(SMSResultEntity instance) {
         String INSERT_SQL = "INSERT INTO SMS_SENDING_LOG (id, company_id, store_id, sms_channel, send_status, phone_no, sms_count," +
@@ -64,7 +61,7 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
             ps.setObject(5, MapUtils.getLong(map, "sendMsgId"));
         });
         if (logger.isDebugEnabled())
-            logger.debug(String.format("updateState() retuen size is  %d", statusMaps.size()));
+            logger.debug(String.format("updateState() retuen size is %d", statusMaps.size()));
     }
 
     @Override
