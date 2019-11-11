@@ -37,7 +37,6 @@ public class MvcController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(MvcController.class);
 
-
     @GetMapping(value = "/welcome.json")
     @ResponseBody
     public JsonMessage welcome(HttpServletRequest request) {
@@ -59,9 +58,9 @@ public class MvcController extends BaseController {
      */
     @PostMapping(value = "/smses/batch/sending.json")
     @ResponseBody
-    public JsonMessage batchSendingSms(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+    public JsonMessage batchSMSSending(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug("batchSendingSms(payload=...) start");
+            logger.debug("batchSMSSending(payload=...) start");
         LoginContextHolder.setAnonymousCtx();
         String smsId = null;
         try {
@@ -84,7 +83,7 @@ public class MvcController extends BaseController {
                         cacheList.clear();
                     }
                 } catch (Exception e) {
-                    logger.error(String.format("batchSendingSms(%s) has error", $it), e);
+                    logger.error(String.format("batchSMSSending(%s) has error", $it), e);
                     result.add(String.format("%s|9999|短信接受异常", smsId));
                 }
             }
@@ -94,7 +93,7 @@ public class MvcController extends BaseController {
             }
             return JsonMessageBuilder.OK().withPayload(StringUtils.join(result, "||")).toMessage();
         } catch (Exception e) {
-            logger.error("batchSendingSms(%s) has error", e);
+            logger.error("batchSMSSending(%s) has error", e);
             return JsonMessageBuilder.ERROR("9999", "请求数据异常").toMessage();
         } finally {
             LoginContextHolder.clear();
@@ -108,11 +107,11 @@ public class MvcController extends BaseController {
      * @param request     网络请求 云妮
      * @return 无敌破环王
      */
-    @PostMapping(value = "/finalstate/fetching/bymsgId.json")
+    @PostMapping(value = "/smses/state/fetching.json")
     @ResponseBody
-    public JsonMessage syncFialState(@RequestBody(required = false) Map<String, Object> requestBody, HttpServletRequest request) {
+    public JsonMessage fetchingSMSState(@RequestBody(required = false) Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("syncFialState(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
+            logger.debug(String.format("fetchingSMSState(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setAnonymousCtx();
         try {
             String smsIds = MapUtils.getString(requestBody, "smsIds");
@@ -137,7 +136,7 @@ public class MvcController extends BaseController {
                 smsIds_list.forEach(smsId -> res_list.add(String.format("%s|4|2|%s|%s", smsId, today_time, "error:NOTEXITS")));
             }
             if (logger.isDebugEnabled())
-                logger.debug(String.format("syncFialState() return %s", StringUtils.join(res_list, "|||")));
+                logger.debug(String.format("fetchingSMSState() return %s", StringUtils.join(res_list, "|||")));
             return JsonMessageBuilder.OK().withPayload(StringUtils.join(res_list, "|||")).toMessage();
         } finally {
             LoginContextHolder.clear();
