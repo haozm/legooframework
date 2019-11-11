@@ -2,6 +2,7 @@ package com.legooframework.model.smsresult.mvc;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
@@ -25,10 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -98,6 +96,24 @@ public class MvcController extends BaseController {
         } finally {
             LoginContextHolder.clear();
         }
+    }
+
+    @PostMapping(value = "/smses/batch/syncstate.json")
+    @ResponseBody
+    public JsonMessage manualSyncState(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("manualSyncState(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            String smsIds_all = MapUtils.getString(requestBody, "smsIds", null);
+            String startTime = MapUtils.getString(requestBody, "start", null);
+            Preconditions.checkArgument(startTime != null, "搜索日期范围开始时间不可为空....");
+            String endTime = MapUtils.getString(requestBody, "end", null);
+            Collection<String> smsIds = Splitter.on(',').splitToList(smsIds_all);
+        } finally {
+            LoginContextHolder.clear();
+        }
+        return JsonMessageBuilder.OK().toMessage();
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.legooframework.model.smsresult.entity;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
@@ -86,7 +87,7 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
         }
     }
 
-    FinalState getFinalState() {
+    public FinalState getFinalState() {
         return finalState;
     }
 
@@ -153,6 +154,20 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
         params.put("wordCount", sendSms.getWordCount());
         params.put("smsContext", sendSms.getContent());
         params.put("finalState", finalState.getState());
+        return params;
+    }
+
+    public Map<String, Object> toView4SyncState(LocalDateTime start, LocalDateTime end) {
+        //        SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate',
+//                sms_account AS 'account'
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("id", getId());
+        params.put("smsExt", getSmsExt());
+        params.put("smsChannle", getSmsChannel().getChannel());
+        params.put("phoneNo", getMobile());
+        params.put("sendDate", start == null ? sendDate : start.toDate());
+        params.put("endDate", end == null ? LocalDateTime.now().toDate() : end);
+        params.put("account", this.account);
         return params;
     }
 

@@ -13,19 +13,16 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.handler.annotation.Payload;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 public class SmsResultService extends BundleService {
 
@@ -68,7 +65,7 @@ public class SmsResultService extends BundleService {
     private void finshSend(Map<String, Object> payload, SendedSmsDto replayDto) {
         payload.put("finalState", FinalState.SENDEDOK.getState());
         payload.put("sendMsgId", replayDto.getSmsSendId());
-        payload.put("sendDate", DateTime.now().toDate());
+        payload.put("sendDate", LocalDateTime.now().toDate());
         payload.put("remarks", replayDto.getExitsRespons());
         payload.put("account", replayDto.getAccount());
     }
@@ -81,6 +78,22 @@ public class SmsResultService extends BundleService {
         payload.put("account", account);
     }
 
+    /**
+     * @param smsIds
+     * @param start
+     * @param end
+     */
+    public void manualSyncState(Collection<String> smsIds, LocalDateTime start, LocalDateTime end) {
+        if (CollectionUtils.isEmpty(smsIds)) return;
+        Optional<List<SMSResultEntity>> smses = getBean(SMSResultEntityAction.class).loadByIds(smsIds);
+        if (!smses.isPresent()) return;
+        List<SMSResultEntity> sub_smses = smses.get().stream().filter(x -> FinalState.SENDING == x.getFinalState()).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(sub_smses)) return;
+        List<Map<String, Object>> sync_list = Lists.newArrayList();
+        sub_smses.forEach(sms -> sync_list.add(sms.toView4SyncState(start, end)));
+        getMessagingTemplate().send("channel_sync_source", MessageBuilder.withPayload(sync_list).build());
+    }
+
     // LIST CHANNEL_SYNC_STATE
     public void syncState(@Payload Map<String, Object> payload) {
         // {id=51300364-1a85-4764-905a-0000ea5f6dc0, companyId=100098, smsExt=4776124108, smsChannle=2, phoneNo=18575106652}
@@ -88,9 +101,10 @@ public class SmsResultService extends BundleService {
         try {
             String account = MapUtils.getString(payload, "account");
             Date sendDate = (Date) MapUtils.getObject(payload, "sendDate");
+            Date endDate = MapUtils.getObject(payload, "endDate") == null ? LocalDateTime.now().toDate() : (Date) MapUtils.getObject(payload, "endDate");
             long start = LocalDateTime.fromDateFields(sendDate).plusMinutes(-10).toDate().getTime() / 1000;
             Optional<String> optional = getSmsService().sync(account, MapUtils.getString(payload, "phoneNo"),
-                    start, DateTime.now().toDate().getTime() / 1000);
+                    start, endDate.getTime() / 1000);
             if (!optional.isPresent()) return;
             String[] payloads = StringUtils.split(optional.get(), ';');
             if (ArrayUtils.isEmpty(payloads)) return;
