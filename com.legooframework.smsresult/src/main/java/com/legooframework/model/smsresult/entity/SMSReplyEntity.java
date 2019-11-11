@@ -15,15 +15,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
+public class SMSReplyEntity extends BaseEntity<Long> implements BatchSetter {
 
     private final Long smsExt;
     private final String sendMsgId, mobile, content, account;
     private Integer companyId, storeId;
     private final LocalDateTime replayDate;
 
-    private SMSReplayEntity(Long smsExt, String sendMsgId, String mobile, String content, LocalDateTime replayDate,
-                            String account) {
+    private SMSReplyEntity(Long smsExt, String sendMsgId, String mobile, String content, LocalDateTime replayDate,
+                           String account) {
         super(0L);
         this.smsExt = smsExt;
         this.sendMsgId = sendMsgId;
@@ -33,7 +33,7 @@ public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
         this.replayDate = replayDate;
     }
 
-    SMSReplayEntity(Long id, ResultSet res) {
+    SMSReplyEntity(Long id, ResultSet res) {
         super(id, res);
         try {
             this.mobile = ResultSetUtil.getString(res, "mobile");
@@ -49,7 +49,7 @@ public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
         }
     }
 
-    SMSReplayEntity(ResultSet res) {
+    SMSReplyEntity(ResultSet res) {
         super(0L);
         try {
             this.mobile = ResultSetUtil.getString(res, "mobile");
@@ -89,12 +89,12 @@ public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
         return storeId;
     }
 
-    static SMSReplayEntity createInstance(String account, String replay_info) {
+    static SMSReplyEntity createInstance(String account, String replay_info) {
         // 578096,18128509449,td,2019-04-02 17:23:59
         String[] args = StringUtils.splitByWholeSeparatorPreserveAllTokens(replay_info, ",");
         Preconditions.checkArgument(args.length == 5, "返回格式异常 ：%s", replay_info);
         LocalDateTime dateTime = DateTimeUtils.parseDef(args[4]);
-        return new SMSReplayEntity(Long.valueOf(args[0]), args[1], args[2], WebUtils.decodeUrl(args[3]),
+        return new SMSReplyEntity(Long.valueOf(args[0]), args[1], args[2], WebUtils.decodeUrl(args[3]),
                 dateTime, account);
     }
 
@@ -112,8 +112,8 @@ public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof SMSReplayEntity)) return false;
-        SMSReplayEntity that = (SMSReplayEntity) o;
+        if (!(o instanceof SMSReplyEntity)) return false;
+        SMSReplyEntity that = (SMSReplyEntity) o;
         return Objects.equal(smsExt, that.smsExt) &&
                 Objects.equal(sendMsgId, that.sendMsgId) &&
                 Objects.equal(mobile, that.mobile) &&

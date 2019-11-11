@@ -8,8 +8,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
 
-import static org.junit.Assert.*;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-smsresult-cfg.xml",
@@ -17,7 +15,7 @@ import static org.junit.Assert.*;
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/entities/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsresult/spring-model-cfg.xml"}
 )
-public class SMSReplayEntityActionTest {
+public class SMSReplyEntityActionTest {
 
     @Test
     public void batchInsert() {
@@ -27,5 +25,5 @@ public class SMSReplayEntityActionTest {
     }
 
     @Autowired
-    SMSReplayEntityAction replayEntityAction;
+    SMSReplyEntityAction replayEntityAction;
 }

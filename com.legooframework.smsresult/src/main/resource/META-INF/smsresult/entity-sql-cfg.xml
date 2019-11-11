@@ -37,7 +37,7 @@
             ]]></body>
         </sql>
     </model>
-    <model id="SMSReplayEntity">
+    <model id="SMSReplyEntity">
         <sql id="batchInsert">
             <body><![CDATA[
         INSERT INTO SMS_REPLAY_LOG

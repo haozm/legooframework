@@ -32,7 +32,7 @@
           parent="smsAbsResultEntityAction"/>
     <bean id="smsBlackListEntityAction" class="com.legooframework.model.smsresult.entity.SMSBlackListEntityAction"
           parent="smsAbsResultEntityAction"/>
-    <bean id="smsReplayEntityAction" class="com.legooframework.model.smsresult.entity.SMSReplayEntityAction"
+    <bean id="smsReplayEntityAction" class="com.legooframework.model.smsresult.entity.SMSReplyEntityAction"
           parent="smsAbsResultEntityAction"/>
 
     <bean id="smsResultService" class="com.legooframework.model.smsresult.service.SmsResultService"/>

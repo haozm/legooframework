@@ -116,7 +116,7 @@ public class SmsResultService extends BundleService {
 
     public void refresh4BlackList() {
         LoginContextHolder.setAnonymousCtx();
-        Optional<List<SMSReplayEntity>> list = getBean(SMSReplayEntityAction.class).load4TDEntities();
+        Optional<List<SMSReplyEntity>> list = getBean(SMSReplyEntityAction.class).load4TDEntities();
         List<SMSBlackListEntity> black_list = Lists.newArrayList();
         list.ifPresent(x -> x.forEach(y -> black_list.add(SMSBlackListEntity.creatInstance(y))));
         getBean(SMSBlackListEntityAction.class).batchInsert(black_list);
@@ -134,7 +134,7 @@ public class SmsResultService extends BundleService {
             CompletableFuture.supplyAsync(() -> getSmsService().reply($it)).thenAccept(opt -> opt.ifPresent(dto -> {
                 LoginContextHolder.setIfNotExitsAnonymousCtx();
                 try {
-                    getBean(SMSReplayEntityAction.class).batchInsert(dto);
+                    getBean(SMSReplyEntityAction.class).batchInsert(dto);
                 } finally {
                     LoginContextHolder.clear();
                 }

@@ -19,11 +19,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public class SMSReplayEntityAction extends BaseEntityAction<SMSReplayEntity> {
+public class SMSReplyEntityAction extends BaseEntityAction<SMSReplyEntity> {
 
-    private static final Logger logger = LoggerFactory.getLogger(SMSReplayEntityAction.class);
+    private static final Logger logger = LoggerFactory.getLogger(SMSReplyEntityAction.class);
 
-    public SMSReplayEntityAction() {
+    public SMSReplyEntityAction() {
         super(null);
     }
 
@@ -32,8 +32,8 @@ public class SMSReplayEntityAction extends BaseEntityAction<SMSReplayEntity> {
         String replay_str = syncSmsDto.getResponse().get();
         String[] args = StringUtils.split(replay_str, "|||");
         if (ArrayUtils.isEmpty(args)) return;
-        List<SMSReplayEntity> list = Lists.newArrayList();
-        Stream.of(args).forEach(x -> list.add(SMSReplayEntity.createInstance(syncSmsDto.getAccount(), x)));
+        List<SMSReplyEntity> list = Lists.newArrayList();
+        Stream.of(args).forEach(x -> list.add(SMSReplyEntity.createInstance(syncSmsDto.getAccount(), x)));
         super.batchInsert("batchInsert", list);
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchInsert(SMSReplayEntity) size is %s", list.size()));
@@ -48,33 +48,33 @@ public class SMSReplayEntityAction extends BaseEntityAction<SMSReplayEntity> {
         return new DateTime[]{start_date, end_date};
     }
 
-    public Optional<List<SMSReplayEntity>> load4TDEntities() {
+    public Optional<List<SMSReplyEntity>> load4TDEntities() {
         DateTime[] dates = getLastReplayTime();
         Map<String, Object> params = Maps.newHashMap();
         params.put("start", dates[0].plusMinutes(-5).toDate());
         params.put("end", dates[1].toDate());
-        Optional<List<SMSReplayEntity>> list = super.queryForEntities("load4TDEntities", params, new BlackRowMapperImpl());
+        Optional<List<SMSReplyEntity>> list = super.queryForEntities("load4TDEntities", params, new BlackRowMapperImpl());
         if (list.isPresent() && logger.isDebugEnabled())
             logger.debug(String.format("load4TDEntities() res is %s", list));
         return list;
     }
 
     @Override
-    protected RowMapper<SMSReplayEntity> getRowMapper() {
+    protected RowMapper<SMSReplyEntity> getRowMapper() {
         return new RowMapperImpl();
     }
 
-    private static class RowMapperImpl implements RowMapper<SMSReplayEntity> {
+    private static class RowMapperImpl implements RowMapper<SMSReplyEntity> {
         @Override
-        public SMSReplayEntity mapRow(ResultSet res, int i) throws SQLException {
-            return new SMSReplayEntity(res.getLong("id"), res);
+        public SMSReplyEntity mapRow(ResultSet res, int i) throws SQLException {
+            return new SMSReplyEntity(res.getLong("id"), res);
         }
     }
 
-    private static class BlackRowMapperImpl implements RowMapper<SMSReplayEntity> {
+    private static class BlackRowMapperImpl implements RowMapper<SMSReplyEntity> {
         @Override
-        public SMSReplayEntity mapRow(ResultSet res, int i) throws SQLException {
-            return new SMSReplayEntity(res);
+        public SMSReplyEntity mapRow(ResultSet res, int i) throws SQLException {
+            return new SMSReplyEntity(res);
         }
     }
 }
