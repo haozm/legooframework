@@ -6,16 +6,13 @@ import com.legooframework.model.smsprovider.entity.SMSProviderEntityAction;
 
 public abstract class BundleService extends BaseService {
 
-
     @Override
     protected Bundle getLocalBundle() {
         return getBean("smsProviderBundle", Bundle.class);
     }
 
-
     SMSProviderEntityAction getSMSProvider() {
         return getBean(SMSProviderEntityAction.class);
     }
-
 
 }

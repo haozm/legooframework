@@ -88,14 +88,14 @@ public class SmsService extends BundleService {
      * @param end     结束时间
      * @return response
      */
-    public Optional<String> sync(String account, String mobile, Date start, Date end) {
+    public Optional<String> sync(String account, String mobile, long start, long end) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("sync(account=%s, mobile=%s, start=%s, end=%s) start...",
+            logger.debug(String.format("sync(account=%s, mobile=%s, start=%d, end=%d) start...",
                     account, mobile, start, end));
         SMSSubAccountEntity subAccount = getSMSProvider().loadSubAccountByAccount(account);
         Map<String, Object> pathVariables = Maps.newHashMap();
-        pathVariables.put("start", start.getTime() / 1000);
-        pathVariables.put("end", end.getTime() / 1000);
+        pathVariables.put("start", start);
+        pathVariables.put("end", end);
         pathVariables.put("mobile", mobile);
         Stopwatch stopwatch = Stopwatch.createStarted();
         Mono<String> mono = WebClient.create().method(HttpMethod.GET)
