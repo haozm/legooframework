@@ -8,6 +8,7 @@ import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsgateway.entity.SMSEntity;
 import com.legooframework.model.smsgateway.entity.SendStatus;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.joda.time.LocalDateTime;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -128,7 +129,8 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
 
     public String toFinalState() {
         if (FinalState.SENDEDERROR == getFinalState()) {
-            return String.format("%s|4|2|%s|%s", getId(), DateFormatUtils.format(this.sendDate, "yyyy-MM-dd HH:mm:ss"),
+            return String.format("%s|4|2|%s|%s", getId(), this.sendDate == null ? LocalDateTime.now().toString("yyyy-MM-dd HH:mm:ss") :
+                            DateFormatUtils.format(this.sendDate, "yyyy-MM-dd HH:mm:ss"),
                     this.remarks == null ? "error:SENDERROR" : this.remarks);
         }
         if (FinalState.DELIVRD == getFinalState()) {
