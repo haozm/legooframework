@@ -258,7 +258,7 @@ public class TakeCareService extends BundleService {
         if (count == null || count == 0L) return;
         String sql_01 = "update acp.crm_birthdaycareplan set company_id= (select cm.company_id from acp.crm_member cm where cm.id= member_id) where company_id is null";
         String sql_02 = "update acp.crm_birthdaycareplan set calendarType= (select IFNULL(cm.calendarType,1) from acp.crm_member cm where cm.id= member_id) where calendarType is null";
-        String sql_03 = "update acp.crm_birthdaycareplan set birthday= (select CASE WHEN IFNULL(cm.calendarType,1) = 1 THEN cm.birthday ELSE cm.lunarBirthday END  from acp.crm_member cm where cm.id= member_id) where birthday is null";
+        String sql_03 = "update acp.crm_birthdaycareplan set birthday = IFNULL((select CASE WHEN IFNULL(cm.calendarType,1) = 1 THEN cm.birthday ELSE cm.lunarBirthday END  from acp.crm_member cm where cm.id= member_id),NOW()) where birthday is null";
         Objects.requireNonNull(getJdbcQuerySupport().getJdbcTemplate()).execute(sql_01);
         Objects.requireNonNull(getJdbcQuerySupport().getJdbcTemplate()).execute(sql_02);
         Objects.requireNonNull(getJdbcQuerySupport().getJdbcTemplate()).execute(sql_03);
