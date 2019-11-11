@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
+import com.legooframework.model.smsprovider.service.SyncSmsDto;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
@@ -27,12 +28,13 @@ public class SMSReplayEntityAction extends BaseEntityAction<SMSReplayEntity> {
         super(null);
     }
 
-    public void batchInsert(String replay_str) {
-        if (Strings.isNullOrEmpty(replay_str)) return;
+    public void batchInsert(SyncSmsDto syncSmsDto) {
+        if (syncSmsDto.getResponse().isPresent()) return;
+        String replay_str = syncSmsDto.getResponse().get();
         String[] args = StringUtils.split(replay_str, "|||");
         if (ArrayUtils.isEmpty(args)) return;
         List<SMSReplayEntity> list = Lists.newArrayList();
-        Stream.of(args).forEach(x -> list.add(SMSReplayEntity.createInstance(x)));
+        Stream.of(args).forEach(x -> list.add(SMSReplayEntity.createInstance(syncSmsDto.getAccount(), x)));
         super.batchInsert("batchInsert", list);
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchInsert(SMSReplayEntity) size is %s", list.size()));

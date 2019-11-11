@@ -18,16 +18,18 @@ import java.sql.SQLException;
 public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
 
     private final Long smsExt;
-    private final String sendMsgId, mobile, content;
+    private final String sendMsgId, mobile, content, account;
     private Integer companyId, storeId;
     private final LocalDateTime replayDate;
 
-    private SMSReplayEntity(Long smsExt, String sendMsgId, String mobile, String content, LocalDateTime replayDate) {
+    private SMSReplayEntity(Long smsExt, String sendMsgId, String mobile, String content, LocalDateTime replayDate,
+                            String account) {
         super(0L);
         this.smsExt = smsExt;
         this.sendMsgId = sendMsgId;
         this.mobile = mobile;
         this.content = content;
+        this.account = account;
         this.replayDate = replayDate;
     }
 
@@ -38,6 +40,7 @@ public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
             this.sendMsgId = ResultSetUtil.getString(res, "sendMsgId");
             this.content = ResultSetUtil.getString(res, "content");
             this.smsExt = res.getLong("smsExt");
+            this.account = null;
             this.replayDate = LocalDateTime.fromDateFields(res.getTimestamp("replayDate"));
             this.companyId = ResultSetUtil.getOptObject(res, "companyId", Integer.class).orElse(-1);
             this.storeId = ResultSetUtil.getOptObject(res, "storeId", Integer.class).orElse(-1);
@@ -53,6 +56,7 @@ public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
             this.companyId = ResultSetUtil.getOptObject(res, "companyId", Integer.class).orElse(-1);
             this.storeId = ResultSetUtil.getOptObject(res, "storeId", Integer.class).orElse(-1);
             this.sendMsgId = null;
+            this.account = null;
             this.content = null;
             this.smsExt = null;
             this.replayDate = null;
@@ -85,13 +89,13 @@ public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
         return storeId;
     }
 
-    static SMSReplayEntity createInstance(String replay_info) {
-        // 578096,,18128509449,td,2019-04-02 17:23:59
+    static SMSReplayEntity createInstance(String account, String replay_info) {
+        // 578096,18128509449,td,2019-04-02 17:23:59
         String[] args = StringUtils.splitByWholeSeparatorPreserveAllTokens(replay_info, ",");
         Preconditions.checkArgument(args.length == 5, "返回格式异常 ：%s", replay_info);
         LocalDateTime dateTime = DateTimeUtils.parseDef(args[4]);
         return new SMSReplayEntity(Long.valueOf(args[0]), args[1], args[2], WebUtils.decodeUrl(args[3]),
-                dateTime);
+                dateTime, account);
     }
 
     @Override
@@ -102,6 +106,7 @@ public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
         ps.setObject(3, this.sendMsgId);
         ps.setObject(4, this.content);
         ps.setObject(5, this.replayDate.toDate());
+        ps.setObject(6, this.account);
     }
 
     @Override
@@ -128,6 +133,7 @@ public class SMSReplayEntity extends BaseEntity<Long> implements BatchSetter {
                 .add("mobile", mobile)
                 .add("content", content)
                 .add("replayDate", replayDate)
+                .add("account", account)
                 .toString();
     }
 }

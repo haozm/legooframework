@@ -39,8 +39,8 @@
         <sql id="batchInsert">
             <body><![CDATA[
         INSERT INTO SMS_REPLAY_LOG
-                    (phone_no, sms_ext, send_msg_id, sms_context,  sms_replay_date)
-             VALUES (       ?,       ?,           ?,           ?,                ?)
+                    (phone_no, sms_ext, send_msg_id, sms_context,  sms_replay_date,sms_account)
+             VALUES (       ?,       ?,           ?,           ?,                ?,          ?)
             ]]></body>
         </sql>
         <sql id="load4TDEntities" macros="crud_fixed">

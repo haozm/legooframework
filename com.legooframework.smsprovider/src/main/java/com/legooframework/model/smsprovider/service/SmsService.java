@@ -76,7 +76,7 @@ public class SmsService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("reply(account=%s,url=%s) return %s [%s]", account.getUsername(),
                     account.getHttpReplyUrl(), response, stopwatch));
-        return Optional.ofNullable(Strings.isNullOrEmpty(response) ? null : new SyncSmsDto(response));
+        return Optional.ofNullable(Strings.isNullOrEmpty(response) ? null : new SyncSmsDto(account, response));
     }
 
     /**

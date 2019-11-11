@@ -35,6 +35,7 @@ DROP TABLE IF EXISTS SMS_REPLAY_LOG;
 CREATE TABLE SMS_REPLAY_LOG
 (
     id              BIGINT(20)       NOT NULL AUTO_INCREMENT,
+    sms_account     VARCHAR(64)      NULL,
     phone_no        VARCHAR(64)      NOT NULL,
     sms_ext         BIGINT(10)       NOT NULL DEFAULT 0,
     send_msg_id     VARCHAR(64)      NULL,
