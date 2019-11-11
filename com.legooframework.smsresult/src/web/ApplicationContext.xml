@@ -81,7 +81,7 @@
               sms_account AS 'account'
          FROM SMS_SENDING_LOG
         WHERE final_state = 98
-          AND TIMESTAMPDIFF(HOUR,send_date,NOW()) <= 6
+          AND TIMESTAMPDIFF(HOUR,send_date,NOW()) <= 2
           AND TIMESTAMPDIFF(MINUTE,send_date,NOW()) >= 5
      ORDER BY createTime
         LIMIT 4096

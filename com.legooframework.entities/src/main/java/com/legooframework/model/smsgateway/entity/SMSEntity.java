@@ -25,7 +25,6 @@ public class SMSEntity {
     private Integer jobId;
     private boolean enbaled;
     private final CommunicationChannel communicationChannel;
-
     private final String weixinId, deviceId;
 
     private SMSEntity(String originalId, String content, String phoneNo, Integer memberId, String memberName,

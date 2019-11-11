@@ -41,8 +41,7 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, smsBatchNo, smsChannel,
                 freeSend, businessType);
     }
-
-
+    
     public Integer getStoreId() {
         return storeId;
     }

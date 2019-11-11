@@ -5,6 +5,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonElement;
+import com.legooframework.model.core.base.entity.EmptyEntity;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.SendMode;
