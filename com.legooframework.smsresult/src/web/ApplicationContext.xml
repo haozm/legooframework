@@ -29,7 +29,7 @@
     <task:executor id="sms-smsresult-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>
     <task:scheduler id="smsresult-scheduler" pool-size="4"/>
     <task:scheduled-tasks scheduler="smsresult-scheduler">
-        <task:scheduled ref="smsResultService" method="replay" cron="0 0/2 * * * ?"/>
+        <task:scheduled ref="smsResultService" method="replay" cron="0 0/30 * * * ?"/>
     </task:scheduled-tasks>
     <!-- ================== SMS SENDING CHANNEL ================== -->
     <int:publish-subscribe-channel id="channel_sms_splitter"/>
