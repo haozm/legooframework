@@ -1,6 +1,7 @@
 package com.legooframework.model.smsprovider.service;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsprovider.entity.SMSProviderEntityAction;
@@ -61,7 +62,7 @@ public class SmsService extends BundleService {
      * @param account 短信账户信息
      * @return response
      */
-    public String reply(SMSSubAccountEntity account) {
+    public Optional<SyncSmsDto> reply(SMSSubAccountEntity account) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("reply(account=%s) start...", account));
         Map<String, Object> pathVariables = Maps.newHashMap();
@@ -74,7 +75,7 @@ public class SmsService extends BundleService {
         stopwatch.stop(); // optional
         if (logger.isDebugEnabled())
             logger.debug(String.format("reply(account=%s) return %s [%s]", account, response, stopwatch));
-        return response;
+        return Optional.ofNullable(Strings.isNullOrEmpty(response) ? null : new SyncSmsDto(response));
     }
 
     /**

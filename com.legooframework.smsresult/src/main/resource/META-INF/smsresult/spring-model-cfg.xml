@@ -37,5 +37,4 @@
 
     <bean id="smsResultService" class="com.legooframework.model.smsresult.service.SmsResultService"/>
     <bean id="smsResultMsgTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
-
 </beans>

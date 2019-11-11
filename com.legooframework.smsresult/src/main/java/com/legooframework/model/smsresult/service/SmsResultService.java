@@ -9,7 +9,9 @@ import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsprovider.entity.SMSProviderEntity;
 import com.legooframework.model.smsprovider.entity.SMSSubAccountEntity;
 import com.legooframework.model.smsprovider.service.SendedSmsDto;
+import com.legooframework.model.smsprovider.service.SyncSmsDto;
 import com.legooframework.model.smsresult.entity.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,6 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
+import java.util.function.Consumer;
 
 public class SmsResultService extends BundleService {
 
@@ -119,7 +122,6 @@ public class SmsResultService extends BundleService {
         }
     }
 
-
     public void refresh4BlackList() {
         LoginContextHolder.setAnonymousCtx();
         Optional<List<SMSReplayEntity>> list = getBean(SMSReplayEntityAction.class).load4TDEntities();
@@ -128,37 +130,30 @@ public class SmsResultService extends BundleService {
         getBean(SMSBlackListEntityAction.class).batchInsert(black_list);
     }
 
+    /**
+     * 接受用户的返回短信息
+     */
     public void replay() {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         Optional<List<SMSSubAccountEntity>> subAccounts = getSmsService().findEnabledSubAccounts();
         if (!subAccounts.isPresent()) return;
-
-
-//        SMSProviderEntity provider = getSmsProviderAction().loadSMSSupplier();
-//        Optional<List<String>> postUrls = provider.getHttpReplayUrl();
-//        postUrls.ifPresent(urls -> urls.forEach(url -> {
-//            try {
-//                sendAndReceive(url);
-//            } catch (Exception e) {
-//                logger.error("replay has error ", e);
-//            } finally {
-//                LoginContextHolder.clear();
-//            }
-//        }));
+        List<CompletableFuture<?>> cfs = Lists.newArrayListWithCapacity(subAccounts.get().size());
+        for (SMSSubAccountEntity $it : subAccounts.get()) {
+            CompletableFuture.supplyAsync(() -> {
+                LoginContextHolder.setIfNotExitsAnonymousCtx();
+                return getSmsService().reply($it);
+            }).thenAccept(opt -> {
+                if (opt.isPresent() && opt.get().getResponse().isPresent()) {
+                    getBean(SMSReplayEntityAction.class).batchInsert(opt.get().getResponse().get());
+                }
+                LoginContextHolder.clear();
+            });
+        }
+        if (CollectionUtils.isNotEmpty(cfs)) {
+            CompletableFuture.allOf(cfs.toArray(new CompletableFuture[0])).join();
+        }
     }
 
-    private void sendAndReceive(String replayApi) {
-        Map<String, Object> pathVariables = Maps.newHashMap();
-        Mono<String> mono = WebClient.create().method(HttpMethod.GET)
-                .uri(replayApi, pathVariables)
-                .contentType(MediaType.APPLICATION_JSON)
-                .retrieve().bodyToMono(String.class);
-        String send_rsp = mono.block(Duration.ofSeconds(30L));
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("replay_rsp=%s", send_rsp));
-        if (StringUtils.equals("no record", send_rsp) || StringUtils.startsWith(send_rsp, "error:")) return;
-        getBean(SMSReplayEntityAction.class).batchInsert(send_rsp);
-    }
 }
 
 
