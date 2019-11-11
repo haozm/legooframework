@@ -14,10 +14,7 @@ import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TakeCareService extends BundleService {
@@ -135,7 +132,7 @@ public class TakeCareService extends BundleService {
             List<CareBirthdayEntity> cares = update_care_aggs.stream().map(CareBirthdayAgg::getBirthdayCare)
                     .collect(Collectors.toList());
             getBean(CareBirthdayEntityAction.class).batchUpdateCare(cares);
-            
+
             List<CareRecordEntity> careLogs = Lists.newArrayList();
             for (CareBirthdayAgg $agg : un_saved_care_aggs) {
                 getBean(CareBirthdayEntityAction.class).singleInsertCare($agg.getBirthdayCare());
@@ -252,4 +249,20 @@ public class TakeCareService extends BundleService {
         return careNinetyTaskAggs;
     }
 
+    /**
+     * 临时解决方案 适配源程序的
+     */
+    public void tempJob() {
+        String query = "SELECT count(cb.id) from acp.crm_birthdaycareplan cb where (cb.company_id is null  OR cb.calendarType is null OR cb.birthday is null)";
+        Long count = Objects.requireNonNull(getJdbcQuerySupport().getJdbcTemplate()).queryForObject(query, Long.class);
+        if (count == null || count == 0L) return;
+        String sql_01 = "update acp.crm_birthdaycareplan set company_id= (select cm.company_id from acp.crm_member cm where cm.id= member_id) where company_id is null";
+        String sql_02 = "update acp.crm_birthdaycareplan set calendarType= (select IFNULL(cm.calendarType,1) from acp.crm_member cm where cm.id= member_id) where calendarType is null";
+        String sql_03 = "update acp.crm_birthdaycareplan set birthday= (select CASE WHEN IFNULL(cm.calendarType,1) = 1 THEN cm.birthday ELSE cm.lunarBirthday END  from acp.crm_member cm where cm.id= member_id) where birthday is null";
+        Objects.requireNonNull(getJdbcQuerySupport().getJdbcTemplate()).execute(sql_01);
+        Objects.requireNonNull(getJdbcQuerySupport().getJdbcTemplate()).execute(sql_02);
+        Objects.requireNonNull(getJdbcQuerySupport().getJdbcTemplate()).execute(sql_03);
+        if (logger.isDebugEnabled())
+            logger.debug("tempJob()  acp.crm_birthdaycareplan job finished ");
+    }
 }

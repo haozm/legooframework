@@ -1,6 +1,7 @@
 package com.legooframework.model.takecare.service;
 
 import com.legooframework.model.core.base.service.BaseService;
+import com.legooframework.model.core.jdbc.JdbcQuerySupport;
 import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.covariant.entity.EmpEntityAction;
 import com.legooframework.model.covariant.service.CovariantService;
@@ -19,5 +20,8 @@ public abstract class BundleService extends BaseService {
     CovariantService getCovariantService() {
         return getBean(CovariantService.class);
     }
-
+    
+    JdbcQuerySupport getJdbcQuerySupport() {
+        return getBean("takeCareJdbcQuerySupport", JdbcQuerySupport.class);
+    }
 }
