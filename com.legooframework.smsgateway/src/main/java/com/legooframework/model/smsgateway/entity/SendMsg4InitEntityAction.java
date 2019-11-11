@@ -20,7 +20,7 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
     /**
      * 批量保存入库
      *
-     * @param batchSaveLogs 批量吧奥村结果
+     * @param batchSaveLogs OOXX
      */
     public void batchInsert(Collection<SendMsg4InitEntity> batchSaveLogs) {
         if (logger.isDebugEnabled())
