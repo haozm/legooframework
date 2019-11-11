@@ -86,7 +86,7 @@
         LIMIT 4096
             ]]>
         </int-jdbc:query>
-        <int:poller fixed-delay="600" time-unit="SECONDS"/>
+        <int:poller fixed-delay="60" time-unit="SECONDS"/>
     </int-jdbc:inbound-channel-adapter>
     <int:splitter input-channel="channel_sync_source" output-channel="channel_sync_state"/>
     <int:channel id="channel_sync_state">
