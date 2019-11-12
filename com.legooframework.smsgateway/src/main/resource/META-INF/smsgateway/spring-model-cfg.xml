@@ -122,7 +122,7 @@
 
     <bean id="smsTempCacheService" class="com.legooframework.model.smsgateway.service.SmsTempCacheService"/>
     <bean id="smsRechargeService" class="com.legooframework.model.smsgateway.service.SMSRechargeService"/>
-    <bean id="smsIntegrationService" class="com.legooframework.model.smsgateway.service.SmsIntegrationService"/>
+    <bean id="smsGatewayService" class="com.legooframework.model.smsgateway.service.SmsGatewayService"/>
 
     <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
     <!--

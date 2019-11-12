@@ -2,10 +2,12 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:task="http://www.springframework.org/schema/task"
        xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:jee="http://www.springframework.org/schema/jee"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
                            http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
                            http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
@@ -15,25 +17,33 @@
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="dataSource"/>
     </bean>
+
     <alias name="dataSource" alias="smsGateWayDataSource"/>
     <alias name="dataSource" alias="smsProviderDataSource"/>
+    <alias name="dataSource" alias="acpDataSource"/>
 
     <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/entities/spring-model-cfg.xml"/>
-    <import resource="classpath*:META-INF/jwtoken/spring-model-cfg.xml"/>
-    <import resource="classpath*:META-INF/crmadapter/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/covariant/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/smsprovider/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/smsgateway/spring-model-cfg.xml"/>
 
+    <task:scheduler id="smsgateway-scheduler" pool-size="4"/>
+    <task:scheduled-tasks scheduler="smsgateway-scheduler">
+        <task:scheduled ref="smsIntegrationService" method="listen4SyncSMS" initial-delay="120000"
+                        fixed-delay="300000"/>
+    </task:scheduled-tasks>
     <!-- =========================== channel ================================= -->
     <int:channel id="channel_sms_sending">
         <int:queue/>
     </int:channel>
-    <int-jdbc:inbound-channel-adapter channel="channel_sms_sending" data-source="smsGateWayDataSource"
+    <int:publish-subscribe-channel id="channel_sending_splitter"/>
+    <int-jdbc:inbound-channel-adapter channel="channel_sending_splitter" data-source="smsGateWayDataSource"
+                                      update="UPDATE SMS_TRANSPORT_LOG SET send_status = 2 WHERE id IN (:id)"
                                       auto-startup="true">
         <int-jdbc:query><![CDATA[
     SELECT rec.id AS 'id',
-           CONCAT_WS('|',rec.id,rec.company_id,rec.store_id,rec.sms_channel,rec.send_status,rec.phone_no,rec.word_count,rec.sms_count) AS 'mixed',
+           CONCAT_WS('|',rec.id,rec.company_id,rec.store_id,rec.sms_channel,'2',rec.phone_no,rec.word_count,rec.sms_count) AS 'mixed',
            rec.sms_context AS 'ctx'
       FROM SMS_TRANSPORT_LOG AS rec
 INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
@@ -42,11 +52,13 @@ INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
   ORDER BY rec.createTime
      LIMIT 2048
         ]]></int-jdbc:query>
-        <int-jdbc:update><![CDATA[
-    UPDATE SMS_TRANSPORT_LOG SET send_status = 2 WHERE id IN ( :id )
-        ]]></int-jdbc:update>
         <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
     </int-jdbc:inbound-channel-adapter>
+    <int:splitter input-channel="channel_sending_splitter" output-channel="channel_sms_sending"/>
+    <int:outbound-channel-adapter channel="channel_sms_sending" ref="smsIntegrationService" method="listen4SendSMS"
+                                  auto-startup="true">
+        <int:poller max-messages-per-poll="32" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="3000"/>
+    </int:outbound-channel-adapter>
     <!--
     <bean id="authenticationEntryPoint"
           class="com.legooframework.model.crmadapter.service.JsonAuthenticationEntryPoint"/>

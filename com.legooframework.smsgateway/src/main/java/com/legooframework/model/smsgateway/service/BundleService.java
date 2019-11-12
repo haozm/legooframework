@@ -11,8 +11,6 @@ import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.StoEntityAction;
 import com.legooframework.model.smsgateway.entity.ChargeSummaryEntityAction;
 import com.legooframework.model.smsgateway.entity.RechargeDetailEntityAction;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.integration.core.MessagingTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -23,11 +21,7 @@ import java.util.UUID;
 
 public abstract class BundleService extends BaseService {
 
-    private static final Logger logger = LoggerFactory.getLogger(BundleService.class);
-
     public static String CHANNEL_SMS_BILLING = "channel_sms_billing";
-    static String CHANNEL_SMS_SENDED = "channel_sms_sended";
-    static String CHANNEL_SMS_SENDING = "channel_sms_sending";
 
     @Override
     protected Bundle getLocalBundle() {
@@ -75,6 +69,5 @@ public abstract class BundleService extends BaseService {
     MessagingTemplate getMessagingTemplate() {
         return getBean("smsMessagingTemplate", MessagingTemplate.class);
     }
-    
 
 }
