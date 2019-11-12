@@ -32,14 +32,18 @@
     <int-jdbc:inbound-channel-adapter channel="channel_sms_sending" data-source="smsGateWayDataSource"
                                       auto-startup="true">
         <int-jdbc:query><![CDATA[
-    SELECT id AS 'id', company_id AS 'companyId',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo',
-           sms_context AS 'smsContext'
-      FROM SMS_SENDING_LOG
-     WHERE final_state = 0
-  ORDER BY createTime LIMIT 1024
+    SELECT rec.id AS 'id',
+           CONCAT_WS('|',rec.id,rec.company_id,rec.store_id,rec.sms_channel,rec.send_status,rec.phone_no,rec.word_count,rec.sms_count) AS 'mixed',
+           rec.sms_context AS 'ctx'
+      FROM SMS_TRANSPORT_LOG AS rec
+INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
+     WHERE bat.is_billing = 0
+       AND rec.send_status = 0
+  ORDER BY rec.createTime
+     LIMIT 2048
         ]]></int-jdbc:query>
         <int-jdbc:update><![CDATA[
-    UPDATE SMS_SENDING_LOG SET final_state = 99 WHERE id IN ( :id )
+    UPDATE SMS_TRANSPORT_LOG SET send_status = 2 WHERE id IN ( :id )
         ]]></int-jdbc:update>
         <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
     </int-jdbc:inbound-channel-adapter>

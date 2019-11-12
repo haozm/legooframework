@@ -1,20 +1,18 @@
 package com.legooframework.model.smsgateway.entity;
 
-import com.google.common.escape.UnicodeEscaper;
-import com.google.common.html.HtmlEscapers;
-import org.apache.commons.codec.net.URLCodec;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.util.ResourceUtils;
 
 public class SMSTransportLogEntityTest {
 
-    @Test
-    public void getSms() throws Exception {
-        String asd = "asjhd%<>lasdj你好 啊是对";
-        System.out.println(HtmlEscapers.htmlEscaper().escape(asd));
-//        Urlencode
-        URLCodec codec = new URLCodec("UTF-8");
-        System.out.println(codec.encode("daa971e7d9de49354f0d008c00ef9d66&"));
+    public static void main(String[] args) {
+        ApplicationContext app = new ClassPathXmlApplicationContext(
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-acp-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/covariant/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsgateway/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsgateway/spring-int-cfg.xml");
     }
+
 }

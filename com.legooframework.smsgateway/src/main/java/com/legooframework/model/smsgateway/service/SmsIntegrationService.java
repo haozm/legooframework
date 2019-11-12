@@ -355,13 +355,18 @@ public class SmsIntegrationService extends BundleService {
         }
     }
 
+    public void sendingSMSService(@Payload Object payload) {
+        logger.debug(payload.getClass().getName());
+        logger.debug(payload.toString());
+    }
+
     /**
      * 发送队列
      *
      * @param user  我是太阳
      * @param smses 待发送的短信
      */
-    public void sendingSMSService(@Header(name = "user") LoginContext user, @Payload List<SendMsg4SendEntity> smses) {
+    public void sendingSMSService01(@Header(name = "user") LoginContext user, @Payload List<SendMsg4SendEntity> smses) {
         LoginContextHolder.setCtx(user);
         try {
             List<String> sms_set = smses.stream().map(sendLog -> SMSSendTransportProtocol.encoding4Flat(sendLog.getSms().getSmsId(),
@@ -412,5 +417,6 @@ public class SmsIntegrationService extends BundleService {
             LoginContextHolder.clear();
         }
     }
+
 
 }

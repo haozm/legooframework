@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
+       xmlns:int="http://www.springframework.org/schema/integration"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/integration/jdbc https://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
+                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd">
+    <int:channel id="channel_sms_sending">
+        <int:queue/>
+    </int:channel>
+    <int:publish-subscribe-channel id="channel_sending_splitter"/>
+    <int-jdbc:inbound-channel-adapter channel="channel_sending_splitter" data-source="smsGateWayDataSource"
+                                      update="UPDATE SMS_TRANSPORT_LOG SET send_status = 2 WHERE id IN (:id)"
+                                      auto-startup="true">
+        <int-jdbc:query><![CDATA[
+    SELECT rec.id AS 'id',
+           CONCAT_WS('|',rec.id,rec.company_id,rec.store_id,rec.sms_channel,rec.send_status,rec.phone_no,rec.word_count,rec.sms_count) AS 'mixed',
+           rec.sms_context AS 'ctx'
+      FROM SMS_TRANSPORT_LOG AS rec
+INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
+     WHERE bat.is_billing = 0
+       AND rec.send_status = 0
+  ORDER BY rec.createTime
+     LIMIT 2048
+        ]]></int-jdbc:query>
+        <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
+    </int-jdbc:inbound-channel-adapter>
+    <int:splitter input-channel="channel_sending_splitter" output-channel="channel_sms_sending"/>
+    <int:outbound-channel-adapter channel="channel_sms_sending" ref="smsIntegrationService" method="sendingSMSService"
+                                  auto-startup="true">
+        <int:poller max-messages-per-poll="32" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="3000"/>
+    </int:outbound-channel-adapter>
+</beans>
