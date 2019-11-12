@@ -245,6 +245,8 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
             this.createTime = LocalDateTime.fromDateFields(resultSet.getTimestamp("createtime"));
             this.remark = resultSet.getString("remark");
             this.limitDays = resultSet.getInt("limit_days");
+            this.mergeAmount = resultSet.getBigDecimal("merge_amount") == null ? new BigDecimal(0.0D) :
+                    resultSet.getBigDecimal("merge_amount");
             this.minAmount = resultSet.getBigDecimal("min_amount") == null ? new BigDecimal(0.0D) :
                     resultSet.getBigDecimal("min_amount");
             this.limitAmount = resultSet.getBigDecimal("limit_amount") == null ? new BigDecimal(0.0D) :
@@ -278,6 +280,7 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
         params.put("limitDays", limitDays);
         params.put("enabled", enabled);
         params.put("remark", remark);
+        params.put("mergeAmount", mergeAmount.doubleValue());
         params.put("createTime", createTime.toString("yyyy-MM-dd HH:mm:ss"));
         params.put("limitAmount", limitAmount.doubleValue());
         params.put("minAmount", minAmount.doubleValue());
