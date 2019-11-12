@@ -79,10 +79,13 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
     }
 
     public SendWechatEntity createSendWxMsg(String batchNo) {
-        return new SendWechatEntity(this.context, this.imgUrls, this.sendInfo01, storeId, companyId, sendInfo02,
+        String ctx = this.context;
+        if (!Strings.isNullOrEmpty(ctx)) {
+            ctx = StringUtils.remove(ctx, "退订回T");
+        }
+        return new SendWechatEntity(ctx, this.imgUrls, this.sendInfo01, storeId, companyId, sendInfo02,
                 businessType);
     }
-
 
     @Override
     public void setValues(PreparedStatement ps) throws SQLException {
