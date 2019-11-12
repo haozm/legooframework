@@ -5,6 +5,7 @@ import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
@@ -25,13 +26,13 @@ public abstract class HttpBaseEntityAction<T extends BaseEntity> {
     /**
      * @param httpUrl       URL
      * @param params        params
-     * @param seconds       超时
+     * @param timeout       超时
      * @param pathVariables path占位符
      * @return OOXX
      */
-    Optional<String> post(String httpUrl, Map<String, Object> params, int seconds, Object... pathVariables) {
+    protected Optional<String> post(String httpUrl, Map<String, Object> params, int timeout, Object... pathVariables) throws Exception {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(httpUrl), "非法的URL地址...%s", httpUrl);
-        int timeout = seconds <= 0 ? 60 * 5 : seconds;
+        int _time = timeout <= 0 ? 60 * 5 : timeout;
         if (logger.isDebugEnabled())
             logger.debug(String.format("httpUrl=%s,params.size =%s,seconds=%d, pathVariables=%s", httpUrl,
                     MapUtils.isEmpty(params) ? 0 : params.size(), timeout, Arrays.toString(pathVariables)));
@@ -39,12 +40,22 @@ public abstract class HttpBaseEntityAction<T extends BaseEntity> {
         if (MapUtils.isNotEmpty(params)) _params.putAll(params);
         _params.put("_batchId", UUID.randomUUID().toString());
         Stopwatch stopwatch = Stopwatch.createStarted();
-        Mono<String> mono = WebClient.create().method(HttpMethod.POST)
-                .uri(httpUrl, pathVariables)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(_params)
-                .retrieve().bodyToMono(String.class);
-        String response = mono.block(Duration.ofSeconds(timeout));
+        Mono<String> mono;
+        if (ArrayUtils.isEmpty(pathVariables)) {
+            mono = WebClient.create().method(HttpMethod.POST)
+                    .uri(httpUrl)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(_params)
+                    .retrieve().bodyToMono(String.class);
+        } else {
+            mono = WebClient.create().method(HttpMethod.POST)
+                    .uri(httpUrl, pathVariables)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(_params)
+                    .retrieve().bodyToMono(String.class);
+        }
+
+        String response = mono.block(Duration.ofSeconds(_time));
         stopwatch.stop(); // optional
         if (logger.isDebugEnabled())
             logger.debug(String.format("URL=%s,_batchId=%s,response=%s [%s]", httpUrl, MapUtils.getString(_params, "_batchId"),

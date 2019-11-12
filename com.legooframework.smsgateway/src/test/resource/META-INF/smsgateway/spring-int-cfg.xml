@@ -27,8 +27,9 @@ INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
         <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
     </int-jdbc:inbound-channel-adapter>
     <int:splitter input-channel="channel_sending_splitter" output-channel="channel_sms_sending"/>
-    <int:outbound-channel-adapter channel="channel_sms_sending" ref="smsIntegrationService" method="sendingSMSService"
+    <int:outbound-channel-adapter channel="channel_sms_sending" ref="smsIntegrationService" method="listen4SendSMS"
                                   auto-startup="true">
         <int:poller max-messages-per-poll="32" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="3000"/>
     </int:outbound-channel-adapter>
+    <!-- sync -->
 </beans>

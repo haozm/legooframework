@@ -78,9 +78,6 @@
     <bean id="sendMsg4InitEntityAction"
           class="com.legooframework.model.smsgateway.entity.SendMsg4InitEntityAction"
           parent="smsClientEntityAction"/>
-    <bean id="sendMsg4FinalEntityAction"
-          class="com.legooframework.model.smsgateway.entity.SendMsg4FinalEntityAction"
-          parent="smsClientEntityAction"/>
     <bean id="sendMsg4ReimburseEntityAction"
           class="com.legooframework.model.smsgateway.entity.SendMsg4ReimburseEntityAction"
           parent="smsClientEntityAction"/>
@@ -125,12 +122,7 @@
 
     <bean id="smsTempCacheService" class="com.legooframework.model.smsgateway.service.SmsTempCacheService"/>
     <bean id="smsRechargeService" class="com.legooframework.model.smsgateway.service.SMSRechargeService"/>
-    <bean id="smsIntegrationService" class="com.legooframework.model.smsgateway.service.SmsIntegrationService">
-        <property name="smsGateWayUrl" value="${sms.gateway.url}"/>
-    </bean>
-    <bean id="smsSyncDataService" class="com.legooframework.model.smsgateway.service.SMSSyncDataService">
-        <property name="smsGateWayUrl" value="${sms.gateway.url}"/>
-    </bean>
+    <bean id="smsIntegrationService" class="com.legooframework.model.smsgateway.service.SmsIntegrationService"/>
 
     <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
     <!--

@@ -516,7 +516,19 @@
             <body><![CDATA[
       INSERT INTO SMS_KEY_WORDS
                   (key_word, enabled, delete_flag, tenant_id, creator)
-           VALUES (:keyword, :enabled, 0,           0,         0);
+           VALUES (:keyword, :enabled, 0,           0,         0)
+            ]]></body>
+        </sql>
+    </model>
+    <model id="SendMsg4InitEntity">
+        <sql id="loadNeedSyncStateSmsIds">
+            <body><![CDATA[
+      SELECT rec.id
+        FROM acp.SMS_TRANSPORT_LOG rec
+       WHERE rec.send_status=3
+         AND rec.send_res_code='0000'
+         AND TIMESTAMPDIFF(HOUR,rec.send_local_date,NOW()) <= 4
+         AND TIMESTAMPDIFF(MINUTE,rec.send_local_date,NOW()) >= 10
             ]]></body>
         </sql>
     </model>

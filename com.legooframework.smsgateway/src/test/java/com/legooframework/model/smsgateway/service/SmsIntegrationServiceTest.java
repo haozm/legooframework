@@ -28,9 +28,10 @@ import java.util.UUID;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
-        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-smsclient-cfg.xml",
+        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-acp-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/covariant/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsprovider/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsgateway/spring-model-cfg.xml"}
 )
 public class SmsIntegrationServiceTest {
@@ -69,10 +70,9 @@ public class SmsIntegrationServiceTest {
     }
 
     @Test
-    public void res() throws Exception {
+    public void syncSMSState() throws Exception {
         LoginContextHolder.setAnonymousCtx();
-        Optional<List<SendMsg4ReimburseEntity>> res = sendMsg4ReimburseEntityAction.loadBySendBatchNo("100098_1315_931626dLLUZB");
-        // smsIntegrationService.reimburse(res.get());
+        smsIntegrationService.syncSMSState();
     }
 
     @Autowired

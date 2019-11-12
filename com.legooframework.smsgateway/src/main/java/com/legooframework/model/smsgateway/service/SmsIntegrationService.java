@@ -5,7 +5,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
-import com.legooframework.model.commons.entity.CommunicationChannel;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.CommonsUtils;
@@ -13,24 +12,33 @@ import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.*;
-import com.legooframework.model.smsgateway.filter.SmsSendInterceptor;
 import com.legooframework.model.smsgateway.mvc.DeductionReqDto;
 import com.legooframework.model.smsgateway.mvc.RechargeReqDto;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsprovider.entity.SMSProviderEntity;
 import com.legooframework.model.smsprovider.entity.SMSProviderEntityAction;
+import com.legooframework.model.smsprovider.entity.SMSProxyEntityAction;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
-import java.util.*;
+import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class SmsIntegrationService extends BundleService {
@@ -320,40 +328,65 @@ public class SmsIntegrationService extends BundleService {
         }
     }
 
-    public void sendingSMSService(@Payload Map<String, Object> payload) {
-        String mixed = MapUtils.getString(payload, "mixed");
+    public void listen4SendSMS(@Payload Map<String, Object> payload) {
         String smsId = MapUtils.getString(payload, "id");
+        String mixed = MapUtils.getString(payload, "mixed");
         String context = MapUtils.getString(payload, "ctx");
-        StringJoiner joiner = new StringJoiner("|");
-        joiner.add(mixed).add("1").add(WebUtils.encodeUrl(context));
-        String paylaod = joiner.toString();
-        SendMsg4SendEntity sendEntity = new SendMsg4SendEntity(smsId);
-        try {
-            String result_rsp = super.sendByProxy(null, paylaod);
-            Optional<JsonElement> jsonElement = WebUtils.parseJson(result_rsp);
-            Preconditions.checkState(jsonElement.isPresent(), "短信网关无返回数据");
-            String rsp_payload = jsonElement.get().getAsString();
-            this.docodingSending(rsp_payload, sendEntity);
-        } catch (Exception e) {
-            sendEntity.errorByException(e);
-        }
-        getBean(SendMsg4InitEntityAction.class).updateSendState(sendEntity);
+        SendMsg4SendEntity result = getBean(SMSProxyEntityAction.class).sendSingleSms(smsId, mixed, context);
+        getBean(SendMsg4InitEntityAction.class).updateSendState(result);
     }
 
-    // 067fc5a0-f731-4e8b-923b-2f5a70012553|0000|OK
-    private void docodingSending(String payload, SendMsg4SendEntity sendEntity) {
-        Map<String, Object> params = Maps.newHashMap();
+    public void syncSMSState() {
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
+        Optional<List<String>> smsIds = getBean(SendMsg4InitEntityAction.class).loadNeedSyncStateSmsIds();
+        if (!smsIds.isPresent()) return;
         try {
-            String[] args = StringUtils.split(payload, '|');
-            Preconditions.checkState(args.length == 3, "错误的返回报文%s", payload);
-            if (StringUtils.equals("0000", args[1])) {
-                sendEntity.finshedSend();
+            if (smsIds.get().size() < 256) {
+                Optional<List<SendMsg4FinalEntity>> res_states = getBean(SMSProxyEntityAction.class).syncSmsState(smsIds.get());
+                res_states.ifPresent($it -> getBean(SendMsg4InitEntityAction.class).updateFinalState($it));
             } else {
-                sendEntity.errorBySending(args[2]);
+                List<List<String>> list_smsIds = Lists.partition(smsIds.get(), 256);
+                CompletableFuture<Void>
             }
-        } catch (Exception e) {
-            sendEntity.errorByException(e);
+        } finally {
+            LoginContextHolder.clear();
         }
     }
 
+    /**
+     * 同步黑名单
+     */
+    public void syncBlackList() {
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            DateTime[] dateTimes = getBean(SMSBlackListEntityAction.class).getLastSyncTime();
+            Optional<List<Integer>> companyIds = getBean(SMSBlackListEntityAction.class).loadSMSCompanys();
+            if (!companyIds.isPresent()) return;
+            Map<String, Object> params = Maps.newHashMap();
+            params.put("dateStart", dateTimes[0].toString("yyyy-MM-dd HH:mm:ss"));
+            params.put("dateEnd", dateTimes[1].toString("yyyy-MM-dd HH:mm:ss"));
+            params.put("companyIds", StringUtils.join(companyIds.get(), ','));
+            Mono<String> mono = WebClient.create().method(HttpMethod.POST)
+                    .uri("")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(params)
+                    .retrieve().bodyToMono(String.class);
+            String http_return = mono.block(Duration.ofSeconds(30));
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("URL=%s,params=%s,return %s", "", params, http_return));
+            Optional<JsonElement> payload_opt = WebUtils.parseJson(http_return);
+            if (!payload_opt.isPresent()) return;
+            String payload_data = payload_opt.get().getAsString();
+            String[] args = StringUtils.splitByWholeSeparator(payload_data, "|||");
+            List<SMSBlackListEntity> instance_list = Lists.newArrayListWithCapacity(args.length);
+            for (String str : args) {
+                String[] arg = StringUtils.split(str, '|');
+                instance_list.add(SMSBlackListEntity.disableInstance(Integer.valueOf(arg[0]),
+                        Integer.valueOf(arg[1]), arg[2]));
+            }
+            getBean(SMSBlackListEntityAction.class).diabled(instance_list);
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
 }

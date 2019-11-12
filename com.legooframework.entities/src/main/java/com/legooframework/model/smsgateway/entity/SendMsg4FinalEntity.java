@@ -15,7 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSetter {
-
+    //18588828127|233b12b8-ad15-4637-8a00-8f97a4ab90ee|4|2|2019-11-12 21:41:49|UNDELIV
     private SendStatus sendStatus;
     private FinalState finalState;
     private LocalDateTime finalStateDate;
@@ -51,8 +51,8 @@ public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSett
         this.finalStateDesc = finalStateDesc;
     }
 
-    public static SendMsg4FinalEntity getInstance(String id, int sendStatus, int finalState, String finalStateDate,
-                                                  String finalStateDesc) {
+    public static SendMsg4FinalEntity create(String id, int sendStatus, int finalState, String finalStateDate,
+                                             String finalStateDesc) {
         SendStatus status = SendStatus.paras(sendStatus);
         Preconditions.checkState(SendStatus.SendedGateWay == status || SendStatus.SMS4SendError == status,
                 "错误的发送状态%s", sendStatus);

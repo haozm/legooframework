@@ -2,15 +2,10 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
-import com.legooframework.model.core.jdbc.ResultSetUtil;
-import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 
-import java.sql.ResultSet;
 import java.util.Date;
-import java.util.Map;
 
 public class SendMsg4SendEntity extends BaseEntity<String> {
 
@@ -45,7 +40,6 @@ public class SendMsg4SendEntity extends BaseEntity<String> {
     public boolean isSending() {
         return SendStatus.SMS4Sending == getSendStatus();
     }
-
 
     public void errorByException(Exception e) {
         Preconditions.checkState(SendStatus.SMS4Sending == getSendStatus());

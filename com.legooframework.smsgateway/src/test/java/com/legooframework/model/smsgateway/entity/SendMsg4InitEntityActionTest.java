@@ -17,6 +17,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -43,6 +44,12 @@ public class SendMsg4InitEntityActionTest {
             smses.add(sms);
         }
         sendMsg4InitEntityAction.batchMarketChannelInsert(smses, store, batchNo, false, BusinessType.COMMONSMS);
+    }
+
+    @Test
+    public void loadNeedSyncStateSmsIds() {
+        Optional<List<String>> lisr = sendMsg4InitEntityAction.loadNeedSyncStateSmsIds();
+        lisr.ifPresent(asd-> System.out.println(asd));
     }
 
 
