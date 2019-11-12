@@ -1,10 +1,9 @@
 package com.legooframework.model.smsresult.service;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
+import com.legooframework.model.core.jdbc.sqlengine.ColumnMapStreamItemReader;
 import com.legooframework.model.core.utils.DateTimeUtils;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
@@ -15,17 +14,19 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.batch.item.ItemReader;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.handler.annotation.Payload;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
-import java.util.stream.Collectors;
 
 public class SmsResultService extends BundleService {
 
@@ -91,6 +92,26 @@ public class SmsResultService extends BundleService {
         getMessagingTemplate().send("channel_sync_source", MessageBuilder.withPayload(payload.get()).build());
         if (logger.isDebugEnabled())
             logger.debug(String.format("manualSyncState(...) is sending to queue...,size is %d", payload.get().size()));
+    }
+
+    public void autoSyncStateJob() {
+        if (logger.isDebugEnabled())
+            logger.debug("autoSyncStateJob(sms2HourSyncStreamItemReader) start....");
+        ItemReader<Map<String, Object>> reader = getBean("sms2HourSyncStreamItemReader", ColumnMapStreamItemReader.class);
+        Map<String, Object> item;
+        int i = 0;
+        try {
+            for (; ; ) {
+                item = reader.read();
+                if (item == null) break;
+                getMessagingTemplate().send("channel_sync_state", MessageBuilder.withPayload(item).build());
+                i++;
+            }
+        } catch (Exception e) {
+            logger.error("autoSyncStateJob(sms2HourSyncStreamItemReader) has error", e);
+        }
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("autoSyncStateJob(sms2HourSyncStreamItemReader) end and size %d", i));
     }
 
     // LIST CHANNEL_SYNC_STATE

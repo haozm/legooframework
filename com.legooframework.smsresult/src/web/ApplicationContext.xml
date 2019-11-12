@@ -29,7 +29,8 @@
     <task:executor id="sms-smsresult-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>
     <task:scheduler id="smsresult-scheduler" pool-size="4"/>
     <task:scheduled-tasks scheduler="smsresult-scheduler">
-        <task:scheduled ref="smsResultService" method="replay" cron="0 0/2 * * * ?"/>
+        <task:scheduled ref="smsResultService" method="replay" cron="0 0/30 * * * ?"/>
+        <task:scheduled ref="smsResultService" method="autoSyncStateJob" initial-delay="120000" fixed-delay="300000"/>
     </task:scheduled-tasks>
     <!-- ================== SMS SENDING CHANNEL ================== -->
     <int:publish-subscribe-channel id="channel_sms_splitter"/>
@@ -72,24 +73,6 @@
     </int-jdbc:outbound-gateway>
 
     <!-- ================== SMS SYNC STATUS ================== -->
-    <int:publish-subscribe-channel id="channel_sync_source"/>
-    <int-jdbc:inbound-channel-adapter channel="channel_sync_source" data-source="smsResultDataSource"
-                                      auto-startup="true">
-        <int-jdbc:query>
-            <![CDATA[
-       SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate',
-              sms_account AS 'account'
-         FROM SMS_SENDING_LOG
-        WHERE final_state = 98
-          AND TIMESTAMPDIFF(HOUR,send_date,NOW()) <= 2
-          AND TIMESTAMPDIFF(MINUTE,send_date,NOW()) >= 5
-     ORDER BY createTime
-        LIMIT 4096
-            ]]>
-        </int-jdbc:query>
-        <int:poller fixed-delay="60" time-unit="SECONDS"/>
-    </int-jdbc:inbound-channel-adapter>
-    <int:splitter input-channel="channel_sync_source" output-channel="channel_sync_state"/>
     <int:channel id="channel_sync_state">
         <int:queue/>
         <int:interceptors>
@@ -98,7 +81,8 @@
     </int:channel>
     <int:outbound-channel-adapter channel="channel_sync_state" ref="smsResultService" method="syncState"
                                   auto-startup="true">
-        <int:poller max-messages-per-poll="512" fixed-delay="10" time-unit="SECONDS"/>
+        <int:poller max-messages-per-poll="512" fixed-delay="10" time-unit="SECONDS"
+                    task-executor="sms-smsresult-executor"/>
     </int:outbound-channel-adapter>
 
     <beans profile="devp">
