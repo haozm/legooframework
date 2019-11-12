@@ -43,7 +43,18 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
         this.companyId = companyId;
         this.businessType = businessType;
         this.sendChannel = sendChannel;
-        this.context = context;
+        if (SendChannel.WECHAT == sendChannel) {
+            String ctx = context;
+            if (!Strings.isNullOrEmpty(ctx)) {
+                ctx = StringUtils.remove(ctx, "退订回T");
+                if (StringUtils.startsWith(ctx, "【")) {
+                    ctx = StringUtils.substringAfter(ctx, "】");
+                }
+            }
+            this.context = ctx;
+        } else {
+            this.context = context;
+        }
         this.sendInfo01 = sendInfo01;
         this.sendInfo02 = sendInfo02;
         this.error = error;
@@ -65,7 +76,18 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
         this.companyId = companyId;
         this.businessType = businessType;
         this.sendChannel = sendChannel;
-        this.context = context;
+        if (SendChannel.WECHAT == sendChannel) {
+            String ctx = context;
+            if (!Strings.isNullOrEmpty(ctx)) {
+                ctx = StringUtils.remove(ctx, "退订回T");
+                if (StringUtils.startsWith(ctx, "【")) {
+                    ctx = StringUtils.substringAfter(ctx, "】");
+                }
+            }
+            this.context = ctx;
+        } else {
+            this.context = context;
+        }
         this.sendInfo01 = sendInfo01;
         this.sendInfo02 = sendInfo02;
         this.error = error;
@@ -89,7 +111,7 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
         return new SendWechatEntity(ctx, this.imgUrls, this.sendInfo01, storeId, companyId, sendInfo02,
                 businessType);
     }
-    
+
     @Override
     public void setValues(PreparedStatement ps) throws SQLException {
 // care_id, company_id, org_id, store_id, employee_id, member_id,
