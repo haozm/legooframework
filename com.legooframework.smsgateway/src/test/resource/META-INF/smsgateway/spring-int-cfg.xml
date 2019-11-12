@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:task="http://www.springframework.org/schema/task"
        xmlns:int-jdbc="http://www.springframework.org/schema/integration/jdbc"
        xmlns:int="http://www.springframework.org/schema/integration"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
                            http://www.springframework.org/schema/integration/jdbc https://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
                            http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd">
     <int:channel id="channel_sms_sending">
@@ -27,9 +29,14 @@ INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
         <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
     </int-jdbc:inbound-channel-adapter>
     <int:splitter input-channel="channel_sending_splitter" output-channel="channel_sms_sending"/>
-    <int:outbound-channel-adapter channel="channel_sms_sending" ref="smsIntegrationService" method="listen4SendSMS"
+    <int:outbound-channel-adapter channel="channel_sms_sending" ref="smsGatewayService" method="listen4SendSMS"
                                   auto-startup="true">
         <int:poller max-messages-per-poll="32" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="3000"/>
     </int:outbound-channel-adapter>
     <!-- sync -->
+    <task:scheduler id="smsgateway-scheduler" pool-size="4"/>
+    <task:scheduled-tasks scheduler="smsgateway-scheduler">
+        <task:scheduled ref="smsGatewayService" method="listen4SyncSMS" initial-delay="120000"
+                        fixed-delay="300000"/>
+    </task:scheduled-tasks>
 </beans>

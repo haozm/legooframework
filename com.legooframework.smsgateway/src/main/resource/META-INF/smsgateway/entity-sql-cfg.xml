@@ -525,8 +525,9 @@
             <body><![CDATA[
       SELECT rec.id
         FROM acp.SMS_TRANSPORT_LOG rec
-       WHERE rec.send_status=3
-         AND rec.send_res_code='0000'
+       WHERE rec.send_status = 3
+         AND rec.send_res_code = '0000'
+         AND rec.final_state = 0
          AND TIMESTAMPDIFF(HOUR,rec.send_local_date,NOW()) <= 4
          AND TIMESTAMPDIFF(MINUTE,rec.send_local_date,NOW()) >= 10
             ]]></body>

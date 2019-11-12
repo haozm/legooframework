@@ -329,6 +329,9 @@ public class SmsGatewayService extends BundleService {
         }
     }
 
+    /**
+     * @param payload 发送监听
+     */
     public void listen4SendSMS(@Payload Map<String, Object> payload) {
         String smsId = MapUtils.getString(payload, "id");
         String mixed = MapUtils.getString(payload, "mixed");
@@ -337,12 +340,15 @@ public class SmsGatewayService extends BundleService {
         getBean(SendMsg4InitEntityAction.class).updateSendState(result);
     }
 
+    /**
+     * 状态回查监听
+     */
     public void listen4SyncSMS() {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         Optional<List<String>> smsIds = getBean(SendMsg4InitEntityAction.class).loadNeedSyncStateSmsIds();
         if (!smsIds.isPresent()) return;
         try {
-            if (smsIds.get().size() < 128) {
+            if (smsIds.get().size() <= 128) {
                 Optional<List<SendMsg4FinalEntity>> res_states = getBean(SMSProxyEntityAction.class).syncSmsState(smsIds.get());
                 res_states.ifPresent($it -> getBean(SendMsg4InitEntityAction.class).updateFinalState($it));
             } else {
