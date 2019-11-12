@@ -35,7 +35,6 @@ public abstract class DateTimeUtils {
         return LocalDate.parse(datatime, YYYYMMDD);
     }
 
-
     public static LocalDate parseYYYYMMDD(String datatime) {
         return LocalDate.parse(datatime, YYYY_MM_DD);
     }

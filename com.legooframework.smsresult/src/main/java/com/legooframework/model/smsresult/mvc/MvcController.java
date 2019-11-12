@@ -12,10 +12,12 @@ import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.smsresult.entity.*;
+import com.legooframework.model.smsresult.service.SmsResultService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,7 +100,7 @@ public class MvcController extends BaseController {
         }
     }
 
-    @PostMapping(value = "/smses/batch/syncstate.json")
+    @PostMapping(value = "/smses/manua/syncstate.json")
     @ResponseBody
     public JsonMessage manualSyncState(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
@@ -107,9 +109,12 @@ public class MvcController extends BaseController {
         try {
             String smsIds_all = MapUtils.getString(requestBody, "smsIds", null);
             String startTime = MapUtils.getString(requestBody, "start", null);
+            DateTimeUtils.parseYYYYMMDD(startTime);
             Preconditions.checkArgument(startTime != null, "搜索日期范围开始时间不可为空....");
             String endTime = MapUtils.getString(requestBody, "end", null);
+            if (!Strings.isNullOrEmpty(endTime)) DateTimeUtils.parseYYYYMMDD(endTime);
             Collection<String> smsIds = Splitter.on(',').splitToList(smsIds_all);
+            getBean(SmsResultService.class, request).manualSyncState(smsIds, startTime, endTime);
         } finally {
             LoginContextHolder.clear();
         }

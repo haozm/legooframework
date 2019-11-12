@@ -1,5 +1,6 @@
 package com.legooframework.model.smsresult.service;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
@@ -13,6 +14,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,17 +82,21 @@ public class SmsResultService extends BundleService {
 
     /**
      * @param smsIds
-     * @param start
-     * @param end
+     * @param start  yyyyMMdd
+     * @param end    yyyyMMdd
      */
-    public void manualSyncState(Collection<String> smsIds, LocalDateTime start, LocalDateTime end) {
+    public void manualSyncState(Collection<String> smsIds, String start, String end) {
         if (CollectionUtils.isEmpty(smsIds)) return;
         Optional<List<SMSResultEntity>> smses = getBean(SMSResultEntityAction.class).loadByIds(smsIds);
         if (!smses.isPresent()) return;
-        List<SMSResultEntity> sub_smses = smses.get().stream().filter(x -> FinalState.SENDING == x.getFinalState()).collect(Collectors.toList());
+        List<SMSResultEntity> sub_smses = smses.get().stream().filter(x -> FinalState.SENDING == x.getFinalState())
+                .collect(Collectors.toList());
         if (CollectionUtils.isEmpty(sub_smses)) return;
+        LocalDateTime startTime = DateTimeUtils.parseYYYYMMDDHHMMSS(String.format("%s000000", start));
+        LocalDateTime endTime = Strings.isNullOrEmpty(end) ? LocalDateTime.now() :
+                DateTimeUtils.parseYYYYMMDDHHMMSS(String.format("%s235959", end));
         List<Map<String, Object>> sync_list = Lists.newArrayList();
-        sub_smses.forEach(sms -> sync_list.add(sms.toView4SyncState(start, end)));
+        sub_smses.forEach(sms -> sync_list.add(sms.toView4SyncState(startTime, endTime)));
         getMessagingTemplate().send("channel_sync_source", MessageBuilder.withPayload(sync_list).build());
     }
 
