@@ -78,7 +78,7 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
             ps.setObject(5, MapUtils.getLong(map, "sendMsgId"));
         });
         if (logger.isDebugEnabled())
-            logger.debug(String.format("updateState() retuen size is %d", statusMaps.size()));
+            logger.debug(String.format("updateState() retuen size is %s", size.length));
     }
 
     @Override
@@ -92,9 +92,5 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
             return new SMSResultEntity(res.getString("id"), res);
         }
     }
-
-
-    public void asd(){
-
-    }
+    
 }
