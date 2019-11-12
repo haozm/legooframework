@@ -49,6 +49,7 @@
         </property>
         <property name="fetchSize" value="512"/>
         <property name="dataSource" ref="smsResultDataSource"/>
+        <property name="verifyCursorPosition" value="false"/>
     </bean>
 
     <bean id="smsResultService" class="com.legooframework.model.smsresult.service.SmsResultService"/>
