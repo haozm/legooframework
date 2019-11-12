@@ -109,10 +109,10 @@ public class MvcController extends BaseController {
         try {
             String smsIds_all = MapUtils.getString(requestBody, "smsIds", null);
             String startTime = MapUtils.getString(requestBody, "start", null);
-            DateTimeUtils.parseYYYYMMDD(startTime);
+            DateTimeUtils.parseShortYYYYMMDD(startTime);
             Preconditions.checkArgument(startTime != null, "搜索日期范围开始时间不可为空....");
             String endTime = MapUtils.getString(requestBody, "end", null);
-            if (!Strings.isNullOrEmpty(endTime)) DateTimeUtils.parseYYYYMMDD(endTime);
+            if (!Strings.isNullOrEmpty(endTime)) DateTimeUtils.parseShortYYYYMMDD(endTime);
             Collection<String> smsIds = Splitter.on(',').splitToList(smsIds_all);
             getBean(SmsResultService.class, request).manualSyncState(smsIds, startTime, endTime);
         } finally {
