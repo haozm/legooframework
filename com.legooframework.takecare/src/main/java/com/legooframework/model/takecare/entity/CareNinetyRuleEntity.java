@@ -30,7 +30,7 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
     private CareNinetyRuleEntity(Integer companyId, Integer storeId, boolean enabled, int toHour, int toNode1,
                                  int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                                  String remark, int limitDays, BigDecimal minAmount, BigDecimal limitAmount,
-                                 int toNode1Delay, int toNode3Delay, int toNode7Delay,
+                                 int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
                                  int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
         super(0);
         this.companyId = companyId;
@@ -38,11 +38,19 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
         this.enabled = enabled;
         Preconditions.checkArgument(toHour >= 0 && toHour < 24, "小时跨度需小于24小时....");
         this.toHour = toHour;
-        if (this.toHour == 0) this.toHourDelay = 0;
+        this.toHourDelay = this.toHour == 0 ? 0 : toHourDelay;
+        if (this.toHour > 0) {
+            Preconditions.checkArgument(this.toHourDelay >= 0, "第一节点延期异常");
+        } else {
+            this.toHour = 0;
+            this.toHourDelay = 0;
+        }
+        int sum_00 = this.toHourDelay;
         this.toNode1 = toNode1;
         this.toNode1Delay = toNode1Delay;
         if (this.toNode1 > 0) {
-            Preconditions.checkArgument(toNode1Delay >= 0, "第一节点延期异常");
+            Preconditions.checkArgument(this.toNode1Delay >= 0, "第一节点延期异常");
+            Preconditions.checkArgument(Ints.max(this.toNode1, sum_00) == this.toNode1, "第0节点延期异常");
         } else {
             this.toNode1 = 0;
             this.toNode1Delay = 0;
@@ -163,22 +171,22 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
     static CareNinetyRuleEntity createByCompany(OrgEntity company, int toHour, int toNode1,
                                                 int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                                                 String remark, int limitDays, double minAmount, double limitAmount,
-                                                int toNode1Delay, int toNode3Delay, int toNode7Delay,
+                                                int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
                                                 int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
         return new CareNinetyRuleEntity(company.getId(), 0, true, toHour, toNode1, toNode3, toNode7, toNode15,
                 toNode30, toNode60, toNode90, remark, limitDays, new BigDecimal(minAmount), new BigDecimal(limitAmount),
-                toNode1Delay, toNode3Delay, toNode7Delay,
+                toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
                 toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
     }
 
     static CareNinetyRuleEntity createByStore(StoEntity store, int toHour, int toNode1,
                                               int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                                               String remark, int limitDays, double minAmount, double limitAmount,
-                                              int toNode1Delay, int toNode3Delay, int toNode7Delay,
+                                              int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
                                               int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
         return new CareNinetyRuleEntity(store.getCompanyId(), store.getId(), true, toHour, toNode1, toNode3, toNode7, toNode15,
                 toNode30, toNode60, toNode90, remark, limitDays, new BigDecimal(minAmount), new BigDecimal(limitAmount),
-                toNode1Delay, toNode3Delay, toNode7Delay,
+                toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
                 toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
     }
 

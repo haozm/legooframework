@@ -223,6 +223,7 @@ public class MvcController extends BaseController {
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
             int toHour = MapUtils.getIntValue(requestBody, "toHour", 0);
+            int toHourDelay = MapUtils.getIntValue(requestBody, "toHourDelay", 0);
             int toNode1 = MapUtils.getIntValue(requestBody, "toNode1", 0);
             int toNode1Delay = MapUtils.getIntValue(requestBody, "toNode1Delay", 1);
             int toNode3 = MapUtils.getIntValue(requestBody, "toNode3", 0);
@@ -246,7 +247,7 @@ public class MvcController extends BaseController {
                 StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(null));
                 getBean(CareNinetyRuleEntityAction.class, request).saveByStore(store, toHour, toNode1,
                         toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
-                        remark, limitDays, minAmount, limitAmount, toNode1Delay, toNode3Delay, toNode7Delay,
+                        remark, limitDays, minAmount, limitAmount, toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
                         toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
             } else {
                 String storeIds_str = MapUtils.getString(requestBody, "storeIds", null);
@@ -254,7 +255,7 @@ public class MvcController extends BaseController {
                     OrgEntity company = getBean(OrgEntityAction.class, request).loadComById(user.getCompanyId());
                     getBean(CareNinetyRuleEntityAction.class, request).saveByCompany(company, toHour, toNode1,
                             toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
-                            remark, limitDays, minAmount, limitAmount, toNode1Delay, toNode3Delay, toNode7Delay,
+                            remark, limitDays, minAmount, limitAmount, toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
                             toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay, appNext);
                 } else {
                     List<Integer> storeIds = Stream.of(StringUtils.split(storeIds_str, ',')).mapToInt(Integer::parseInt)
@@ -262,7 +263,7 @@ public class MvcController extends BaseController {
                     Optional<List<StoEntity>> stores_opt = getBean(StoEntityAction.class, request).findByIds(storeIds);
                     stores_opt.ifPresent(x -> getBean(CareNinetyRuleEntityAction.class, request).saveByStores(x, toHour, toNode1,
                             toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
-                            remark, limitDays, minAmount, limitAmount, toNode1Delay, toNode3Delay, toNode7Delay,
+                            remark, limitDays, minAmount, limitAmount, toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
                             toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay));
                 }
             }

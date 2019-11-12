@@ -43,12 +43,12 @@ public class CareNinetyRuleEntityAction extends BaseEntityAction<CareNinetyRuleE
     public void saveByCompany(OrgEntity company, int toHour, int toNode1,
                               int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                               String remark, int limitDays, double minAmount, double limitAmount,
-                              int toNode1Delay, int toNode3Delay, int toNode7Delay,
+                              int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
                               int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay,
                               boolean appToStores) {
         CareNinetyRuleEntity instance = CareNinetyRuleEntity.createByCompany(company, toHour, toNode1,
                 toNode3, toNode7, toNode15, toNode30, toNode60, toNode90, remark, limitDays, minAmount, limitAmount,
-                toNode1Delay, toNode3Delay, toNode7Delay,
+                toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
                 toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
         Map<String, Object> params = company.toParamMap();
         params.put("sql", "findByCompany");
@@ -67,11 +67,11 @@ public class CareNinetyRuleEntityAction extends BaseEntityAction<CareNinetyRuleE
     public void saveByStore(StoEntity store, int toHour, int toNode1,
                             int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                             String remark, int limitDays, double minAmount, double limitAmount,
-                            int toNode1Delay, int toNode3Delay, int toNode7Delay,
+                            int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
                             int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
         CareNinetyRuleEntity instance = CareNinetyRuleEntity.createByStore(store, toHour, toNode1,
                 toNode3, toNode7, toNode15, toNode30, toNode60, toNode90, remark, limitDays, minAmount, limitAmount,
-                toNode1Delay, toNode3Delay, toNode7Delay,
+                toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
                 toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
         Map<String, Object> params = store.toParamMap();
         params.put("sql", "findByStore");
@@ -85,13 +85,13 @@ public class CareNinetyRuleEntityAction extends BaseEntityAction<CareNinetyRuleE
     public void saveByStores(Collection<StoEntity> stores, int toHour, int toNode1,
                              int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                              String remark, int limitDays, double minAmount, double limitAmount,
-                             int toNode1Delay, int toNode3Delay, int toNode7Delay,
+                             int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
                              int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
         if (CollectionUtils.isEmpty(stores)) return;
         disabledAllStores(stores);
         List<CareNinetyRuleEntity> rules = stores.stream().map(x -> CareNinetyRuleEntity.createByStore(x, toHour, toNode1,
                 toNode3, toNode7, toNode15, toNode30, toNode60, toNode90, remark, limitDays, minAmount, limitAmount,
-                toNode1Delay, toNode3Delay, toNode7Delay,
+                toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
                 toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay))
                 .collect(Collectors.toList());
         super.batchInsert("batchInsert", Lists.newArrayList(rules));
