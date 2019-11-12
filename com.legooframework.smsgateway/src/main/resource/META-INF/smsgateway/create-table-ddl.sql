@@ -288,6 +288,26 @@ CREATE TABLE SMS_TRANSPORT_LOG
   COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
 
+-- 短息提交批次记录等
+DROP TABLE IF EXISTS SMS_TRANSPORT_BATCH;
+CREATE TABLE SMS_TRANSPORT_BATCH
+(
+  id           BIGINT(20)       NOT NULL AUTO_INCREMENT,
+  company_id   INT(11)          NOT NULL,
+  store_id     INT(11)          NOT NULL,
+  send_batchno VARCHAR(32)      NOT NULL,
+  is_billing   TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  delete_flag  TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  tenant_id    BIGINT(20)       NULL     DEFAULT NULL,
+  creator      BIGINT(20)       NOT NULL DEFAULT -1,
+  createTime   DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  editor       BIGINT(20)       NULL     DEFAULT NULL,
+  editTime     DATETIME         NULL     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id, company_id, store_id)
+) DEFAULT CHARSET = utf8mb4
+  COLLATE = 'utf8mb4_general_ci'
+  ENGINE = InnoDB;
+
 -- 电话黑名单
 DROP TABLE IF EXISTS SMS_BLACKLIST;
 CREATE TABLE SMS_BLACKLIST

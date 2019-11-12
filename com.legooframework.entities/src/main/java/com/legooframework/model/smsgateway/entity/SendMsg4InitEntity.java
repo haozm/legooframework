@@ -17,7 +17,7 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
 
     private final Integer companyId, storeId;
     private final SMSEntity sms;
-    private final String sendBatchNo;
+    private String sendBatchNo;
     private final SMSChannel smsChannel;
     private final BusinessType businessType;
     private final boolean freeSend;
@@ -36,12 +36,16 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         this.businessType = businessType;
     }
 
+    void setSendBatchNo(String sendBatchNo) {
+        this.sendBatchNo = sendBatchNo;
+    }
+
     public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, String smsBatchNo, SMSChannel smsChannel,
                                                     boolean freeSend, BusinessType businessType) {
         return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, smsBatchNo, smsChannel,
                 freeSend, businessType);
     }
-    
+
     public Integer getStoreId() {
         return storeId;
     }

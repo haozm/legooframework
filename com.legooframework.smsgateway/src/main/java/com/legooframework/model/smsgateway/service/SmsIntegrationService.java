@@ -222,7 +222,7 @@ public class SmsIntegrationService extends BundleService {
                     isFree, businessType));
         }
         // save_msg_log_4_sending
-        getBean(SendMsg4InitEntityAction.class).batchInsert(batchSaveLogs);
+        //getBean(SendMsg4InitEntityAction.class).batchInsert(batchSaveLogs);
         return summaryId;
     }
 

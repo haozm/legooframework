@@ -1,6 +1,7 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.collect.Lists;
+import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.StoEntityAction;
 import com.legooframework.model.membercare.entity.BusinessType;
@@ -23,23 +24,23 @@ import static org.junit.Assert.*;
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-acp-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/covariant/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsgateway/spring-model-cfg.xml"}
 )
 public class SendMsg4InitEntityActionTest {
 
     @Test
     public void batchInsert() {
-        List<SendMsg4InitEntity> smses = Lists.newArrayList();
+        LoginContextHolder.setAnonymousCtx();
+        List<SMSEntity> smses = Lists.newArrayList();
         String batchNo = LocalDateTime.now().toString("yyyyMMddHHmmss");
         StoEntity store = stoEntityAction.loadById(1120);
         for (int i = 0; i < 100; i++) {
             SMSEntity sms = SMSEntity.createSMSMsgWithNoJob(UUID.randomUUID().toString(), 12, "18588828127", "HAOXIAOJIE",
                     String.format("【武商广场沙驰男装】您好HXJ，在穿着过程中有搭配方面的问题吗，可以随时到店帮您搭配哦，请记得洗涤保养技巧--%d，祝您愉快每一天。退订回T", i));
-            SendMsg4InitEntity sabe = SendMsg4InitEntity.createInstance(store, sms, batchNo, SMSChannel.MarketChannel, false, BusinessType.TESTSMS);
-            smses.add(sabe);
+            smses.add(sms);
         }
-        sendMsg4InitEntityAction.batchInsert(smses);
+        sendMsg4InitEntityAction.batchMarketChannelInsert(smses, store, batchNo, false, BusinessType.COMMONSMS);
     }
 
     @Autowired

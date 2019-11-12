@@ -39,17 +39,16 @@ public class CareNinetyRuleEntityAction extends BaseEntityAction<CareNinetyRuleE
         return querySingleByParams(params);
     }
 
-
     public void saveByCompany(OrgEntity company, int toHour, int toNode1,
                               int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                               String remark, int limitDays, double minAmount, double limitAmount,
                               int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
-                              int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay,
+                              int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay, double mergeAmount,
                               boolean appToStores) {
         CareNinetyRuleEntity instance = CareNinetyRuleEntity.createByCompany(company, toHour, toNode1,
                 toNode3, toNode7, toNode15, toNode30, toNode60, toNode90, remark, limitDays, minAmount, limitAmount,
                 toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
-                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
+                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay, mergeAmount);
         Map<String, Object> params = company.toParamMap();
         params.put("sql", "findByCompany");
         Optional<CareNinetyRuleEntity> com_rule = querySingleByParams(params);
@@ -68,11 +67,11 @@ public class CareNinetyRuleEntityAction extends BaseEntityAction<CareNinetyRuleE
                             int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                             String remark, int limitDays, double minAmount, double limitAmount,
                             int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
-                            int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
+                            int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay, double mergeAmount) {
         CareNinetyRuleEntity instance = CareNinetyRuleEntity.createByStore(store, toHour, toNode1,
                 toNode3, toNode7, toNode15, toNode30, toNode60, toNode90, remark, limitDays, minAmount, limitAmount,
                 toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
-                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
+                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay, mergeAmount);
         Map<String, Object> params = store.toParamMap();
         params.put("sql", "findByStore");
         Optional<CareNinetyRuleEntity> store_rule = querySingleByParams(params);
@@ -86,13 +85,13 @@ public class CareNinetyRuleEntityAction extends BaseEntityAction<CareNinetyRuleE
                              int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                              String remark, int limitDays, double minAmount, double limitAmount,
                              int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
-                             int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
+                             int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay, double mergeAmount) {
         if (CollectionUtils.isEmpty(stores)) return;
         disabledAllStores(stores);
         List<CareNinetyRuleEntity> rules = stores.stream().map(x -> CareNinetyRuleEntity.createByStore(x, toHour, toNode1,
                 toNode3, toNode7, toNode15, toNode30, toNode60, toNode90, remark, limitDays, minAmount, limitAmount,
                 toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
-                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay))
+                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay, mergeAmount))
                 .collect(Collectors.toList());
         super.batchInsert("batchInsert", Lists.newArrayList(rules));
     }

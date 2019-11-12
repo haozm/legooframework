@@ -115,9 +115,9 @@
             <body><![CDATA[
     INSERT INTO acp.crm_90_node_map
                 (store_id, to_H, to_1, to_3, to_7, to_15, to_30, to_60, to_90, createtime,    remark, enable, company_id, min_amount, limit_days, limit_amount,
-                to_H_delay, to_1_delay, to_3_delay, to_7_delay, to_15_delay, to_30_delay, to_60_delay, to_90_delay )
+                to_H_delay, to_1_delay, to_3_delay, to_7_delay, to_15_delay, to_30_delay, to_60_delay, to_90_delay,merge_amount )
          VALUES (       ?,    ?,    ?,    ?,     ?,     ?,    ?,     ?,     ?, CURRENT_TIMESTAMP,  ?,      ?,          ?,           ?,          ?,           ?,
-                         ?,          ?,          ?,           ?,           ?,          ?,           ?,            ?)
+                         ?,          ?,          ?,           ?,           ?,          ?,           ?,            ?,          ?)
             ]]></body>
         </sql>
     </model>

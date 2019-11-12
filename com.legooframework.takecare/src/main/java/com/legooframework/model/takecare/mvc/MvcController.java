@@ -241,6 +241,7 @@ public class MvcController extends BaseController {
             int limitDays = MapUtils.getIntValue(requestBody, "limitDays", 0);
             double minAmount = MapUtils.getDoubleValue(requestBody, "minAmount", 0.00D);
             double limitAmount = MapUtils.getDoubleValue(requestBody, "limitAmount", 0.00D);
+            double mergeAmount = MapUtils.getDoubleValue(requestBody, "mergeAmount", 0.00D);
             String remark = MapUtils.getString(requestBody, "remark", null);
             boolean appNext = MapUtils.getIntValue(requestBody, "appNext", 0) == 1;
             if (user.isStoreManager() || user.isShoppingGuide()) {
@@ -248,7 +249,7 @@ public class MvcController extends BaseController {
                 getBean(CareNinetyRuleEntityAction.class, request).saveByStore(store, toHour, toNode1,
                         toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
                         remark, limitDays, minAmount, limitAmount, toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
-                        toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
+                        toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay, mergeAmount);
             } else {
                 String storeIds_str = MapUtils.getString(requestBody, "storeIds", null);
                 if (Strings.isNullOrEmpty(storeIds_str)) {
@@ -256,7 +257,7 @@ public class MvcController extends BaseController {
                     getBean(CareNinetyRuleEntityAction.class, request).saveByCompany(company, toHour, toNode1,
                             toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
                             remark, limitDays, minAmount, limitAmount, toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
-                            toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay, appNext);
+                            toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay, mergeAmount, appNext);
                 } else {
                     List<Integer> storeIds = Stream.of(StringUtils.split(storeIds_str, ',')).mapToInt(Integer::parseInt)
                             .boxed().collect(Collectors.toList());
@@ -264,7 +265,7 @@ public class MvcController extends BaseController {
                     stores_opt.ifPresent(x -> getBean(CareNinetyRuleEntityAction.class, request).saveByStores(x, toHour, toNode1,
                             toNode3, toNode7, toNode15, toNode30, toNode60, toNode90,
                             remark, limitDays, minAmount, limitAmount, toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
-                            toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay));
+                            toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay, mergeAmount));
                 }
             }
             return JsonMessageBuilder.OK().toMessage();

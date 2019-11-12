@@ -25,17 +25,19 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
     private int toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay, toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay;
     private LocalDateTime createTime;
     private String remark;
-    private BigDecimal minAmount, limitAmount;
+    private BigDecimal minAmount, limitAmount, mergeAmount;
 
     private CareNinetyRuleEntity(Integer companyId, Integer storeId, boolean enabled, int toHour, int toNode1,
                                  int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                                  String remark, int limitDays, BigDecimal minAmount, BigDecimal limitAmount,
                                  int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
-                                 int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
+                                 int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay,
+                                 BigDecimal mergeAmount) {
         super(0);
         this.companyId = companyId;
         this.storeId = storeId;
         this.enabled = enabled;
+        this.mergeAmount = mergeAmount;
         Preconditions.checkArgument(toHour >= 0 && toHour < 24, "小时跨度需小于24小时....");
         this.toHour = toHour;
         this.toHourDelay = this.toHour == 0 ? 0 : toHourDelay;
@@ -166,28 +168,34 @@ public class CareNinetyRuleEntity extends BaseEntity<Integer> implements BatchSe
         ps.setObject(21, toNode30Delay);
         ps.setObject(22, toNode60Delay);
         ps.setObject(23, toNode90Delay);
+        ps.setObject(24, mergeAmount);
     }
 
     static CareNinetyRuleEntity createByCompany(OrgEntity company, int toHour, int toNode1,
                                                 int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                                                 String remark, int limitDays, double minAmount, double limitAmount,
                                                 int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
-                                                int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
+                                                int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay,
+                                                double mergeAmount) {
         return new CareNinetyRuleEntity(company.getId(), 0, true, toHour, toNode1, toNode3, toNode7, toNode15,
-                toNode30, toNode60, toNode90, remark, limitDays, new BigDecimal(minAmount), new BigDecimal(limitAmount),
+                toNode30, toNode60, toNode90, remark, limitDays, new BigDecimal(minAmount < 0 ? 0 : minAmount),
+                new BigDecimal(limitAmount < 0 ? 0 : limitAmount),
                 toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
-                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
+                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay,
+                new BigDecimal(mergeAmount < 0 ? 0 : mergeAmount));
     }
 
     static CareNinetyRuleEntity createByStore(StoEntity store, int toHour, int toNode1,
                                               int toNode3, int toNode7, int toNode15, int toNode30, int toNode60, int toNode90,
                                               String remark, int limitDays, double minAmount, double limitAmount,
                                               int toHourDelay, int toNode1Delay, int toNode3Delay, int toNode7Delay,
-                                              int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay) {
+                                              int toNode15Delay, int toNode30Delay, int toNode60Delay, int toNode90Delay,
+                                              double mergeAmount) {
         return new CareNinetyRuleEntity(store.getCompanyId(), store.getId(), true, toHour, toNode1, toNode3, toNode7, toNode15,
-                toNode30, toNode60, toNode90, remark, limitDays, new BigDecimal(minAmount), new BigDecimal(limitAmount),
+                toNode30, toNode60, toNode90, remark, limitDays, new BigDecimal(minAmount < 0 ? 0 : minAmount),
+                new BigDecimal(limitAmount < 0 ? 0 : limitAmount),
                 toHourDelay, toNode1Delay, toNode3Delay, toNode7Delay,
-                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay);
+                toNode15Delay, toNode30Delay, toNode60Delay, toNode90Delay, new BigDecimal(mergeAmount < 0 ? 0 : mergeAmount));
     }
 
     Integer getCompanyId() {
