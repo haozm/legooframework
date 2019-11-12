@@ -6,14 +6,18 @@ import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntity> {
@@ -50,6 +54,17 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
         insertBatchInfo(store, batchNo);
     }
 
+    public void updateSendState(SendMsg4SendEntity sendEntity) {
+        String update_sql = "UPDATE SMS_TRANSPORT_LOG SET send_status= ?,send_res_code=?, send_local_date=?, remarks=? WHERE id = ?";
+        Objects.requireNonNull(getJdbcTemplate()).update(update_sql, ps -> {
+            ps.setObject(1, sendEntity.getSendStatus().getStatus());
+            ps.setObject(2, sendEntity.getSendResCode());
+            ps.setObject(3, sendEntity.getSendLocalDate());
+            ps.setObject(4, sendEntity.getRemarks());
+            ps.setObject(5, sendEntity.getId());
+        });
+    }
+    
     private void insertBatchInfo(StoEntity store, String batchNo) {
         String insert_sql = "INSERT INTO SMS_TRANSPORT_BATCH  (company_id, store_id, send_batchno, is_billing, delete_flag, tenant_id) VALUES( ?, ?, ?,  0,  0, ?)";
         Objects.requireNonNull(getJdbcTemplate()).update(insert_sql, ps -> {

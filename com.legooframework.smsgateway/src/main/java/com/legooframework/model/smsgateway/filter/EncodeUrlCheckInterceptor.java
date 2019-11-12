@@ -16,15 +16,15 @@ public class EncodeUrlCheckInterceptor extends SmsSendInterceptor {
 
     @Override
     public boolean filter(Collection<SendMsg4SendEntity> batchSendLogs) {
-        batchSendLogs.stream().filter(x -> !x.isError()).forEach(x -> {
-            try {
-                urlCodec.encode(x.getSms().getContent());
-            } catch (Exception e) {
-                logger.error(String.format("EncodeUrlCheckInterceptor hander %s has error",
-                        x.getSms().getContent()), e);
-                x.error4Encode();
-            }
-        });
+//        batchSendLogs.stream().filter(x -> !x.isError()).forEach(x -> {
+//            try {
+//                urlCodec.encode(x.getSms().getContent());
+//            } catch (Exception e) {
+//                logger.error(String.format("EncodeUrlCheckInterceptor hander %s has error",
+//                        x.getSms().getContent()), e);
+//                x.error4Encode();
+//            }
+//        });
         return false;
     }
 

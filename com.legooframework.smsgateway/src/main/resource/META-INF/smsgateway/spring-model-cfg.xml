@@ -78,9 +78,6 @@
     <bean id="sendMsg4InitEntityAction"
           class="com.legooframework.model.smsgateway.entity.SendMsg4InitEntityAction"
           parent="smsClientEntityAction"/>
-    <bean id="sendMsg4SendEntityAction"
-          class="com.legooframework.model.smsgateway.entity.SendMsg4SendEntityAction"
-          parent="smsClientEntityAction"/>
     <bean id="sendMsg4FinalEntityAction"
           class="com.legooframework.model.smsgateway.entity.SendMsg4FinalEntityAction"
           parent="smsClientEntityAction"/>

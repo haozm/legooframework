@@ -3,7 +3,6 @@ package com.legooframework.model.smsgateway.entity;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.integration.core.MessagingTemplate;
@@ -57,8 +56,7 @@ public class SMSBatchSendLogEntityActionTest {
 //        });
     }
 
-    @Autowired
-    SendMsg4SendEntityAction action;
+
     @Resource(name = "smsMessagingTemplate")
     MessagingTemplate messagingTemplate;
 }

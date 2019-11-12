@@ -19,26 +19,19 @@ import com.legooframework.model.smsgateway.mvc.RechargeReqDto;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import com.legooframework.model.smsprovider.entity.SMSProviderEntity;
 import com.legooframework.model.smsprovider.entity.SMSProviderEntityAction;
-import com.legooframework.model.smsresult.entity.SMSSendTransportProtocol;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.transaction.TransactionStatus;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class SmsIntegrationService extends BundleService {
 
@@ -105,67 +98,68 @@ public class SmsIntegrationService extends BundleService {
         Preconditions.checkState(chargeSummary.isPresent(), "数据异常: Id=%s 对应的充值计费不存在...", summaryId);
 
         // 按照批次号获取短信送入发送通道
-        Optional<List<SendMsg4SendEntity>> send_sms_list_opt = getBean(SendMsg4SendEntityAction.class)
-                .load4Sending(chargeSummary.get(), CommunicationChannel.SMS);
-        Optional<List<SendMsg4SendEntity>> send_wx_list_opt = getBean(SendMsg4SendEntityAction.class)
-                .load4Sending(chargeSummary.get(), CommunicationChannel.WEIXIN);
-        if (send_sms_list_opt.isPresent()) {
-            List<SendMsg4SendEntity> send_sms_list = send_sms_list_opt.get();
-            getBean("smsBeforeSendInterceptor", SmsSendInterceptor.class).filter(send_sms_list);
-            List<SendMsg4SendEntity> errors_list = send_sms_list.stream().filter(SendMsg4SendEntity::isError)
-                    .collect(Collectors.toList());
-            List<SendMsg4SendEntity> send_list = send_sms_list.stream().filter(SendMsg4SendEntity::isSending)
-                    .collect(Collectors.toList());
-
-            if (CollectionUtils.isNotEmpty(errors_list)) {
-                Message<List<SendMsg4SendEntity>> msg_request = MessageBuilder.withPayload(errors_list)
-                        .setHeader("action", "writeOff")
-                        .setHeader("sendBatchNo", chargeSummary.get().getSmsBatchNo())
-                        .setHeader("user", user).build();
-                getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDED, msg_request);
-            }
-
-            if (CollectionUtils.isEmpty(send_list)) return chargeSummary.get().getSmsBatchNo();
-            if (send_list.size() <= 200) {
-                Message<List<SendMsg4SendEntity>> message = MessageBuilder.withPayload(send_list)
-                        .setHeader("user", user).build();
-                getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDING, message);
-            } else {
-                List<List<SendMsg4SendEntity>> list_list = Lists.partition(send_list, 200);
-                List<Message<List<SendMsg4SendEntity>>> messages = list_list.stream().map(x -> MessageBuilder.withPayload(x)
-                        .setHeader("user", user).build())
-                        .collect(Collectors.toList());
-                messages.forEach(msg -> getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDING, msg));
-            }
-        }
+//        Optional<List<SendMsg4SendEntity>> send_sms_list_opt = getBean(SendMsg4SendEntityAction.class)
+//                .load4Sending(chargeSummary.get(), CommunicationChannel.SMS);
+//        Optional<List<SendMsg4SendEntity>> send_wx_list_opt = getBean(SendMsg4SendEntityAction.class)
+//                .load4Sending(chargeSummary.get(), CommunicationChannel.WEIXIN);
+//        if (send_sms_list_opt.isPresent()) {
+//            List<SendMsg4SendEntity> send_sms_list = send_sms_list_opt.get();
+//            getBean("smsBeforeSendInterceptor", SmsSendInterceptor.class).filter(send_sms_list);
+//            List<SendMsg4SendEntity> errors_list = send_sms_list.stream().filter(SendMsg4SendEntity::isError)
+//                    .collect(Collectors.toList());
+//            List<SendMsg4SendEntity> send_list = send_sms_list.stream().filter(SendMsg4SendEntity::isSending)
+//                    .collect(Collectors.toList());
+//
+//            if (CollectionUtils.isNotEmpty(errors_list)) {
+//                Message<List<SendMsg4SendEntity>> msg_request = MessageBuilder.withPayload(errors_list)
+//                        .setHeader("action", "writeOff")
+//                        .setHeader("sendBatchNo", chargeSummary.get().getSmsBatchNo())
+//                        .setHeader("user", user).build();
+//                getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDED, msg_request);
+//            }
+//
+//            if (CollectionUtils.isEmpty(send_list)) return chargeSummary.get().getSmsBatchNo();
+//            if (send_list.size() <= 200) {
+//                Message<List<SendMsg4SendEntity>> message = MessageBuilder.withPayload(send_list)
+//                        .setHeader("user", user).build();
+//                getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDING, message);
+//            } else {
+//                List<List<SendMsg4SendEntity>> list_list = Lists.partition(send_list, 200);
+//                List<Message<List<SendMsg4SendEntity>>> messages = list_list.stream().map(x -> MessageBuilder.withPayload(x)
+//                        .setHeader("user", user).build())
+//                        .collect(Collectors.toList());
+//                messages.forEach(msg -> getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDING, msg));
+//            }
+//        }
         // 发送微信逻辑
-        if (send_wx_list_opt.isPresent()) {
-            List<SendMsg4SendEntity> send_wx_list = send_wx_list_opt.get();
-            List<SendMsg4SendEntity> error_list = send_wx_list.stream().filter(x -> !x.isEnbaled())
-                    .filter(x -> !x.hasWeixin()).collect(Collectors.toList());
-            List<SendMsg4SendEntity> sending_list = send_wx_list.stream().filter(SendMsg4InitEntity::isEnbaled)
-                    .filter(SendMsg4InitEntity::hasWeixin).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(error_list)) {
-                error_list.forEach(x -> x.errorBySending("微信发送信息异常..."));
-                Message<List<SendMsg4SendEntity>> msg_request = MessageBuilder.withPayload(error_list)
-                        .setHeader("user", LoginContextHolder.get()).build();
-                getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDED, msg_request);
-            }
-            if (CollectionUtils.isNotEmpty(sending_list)) {
-                List<WechatMessageEntity> wechatMessages = Lists.newArrayListWithCapacity(sending_list.size());
-                final String batchNo = chargeSummary.get().getSmsBatchNo();
-                sending_list.forEach(msg -> wechatMessages.add(WechatMessageEntity
-                        .createMessage4Txt(msg.getSms().getContent(), msg.getSms().getWeixinId(), batchNo,
-                                msg.getSms().getDeviceId(), msg.getStoreId(), UUID.randomUUID().toString(), 1,
-                                msg.getCreator(), msg.getTenantId())));
-                getBean(WechatMessageEntityAction.class).batchSend(wechatMessages);
-                sending_list.forEach(SendMsg4SendEntity::finshedByWechat);
-                Message<List<SendMsg4SendEntity>> msg_request = MessageBuilder.withPayload(sending_list)
-                        .setHeader("user", LoginContextHolder.get()).build();
-                getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDED, msg_request);
-            }
-        }
-        return chargeSummary.get().getSmsBatchNo();
+        //if (send_wx_list_opt.isPresent()) {
+//            List<SendMsg4SendEntity> send_wx_list = send_wx_list_opt.get();
+//            List<SendMsg4SendEntity> error_list = send_wx_list.stream().filter(x -> !x.isEnbaled())
+//                    .filter(x -> !x.hasWeixin()).collect(Collectors.toList());
+//            List<SendMsg4SendEntity> sending_list = send_wx_list.stream().filter(SendMsg4InitEntity::isEnbaled)
+//                    .filter(SendMsg4InitEntity::hasWeixin).collect(Collectors.toList());
+//            if (CollectionUtils.isNotEmpty(error_list)) {
+//                error_list.forEach(x -> x.errorBySending("微信发送信息异常..."));
+//                Message<List<SendMsg4SendEntity>> msg_request = MessageBuilder.withPayload(error_list)
+//                        .setHeader("user", LoginContextHolder.get()).build();
+//                getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDED, msg_request);
+//            }
+//            if (CollectionUtils.isNotEmpty(sending_list)) {
+//                List<WechatMessageEntity> wechatMessages = Lists.newArrayListWithCapacity(sending_list.size());
+//                final String batchNo = chargeSummary.get().getSmsBatchNo();
+//                sending_list.forEach(msg -> wechatMessages.add(WechatMessageEntity
+//                        .createMessage4Txt(msg.getSms().getContent(), msg.getSms().getWeixinId(), batchNo,
+//                                msg.getSms().getDeviceId(), msg.getStoreId(), UUID.randomUUID().toString(), 1,
+//                                msg.getCreator(), msg.getTenantId())));
+//                getBean(WechatMessageEntityAction.class).batchSend(wechatMessages);
+//                sending_list.forEach(SendMsg4SendEntity::finshedByWechat);
+//                Message<List<SendMsg4SendEntity>> msg_request = MessageBuilder.withPayload(sending_list)
+//                        .setHeader("user", LoginContextHolder.get()).build();
+//                getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDED, msg_request);
+//            }
+        //}
+        //  return chargeSummary.get().getSmsBatchNo();
+        return null;
     }
 
     /**
@@ -326,97 +320,40 @@ public class SmsIntegrationService extends BundleService {
         }
     }
 
-    /**
-     * channel = BundleService.CHANNEL_SMS_SENDED
-     *
-     * @param user    浪人
-     * @param payload 黑客
-     */
-    @SuppressWarnings("unchecked")
-    public void handleSendResult(@Header(name = "user") LoginContext user,
-                                 @Header(name = "action", required = false) String action,
-                                 @Header(name = "sendBatchNo", required = false) String sendBatchNo,
-                                 @Payload Object payload) {
-        LoginContextHolder.setCtx(user);
+    public void sendingSMSService(@Payload Map<String, Object> payload) {
+        String mixed = MapUtils.getString(payload, "mixed");
+        String smsId = MapUtils.getString(payload, "id");
+        String context = MapUtils.getString(payload, "ctx");
+        StringJoiner joiner = new StringJoiner("|");
+        joiner.add(mixed).add("1").add(WebUtils.encodeUrl(context));
+        String paylaod = joiner.toString();
+        SendMsg4SendEntity sendEntity = new SendMsg4SendEntity(smsId);
         try {
-            if (payload == null) return;
-            if (payload instanceof SendMsg4SendEntity) {
-                getBean(SendMsg4SendEntityAction.class).updateSendResulset((SendMsg4SendEntity) payload);
-            } else {
-                getBean(SendMsg4SendEntityAction.class).batchUpdate((List<SendMsg4SendEntity>) payload);
-            }
-        } finally {
-            LoginContextHolder.clear();
-        }
-        if (StringUtils.equals("writeOff", action)) {
-            Message<String> message = MessageBuilder.withPayload(sendBatchNo).setHeader("user", user)
-                    .setHeader("action", "writeOff").build();
-            getMessagingTemplate().sendAndReceive(BundleService.CHANNEL_SMS_BILLING, message);
-        }
-    }
-
-    public void sendingSMSService(@Payload Object payload) {
-        logger.debug(payload.getClass().getName());
-        logger.debug(payload.toString());
-    }
-
-    /**
-     * 发送队列
-     *
-     * @param user  我是太阳
-     * @param smses 待发送的短信
-     */
-    public void sendingSMSService01(@Header(name = "user") LoginContext user, @Payload List<SendMsg4SendEntity> smses) {
-        LoginContextHolder.setCtx(user);
-        try {
-            List<String> sms_set = smses.stream().map(sendLog -> SMSSendTransportProtocol.encoding4Flat(sendLog.getSms().getSmsId(),
-                    sendLog.getCompanyId(), sendLog.getStoreId(), sendLog.getSmsChannel(),
-                    sendLog.getSendStatus(), sendLog.getSms().getPhoneNo(), sendLog.getSms().getWordCount(),
-                    sendLog.getSms().getSmsNum(), sendLog.getSms().getContent())).collect(Collectors.toList());
-            Map<String, Object> params = Maps.newHashMap();
-            params.put("payload", StringUtils.join(sms_set, "||"));
-            Mono<String> mono = WebClient.create().method(HttpMethod.POST)
-                    .uri(getSendSmsApi(), "flat")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(params)
-                    .retrieve().bodyToMono(String.class);
-            String result_rsp = mono.block(Duration.ofSeconds(30));
-            if (logger.isDebugEnabled())
-                logger.debug(String.format("sendingSMS(%s) result is %s", smses.size(), result_rsp));
+            String result_rsp = super.sendByProxy(null, paylaod);
             Optional<JsonElement> jsonElement = WebUtils.parseJson(result_rsp);
-            // 257509ed-ac68-4961-9c29-6c6501f8a06d|9999|短信内容解码异常||100098|9999|短信内容解码异常
             Preconditions.checkState(jsonElement.isPresent(), "短信网关无返回数据");
             String rsp_payload = jsonElement.get().getAsString();
-            String[] result_set = StringUtils.splitByWholeSeparator(rsp_payload, "||");
-            Stream.of(result_set).forEach(result -> {
-                try {
-                    String[] _temp = StringUtils.split(result, '|');
-                    Optional<SendMsg4SendEntity> sms_opt = smses.stream()
-                            .filter(x -> StringUtils.equals(_temp[0], x.getSms().getSmsId())).findFirst();
-                    sms_opt.ifPresent(sms -> {
-                        if (StringUtils.equals("0000", _temp[1])) {
-                            sms.finshedSend();
-                        } else {
-                            sms.errorBySending(_temp[2]);
-                        }
-                    });
-                } catch (Exception e) {
-                    logger.error("短信发送返回解析异常....", e);
-                }
-            });
-
+            this.docodingSending(rsp_payload, sendEntity);
         } catch (Exception e) {
-            logger.error("发送短信到发生异常....", e);
-        } finally {
-            smses.forEach(x -> {
-                if (x.isSending()) x.errorBySending(null);
-            });
-            Message<List<SendMsg4SendEntity>> msg_request = MessageBuilder.withPayload(smses)
-                    .setHeader("user", LoginContextHolder.get()).build();
-            getMessagingTemplate().send(BundleService.CHANNEL_SMS_SENDED, msg_request);
-            LoginContextHolder.clear();
+            sendEntity.errorByException(e);
         }
+        getBean(SendMsg4InitEntityAction.class).updateSendState(sendEntity);
     }
 
+    // 067fc5a0-f731-4e8b-923b-2f5a70012553|0000|OK
+    private void docodingSending(String payload, SendMsg4SendEntity sendEntity) {
+        Map<String, Object> params = Maps.newHashMap();
+        try {
+            String[] args = StringUtils.split(payload, '|');
+            Preconditions.checkState(args.length == 3, "错误的返回报文%s", payload);
+            if (StringUtils.equals("0000", args[1])) {
+                sendEntity.finshedSend();
+            } else {
+                sendEntity.errorBySending(args[2]);
+            }
+        } catch (Exception e) {
+            sendEntity.errorByException(e);
+        }
+    }
 
 }

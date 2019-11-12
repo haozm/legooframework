@@ -24,20 +24,20 @@ public class MobileNumberCheckInterceptor extends SmsSendInterceptor {
         final KvDictEntity whitelist = kvDictEntityAction.loadByValue("SMS_PREFIX", "WHITELIST");
         final Pattern pattern = Pattern.compile(whitelist.getDesc());
 
-        smsTransportLogs.stream().filter(x -> !x.isEnbaled()).forEach(SendMsg4SendEntity::error4Init);
-
-        smsTransportLogs.stream().filter(x -> !x.isError()).forEach(x -> {
-            String phoneNo = x.getSms().getPhoneNo();
-            try {
-                if (!validity(phoneNo) || !matcher(phoneNo, pattern)) {
-                    x.errorByMobile();
-                }
-            } catch (Exception e) {
-                logger.error(String.format("MobileNumberCheckInterceptor hander %s has error",
-                        x.getSms().getPhoneNo()), e);
-                x.errorByException(e);
-            }
-        });
+//        smsTransportLogs.stream().filter(x -> !x.isEnbaled()).forEach(SendMsg4SendEntity::error4Init);
+//
+//        smsTransportLogs.stream().filter(x -> !x.isError()).forEach(x -> {
+//            String phoneNo = x.getSms().getPhoneNo();
+//            try {
+//                if (!validity(phoneNo) || !matcher(phoneNo, pattern)) {
+//                    x.errorByMobile();
+//                }
+//            } catch (Exception e) {
+//                logger.error(String.format("MobileNumberCheckInterceptor hander %s has error",
+//                        x.getSms().getPhoneNo()), e);
+//                x.errorByException(e);
+//            }
+//        });
         return false;
     }
 

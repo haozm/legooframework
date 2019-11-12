@@ -15,7 +15,7 @@
                                       auto-startup="true">
         <int-jdbc:query><![CDATA[
     SELECT rec.id AS 'id',
-           CONCAT_WS('|',rec.id,rec.company_id,rec.store_id,rec.sms_channel,rec.send_status,rec.phone_no,rec.word_count,rec.sms_count) AS 'mixed',
+           CONCAT_WS('|',rec.id,rec.company_id,rec.store_id,rec.sms_channel,'2',rec.phone_no,rec.word_count,rec.sms_count) AS 'mixed',
            rec.sms_context AS 'ctx'
       FROM SMS_TRANSPORT_LOG AS rec
 INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno

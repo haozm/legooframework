@@ -90,10 +90,6 @@ public class SMSBlackListEntity extends BaseEntity<String> implements BatchSette
         }
     }
 
-    public boolean isBlackPhone(SendMsg4SendEntity sendLog) {
-        return this.companyId.equals(sendLog.getCompanyId()) && this.storeId.equals(sendLog.getStoreId()) &&
-                this.getId().equals(sendLog.getSms().getPhoneNo());
-    }
 
     @Override
     public Map<String, Object> toParamMap(String... excludes) {

@@ -22,20 +22,20 @@ public class MobileNumberBlackListInterceptor extends SmsSendInterceptor {
 
     @Override
     public boolean filter(Collection<SendMsg4SendEntity> smsTransportLogs) {
-        Collection<SendMsg4SendEntity> logs = smsTransportLogs.stream().filter(x -> !x.isError()).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(logs)) return true;
-        Optional<List<SMSBlackListEntity>> blackList = blackListEntityAction.loadAll();
-        if (!blackList.isPresent()) return true;
-        logs.forEach(x -> {
-            try {
-                Optional<SMSBlackListEntity> ins = blackList.get().stream().filter(y -> y.isBlackPhone(x)).findFirst();
-                if (ins.isPresent()) x.errorByBlackList();
-            } catch (Exception e) {
-                logger.error(String.format("MobileNumberBlackListInterceptor hander %s has error",
-                        x.getSms().getPhoneNo()), e);
-                x.errorByException(e);
-            }
-        });
+//        Collection<SendMsg4SendEntity> logs = smsTransportLogs.stream().filter(x -> !x.isError()).collect(Collectors.toList());
+//        if (CollectionUtils.isEmpty(logs)) return true;
+//        Optional<List<SMSBlackListEntity>> blackList = blackListEntityAction.loadAll();
+//        if (!blackList.isPresent()) return true;
+//        logs.forEach(x -> {
+//            try {
+//                Optional<SMSBlackListEntity> ins = blackList.get().stream().filter(y -> y.isBlackPhone(x)).findFirst();
+//                if (ins.isPresent()) x.errorByBlackList();
+//            } catch (Exception e) {
+////                logger.error(String.format("MobileNumberBlackListInterceptor hander %s has error",
+////                        x.getSms().getPhoneNo()), e);
+//                x.errorByException(e);
+//            }
+//        });
         return false;
     }
 
