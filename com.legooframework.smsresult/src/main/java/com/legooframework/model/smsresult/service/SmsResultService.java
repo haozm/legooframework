@@ -1,5 +1,6 @@
 package com.legooframework.model.smsresult.service;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -81,25 +82,15 @@ public class SmsResultService extends BundleService {
     }
 
     /**
-     * @param smsIds
-     * @param start  yyyyMMdd
-     * @param end    yyyyMMdd
+     * @param start hour
+     * @param end   hour
      */
-    public void manualSyncState(Collection<String> smsIds, String start, String end) {
-        if (CollectionUtils.isEmpty(smsIds)) return;
-        Optional<List<SMSResultEntity>> smses = getBean(SMSResultEntityAction.class).loadByIds(smsIds);
-        if (!smses.isPresent()) return;
-        List<SMSResultEntity> sub_smses = smses.get().stream().filter(x -> FinalState.SENDING == x.getFinalState())
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(sub_smses)) return;
-        LocalDateTime startTime = DateTimeUtils.parseYYYYMMDDHHMMSS(String.format("%s000000", start));
-        LocalDateTime endTime = Strings.isNullOrEmpty(end) ? LocalDateTime.now() :
-                DateTimeUtils.parseYYYYMMDDHHMMSS(String.format("%s235959", end));
-        List<Map<String, Object>> sync_list = Lists.newArrayList();
-        sub_smses.forEach(sms -> sync_list.add(sms.toView4SyncState(startTime, endTime)));
-        getMessagingTemplate().send("channel_sync_source", MessageBuilder.withPayload(sync_list).build());
+    public void manualSyncState(int start, int end) {
+        Optional<List<Map<String, Object>>> payload = getBean(SMSResultEntityAction.class).load4SyncState(start, end);
+        if (!payload.isPresent()) return;
+        getMessagingTemplate().send("channel_sync_source", MessageBuilder.withPayload(payload.get()).build());
         if (logger.isDebugEnabled())
-            logger.debug(String.format("manualSyncState(...) is sending to queue...,size is %d", sync_list.size()));
+            logger.debug(String.format("manualSyncState(...) is sending to queue...,size is %d", payload.get().size()));
     }
 
     // LIST CHANNEL_SYNC_STATE
@@ -109,10 +100,9 @@ public class SmsResultService extends BundleService {
         try {
             String account = MapUtils.getString(payload, "account");
             Date sendDate = (Date) MapUtils.getObject(payload, "sendDate");
-            Date endDate = MapUtils.getObject(payload, "endDate") == null ? LocalDateTime.now().toDate() : (Date) MapUtils.getObject(payload, "endDate");
             long start = LocalDateTime.fromDateFields(sendDate).plusMinutes(-10).toDate().getTime() / 1000;
             Optional<String> optional = getSmsService().sync(account, MapUtils.getString(payload, "phoneNo"),
-                    start, endDate.getTime() / 1000);
+                    start, LocalDateTime.now().toDate().getTime() / 1000);
             if (!optional.isPresent()) return;
             String[] payloads = StringUtils.split(optional.get(), ';');
             if (ArrayUtils.isEmpty(payloads)) return;

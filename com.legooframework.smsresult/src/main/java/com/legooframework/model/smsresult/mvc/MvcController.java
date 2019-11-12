@@ -2,7 +2,6 @@ package com.legooframework.model.smsresult.mvc;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
@@ -17,7 +16,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
-import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +26,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -107,14 +108,9 @@ public class MvcController extends BaseController {
             logger.debug(String.format("manualSyncState(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setAnonymousCtx();
         try {
-            String smsIds_all = MapUtils.getString(requestBody, "smsIds", null);
-            String startTime = MapUtils.getString(requestBody, "start", null);
-            DateTimeUtils.parseShortYYYYMMDD(startTime);
-            Preconditions.checkArgument(startTime != null, "搜索日期范围开始时间不可为空....");
-            String endTime = MapUtils.getString(requestBody, "end", null);
-            if (!Strings.isNullOrEmpty(endTime)) DateTimeUtils.parseShortYYYYMMDD(endTime);
-            Collection<String> smsIds = Splitter.on(',').splitToList(smsIds_all);
-            getBean(SmsResultService.class, request).manualSyncState(smsIds, startTime, endTime);
+            int start = MapUtils.getInteger(requestBody, "start", 1);
+            int end = MapUtils.getInteger(requestBody, "end", 12);
+            getBean(SmsResultService.class, request).manualSyncState(start, end);
         } finally {
             LoginContextHolder.clear();
         }

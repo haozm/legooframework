@@ -8,6 +8,14 @@
                VALUES (:id,:companyId, :storeId, :smsChannel, :sendStatus, :phoneNo,  :smsCount, :wordCount, :smsContext, :smsExt, :tenantId,           0,      -1, CURRENT_TIMESTAMP)
             ]]></body>
         </sql>
+        <sql id="load4SyncState">
+            <body><![CDATA[
+       SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate', sms_account AS 'account'
+         FROM SMS_SENDING_LOG
+        WHERE final_state = 98
+          AND TIMESTAMPDIFF(HOUR,send_date,NOW()) BETWEEN :start AND :end
+            ]]></body>
+        </sql>
         <sql id="query4list" macros="crud_fixed">
             <body><![CDATA[
           SELECT sslt.id AS 'id',

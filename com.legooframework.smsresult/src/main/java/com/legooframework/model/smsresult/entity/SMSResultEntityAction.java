@@ -56,6 +56,14 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
         return res;
     }
 
+    public Optional<List<Map<String, Object>>> load4SyncState(int start, int end) {
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("sql", "load4SyncState");
+        params.put("start", start);
+        params.put("end", end);
+        return super.queryForMapList("load4SyncState", params);
+    }
+
     public void updateState(Collection<Map<String, Object>> statusMaps) {
         if (CollectionUtils.isEmpty(statusMaps)) return;
         String update_sql = "UPDATE SMS_SENDING_LOG SET final_state = ?, final_state_date = ?, final_state_desc = ? WHERE phone_no = ? AND send_msg_id = ? AND final_state = 98";
