@@ -98,6 +98,8 @@ public class SmsResultService extends BundleService {
         List<Map<String, Object>> sync_list = Lists.newArrayList();
         sub_smses.forEach(sms -> sync_list.add(sms.toView4SyncState(startTime, endTime)));
         getMessagingTemplate().send("channel_sync_source", MessageBuilder.withPayload(sync_list).build());
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("manualSyncState(...) is sending to queue...,size is %d", sync_list.size()));
     }
 
     // LIST CHANNEL_SYNC_STATE
