@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="OFF">
+    <Appenders>
+        <RollingFile name="AppLogOut" fileName="${catalina.base}/logs/com.legooframework.smsresult_run.log"
+                     filePattern="${catalina.base}/logs/com.legooframework.smsresult_run-%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="[CSOSM-LOG][%-5level] [%d{yyyy-MM-dd HH:mm:ss}] [%t] %class{36} [%M] - %msg%xEx%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+            </Policies>
+        </RollingFile>
+    </Appenders>
+    <Loggers>
+        <Root level="ERROR">
+            <AppenderRef ref="AppLogOut"/>
+        </Root>
+        <Logger name="org.springframework" level="INFO" additivity="false">
+            <AppenderRef ref="AppLogOut"/>
+        </Logger>
+        <Logger name="com.legooframework" level="DEBUG" additivity="false">
+            <AppenderRef ref="AppLogOut"/>
+        </Logger>
+    </Loggers>
+</Configuration>
