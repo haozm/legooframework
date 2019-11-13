@@ -64,7 +64,7 @@ public class MsgTemplateEnity extends BaseEntity<Integer> {
     MsgTemplateEnity(Integer id, ResultSet res) {
         super(id);
         try {
-            this.companyId = ResultSetUtil.getObject(res, "company_id", Integer.class);
+            this.companyId = ResultSetUtil.getOptObject(res, "company_id", Integer.class).orElse(0);
             this.storeId = ResultSetUtil.getOptObject(res, "store_id", Number.class).orElse(0).intValue();
             this.content = ResultSetUtil.getOptString(res, "content", null);
             this.name = ResultSetUtil.getOptString(res, "name", null);
