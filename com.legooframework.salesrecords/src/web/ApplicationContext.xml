@@ -25,11 +25,11 @@
     <import resource="classpath*:META-INF/covariant/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/salesrecords/spring-model-cfg.xml"/>
 
-    <task:scheduler id="salesrecords-scheduler-pool" pool-size="4"/>
+    <!--<task:scheduler id="salesrecords-scheduler-pool" pool-size="4"/>
     <task:scheduled-tasks scheduler="salesrecords-scheduler-pool">
         <task:scheduled ref="saleRecordService" method="alloctSaleOrder4EmployeeJob" fixed-delay="60000"
                         initial-delay="120000"/>
-    </task:scheduled-tasks>
+    </task:scheduled-tasks>-->
     <!--
     <bean id="authenticationEntryPoint"
           class="com.legooframework.model.crmadapter.service.JsonAuthenticationEntryPoint"/>

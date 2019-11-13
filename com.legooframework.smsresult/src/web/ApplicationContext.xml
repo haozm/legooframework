@@ -31,6 +31,7 @@
     <task:scheduled-tasks scheduler="smsresult-scheduler">
         <task:scheduled ref="smsResultService" method="replay" cron="0 0/30 * * * ?"/>
         <task:scheduled ref="smsResultService" method="autoSyncStateJob" initial-delay="120000" fixed-delay="300000"/>
+        <task:scheduled ref="smsResultService" method="autoSyncDayStateJob" cron="0 0 0/1 * * ?"/>
     </task:scheduled-tasks>
     <!-- ================== SMS SENDING CHANNEL ================== -->
     <int:publish-subscribe-channel id="channel_sms_splitter"/>
@@ -50,7 +51,8 @@
            sms_context AS 'smsContext'
       FROM SMS_SENDING_LOG
      WHERE final_state = 0
-  ORDER BY createTime LIMIT 1024
+  ORDER BY createTime
+     LIMIT 1024
         ]]></int-jdbc:query>
         <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
     </int-jdbc:inbound-channel-adapter>

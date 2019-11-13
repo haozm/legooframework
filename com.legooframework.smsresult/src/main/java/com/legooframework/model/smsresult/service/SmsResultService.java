@@ -94,6 +94,27 @@ public class SmsResultService extends BundleService {
             logger.debug(String.format("manualSyncState(...) is sending to queue...,size is %d", payload.get().size()));
     }
 
+    public void autoSyncDayStateJob() {
+        if (logger.isDebugEnabled())
+            logger.debug("autoSyncDayStateJob(smsDaySyncStreamItemReader) start....");
+        ItemReader<Map<String, Object>> reader = getBean("smsDaySyncStreamItemReader", ColumnMapStreamItemReader.class);
+        Map<String, Object> item;
+        int i = 0;
+        try {
+            for (; ; ) {
+                item = reader.read();
+                if (item == null) break;
+                getMessagingTemplate().send("channel_sync_state", MessageBuilder.withPayload(item).build());
+                i++;
+            }
+        } catch (Exception e) {
+            logger.error("autoSyncDayStateJob(smsDaySyncStreamItemReader) has error", e);
+        }
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("autoSyncDayStateJob(smsDaySyncStreamItemReader) end and size %d", i));
+    }
+
+
     public void autoSyncStateJob() {
         if (logger.isDebugEnabled())
             logger.debug("autoSyncStateJob(sms2HourSyncStreamItemReader) start....");
