@@ -273,13 +273,11 @@ public class QueryDTO implements Cloneable {
     }
 
     public QueryDTO copy() {
-        QueryDTO clone = null;
         try {
-            clone = (QueryDTO) this.clone();
+            return (QueryDTO) this.clone();
         } catch (CloneNotSupportedException e) {
             throw new IllegalArgumentException("复制失败");
         }
-        return clone;
     }
 
     public boolean isSummaryQuery() {
@@ -290,8 +288,4 @@ public class QueryDTO implements Cloneable {
         return "details".equals(this.queryType);
     }
 
-    public static void main(String[] args) {
-        System.out.println(LocalDate.now().dayOfWeek().withMinimumValue());
-        System.out.println(LocalDate.now().dayOfWeek().withMaximumValue());
-    }
 }
