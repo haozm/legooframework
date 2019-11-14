@@ -2,14 +2,14 @@
     <tstamp>
         <format property="build.current.time" pattern="yyyyMMdd_HHmmss"/>
     </tstamp>
-    <property name="jdk.home" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home"/>
+    <property name="jdk.home" value="C:/JavaSpace/etc/jdk1.8.0_181"/>
     <property name="spring.profiles.active" value="devp"/>
     <property name="project.name" value="webwork"/>
     <property name="project.version" value="1.0.0"/>
     <property name="src.java" value="src/main/java"/>
     <property name="src.resource" value="src/main/resource"/>
 
-    <property name="apps.root" value="/Users/haoxiaojie/Documents/ideaspace/apache-tomcat-9.0.13/shared"/>
+    <property name="apps.root" value="C:/JavaSpace/service/apps"/>
     <property name="third.libs" value="${apps.root}/extlib"/>
     <property name="lib.dir" value="${apps.root}/lib"/>
     <property name="resources.dir" value="${apps.root}/resources"/>
@@ -69,7 +69,7 @@
             <reference refid="httpproxy_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="install-httpproxy-web">
+    <target name="install-httpproxy-war">
         <antcall target="webapp-new">
             <param name="app.name" value="httpproxy"/>
             <param name="spring.profiles.active" value="${spring.profiles.active}"/>
