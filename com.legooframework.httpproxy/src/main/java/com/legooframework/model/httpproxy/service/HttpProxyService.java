@@ -1,15 +1,11 @@
 package com.legooframework.model.httpproxy.service;
 
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.messaging.Message;
-import org.springframework.messaging.MessageHeaders;
-import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -32,6 +28,9 @@ public class HttpProxyService extends BundleService {
                     headerAccessor.getHeader("host"), headerAccessor.getHeader("http_requestUrl"),
                     headerAccessor.getHeader("contentType"),
                     headerAccessor.getHeader("http_requestMethod"), message.getPayload()));
+        
+        // AntPathMatcher;
+        // AntPathRequestMatcher;
         return test();
     }
 
