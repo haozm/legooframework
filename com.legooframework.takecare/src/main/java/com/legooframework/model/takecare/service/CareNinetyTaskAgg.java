@@ -30,6 +30,10 @@ public class CareNinetyTaskAgg {
         this.imgs = imgs;
     }
 
+    public boolean isOnlyWx() {
+        return this.channels.size() == 1 && this.channels.contains(SendChannel.WECHAT);
+    }
+
     List<CareRecordEntity> getCareRecord(UserAuthorEntity user) {
         List<CareRecordEntity> logs = Lists.newArrayList();
         if (memberAgg == null) {
@@ -43,7 +47,7 @@ public class CareNinetyTaskAgg {
                 } else {
                     logs.add(CareRecordEntity.sendSmsNinetyCare4Member(this, user));
                 }
-            } else if (SendChannel.WECHAT == ch) {
+            } else if (SendChannel.WECHAT == ch && memberAgg.getWxUser().isPresent()) {
                 if (Strings.isNullOrEmpty(targetContent)) {
                     logs.add(CareRecordEntity.errorNinetyCare4Member(this, user));
                 } else {
@@ -71,7 +75,7 @@ public class CareNinetyTaskAgg {
                 } else {
                     logs.add(CareHisRecordEntity.smsCareNinety4Member(this, user));
                 }
-            } else if (SendChannel.WECHAT == ch) {
+            } else if (SendChannel.WECHAT == ch && memberAgg.getWxUser().isPresent()) {
                 if (Strings.isNullOrEmpty(targetContent)) {
                     logs.add(CareHisRecordEntity.errorCareNinety4Member(this, user));
                 } else {

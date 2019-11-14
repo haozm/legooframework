@@ -34,21 +34,37 @@ public class TakeCareService extends BundleService {
     public void batchNinetyCare(Collection<Integer> taskIds, Collection<SendChannel> channels, String followUpContent,
                                 String[] imgUrls, List<CareNinetyTaskAgg> careNinetyAggs, UserAuthorEntity user) {
         StoEntity store = getBean(StoEntityAction.class).loadById(user.getStoreId().orElse(0));
-        List<CareNinetyTaskAgg> careAggs;
+        List<CareNinetyTaskAgg> _tempAgg;
         if (CollectionUtils.isNotEmpty(careNinetyAggs)) {
-            careAggs = Lists.newArrayList(careNinetyAggs);
+            _tempAgg = Lists.newArrayList(careNinetyAggs);
         } else {
-            careAggs = previewNinetySmsConent(taskIds, followUpContent, user);
+            _tempAgg = previewNinetySmsConent(taskIds, followUpContent, user);
         }
-        Preconditions.checkState(CollectionUtils.isNotEmpty(careAggs), "待处理的 task 不存在...");
-
+        Preconditions.checkState(CollectionUtils.isNotEmpty(_tempAgg), "待处理的 task 不存在...");
+        List<CareNinetyTaskAgg> careAggs = Lists.newArrayList();
         // 处理节点信息
-        for (CareNinetyTaskAgg agg : careAggs) {
-            CareNinetyTaskEntity task = getBean(CareNinetyEntityAction.class)
-                    .processTask(agg.getTaskId(), channels.contains(SendChannel.CANCEL));
-            agg.setTask(task);
-            agg.setChannels(channels);
-            agg.setImgs(imgUrls);
+        for (CareNinetyTaskAgg agg : _tempAgg) {
+            if (channels.contains(SendChannel.CANCEL)) {
+                CareNinetyTaskEntity task = getBean(CareNinetyEntityAction.class).processTask(agg.getTaskId(), true);
+                agg.setTask(task);
+                agg.setChannels(channels);
+                agg.setImgs(imgUrls);
+                careAggs.add(agg);
+            } else if (agg.isOnlyWx()) {
+                if (agg.getWxUser().isPresent()) {
+                    CareNinetyTaskEntity task = getBean(CareNinetyEntityAction.class).processTask(agg.getTaskId(), false);
+                    agg.setTask(task);
+                    agg.setChannels(channels);
+                    agg.setImgs(imgUrls);
+                    careAggs.add(agg);
+                }
+            } else {
+                CareNinetyTaskEntity task = getBean(CareNinetyEntityAction.class).processTask(agg.getTaskId(), false);
+                agg.setTask(task);
+                agg.setChannels(channels);
+                agg.setImgs(imgUrls);
+                careAggs.add(agg);
+            }
         } // end_for
 
         List<CareRecordEntity> all_care_logs = Lists.newArrayList();
