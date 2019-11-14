@@ -18,7 +18,7 @@
         <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"/>
     </util:list>
 
-    <int-http:inbound-gateway id="httpChannelAdapter" request-channel="request-channel" path="/hao/xiaojie.json"
+    <int-http:inbound-gateway id="httpChannelAdapter" request-channel="request-channel" path="/**"
                               request-payload-type="java.util.Map" message-converters="converters"
                               supported-methods="POST"/>
     <int:publish-subscribe-channel id="request-channel"/>
