@@ -53,6 +53,14 @@ public class CareBirthdayEntityAction extends BaseEntityAction<CareBirthdayEntit
             } else if (SendChannel.CANCEL == channel) {
                 careLogs.add(CareRecordEntity.cancelBirthdayCare4Member(care, employee, agg.getMember()));
                 hisCareLogs.add(CareHisRecordEntity.cancelBirthdayCare4Member(care, employee, agg.getMember()));
+            } else if (SendChannel.WX_SMS == channel) {
+                if (agg.getWxUser().isPresent()) {
+                    careLogs.add(CareRecordEntity.wxBirthdayCare4Member(care, employee, agg, followUpContent, imgUrls));
+                    hisCareLogs.add(CareHisRecordEntity.wxBirthdayCare4Member(care, employee, agg, followUpContent));
+                } else {
+                    careLogs.add(CareRecordEntity.smsBirthdayCare4Member(care, employee, agg, followUpContent));
+                    hisCareLogs.add(CareHisRecordEntity.smsBirthdayCare4Member(care, employee, agg, followUpContent));
+                }
             }
         }
         return new CareBirthdayAgg(care, careLogs, hisCareLogs, agg, channels);

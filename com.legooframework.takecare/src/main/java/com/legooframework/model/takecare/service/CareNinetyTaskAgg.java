@@ -55,6 +55,20 @@ public class CareNinetyTaskAgg {
                 }
             } else if (SendChannel.CANCEL == ch) {
                 logs.add(CareRecordEntity.cancelNinetyCare4Member(this, user));
+            } else if (SendChannel.WX_SMS == ch) {
+                if (memberAgg.getWxUser().isPresent()) {
+                    if (Strings.isNullOrEmpty(targetContent)) {
+                        logs.add(CareRecordEntity.errorNinetyCare4Member(this, user));
+                    } else {
+                        logs.add(CareRecordEntity.wxNinetyCare4Member(this, user, imgs));
+                    }
+                } else {
+                    if (Strings.isNullOrEmpty(targetContent)) {
+                        logs.add(CareRecordEntity.errorNinetyCare4Member(this, user));
+                    } else {
+                        logs.add(CareRecordEntity.sendSmsNinetyCare4Member(this, user));
+                    }
+                }
             } else {
                 logs.add(CareRecordEntity.manualNinetyCare4Member(this, user));
             }
