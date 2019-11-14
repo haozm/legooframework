@@ -30,7 +30,7 @@ public class CareNinetyTaskAgg {
         this.imgs = imgs;
     }
 
-    public boolean isOnlyWx() {
+    boolean isOnlyWx() {
         return this.channels.size() == 1 && this.channels.contains(SendChannel.WECHAT);
     }
 

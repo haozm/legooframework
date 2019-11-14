@@ -42,6 +42,8 @@ public class TakeCareService extends BundleService {
         }
         Preconditions.checkState(CollectionUtils.isNotEmpty(_tempAgg), "待处理的 task 不存在...");
         List<CareNinetyTaskAgg> careAggs = Lists.newArrayList();
+        // 先注入渠道
+        _tempAgg.forEach(x -> x.setChannels(channels));
         // 处理节点信息
         for (CareNinetyTaskAgg agg : _tempAgg) {
             if (channels.contains(SendChannel.CANCEL)) {
