@@ -13,13 +13,12 @@
     <context:property-placeholder location="classpath:jdbc.properties"/>
     <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/httpproxy/spring-model-cfg.xml"/>
-
+    <!--
     <util:list id="converters">
-        <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"/>
+        <bean class="org.springframework.http.converter.ResourceHttpMessageConverter"/>
     </util:list>
-
+    -->
     <int-http:inbound-gateway id="httpChannelAdapter" request-channel="request-channel" path="/**"
-                              request-payload-type="java.util.Map" message-converters="converters"
                               supported-methods="POST"/>
     <int:publish-subscribe-channel id="request-channel"/>
     <int:service-activator input-channel="request-channel" ref="httpProxyService" method="postProxy"/>
