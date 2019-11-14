@@ -39,8 +39,6 @@ public class SendMsg4ReimburseEntityAction extends BaseEntityAction<SendMsg4Reim
         return super.updateAction("update4Reimburse", params);
     }
 
-
-
     @Override
     protected RowMapper<SendMsg4ReimburseEntity> getRowMapper() {
         return new RowMapperImpl();

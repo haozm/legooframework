@@ -43,7 +43,8 @@ public class CareBirthdayEntityAction extends BaseEntityAction<CareBirthdayEntit
             if (SendChannel.SMS == channel) {
                 careLogs.add(CareRecordEntity.smsBirthdayCare4Member(care, employee, agg, followUpContent));
                 hisCareLogs.add(CareHisRecordEntity.smsBirthdayCare4Member(care, employee, agg, followUpContent));
-            } else if (SendChannel.WECHAT == channel) {
+            } else if (SendChannel.WECHAT == channel && agg.getWxUser().isPresent()) {
+                // 存在微信的情况尽心了处理
                 careLogs.add(CareRecordEntity.wxBirthdayCare4Member(care, employee, agg, followUpContent, imgUrls));
                 hisCareLogs.add(CareHisRecordEntity.wxBirthdayCare4Member(care, employee, agg, followUpContent));
             } else if (SendChannel.CALLPHONE == channel || SendChannel.OFFLINE == channel) {
@@ -54,7 +55,7 @@ public class CareBirthdayEntityAction extends BaseEntityAction<CareBirthdayEntit
                 hisCareLogs.add(CareHisRecordEntity.cancelBirthdayCare4Member(care, employee, agg.getMember()));
             }
         }
-        return new CareBirthdayAgg(care, careLogs, hisCareLogs, agg);
+        return new CareBirthdayAgg(care, careLogs, hisCareLogs, agg, channels);
     }
 
     public void batchUpdateCare(Collection<CareBirthdayEntity> birthdayCares) {

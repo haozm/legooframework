@@ -69,7 +69,6 @@ public class TakeCareService extends BundleService {
         sendWxMsg4Care(all_care_logs, batchNo);
     }
 
-
     public void batchBirthdayCare(Collection<Integer> memberIds, Collection<SendChannel> channels,
                                   String followUpContent, String[] imgUrls, UserAuthorEntity user) {
         if (CollectionUtils.isEmpty(memberIds)) return;
@@ -94,11 +93,13 @@ public class TakeCareService extends BundleService {
                 send_ctx = replace(send_ctx, replaceMap);
                 send_ctx = String.format("%s%s", sms_prefix, send_ctx);
             }
+            // 聚合会员生日
             CareBirthdayAgg careAgg = getBean(CareBirthdayEntityAction.class)
                     .careMember4ThisYear(employee, memberAgg, channels, send_ctx, imgUrls);
             if (careAgg.getBirthdayCare().hasError()) {
                 birthday_care_err_aggs.add(careAgg);
-            } else {
+            } else if (careAgg.hasCareLog()) {
+                // 无记录的生日排除掉
                 careAgg.finished();
                 birthday_care_aggs.add(careAgg);
             }
@@ -113,7 +114,6 @@ public class TakeCareService extends BundleService {
             }
         }
         if (CollectionUtils.isEmpty(birthday_care_aggs)) return;
-
 
         List<CareBirthdayAgg> saved_care_aggs = birthday_care_aggs.stream().filter(CareBirthdayAgg::hasSavedCare)
                 .collect(Collectors.toList());
