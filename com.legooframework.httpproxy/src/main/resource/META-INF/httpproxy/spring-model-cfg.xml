@@ -7,5 +7,12 @@
     <bean id="httpPorxyBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/httpproxy/legoo-model-cfg.xml"/>
     </bean>
+    <bean id="httpGateWayFactory" class="com.legooframework.model.httpproxy.entity.HttpGateWayFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]httpproxy[\\,/]httpproxy-rule-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
     <bean id="httpProxyService" class="com.legooframework.model.httpproxy.service.HttpProxyService"/>
 </beans>

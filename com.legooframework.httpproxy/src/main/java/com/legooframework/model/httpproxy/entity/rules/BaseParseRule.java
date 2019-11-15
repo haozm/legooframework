@@ -6,8 +6,6 @@ abstract class BaseParseRule extends Rule {
 
     public abstract String[] getPatterns();
 
-    static String KEY_MODULES= "modules";
-
     static String KEY_MODULE = "modules/module";
 
 }
