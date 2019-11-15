@@ -227,8 +227,10 @@
          WHERE wt.`work` = 1
      <#if (sql=="findById")>
            AND wt.userName = :userName
+         LIMIT 1
      <#elseif (sql=="findByMember")>
            AND awm.member_id = :memberId
+         LIMIT 1
      </#if>
             ]]></body>
         </sql>
