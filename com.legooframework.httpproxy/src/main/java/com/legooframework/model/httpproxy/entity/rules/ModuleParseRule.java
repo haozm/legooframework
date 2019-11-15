@@ -18,7 +18,8 @@ class ModuleParseRule extends BaseParseRule {
         String params = AttributesUtil.getValue(name, attributes, "params");
         String id = AttributesUtil.getValue(name, attributes, "id");
         String fuse = AttributesUtil.getValue(name, attributes, "fuse");
-        HttpGateWayBuilder builder = new HttpGateWayBuilder(id, params, Integer.parseInt(fuse));
+        String timeout = AttributesUtil.getIfPresent(attributes, "timeout").orElse("60");
+        HttpGateWayBuilder builder = new HttpGateWayBuilder(id, params, Integer.parseInt(fuse), Integer.parseInt(timeout));
         getDigester().push(builder);
     }
 

@@ -1,5 +1,6 @@
 package com.legooframework.model.httpproxy.service;
 
+import com.legooframework.model.httpproxy.entity.HttpGateWayParams;
 import com.legooframework.model.httpproxy.entity.HttpRequestDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,25 +24,25 @@ public class HttpProxyService extends BundleService {
         HttpRequestDto requestDto = new HttpRequestDto(message);
         if (logger.isDebugEnabled())
             logger.debug(requestDto.toString());
-        String target = getHttpGateWayFactory().getTarget(requestDto);
-        return test(target, requestDto.getBody().orElse(null));
+        HttpGateWayParams gateWayParams = getHttpGateWayFactory().getTarget(requestDto);
+        return postTarget(gateWayParams, requestDto.getBody().orElse(null));
     }
 
-    private String test(String httpUrl, Object params) {
+    private String postTarget(HttpGateWayParams gateWayParams, Object params) {
         Mono<String> mono;
         if (null != params) {
             mono = WebClient.create().method(HttpMethod.POST)
-                    .uri(httpUrl)
+                    .uri(gateWayParams.getTarget())
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(params)
                     .retrieve().bodyToMono(String.class);
         } else {
             mono = WebClient.create().method(HttpMethod.POST)
-                    .uri(httpUrl)
+                    .uri(gateWayParams.getTarget())
                     .contentType(MediaType.APPLICATION_JSON)
                     .retrieve().bodyToMono(String.class);
         }
-        return mono.block(Duration.ofSeconds(60));
+        return mono.block(Duration.ofSeconds(gateWayParams.getTimeout()));
     }
 
 }

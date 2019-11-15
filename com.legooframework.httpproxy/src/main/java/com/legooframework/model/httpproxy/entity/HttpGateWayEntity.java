@@ -12,19 +12,24 @@ public class HttpGateWayEntity extends BaseEntity<String> implements IGateWay {
 
     private final String[] params;
     private final String domain, path;
-    private final int fuseCount;
+    private final int fuseCount, timeout;
 
-    HttpGateWayEntity(String id, String[] params, String domain, String path, int fuseCount) {
+    HttpGateWayEntity(String id, String[] params, String domain, String path, int fuseCount, int timeout) {
         super(id);
         this.params = params;
         this.domain = domain;
         this.path = path;
         this.fuseCount = fuseCount;
+        this.timeout = timeout <= 0 ? 60 : timeout;
     }
 
     @Override
     public boolean match(UriComponents originalUri) {
         return StringUtils.equalsAnyIgnoreCase(params[1], originalUri.getQueryParams().getFirst(params[0]));
+    }
+
+    int getTimeout() {
+        return timeout;
     }
 
     @Override
@@ -41,6 +46,7 @@ public class HttpGateWayEntity extends BaseEntity<String> implements IGateWay {
                 .add("params", Arrays.toString(params))
                 .add("domain", domain)
                 .add("path", path)
+                .add("timeout", timeout)
                 .add("fuseCount", fuseCount)
                 .toString();
     }

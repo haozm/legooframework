@@ -46,7 +46,7 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
         this.fusingCache.invalidateAll();
     }
 
-    public String getTarget(HttpRequestDto requestDto) {
+    public HttpGateWayParams getTarget(HttpRequestDto requestDto) {
         String target = null;
         HttpGateWayEntity gateWay = null;
         for (HttpGateWayEntity $it : gateWays) {
@@ -60,7 +60,7 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
         if (logger.isDebugEnabled())
             logger.debug(String.format("[%s] matched [%s]", requestDto.getUri(), target));
         pushCache(new FusingCountEntity(gateWay, requestDto));
-        return target;
+        return new HttpGateWayParams(target, gateWay.getTimeout());
     }
 
     /**
