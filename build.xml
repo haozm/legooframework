@@ -57,6 +57,38 @@
             <reference refid="regiscenter_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
+    <target name="install-monitor-jar">
+        <path id="monitor_classpath">
+            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
+            <fileset dir="${third.libs}" includes="*.jar"/>
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar"/>
+        </path>
+        <antcall target="commons-task">
+            <param name="model.name" value="com.legooframework.monitor"/>
+            <param name="short.name" value="monitor"/>
+            <reference refid="monitor_classpath" torefid="bundle_classpath"/>
+        </antcall>
+    </target>
+    <target name="install-monitor-war">
+        <antcall target="webapp-new">
+            <param name="app.name" value="monitor"/>
+            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
+            <param name="wepapp.root" value="${webapp.root}"/>
+            <param name="vfs.root" value="file:${resources.dir}"/>
+        </antcall>
+        <delete dir="${webapp.root}/monitor/WEB-INF/lib" includes="*.jar"/>
+        <copy todir="${webapp.root}/monitor/WEB-INF/lib" encoding="UTF-8">
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-monitor-*.jar"/>
+        </copy>
+        <delete dir="${webapp.root}/monitor/WEB-INF/classes" includes="**/*.xml"/>
+        <copy todir="${webapp.root}/monitor/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
+            <fileset dir="${config.dir}" includes="**/core/**,**/monitor/**"/>
+        </copy>
+        <delete dir="${webapp.root}/monitor/resources" includes="**/*.*"/>
+        <copy todir="${webapp.root}/monitor/resources" overwrite="true" encoding="UTF-8" flatten="false">
+            <fileset dir="${resources.dir}" includes="**/core/**,**/monitor/**"/>
+        </copy>
+    </target>
     <target name="install-httpproxy-jar">
         <path id="httpproxy_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
@@ -951,7 +983,7 @@
     </target>
 
     <target name="hxj">
-        <property name="model.name" value="httpproxy"/>
+        <property name="model.name" value="monitor"/>
         <!--
          <mkdir dir="com.legooframework.entities/src/main/java/com/legooframework/model/${model.name}/entity"/>
          <mkdir dir="com.legooframework.entities/src/main/java/com/legooframework/model/${model.name}/event"/>

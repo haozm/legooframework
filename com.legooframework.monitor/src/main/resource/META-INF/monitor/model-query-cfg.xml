@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="monitor">
+        <sql id="goodsList_count" dynamic="true">
+            <body><![CDATA[
+         SELECT COUNT(cg.oldGoodsId)
+           FROM crm_goods AS cg
+          WHERE cg.company_id = :companyId
+            AND cg.status = 1
+            ]]></body>
+        </sql>
+    </model>
+</sqls>
