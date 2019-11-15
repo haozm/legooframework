@@ -1,6 +1,7 @@
 package com.legooframework.model.httpproxy.entity;
 
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -33,7 +34,7 @@ public class HttpProxyEntityActionTest {
 
     @Test
     public void riComponentsBuilder() {
-        String httpUrl = "http://testold.csosm.com/httpproxy/api/statistical/layout/load/homepage.json?hao=xiaojie&asd=asdasd";
+        String httpUrl = "http://testold.csosm.com/httpproxy/api/layout/load/homepage.json?hao=xiaojie&asd=asdasd";
         //String httpUrl = "http://testold.csosm.com/httpproxy/api/stati234l/layout/load/homepage.json?hao=xiaojie&asd=asdasd&mod=haox";
         UriComponents uri = UriComponentsBuilder.fromHttpUrl(httpUrl).build();
         System.out.println(uri.getHost());
@@ -44,6 +45,8 @@ public class HttpProxyEntityActionTest {
         System.out.println(uri.getPathSegments());
         AntPathMatcher antPathMatcher = new AntPathMatcher();
         System.out.println(antPathMatcher.match("/*/api/statistical/**", uri.getPath()));
+        System.out.println(uri.getQueryParams().getFirst("hao"));
+        System.out.println(StringUtils.substringAfter(uri.getPath(), "/api/"));
         UriComponents nse = UriComponentsBuilder.newInstance().host(uri.getHost()).port(uri.getPort()).scheme(uri.getScheme())
                 .pathSegment("hao", "asd", "jie").path("asdasdasd/asdasd/asd/asd.sda").query(uri.getQuery()).build();
         System.out.println(nse);

@@ -1,5 +1,7 @@
 package com.legooframework.model.httpproxy.entity;
 
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.config.FileReloadSupport;
 import org.apache.commons.digester3.Digester;
@@ -12,7 +14,7 @@ import java.io.File;
 import java.util.List;
 import java.util.Optional;
 
-public class HttpGateWayFactory extends FileReloadSupport<File> implements IGateWay {
+public class HttpGateWayFactory extends FileReloadSupport<File> {
 
     private static final Logger logger = LoggerFactory.getLogger(HttpGateWayFactory.class);
 
@@ -25,14 +27,18 @@ public class HttpGateWayFactory extends FileReloadSupport<File> implements IGate
         this.gateWays = Lists.newArrayList();
     }
 
-    @Override
-    public boolean match() {
-        return false;
-    }
-
-    @Override
-    public String getTatget() {
-        return null;
+    public String getTarget(HttpRequestDto requestDto) {
+        String target = null;
+        for (HttpGateWayEntity gateWay : gateWays) {
+            if (gateWay.match(requestDto.getUriComponents())) {
+                target = gateWay.getTatget(requestDto.getUriComponents());
+                break;
+            }
+        }
+        Preconditions.checkState(!Strings.isNullOrEmpty(target), "Uri=%s 无匹配数据...", requestDto.getUri());
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("[%s] matched [%s]", requestDto.getUri(), target));
+        return target;
     }
 
     @Override
@@ -50,6 +56,7 @@ public class HttpGateWayFactory extends FileReloadSupport<File> implements IGate
             digester.parse(file);
             if (logger.isDebugEnabled())
                 logger.debug(String.format("finish parse getway-rule: %s", items));
+            this.gateWays.addAll(items);
             return Optional.of(file);
         } catch (Exception e) {
             logger.error(String.format("parse file=%s has error", file), e);

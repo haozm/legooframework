@@ -10,9 +10,10 @@ class ModuleItemParseRule extends BaseParseRule {
     @Override
     public void begin(String namespace, String name, Attributes attributes) throws Exception {
         if (StringUtils.equals("target", name)) {
-            String target = AttributesUtil.getValue(name, attributes, "value");
+            String domain = AttributesUtil.getValue(name, attributes, "domain");
+            String path = AttributesUtil.getValue(name, attributes, "path");
             HttpGateWayBuilder builder = getDigester().peek();
-            builder.setTarget(target);
+            builder.setPathInfo(domain, path);
         }
     }
 

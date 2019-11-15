@@ -15,9 +15,9 @@ class ModuleParseRule extends BaseParseRule {
 
     @Override
     public void begin(String namespace, String name, Attributes attributes) throws Exception {
-        String ant_path = AttributesUtil.getValue(name, attributes, "ant");
+        String params = AttributesUtil.getValue(name, attributes, "params");
         String id = AttributesUtil.getValue(name, attributes, "id");
-        HttpGateWayBuilder builder = new HttpGateWayBuilder(id, ant_path);
+        HttpGateWayBuilder builder = new HttpGateWayBuilder(id, params);
         getDigester().push(builder);
     }
 

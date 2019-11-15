@@ -1,8 +1,10 @@
 package com.legooframework.model.httpproxy.entity;
 
+import org.springframework.web.util.UriComponents;
+
 public interface IGateWay {
 
-    boolean match();
+    boolean match(UriComponents originalUri);
 
-    String getTatget();
+    String getTatget(UriComponents originalUri);
 }

@@ -1,31 +1,36 @@
 package com.legooframework.model.httpproxy.entity;
 
 import com.google.common.base.MoreObjects;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
 
 public class HttpGateWayBuilder {
 
-    private final String id, antPath;
-    private String target;
+    private String id, domain, path;
+    private final String[] params;
 
-    public HttpGateWayBuilder(String id, String antPath) {
+    public HttpGateWayBuilder(String id, String params) {
         this.id = id;
-        this.antPath = antPath;
+        this.params = StringUtils.split(params, '=');
     }
 
-    public void setTarget(String target) {
-        this.target = target;
+    public void setPathInfo(String domain, String path) {
+        this.domain = domain;
+        this.path = path;
     }
 
     public HttpGateWayEntity build() {
-        return new HttpGateWayEntity(id, antPath, target);
+        return new HttpGateWayEntity(id, params, domain, path);
     }
 
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("id", id)
-                .add("antPath", antPath)
-                .add("target", target)
+                .add("params", Arrays.toString(params))
+                .add("domain", domain)
+                .add("path", path)
                 .toString();
     }
 }

@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <modules>
-    <module id="statistical" ant="/*/api/statistical/**">
-        <target value="http://testold.csosm.com/statistical/api/{paht}"/>
+    <module id="statistical" params="mod=statistical">
+        <target domain="http://testold.csosm.com/" path="statistical/api/"/>
     </module>
-    <module id="salesrecords" ant="/*/api/salesrecords/**">
-        <target value="http://testold.csosm.com/salesrecords/api/{paht}"/>
+    <module id="salesrecords" params="mod=salesrecords">
+        <target domain="http://testold.csosm.com/" path="salesrecords/api/"/>
     </module>
-    <module id="takecare" ant="/*/api/takecare/**">
-        <target value="http://testold.csosm.com/takecare/api/{paht}"/>
+    <module id="takecare" params="mod=takecare">
+        <target domain="http://testold.csosm.com/" path="takecare/api/"/>
     </module>
 </modules>
