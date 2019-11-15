@@ -9,10 +9,12 @@ public class HttpGateWayBuilder {
 
     private String id, domain, path;
     private final String[] params;
+    private final int fuseCount;
 
-    public HttpGateWayBuilder(String id, String params) {
+    public HttpGateWayBuilder(String id, String params, int fuseCount) {
         this.id = id;
         this.params = StringUtils.split(params, '=');
+        this.fuseCount = fuseCount;
     }
 
     public void setPathInfo(String domain, String path) {
@@ -21,7 +23,7 @@ public class HttpGateWayBuilder {
     }
 
     public HttpGateWayEntity build() {
-        return new HttpGateWayEntity(id, params, domain, path);
+        return new HttpGateWayEntity(id, params, domain, path, fuseCount);
     }
 
     @Override
@@ -31,6 +33,7 @@ public class HttpGateWayBuilder {
                 .add("params", Arrays.toString(params))
                 .add("domain", domain)
                 .add("path", path)
+                .add("fuseCount", fuseCount)
                 .toString();
     }
 }

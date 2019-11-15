@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <modules>
-    <module id="statistical" params="mod=statistical">
+    <module id="statistical" params="mod=statistical" fuse="2000">
         <target domain="http://testold.csosm.com/" path="statistical/api/"/>
     </module>
-    <module id="salesrecords" params="mod=salesrecords">
+    <module id="salesrecords" params="mod=salesrecords" fuse="2000">
         <target domain="http://testold.csosm.com/" path="salesrecords/api/"/>
     </module>
-    <module id="takecare" params="mod=takecare">
+    <module id="takecare" params="mod=takecare" fuse="2000">
         <target domain="http://testold.csosm.com/" path="takecare/api/"/>
     </module>
 </modules>

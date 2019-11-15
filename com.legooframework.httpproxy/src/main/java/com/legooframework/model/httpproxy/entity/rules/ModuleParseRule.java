@@ -17,7 +17,8 @@ class ModuleParseRule extends BaseParseRule {
     public void begin(String namespace, String name, Attributes attributes) throws Exception {
         String params = AttributesUtil.getValue(name, attributes, "params");
         String id = AttributesUtil.getValue(name, attributes, "id");
-        HttpGateWayBuilder builder = new HttpGateWayBuilder(id, params);
+        String fuse = AttributesUtil.getValue(name, attributes, "fuse");
+        HttpGateWayBuilder builder = new HttpGateWayBuilder(id, params, Integer.parseInt(fuse));
         getDigester().push(builder);
     }
 

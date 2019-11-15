@@ -7,12 +7,30 @@
     <bean id="httpPorxyBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/httpproxy/legoo-model-cfg.xml"/>
     </bean>
-    <bean id="httpGateWayFactory" class="com.legooframework.model.httpproxy.entity.HttpGateWayFactoryBean">
+    <bean id="httpProxyStatementFactory" class="com.legooframework.model.core.jdbc.sqlengine.SQLStatementFactoryBean">
+        <property name="patterns">
+            <util:list value-type="java.lang.String">
+                <value>.*[\\,/]httpproxy[\\,/]entity-sql-cfg.xml$</value>
+            </util:list>
+        </property>
+    </bean>
+    <bean id="httpProxyAbsEntityAction" class="com.legooframework.model.core.base.entity.BaseEntityAction"
+          abstract="true">
+        <property name="statementFactory" ref="httpProxyStatementFactory"/>
+        <property name="dataSource" ref="httpProxyDataSource"/>
+    </bean>
+    <bean id="httpProxyFusingCountAction" class="com.legooframework.model.httpproxy.entity.FusingCountEntityAction"
+          parent="httpProxyAbsEntityAction"/>
+
+    <bean id="httpGateWayFactory" class="com.legooframework.model.httpproxy.entity.HttpGateWayFactoryBean"
+          depends-on="httpProxyFusingCountAction">
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]httpproxy[\\,/]httpproxy-rule-cfg.xml$</value>
             </util:list>
         </property>
+        <property name="fusingCountAction" ref="httpProxyFusingCountAction"/>
     </bean>
+
     <bean id="httpProxyService" class="com.legooframework.model.httpproxy.service.HttpProxyService"/>
 </beans>

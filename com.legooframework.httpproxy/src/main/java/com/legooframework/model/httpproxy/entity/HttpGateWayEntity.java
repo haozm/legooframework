@@ -12,12 +12,14 @@ public class HttpGateWayEntity extends BaseEntity<String> implements IGateWay {
 
     private final String[] params;
     private final String domain, path;
+    private final int fuseCount;
 
-    HttpGateWayEntity(String id, String[] params, String domain, String path) {
+    HttpGateWayEntity(String id, String[] params, String domain, String path, int fuseCount) {
         super(id);
         this.params = params;
         this.domain = domain;
         this.path = path;
+        this.fuseCount = fuseCount;
     }
 
     @Override
@@ -39,6 +41,7 @@ public class HttpGateWayEntity extends BaseEntity<String> implements IGateWay {
                 .add("params", Arrays.toString(params))
                 .add("domain", domain)
                 .add("path", path)
+                .add("fuseCount", fuseCount)
                 .toString();
     }
 }

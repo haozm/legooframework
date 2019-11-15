@@ -3,16 +3,22 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:jee="http://www.springframework.org/schema/jee"
        xmlns:int-http="http://www.springframework.org/schema/integration/http"
        xmlns:util="http://www.springframework.org/schema/util"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
                            http://www.springframework.org/schema/integration https://www.springframework.org/schema/integration/spring-integration.xsd
+                           http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd
                            http://www.springframework.org/schema/integration/http https://www.springframework.org/schema/integration/http/spring-integration-http.xsd">
     <context:property-placeholder location="classpath:jdbc.properties"/>
     <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/httpproxy/spring-model-cfg.xml"/>
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <alias name="dataSource" alias="httpProxyDataSource"/>
     <!--
     <util:list id="converters">
         <bean class="org.springframework.http.converter.ResourceHttpMessageConverter"/>
@@ -22,4 +28,10 @@
                               supported-methods="POST"/>
     <int:publish-subscribe-channel id="request-channel"/>
     <int:service-activator input-channel="request-channel" ref="httpProxyService" method="postProxy"/>
+    <beans profile="devp">
+        <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/httpproxy"/>
+    </beans>
+    <beans profile="test">
+        <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/httpproxy"/>
+    </beans>
 </beans>

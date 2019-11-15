@@ -17,6 +17,7 @@ public class HttpGateWayFactoryBean extends AbstractFactoryBean<HttpGateWayFacto
         implements ApplicationListener<FileMonitorEvent> {
 
     private HttpGateWayFactory httpGateWayFactory;
+    private FusingCountEntityAction fusingCountAction;
 
     @Override
     public Class<HttpGateWayFactory> getObjectType() {
@@ -29,7 +30,7 @@ public class HttpGateWayFactoryBean extends AbstractFactoryBean<HttpGateWayFacto
         MonitorFileSystem monitorFileSystem = Objects.requireNonNull(getBeanFactory())
                 .getBean(MonitorFileSystem.class);
         Preconditions.checkNotNull(monitorFileSystem);
-        this.httpGateWayFactory = new HttpGateWayFactory(patterns, rulesModule);
+        this.httpGateWayFactory = new HttpGateWayFactory(patterns, rulesModule, fusingCountAction);
         Optional<Collection<File>> files = monitorFileSystem.findFiles(patterns);
         files.ifPresent(f -> f.forEach(x -> {
             this.httpGateWayFactory.parseFile(x).ifPresent(c -> this.httpGateWayFactory.addConfig(x, c));
@@ -41,6 +42,10 @@ public class HttpGateWayFactoryBean extends AbstractFactoryBean<HttpGateWayFacto
 
     public void setPatterns(List<String> patterns) {
         this.patterns = patterns;
+    }
+
+    public void setFusingCountAction(FusingCountEntityAction fusingCountAction) {
+        this.fusingCountAction = fusingCountAction;
     }
 
     @Override

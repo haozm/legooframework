@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqls>
+    <model id="FusingCountEntity">
+        <sql id="batchInsert">
+            <body><![CDATA[
+    INSERT INTO PROXY_NET_FUSE
+                (module_name, req_path, fuse_time, req_query, fuse_count)
+         VALUES (          ?,        ?,         ?,         ?,          ?)
+            ]]></body>
+        </sql>
+    </model>
+</sqls>
