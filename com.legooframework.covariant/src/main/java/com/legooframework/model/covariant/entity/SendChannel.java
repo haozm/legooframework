@@ -5,7 +5,7 @@ import com.google.common.base.MoreObjects;
 public enum SendChannel {
 
     SMS(0, "短信发送"), WECHAT(1, "微信发送"), WECHAT_GZH(2, "公众号发送"),
-    OFFLINE(3, "线下更进"), CALLPHONE(4, "电话跟进"), CANCEL(9, "取消跟进");
+    OFFLINE(3, "线下更进"), CALLPHONE(4, "电话跟进"), WX_SMS(10, "微信优先"), CANCEL(9, "取消跟进");
 
     private int value;
     private String desc;
@@ -27,6 +27,9 @@ public enum SendChannel {
                 break;
             case 4:
                 res = CALLPHONE;
+                break;
+            case 10:
+                res = WX_SMS;
                 break;
             case 9:
                 res = CANCEL;
