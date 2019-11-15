@@ -130,13 +130,18 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
         @Override
         public void run() {
             LocalDateTime before_minutes = LocalDateTime.now().plusMinutes(-1);
+            LocalDateTime before_two_minutes = LocalDateTime.now().plusMinutes(-2);
             String key = before_minutes.toString("yyyyMMddHHmm00");
-            Set<String> values = multimap.removeAll(key);
-            if (CollectionUtils.isNotEmpty(values)) {
-                if (logger.isDebugEnabled())
-                    logger.debug(String.format("fusingCache.invalidateAll(%s)", values));
-                fusingCache.invalidateAll(values);
-            }
+            removeAll(multimap.removeAll(key));
+            key = before_two_minutes.toString("yyyyMMddHHmm00");
+            removeAll(multimap.removeAll(key));
+        }
+
+        private void removeAll(Set<String> cacheKeys) {
+            if (CollectionUtils.isEmpty(cacheKeys)) return;
+            fusingCache.invalidateAll(cacheKeys);
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("fusingCache.invalidateAll(%s)", cacheKeys));
         }
     }
 }
