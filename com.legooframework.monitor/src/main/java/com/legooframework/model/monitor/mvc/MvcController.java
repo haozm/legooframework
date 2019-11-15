@@ -22,7 +22,7 @@ public class MvcController extends BaseController {
     public JsonMessage welcome(HttpServletRequest request) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("welcome(url=%s)", request.getRequestURI()));
-        Bundle bundle = getBean("smsResultBundle", Bundle.class, request);
+        Bundle bundle = getBean("monitorBundle", Bundle.class, request);
         return JsonMessageBuilder.OK().withPayload(bundle.toDesc()).toMessage();
     }
 
