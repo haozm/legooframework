@@ -39,27 +39,29 @@ public class CareBirthdayEntityAction extends BaseEntityAction<CareBirthdayEntit
                 new CareBirthdayEntity(agg.getMember(), followUpContent);
         List<CareRecordEntity> careLogs = Lists.newArrayList();
         List<CareHisRecordEntity> hisCareLogs = Lists.newArrayList();
-        for (SendChannel channel : channels) {
-            if (SendChannel.SMS == channel) {
-                careLogs.add(CareRecordEntity.smsBirthdayCare4Member(care, employee, agg, followUpContent));
-                hisCareLogs.add(CareHisRecordEntity.smsBirthdayCare4Member(care, employee, agg, followUpContent));
-            } else if (SendChannel.WECHAT == channel && agg.getWxUser().isPresent()) {
-                // 存在微信的情况尽心了处理
+        if (channels.contains(SendChannel.WX_SMS)) {
+            if (agg.getWxUser().isPresent()) {
                 careLogs.add(CareRecordEntity.wxBirthdayCare4Member(care, employee, agg, followUpContent, imgUrls));
                 hisCareLogs.add(CareHisRecordEntity.wxBirthdayCare4Member(care, employee, agg, followUpContent));
-            } else if (SendChannel.CALLPHONE == channel || SendChannel.OFFLINE == channel) {
-                careLogs.add(CareRecordEntity.manualBirthdayCare4Member(care, employee, agg.getMember()));
-                hisCareLogs.add(CareHisRecordEntity.offlineBirthdayCare4Member(care, employee, agg.getMember()));
-            } else if (SendChannel.CANCEL == channel) {
-                careLogs.add(CareRecordEntity.cancelBirthdayCare4Member(care, employee, agg.getMember()));
-                hisCareLogs.add(CareHisRecordEntity.cancelBirthdayCare4Member(care, employee, agg.getMember()));
-            } else if (SendChannel.WX_SMS == channel) {
-                if (agg.getWxUser().isPresent()) {
-                    careLogs.add(CareRecordEntity.wxBirthdayCare4Member(care, employee, agg, followUpContent, imgUrls));
-                    hisCareLogs.add(CareHisRecordEntity.wxBirthdayCare4Member(care, employee, agg, followUpContent));
-                } else {
+            } else {
+                careLogs.add(CareRecordEntity.smsBirthdayCare4Member(care, employee, agg, followUpContent));
+                hisCareLogs.add(CareHisRecordEntity.smsBirthdayCare4Member(care, employee, agg, followUpContent));
+            }
+        } else {
+            for (SendChannel channel : channels) {
+                if (SendChannel.SMS == channel) {
                     careLogs.add(CareRecordEntity.smsBirthdayCare4Member(care, employee, agg, followUpContent));
                     hisCareLogs.add(CareHisRecordEntity.smsBirthdayCare4Member(care, employee, agg, followUpContent));
+                } else if (SendChannel.WECHAT == channel && agg.getWxUser().isPresent()) {
+                    // 存在微信的情况尽心了处理
+                    careLogs.add(CareRecordEntity.wxBirthdayCare4Member(care, employee, agg, followUpContent, imgUrls));
+                    hisCareLogs.add(CareHisRecordEntity.wxBirthdayCare4Member(care, employee, agg, followUpContent));
+                } else if (SendChannel.CALLPHONE == channel || SendChannel.OFFLINE == channel) {
+                    careLogs.add(CareRecordEntity.manualBirthdayCare4Member(care, employee, agg.getMember()));
+                    hisCareLogs.add(CareHisRecordEntity.offlineBirthdayCare4Member(care, employee, agg.getMember()));
+                } else if (SendChannel.CANCEL == channel) {
+                    careLogs.add(CareRecordEntity.cancelBirthdayCare4Member(care, employee, agg.getMember()));
+                    hisCareLogs.add(CareHisRecordEntity.cancelBirthdayCare4Member(care, employee, agg.getMember()));
                 }
             }
         }

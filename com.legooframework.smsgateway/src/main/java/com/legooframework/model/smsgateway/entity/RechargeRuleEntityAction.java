@@ -54,15 +54,12 @@ public class RechargeRuleEntityAction extends BaseEntityAction<RechargeRuleEntit
      * @param remarks   备注
      * @return 字串
      */
-    public String addRule(Long min, Long max, double unitPrice, OrgEntity company,
-                          String remarks, LocalDate expiredDate) {
+    public String addRule(Long min, Long max, double unitPrice, OrgEntity company, String remarks, LocalDate expiredDate) {
         RechargeRuleEntity instance;
         if (null == company) {
-            instance = new RechargeRuleEntity(min, max, unitPrice, null, null, false,
-                    expiredDate);
+            instance = new RechargeRuleEntity(min, max, unitPrice, null, null, false, expiredDate);
         } else {
-            instance = new RechargeRuleEntity(min, max, unitPrice, company, remarks, false,
-                    expiredDate);
+            instance = new RechargeRuleEntity(min, max, unitPrice, company, remarks, false, expiredDate);
         }
         super.updateAction(instance, "insert");
         final String cache_key = String.format("%s_load_all", getModelName());
@@ -80,8 +77,7 @@ public class RechargeRuleEntityAction extends BaseEntityAction<RechargeRuleEntit
      * @param remarks   备注
      * @return 字串 春梦
      */
-    public String addTemporaryRule(Long min, Long max, double unitPrice, OrgEntity company,
-                                   String remarks, LocalDate expiredDate) {
+    public String addTemporaryRule(Long min, Long max, double unitPrice, OrgEntity company, String remarks, LocalDate expiredDate) {
         Preconditions.checkNotNull(company, "入参 CrmOrganizationEntity company 不可以为空值...");
         RechargeRuleEntity instance = new RechargeRuleEntity(min, max, unitPrice, company, remarks, true,
                 expiredDate);
@@ -152,7 +148,7 @@ public class RechargeRuleEntityAction extends BaseEntityAction<RechargeRuleEntit
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<RechargeRuleEntity> {
+    private static class RowMapperImpl implements RowMapper<RechargeRuleEntity> {
         @Override
         public RechargeRuleEntity mapRow(ResultSet res, int i) throws SQLException {
             return new RechargeRuleEntity(res.getString("id"), res);

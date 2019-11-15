@@ -40,37 +40,39 @@ public class CareNinetyTaskAgg {
             logs.add(CareRecordEntity.errorNinetyCare4Member(this, user));
             return logs;
         }
-        for (SendChannel ch : channels) {
-            if (SendChannel.SMS == ch) {
-                if (Strings.isNullOrEmpty(targetContent)) {
-                    logs.add(CareRecordEntity.errorNinetyCare4Member(this, user));
-                } else {
-                    logs.add(CareRecordEntity.sendSmsNinetyCare4Member(this, user));
-                }
-            } else if (SendChannel.WECHAT == ch && memberAgg.getWxUser().isPresent()) {
+        if (channels.contains(SendChannel.WX_SMS)) {
+            if (memberAgg.getWxUser().isPresent()) {
                 if (Strings.isNullOrEmpty(targetContent)) {
                     logs.add(CareRecordEntity.errorNinetyCare4Member(this, user));
                 } else {
                     logs.add(CareRecordEntity.wxNinetyCare4Member(this, user, imgs));
                 }
-            } else if (SendChannel.CANCEL == ch) {
-                logs.add(CareRecordEntity.cancelNinetyCare4Member(this, user));
-            } else if (SendChannel.WX_SMS == ch) {
-                if (memberAgg.getWxUser().isPresent()) {
-                    if (Strings.isNullOrEmpty(targetContent)) {
-                        logs.add(CareRecordEntity.errorNinetyCare4Member(this, user));
-                    } else {
-                        logs.add(CareRecordEntity.wxNinetyCare4Member(this, user, imgs));
-                    }
+            } else {
+                if (Strings.isNullOrEmpty(targetContent)) {
+                    logs.add(CareRecordEntity.errorNinetyCare4Member(this, user));
                 } else {
+                    logs.add(CareRecordEntity.sendSmsNinetyCare4Member(this, user));
+                }
+            }
+        } else {
+            for (SendChannel ch : channels) {
+                if (SendChannel.SMS == ch) {
                     if (Strings.isNullOrEmpty(targetContent)) {
                         logs.add(CareRecordEntity.errorNinetyCare4Member(this, user));
                     } else {
                         logs.add(CareRecordEntity.sendSmsNinetyCare4Member(this, user));
                     }
+                } else if (SendChannel.WECHAT == ch && memberAgg.getWxUser().isPresent()) {
+                    if (Strings.isNullOrEmpty(targetContent)) {
+                        logs.add(CareRecordEntity.errorNinetyCare4Member(this, user));
+                    } else {
+                        logs.add(CareRecordEntity.wxNinetyCare4Member(this, user, imgs));
+                    }
+                } else if (SendChannel.CANCEL == ch) {
+                    logs.add(CareRecordEntity.cancelNinetyCare4Member(this, user));
+                } else {
+                    logs.add(CareRecordEntity.manualNinetyCare4Member(this, user));
                 }
-            } else {
-                logs.add(CareRecordEntity.manualNinetyCare4Member(this, user));
             }
         }
         return logs;
