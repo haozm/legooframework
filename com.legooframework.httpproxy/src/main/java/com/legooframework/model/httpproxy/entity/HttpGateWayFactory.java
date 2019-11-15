@@ -37,7 +37,7 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
         CacheRemovalListener removalListener = new CacheRemovalListener(fusingCountAction);
         this.fusingCache = CacheBuilder.from("initialCapacity=512,maximumSize=4096,expireAfterAccess=3m")
                 .removalListener(removalListener).build();
-        timer.scheduleAtFixedRate(new CacheTimerTask(), 0L, 1000 * 60L);
+        this.timer.scheduleAtFixedRate(new CacheTimerTask(), 0L, 1000 * 60L);
     }
 
     void destroy() {

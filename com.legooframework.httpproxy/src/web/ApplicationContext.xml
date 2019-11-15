@@ -19,11 +19,7 @@
         <property name="dataSource" ref="dataSource"/>
     </bean>
     <alias name="dataSource" alias="httpProxyDataSource"/>
-    <!--
-    <util:list id="converters">
-        <bean class="org.springframework.http.converter.ResourceHttpMessageConverter"/>
-    </util:list>
-    -->
+
     <int-http:inbound-gateway id="httpChannelAdapter" request-channel="request-channel" path="/**"
                               supported-methods="POST"/>
     <int:publish-subscribe-channel id="request-channel"/>
