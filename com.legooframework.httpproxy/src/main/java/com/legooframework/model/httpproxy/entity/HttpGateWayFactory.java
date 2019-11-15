@@ -6,17 +6,19 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.config.FileReloadSupport;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.digester3.Digester;
 import org.apache.commons.digester3.binder.DigesterLoader;
 import org.apache.commons.digester3.binder.RulesModule;
+import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class HttpGateWayFactory extends FileReloadSupport<File> {
 
@@ -25,6 +27,8 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
     private final RulesModule rulesModule;
     private final List<HttpGateWayEntity> gateWays;
     private final Cache<String, FusingCountEntity> fusingCache;
+    private final HashMultimap<String, String> multimap = HashMultimap.create();
+    private final Timer timer = new Timer();
 
     HttpGateWayFactory(List<String> patterns, RulesModule rulesModule, FusingCountEntityAction fusingCountAction) {
         super(patterns);
@@ -33,6 +37,13 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
         CacheRemovalListener removalListener = new CacheRemovalListener(fusingCountAction);
         this.fusingCache = CacheBuilder.from("initialCapacity=512,maximumSize=4096,expireAfterAccess=3m")
                 .removalListener(removalListener).build();
+        timer.scheduleAtFixedRate(new CacheTimerTask(), 0L, 1000 * 60L);
+    }
+
+    void destroy() {
+        this.timer.cancel();
+        this.multimap.clear();
+        this.fusingCache.invalidateAll();
     }
 
     public String getTarget(HttpRequestDto requestDto) {
@@ -56,15 +67,17 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
      * @param fusingCount OOXX
      */
     private void pushCache(FusingCountEntity fusingCount) {
+        LocalDateTime now = LocalDateTime.now();
+        String key_key = now.toString("yyyyMMddHHmm00");
         String cache_key = fusingCount.getCacheKey();
         FusingCountEntity cache_value = fusingCache.getIfPresent(cache_key);
+        this.multimap.put(key_key, cache_key);
         if (null == cache_value) {
             fusingCache.put(fusingCount.getCacheKey(), fusingCount);
         } else {
             cache_value.increment();
         }
     }
-
 
     @Override
     public void addConfig(File file, File config) {
@@ -91,7 +104,6 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
         return Optional.empty();
     }
 
-
     private static class CacheRemovalListener implements RemovalListener<String, FusingCountEntity> {
 
         CacheRemovalListener(FusingCountEntityAction fusingCountAction) {
@@ -107,6 +119,24 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
             }
             if (logger.isDebugEnabled())
                 logger.debug(String.format("RemovalListener %s Removaled", removal.getValue()));
+        }
+    }
+
+    private class CacheTimerTask extends TimerTask {
+
+        CacheTimerTask() {
+        }
+
+        @Override
+        public void run() {
+            LocalDateTime before_minutes = LocalDateTime.now().plusMinutes(-1);
+            String key = before_minutes.toString("yyyyMMddHHmm00");
+            Set<String> values = multimap.removeAll(key);
+            if (CollectionUtils.isNotEmpty(values)) {
+                if (logger.isDebugEnabled())
+                    logger.debug(String.format("fusingCache.invalidateAll(%s)", values));
+                fusingCache.invalidateAll(values);
+            }
         }
     }
 }

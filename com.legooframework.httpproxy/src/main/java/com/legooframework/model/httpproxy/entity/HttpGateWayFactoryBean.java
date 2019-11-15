@@ -38,6 +38,10 @@ public class HttpGateWayFactoryBean extends AbstractFactoryBean<HttpGateWayFacto
         return this.httpGateWayFactory;
     }
 
+    public void destroySlef() {
+        this.httpGateWayFactory.destroy();
+    }
+
     private List<String> patterns;
 
     public void setPatterns(List<String> patterns) {

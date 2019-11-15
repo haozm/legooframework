@@ -23,7 +23,7 @@
           parent="httpProxyAbsEntityAction"/>
 
     <bean id="httpGateWayFactory" class="com.legooframework.model.httpproxy.entity.HttpGateWayFactoryBean"
-          depends-on="httpProxyFusingCountAction">
+          depends-on="httpProxyFusingCountAction" destroy-method="destroySlef">
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]httpproxy[\\,/]httpproxy-rule-cfg.xml$</value>
