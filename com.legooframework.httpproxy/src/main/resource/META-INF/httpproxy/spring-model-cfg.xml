@@ -21,6 +21,7 @@
     </bean>
     <bean id="httpProxyFusingCountAction" class="com.legooframework.model.httpproxy.entity.FusingCountEntityAction"
           parent="httpProxyAbsEntityAction"/>
+    <bean id="httpProxyEntityAction" class="com.legooframework.model.httpproxy.entity.HttpProxyEntityAction"/>
 
     <bean id="httpGateWayFactory" class="com.legooframework.model.httpproxy.entity.HttpGateWayFactoryBean"
           depends-on="httpProxyFusingCountAction" destroy-method="destroySlef">
