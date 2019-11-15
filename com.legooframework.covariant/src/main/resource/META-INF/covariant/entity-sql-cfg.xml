@@ -62,22 +62,24 @@
       INNER JOIN acp.acp_store sto ON csm.store_id =sto.id
        LEFT JOIN acp.crm_shoppingguide_member cgm ON cgm.member_id = cm.id
        LEFT JOIN acp.crm_membercardtype cmc ON cm.memberCardType_id = cmc.id
-           WHERE cm.status = 1
         <#if (sql=="findById")>
-             AND cm.id = :memberId
+           WHERE cm.id = :memberId
         <#elseif (sql="findByStore")>
-             AND cm.status = 1
+           WHERE cm.status = 1
              AND csm.store_id = :storeId
         <#elseif (sql="findByShoppingGuide")>
+           WHERE cm.status = 1
              AND csm.store_id = :storeId
              AND cgm.shoppingguide_id  = :shoppingGuideId
         <#elseif (sql="findByWxUser")>
+           WHERE cm.status = 1
              AND cgm.id = ( SELECT awm.member_id
                               FROM acp.acp_weixin_member AS awm
                              WHERE awm.company_id = :compamyId
                                AND awm.store_id = :storeId
                                AND  awm.weixin_id = :userName )
         <#elseif (sql="findByIds")>
+           WHERE cm.status = 1
              AND cm.id IN (${memberIds?join(",")})
         </#if>
             ]]></body>
