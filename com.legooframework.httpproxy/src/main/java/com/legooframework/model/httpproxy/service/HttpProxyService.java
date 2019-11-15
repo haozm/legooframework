@@ -1,5 +1,6 @@
 package com.legooframework.model.httpproxy.service;
 
+import com.legooframework.model.httpproxy.entity.FusingTimeOutException;
 import com.legooframework.model.httpproxy.entity.HttpGateWayParams;
 import com.legooframework.model.httpproxy.entity.HttpRequestDto;
 import org.slf4j.Logger;
@@ -25,10 +26,10 @@ public class HttpProxyService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(requestDto.toString());
         HttpGateWayParams gateWayParams = getHttpGateWayFactory().getTarget(requestDto);
-        return postTarget(gateWayParams, requestDto.getBody().orElse(null));
+        return postJsonTarget(gateWayParams, requestDto.getBody().orElse(null));
     }
 
-    private String postTarget(HttpGateWayParams gateWayParams, Object params) {
+    private String postJsonTarget(HttpGateWayParams gateWayParams, Object params) {
         Mono<String> mono;
         if (null != params) {
             mono = WebClient.create().method(HttpMethod.POST)
@@ -42,7 +43,13 @@ public class HttpProxyService extends BundleService {
                     .contentType(MediaType.APPLICATION_JSON)
                     .retrieve().bodyToMono(String.class);
         }
-        return mono.block(Duration.ofSeconds(gateWayParams.getTimeout()));
+        //IllegalStateException
+        try {
+            return mono.block(Duration.ofSeconds(gateWayParams.getTimeout()));
+        } catch (IllegalStateException e) {
+            logger.error(String.format("Post %s is Timeout %d By Fusing", gateWayParams.getTarget(), gateWayParams.getTimeout()));
+            throw new FusingTimeOutException(gateWayParams);
+        }
     }
 
 }
