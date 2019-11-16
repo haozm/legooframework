@@ -900,7 +900,7 @@
 
     <target name="webapp-scp">
         <echo message="[-----------------  Start scp webapp   /var/BackupData/tomcat/develop/apps -----------------]"/>
-        <scp todir="yycrm@svr02.csosm.com:/var/BackupData/tomcat/develop/apps/temp/" password="+89SGucK&amp;!&lt;k7@">
+        <scp todir="yycrm@svr02.csosm.com:/var/BackupData/tomcat/develop/apps/temp/" password="+89SGucK&amp;!&lt;k7@" trust="true">
             <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy"/>
         </scp>
         <echo message="[-----------------  End scp webapp   -----------------]"/>
