@@ -904,6 +904,7 @@
             <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="resources/**/*.*"/>
             <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="WEB-INF/*.xml"/>
             <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="WEB-INF/classes/**/*.*"/>
+            <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="WEB-INF/lib/legoo-*.jar"/>
         </scp>
         <echo message="[-----------------  End scp webapp   -----------------]"/>
     </target>
