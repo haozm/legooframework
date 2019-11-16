@@ -1,6 +1,7 @@
 package com.legooframework.model.httpproxy.entity;
 
 import com.google.common.base.MoreObjects;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.util.MimeType;
@@ -30,6 +31,10 @@ public class HttpRequestDto {
 
     String getUri() {
         return uri;
+    }
+
+    public boolean isPost() {
+        return StringUtils.equals(requestMethod, "POST");
     }
 
     UriComponents getUriComponents() {

@@ -19,7 +19,10 @@ public class HttpProxyService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(requestDto.toString());
         HttpGateWayParams gateWayParams = getHttpGateWayFactory().getTarget(requestDto);
-        return getHttpProxyAction().postJsonTarget(gateWayParams, requestDto.getBody().orElse(null));
+        if (requestDto.isPost()) {
+            return getHttpProxyAction().postJsonTarget(gateWayParams, requestDto.getBody().orElse(null));
+        }
+        return "";
     }
 
 }
