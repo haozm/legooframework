@@ -901,10 +901,10 @@
     <target name="webapp-scp">
         <echo message="[-----------------  Start scp webapp   /var/BackupData/tomcat/develop/apps -----------------]"/>
         <scp todir="yycrm@svr02.csosm.com:/var/data02/ygreports/apps/temp/" password="+89SGucK&amp;!&lt;k7@" trust="true">
-            <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="resources/**/*.*"/>
-            <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="WEB-INF/*.xml"/>
-            <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="WEB-INF/classes/**/*.*"/>
-            <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="WEB-INF/lib/legoo-*.jar"/>
+            <fileset dir="/var/BackupData/tomcat/develop/apps/webapps" includes="httpproxy/resources/**/*.*"/>
+            <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="httpproxy/WEB-INF/*.xml"/>
+            <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="httpproxy/WEB-INF/classes/**/*.*"/>
+            <fileset dir="/var/BackupData/tomcat/develop/apps/webapps/httpproxy" includes="httpproxy/WEB-INF/lib/legoo-*.jar"/>
         </scp>
         <echo message="[-----------------  End scp webapp   -----------------]"/>
     </target>
