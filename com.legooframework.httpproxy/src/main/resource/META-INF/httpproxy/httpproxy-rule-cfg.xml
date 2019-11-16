@@ -9,4 +9,7 @@
     <module id="takecare" params="mod=takecare" fuse="2000" timeout="20">
         <target domain="http://testold.csosm.com/" path="takecare/api/"/>
     </module>
+    <module id="smsresult" params="mod=smsresult" fuse="2000" timeout="20">
+        <target domain="http://testold.csosm.com/" path="smsresult/api/"/>
+    </module>
 </modules>

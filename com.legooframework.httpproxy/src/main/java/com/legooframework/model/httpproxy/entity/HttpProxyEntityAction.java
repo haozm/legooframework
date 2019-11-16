@@ -14,7 +14,6 @@ import java.time.Duration;
 
 public class HttpProxyEntityAction extends HttpBaseEntityAction<EmptyEntity> {
 
-
     private static final Logger logger = LoggerFactory.getLogger(HttpProxyService.class);
 
     public HttpProxyEntityAction() {

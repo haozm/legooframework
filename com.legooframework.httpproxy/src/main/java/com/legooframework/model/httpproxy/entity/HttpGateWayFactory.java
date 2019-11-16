@@ -56,7 +56,7 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
                 break;
             }
         }
-        Preconditions.checkState(!Strings.isNullOrEmpty(target), "Uri=%s 无匹配数据...", requestDto.getUri());
+        Preconditions.checkState(!Strings.isNullOrEmpty(target), "Uri=%s 无匹配地址...", requestDto.getUri());
         if (logger.isDebugEnabled())
             logger.debug(String.format("[%s] matched [%s]", requestDto.getUri(), target));
         pushCache(new FusingCountEntity(gateWay, requestDto));
@@ -114,11 +114,8 @@ public class HttpGateWayFactory extends FileReloadSupport<File> {
 
         @Override
         public void onRemoval(RemovalNotification<String, FusingCountEntity> removal) {
-            if (fusingCountAction != null) {
+            if (fusingCountAction != null)
                 fusingCountAction.insert(removal.getValue());
-            }
-            if (logger.isDebugEnabled())
-                logger.debug(String.format("RemovalListener %s Removaled", removal.getValue()));
         }
     }
 

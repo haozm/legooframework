@@ -10,12 +10,11 @@ public class HttpGateWayParams {
         this.timeout = timeout;
     }
 
-
-    public String getTarget() {
+    String getTarget() {
         return target;
     }
 
-    public int getTimeout() {
+    int getTimeout() {
         return timeout;
     }
 }
