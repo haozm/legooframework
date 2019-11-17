@@ -911,7 +911,7 @@
             <fileset dir="${apps.root}/webapps" includes="${app.name}/resources/**/*.*"/>
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/*.xml"/>
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/classes/**/*.*"/>
-            <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/lib/sslegoo-*.jar"/>
+            <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/lib/legoo-*.jar"/>
         </scp>
         <echo message="[-----------------  End scp webapp ${app.name}  -----------------]"/>
     </target>
