@@ -107,8 +107,6 @@
             <param name="jar.includes" value="legoo-core-*.jar,legoo-httpproxy-*.jar"/>
             <param name="resources.includes" value="**/core/**,**/httpproxy/**"/>
         </antcall>
-        <reload  url="${tomcat.svr05.url}" username="${tomcat.svr05.username}" password="${tomcat.svr05.password}" path="httpproxy"/>
-        <echo message="[-------------- [reload: httpproxy success (~_~) ] --------------]"/>
     </target>
     <target name="install-salesrecords-jar">
         <path id="salesrecords_classpath">
