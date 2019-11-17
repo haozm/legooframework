@@ -918,7 +918,7 @@
 
     <target name="scp-svr01">
         <echo message="[-----------------  Start scp webapp ${app.name} to svr01 -----------------]"/>
-        <scp todir="yycrm@svr01.csosm.com:/data/ygreports/apps/temp/" password="ds152^0#LRy]1*" trust="true">
+        <scp todir="yycrm@svr01.csosm.com:/data/ygreports/apps/webapps1/" password="ds152^0#LRy]1*" trust="true">
             <fileset dir="${apps.root}/webapps" includes="${app.name}/resources/**/*.*"/>
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/*.xml"/>
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/classes/**/*.*"/>
