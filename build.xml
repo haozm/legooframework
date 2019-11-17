@@ -899,7 +899,7 @@
     </target>
 
     <target name="scp-svr02">
-        <echo message="[-----------------  Start scp webapp ${app.name} -----------------]"/>
+        <echo message="[-----------------  Start scp webapp ${app.name} svr02-----------------]"/>
         <scp todir="yycrm@svr02.csosm.com:/var/data02/ygreports/apps/temp/" password="+89SGucK&amp;!&lt;k7@" trust="true">
             <fileset dir="${apps.root}/webapps" includes="${app.name}/resources/**/*.*"/>
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/*.xml"/>
@@ -907,6 +907,17 @@
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/lib/legoo-*.jar"/>
         </scp>
         <echo message="[-----------------  End scp webapp ${app.name}  -----------------]"/>
+    </target>
+
+    <target name="scp-svr01">
+        <echo message="[-----------------  Start scp webapp ${app.name} to svr01 -----------------]"/>
+        <scp todir="yycrm@svr01.csosm.com:/data/ygreports/apps/temp/" password="ds152^0#LRy]1*" trust="true">
+            <fileset dir="${apps.root}/webapps" includes="${app.name}/resources/**/*.*"/>
+            <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/*.xml"/>
+            <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/classes/**/*.*"/>
+            <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/lib/legoo-*.jar"/>
+        </scp>
+        <echo message="[-----------------  End scp webapp ${app.name}  svr01 -----------------]"/>
     </target>
 
     <target name="install-web-manager">
