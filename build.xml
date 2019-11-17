@@ -17,7 +17,7 @@
     <property name="out.dir" value="${apps.root}/temp"/>
     <property name="webapp.root" value="${apps.root}/webapps"/>
 
-    <property name="tomcat.svr05.url"      value="http://dev.csosm.com/manager/text"/>
+    <property name="tomcat.svr05.url"      value="http://dev.csosm.com/manager/html"/>
   	<property name="tomcat.svr05.username" value="admin"/>
   	<property name="tomcat.svr05.password" value="yycrm"/>
 
@@ -107,7 +107,7 @@
             <param name="jar.includes" value="legoo-core-*.jar,legoo-httpproxy-*.jar"/>
             <param name="resources.includes" value="**/core/**,**/httpproxy/**"/>
         </antcall>
-        <reload  url="${tomcat.svr05.url}" username="${tomcat.svr05.username}" password="${tomcat.svr05.password}" path="/httpproxy"/>
+        <reload  url="${tomcat.svr05.url}" username="${tomcat.svr05.username}" password="${tomcat.svr05.password}" path="httpproxy"/>
         <echo message="[-------------- [reload: httpproxy success (~_~) ] --------------]"/>
     </target>
     <target name="install-salesrecords-jar">
