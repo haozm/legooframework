@@ -21,8 +21,8 @@
     <property name="tomcat.svr05.username" value="admin"/>
     <property name="tomcat.svr05.password" value="yycrm"/>
 
-    <property name="catalina.home" value="/var/BackupData/tomcat/develop/client"/>
-    <import file="${catalina.home}/bin/catalina-tasks.xml"/>
+<!--    <property name="catalina.home" value="C:/JavaSpace/service/apps"/>-->
+<!--    <import file="${catalina.home}/bin/catalina-tasks.xml"/>-->
 
     <target name="init">
         <echo message="jdk.home=${jdk.home}"/>
@@ -442,6 +442,36 @@
             <param name="resources.includes" value="**/core/**,**/wechatcircle/**,**/entities/**"/>
         </antcall>
     </target>
+    <target name="install-smsgateway-jar">
+        <path id="smsgateway_classpath">
+            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
+            <fileset dir="${third.libs}" includes="*.jar"/>
+            <fileset dir="${lib.dir}"
+                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-smsprovider-*.jar,legoo-covariant-*.jar,legoo-dict-*.jar"/>
+        </path>
+        <antcall target="commons-task">
+            <param name="model.name" value="com.legooframework.smsgateway"/>
+            <param name="short.name" value="smsgateway"/>
+            <reference refid="smsgateway_classpath" torefid="bundle_classpath"/>
+        </antcall>
+    </target>
+    <target name="install-smsgateway-war">
+        <antcall target="webapp-new">
+            <param name="app.name" value="smsgateway"/>
+            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
+            <param name="wepapp.root" value="${webapp.root}"/>
+            <param name="vfs.root" value="file:${resources.dir}"/>
+        </antcall>
+        <copy todir="${webapp.root}/smsgateway/WEB-INF/lib" overwrite="true" encoding="UTF-8">
+            <fileset dir="${lib.dir}"
+                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar,legoo-dict-*.jar,legoo-jwtoken-*.jar,
+                     legoo-smsgateway-*.jar,legoo-smsprovider-*.jar"/>
+        </copy>
+        <copy todir="${webapp.root}/smsgateway/WEB-INF/classes" encoding="UTF-8" overwrite="true" flatten="false">
+            <fileset dir="${config.dir}"
+                     includes="**/core/**,**/entities/**,**/crmadapter/**,**/dict/**,**/jwtoken/**,**/smsgateway/**,**/smsprovider/**"/>
+        </copy>
+    </target>
     <target name="install-smsresult-jar">
         <path id="smsresult_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
@@ -465,11 +495,16 @@
             <param name="resources.includes" value="**/core/**,**/entities/**,**/smsprovider/**,**/smsresult/**"/>
         </antcall>
     </target>
-    <target name="jar-dict">
+    <target name="install-dict-jar">
+        <path id="dict_classpath">
+            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
+            <fileset dir="${third.libs}" includes="*.jar"/>
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar"/>
+        </path>
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.dict"/>
             <param name="short.name" value="dict"/>
-            <reference refid="commons_classpath" torefid="bundle_classpath"/>
+            <reference refid="dict_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
     <target name="jar-devices">
@@ -657,23 +692,6 @@
             <param name="short.name" value="jwtoken"/>
             <reference refid="base_classpath" torefid="bundle_classpath"/>
         </antcall>
-    </target>
-    <target name="install-smsgateway-war">
-        <antcall target="webapp-new">
-            <param name="app.name" value="smsgateway"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <copy todir="${webapp.root}/smsgateway/WEB-INF/lib" overwrite="true" encoding="UTF-8">
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar,legoo-dict-*.jar,legoo-jwtoken-*.jar,
-                     legoo-smsgateway-*.jar,legoo-smsprovider-*.jar"/>
-        </copy>
-        <copy todir="${webapp.root}/smsgateway/WEB-INF/classes" encoding="UTF-8" overwrite="true" flatten="false">
-            <fileset dir="${config.dir}"
-                     includes="**/core/**,**/entities/**,**/crmadapter/**,**/dict/**,**/jwtoken/**,**/smsgateway/**,**/smsprovider/**"/>
-        </copy>
     </target>
     <target name="install-web-picturemgn">
         <antcall target="webapp-new">
