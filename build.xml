@@ -21,8 +21,8 @@
     <property name="tomcat.svr05.username" value="admin"/>
     <property name="tomcat.svr05.password" value="yycrm"/>
 
-<!--    <property name="catalina.home" value="C:/JavaSpace/service/apps"/>-->
-<!--    <import file="${catalina.home}/bin/catalina-tasks.xml"/>-->
+    <!--    <property name="catalina.home" value="C:/JavaSpace/service/apps"/>-->
+    <!--    <import file="${catalina.home}/bin/catalina-tasks.xml"/>-->
 
     <target name="init">
         <echo message="jdk.home=${jdk.home}"/>
@@ -461,16 +461,11 @@
             <param name="spring.profiles.active" value="${spring.profiles.active}"/>
             <param name="wepapp.root" value="${webapp.root}"/>
             <param name="vfs.root" value="file:${resources.dir}"/>
+            <param name="jar.includes"
+                   value="legoo-core-*.jar,legoo-entities-*.jar,legoo-dict-*.jar,legoo-covariant-*.jar,legoo-smsgateway-*.jar,legoo-smsprovider-*.jar"/>
+            <param name="resources.includes"
+                   value="**/core/**,**/entities/**,**/covariant/**,**/dict/**,**/smsgateway/**,**/smsprovider/**"/>
         </antcall>
-        <copy todir="${webapp.root}/smsgateway/WEB-INF/lib" overwrite="true" encoding="UTF-8">
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar,legoo-dict-*.jar,legoo-jwtoken-*.jar,
-                     legoo-smsgateway-*.jar,legoo-smsprovider-*.jar"/>
-        </copy>
-        <copy todir="${webapp.root}/smsgateway/WEB-INF/classes" encoding="UTF-8" overwrite="true" flatten="false">
-            <fileset dir="${config.dir}"
-                     includes="**/core/**,**/entities/**,**/crmadapter/**,**/dict/**,**/jwtoken/**,**/smsgateway/**,**/smsprovider/**"/>
-        </copy>
     </target>
     <target name="install-smsresult-jar">
         <path id="smsresult_classpath">
