@@ -26,12 +26,13 @@
            sto.companypy, sto.crc32id, sd.deviceid, sd.weixin
       FROM acp.acp_store AS sto
  LEFT JOIN yycomm.store_device AS sd ON sd.store_id=sto.id AND sd.company_id = sto.company_id AND sd.devicetype = 1 AND sd.status=1
-     WHERE sto.status = 1
     <#if (sql=="findById")>
-       AND sto.id = :storeId
+     WHERE sto.id = :storeId
     <#elseif (sql=="findByIds")>
+     WHERE sto.status = 1
        AND sto.id IN (${storeIds?join(",")})
     <#elseif (sql=="findByOldInfo")>
+     WHERE sto.status = 1
        AND LOWER(sto.oldStoreId)  = :oldStoreId
        AND LOWER(sto.companypy) = :companypy
     </#if>
