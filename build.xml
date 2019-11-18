@@ -17,12 +17,12 @@
     <property name="out.dir" value="${apps.root}/temp"/>
     <property name="webapp.root" value="${apps.root}/webapps"/>
 
-    <property name="tomcat.svr05.url"      value="http://dev.csosm.com/manager/html"/>
-  	<property name="tomcat.svr05.username" value="admin"/>
-  	<property name="tomcat.svr05.password" value="yycrm"/>
+    <property name="tomcat.svr05.url" value="http://dev.csosm.com/manager/html"/>
+    <property name="tomcat.svr05.username" value="admin"/>
+    <property name="tomcat.svr05.password" value="yycrm"/>
 
-  	<property name="catalina.home" value="/var/BackupData/tomcat/develop/client"/>
-  	<import file="${catalina.home}/bin/catalina-tasks.xml"/>
+    <property name="catalina.home" value="/var/BackupData/tomcat/develop/client"/>
+    <import file="${catalina.home}/bin/catalina-tasks.xml"/>
 
     <target name="init">
         <echo message="jdk.home=${jdk.home}"/>
@@ -895,9 +895,6 @@
         <copy todir="${webapp.root}/${app.name}/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="${resources.includes}"/>
         </copy>
-        <copy todir="${wepapp.root}/${app.name}/WEB-INF/lib">
-            <fileset dir="${third.libs}" includes="*.jar"/>
-        </copy>
         <delete dir="${webapp.root}/${app.name}/resources" includes="**/*.*"/>
         <copy todir="${webapp.root}/${app.name}/resources" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${resources.dir}" includes="${resources.includes}"/>
@@ -907,7 +904,8 @@
 
     <target name="scp-svr02">
         <echo message="[-----------------  Start scp webapp ${app.name} svr02-----------------]"/>
-        <scp todir="yycrm@svr02.csosm.com:/var/data02/ygreports/apps/webapps1" password="+89SGucK&amp;!&lt;k7@" trust="true">
+        <scp todir="yycrm@svr02.csosm.com:/var/data02/ygreports/apps/webapps1" password="+89SGucK&amp;!&lt;k7@"
+             trust="true">
             <fileset dir="${apps.root}/webapps" includes="${app.name}/resources/**/*.*"/>
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/*.xml"/>
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/classes/**/*.*"/>
