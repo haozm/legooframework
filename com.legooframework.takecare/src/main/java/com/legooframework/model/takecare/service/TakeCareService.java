@@ -262,7 +262,9 @@ public class TakeCareService extends BundleService {
 
             Map<String, Object> replaces = mm_agg.toReplaceMap();
             String target = replace(agg.getSrcMsgTemp(), replaces);
-            agg.setTargetContent(String.format("%s%s退订回T", sms_prefix, target));
+            // 90 生日 不需要添加 短信后缀
+//            agg.setTargetContent(String.format("%s%s退订回T", sms_prefix, target));
+            agg.setTargetContent(String.format("%s%s", sms_prefix, target));
         }
         return careNinetyTaskAggs;
     }
