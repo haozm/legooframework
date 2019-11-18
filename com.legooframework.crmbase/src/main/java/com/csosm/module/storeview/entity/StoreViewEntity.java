@@ -33,7 +33,6 @@ public class StoreViewEntity extends BaseEntity<String> {
     final static int TYPE_DATA_PERMISSION = 1;
     final static int TYPE_SMS_RECHARGE = 2;
 
-
     public boolean isDataPermissionTree() {
         return this.treeType == 1;
     }

@@ -28,7 +28,6 @@ public class UserAuthorEntity extends BaseEntity<Integer> implements ToReplace {
     private Integer companyId, orgId, storeId;
     private final static Ordering<Integer> ORDER_INT = Ordering.natural();
 
-
     UserAuthorEntity(Integer id, ResultSet res) {
         super(id);
         try {

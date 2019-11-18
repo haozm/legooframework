@@ -81,6 +81,9 @@ public class EmpEntity extends BaseEntity<Integer> implements ToReplace {
         return Optional.ofNullable(hasStore() ? storeId : null);
     }
 
+    public Integer getCompanyId() {
+        return companyId;
+    }
 
     public String getPhone() {
         return phone;
