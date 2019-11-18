@@ -2,6 +2,6 @@
 <model name="smsgateway" version="1.0.0">
     <depends>
         <bundle name="legooCore" version="1.0.0" use="required"/>
-        <bundle name="crmadapter" version="1.0.0" use="required"/>
+        <bundle name="covariant" version="1.0.0" use="required"/>
     </depends>
 </model>

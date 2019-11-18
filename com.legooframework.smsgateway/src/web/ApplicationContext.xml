@@ -83,9 +83,9 @@ INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
     </bean>
     -->
     <beans profile="devp">
-        <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/smsgateway"/>
+        <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/acp"/>
     </beans>
     <beans profile="test">
-        <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/smsgateway"/>
+        <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/acp"/>
     </beans>
 </beans>
