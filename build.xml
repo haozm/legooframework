@@ -920,7 +920,7 @@
 
     <target name="scp-svr02">
         <echo message="[-----------------  Start scp webapp ${app.name} svr02-----------------]"/>
-        <scp todir="yycrm@svr02.csosm.com:/var/data02/ygreports/apps/webapps1" password="+89SGucK&amp;!&lt;k7@"
+        <scp todir="yycrm@svr02.csosm.com:/var/data02/ygreports/apps/webapps1" password="28&amp;(mNS973@*a0q"
              trust="true">
             <fileset dir="${apps.root}/webapps" includes="${app.name}/resources/**/*.*"/>
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/*.xml"/>
@@ -932,7 +932,7 @@
 
     <target name="scp-svr01">
         <echo message="[-----------------  Start scp webapp ${app.name} to svr01 -----------------]"/>
-        <scp todir="yycrm@svr01.csosm.com:/data/ygreports/apps/webapps1/" password="ds152^0#LRy]1*" trust="true">
+        <scp todir="yycrm@svr01.csosm.com:/data/ygreports/apps/webapps1/" password="*kdL62#%a;heKK6" trust="true">
             <fileset dir="${apps.root}/webapps" includes="${app.name}/resources/**/*.*"/>
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/*.xml"/>
             <fileset dir="${apps.root}/webapps" includes="${app.name}/WEB-INF/classes/**/*.*"/>
@@ -955,7 +955,7 @@
     </target>
 
     <target name="hxj">
-        <property name="model.name" value="monitor"/>
+        <property name="model.name" value="crmold"/>
         <!--
          <mkdir dir="com.legooframework.entities/src/main/java/com/legooframework/model/${model.name}/entity"/>
          <mkdir dir="com.legooframework.entities/src/main/java/com/legooframework/model/${model.name}/event"/>
