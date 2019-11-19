@@ -7,6 +7,7 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.core.utils.DateTimeUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
@@ -46,8 +47,12 @@ public class MemberEntity extends BaseEntity<Integer> implements ToReplace {
             this.totalScore = res.getBigDecimal("totalScore") == null ? 0.0D : res.getBigDecimal("totalScore").doubleValue();
             this.rechargeAmount = res.getBigDecimal("rechargeAmount") == null ? 0.0D : res.getBigDecimal("rechargeAmount").doubleValue();
             this.birthday = res.getObject("birthday") == null ? null : LocalDate.fromDateFields(res.getDate("birthday"));
-            this.thisYearBirthday = res.getObject("thisYearBirthday") == null ? null :
-                    DateTimeUtils.parseShortYYYYMMDD(res.getString("thisYearBirthday"));
+            if (StringUtils.equals("20190229", res.getString("thisYearBirthday"))) {
+                this.thisYearBirthday = DateTimeUtils.parseShortYYYYMMDD("20190228");
+            } else {
+                this.thisYearBirthday = res.getObject("thisYearBirthday") == null ? null :
+                        DateTimeUtils.parseShortYYYYMMDD(res.getString("thisYearBirthday"));
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Restore MemberEntity has SQLException", e);
         }
