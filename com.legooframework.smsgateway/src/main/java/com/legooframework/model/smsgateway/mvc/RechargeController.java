@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/recharge")
@@ -68,6 +69,30 @@ public class RechargeController extends SmsBaseController {
                 }
             }
             return JsonMessageBuilder.OK().withPayload(treeRoot.toMap()).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
+    @PostMapping(value = "/tree/add.json")
+    public JsonMessage editRechargeTree(@RequestBody(required = false) Map<String, Object> requestBody,
+                                        HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("editRechargeTree(url=%s,param=%s)", request.getRequestURL(), requestBody));
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
+            String groupName = MapUtils.getString(requestBody, "groupName", null);
+            String storeIds_raw = MapUtils.getString(requestBody, "storeIds", null);
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName), "分组名称[groupName]不可以为空...");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(storeIds_raw), "待分组的门店[storeIds]不可以为空...");
+            OrgEntity company = loadCompanyById(companyId, request);
+            List<Integer> storeIds = Splitter.on(',').splitToList(storeIds_raw).stream()
+                    .mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
+            Optional<List<StoEntity>> stores = getBean(StoEntityAction.class, request).findByIds(storeIds);
+            Preconditions.checkState(stores.isPresent(), "给定的列表无合法的门店....");
+            getBean(RechargeBalanceEntityAction.class, request).createStoreGroupBalance(company, stores.get(), groupName);
+            return JsonMessageBuilder.OK().toMessage();
         } finally {
             LoginContextHolder.clear();
         }
