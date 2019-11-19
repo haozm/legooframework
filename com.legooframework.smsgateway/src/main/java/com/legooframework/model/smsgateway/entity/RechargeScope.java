@@ -7,7 +7,7 @@ import com.google.common.base.MoreObjects;
  */
 public enum RechargeScope {
 
-    Company(1, "公司范围"), StoreGroup(2, "组织范围"), Store(3, "门店范围");
+    Company(1, "公司范围"), StoreGroup(2, "多家门店"), Store(3, "门店范围");
 
     private final int scope;
     private final String desc;

@@ -25,8 +25,8 @@ public class SMSRechargeService extends BundleService {
             logger.debug(String.format("rechargeByCompany(%s,%s)", companyId, rechargeAmount));
         OrgEntity company = getCompany(companyId);
         RechargeRuleEntity rule = getRechargeRule(company, rechargeAmount);
-        RechargeRes rechargeRes = rechargeByCompany(companyId, rechargeAmount, rule, rechargeType);
-        addBalance(rechargeRes);
+        RechargeResDto rechargeResDto = rechargeByCompany(companyId, rechargeAmount, rule, rechargeType);
+        getBean(RechargeBalanceEntityAction.class).addBalance(rechargeResDto);
     }
 
     /**
@@ -42,15 +42,10 @@ public class SMSRechargeService extends BundleService {
             logger.debug(String.format("freecharge(%s,%s,%s,%s)", companyId, storeGroupId, storId, totalQuantity));
         OrgEntity company = getCompany(companyId);
         StoEntity store = storId == null ? null : getStore(companyId, storId);
-        RechargeRes rechargeRes = getBean(RechargeDetailEntityAction.class).freecharge(company, store, storeGroupId, totalQuantity);
-        addBalance(rechargeRes);
+//        RechargeRes rechargeRes = getBean(RechargeDetailEntityAction.class).freecharge(company, store, storeGroupId, totalQuantity);
+//        addBalance(rechargeRes);
     }
 
-    private void addBalance(RechargeRes rechargeRes) {
-        Optional<RechargeDetailEntity> recharge = getBean(RechargeDetailEntityAction.class).findById(rechargeRes.getRechargeId());
-        Preconditions.checkState(recharge.isPresent(), "保存充值流水失败...,Id=%s", rechargeRes);
-        getBean(RechargeBalanceEntityAction.class).addBalance(recharge.get(), recharge.get().getTotalQuantity());
-    }
 
     /**
      * 公司一次性充值
@@ -67,8 +62,8 @@ public class SMSRechargeService extends BundleService {
                     unitPrice, remarke));
         OrgEntity company = getCompany(companyId);
         RechargeRuleEntity rule = createTemporaryRule(company, rechargeAmount, unitPrice, remarke);
-        RechargeRes rechargeRes = rechargeByCompany(companyId, rechargeAmount, rule, rechargeType);
-        addBalance(rechargeRes);
+        RechargeResDto rechargeResDto = rechargeByCompany(companyId, rechargeAmount, rule, rechargeType);
+        getBean(RechargeBalanceEntityAction.class).addBalance(rechargeResDto);
     }
 
     /**
@@ -83,18 +78,18 @@ public class SMSRechargeService extends BundleService {
             logger.debug(String.format("rechargeByStoreGroup(%s,%s,%s)", companyId, storeGroupId, rechargeAmount));
         OrgEntity company = getCompany(companyId);
         RechargeRuleEntity rule = getRechargeRule(company, rechargeAmount);
-        RechargeRes rechargeRes = null;
+        RechargeResDto rechargeResDto = null;
         switch (rechargeType) {
             case Recharge:
-                rechargeRes = getRechargeAction().recharge(company, null, storeGroupId, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().recharge(company, null, null, rule, rechargeAmount);
                 break;
             case Precharge:
-                rechargeRes = getRechargeAction().precharge(company, null, storeGroupId, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().precharge(company, null, null, rule, rechargeAmount);
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法的参数值：rechargeType= %s", rechargeType));
         }
-        addBalance(rechargeRes);
+        getBean(RechargeBalanceEntityAction.class).addBalance(rechargeResDto);
     }
 
     public void rechargeByStoreGroupOnce(Integer companyId, String storeGroupId, long rechargeAmount, double unitPrice,
@@ -103,18 +98,18 @@ public class SMSRechargeService extends BundleService {
             logger.debug(String.format("rechargeByOrgOnce(%s,%s,%s)", companyId, storeGroupId, rechargeAmount));
         OrgEntity company = getCompany(companyId);
         RechargeRuleEntity rule = createTemporaryRule(company, rechargeAmount, unitPrice, remarke);
-        RechargeRes rechargeRes = null;
+        RechargeResDto rechargeResDto = null;
         switch (rechargeType) {
             case Recharge:
-                rechargeRes = getRechargeAction().recharge(company, null, storeGroupId, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().recharge(company, null, null, rule, rechargeAmount);
                 break;
             case Precharge:
-                rechargeRes = getRechargeAction().precharge(company, null, storeGroupId, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().precharge(company, null, null, rule, rechargeAmount);
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法的参数值：rechargeType= %s", rechargeType));
         }
-        addBalance(rechargeRes);
+        getBean(RechargeBalanceEntityAction.class).addBalance(rechargeResDto);
     }
 
     /**
@@ -130,18 +125,18 @@ public class SMSRechargeService extends BundleService {
         OrgEntity company = getCompany(companyId);
         StoEntity store = getStore(companyId, storeId);
         RechargeRuleEntity rule = getRechargeRule(company, rechargeAmount);
-        RechargeRes rechargeRes = null;
+        RechargeResDto rechargeResDto = null;
         switch (rechargeType) {
             case Recharge:
-                rechargeRes = getRechargeAction().recharge(company, store, null, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().recharge(company, store, null, rule, rechargeAmount);
                 break;
             case Precharge:
-                rechargeRes = getRechargeAction().precharge(company, store, null, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().precharge(company, store, null, rule, rechargeAmount);
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法的参数值：rechargeType= %s", rechargeType));
         }
-        addBalance(rechargeRes);
+        getBean(RechargeBalanceEntityAction.class).addBalance(rechargeResDto);
     }
 
     /**
@@ -161,18 +156,18 @@ public class SMSRechargeService extends BundleService {
         OrgEntity company = getBean(OrgEntityAction.class).loadComById(companyId);
         RechargeRuleEntity rule = createTemporaryRule(company, rechargeAmount, unitPrice, remarke);
         StoEntity store = getStore(companyId, storeId);
-        RechargeRes rechargeRes = null;
+        RechargeResDto rechargeResDto = null;
         switch (rechargeType) {
             case Recharge:
-                rechargeRes = getRechargeAction().recharge(company, store, null, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().recharge(company, store, null, rule, rechargeAmount);
                 break;
             case Precharge:
-                rechargeRes = getRechargeAction().precharge(company, store, null, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().precharge(company, store, null, rule, rechargeAmount);
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法的参数值：rechargeType= %s", rechargeType));
         }
-        addBalance(rechargeRes);
+        getBean(RechargeBalanceEntityAction.class).addBalance(rechargeResDto);
     }
 
     private RechargeRuleEntity getRechargeRule(OrgEntity company, long rechargeAmount) {
@@ -193,20 +188,20 @@ public class SMSRechargeService extends BundleService {
         return rule.get();
     }
 
-    private RechargeRes rechargeByCompany(Integer companyId, long rechargeAmount, RechargeRuleEntity rule, RechargeType rechargeType) {
+    private RechargeResDto rechargeByCompany(Integer companyId, long rechargeAmount, RechargeRuleEntity rule, RechargeType rechargeType) {
         OrgEntity company = getCompany(companyId);
-        RechargeRes rechargeRes = null;
+        RechargeResDto rechargeResDto = null;
         switch (rechargeType) {
             case Recharge:
-                rechargeRes = getRechargeAction().recharge(company, null, null, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().recharge(company, null, null, rule, rechargeAmount);
                 break;
             case Precharge:
-                rechargeRes = getRechargeAction().precharge(company, null, null, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().precharge(company, null, null, rule, rechargeAmount);
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法的参数值：rechargeType= %s", rechargeType));
         }
-        return rechargeRes;
+        return rechargeResDto;
     }
 
     /**

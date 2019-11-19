@@ -1,9 +1,7 @@
 package com.legooframework.model.smsgateway.entity;
 
-import com.google.common.base.MoreObjects;
-import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Sets;
+import com.google.common.base.*;
+import com.google.common.collect.ImmutableList;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.utils.CommonsUtils;
 import com.legooframework.model.covariant.entity.StoEntity;
@@ -12,26 +10,24 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RechargeBalanceEntity extends BaseEntity<String> {
 
     private final Integer companyId, storeId;
-    private final String storeGroupId;
+    private final List<Integer> storeIds;
     private final RechargeScope rechargeScope;
     private Long balance = 0L;
-    private final Set<Integer> storeIds;
 
     RechargeBalanceEntity(RechargeDetailEntity recharge) {
         super(CommonsUtils.randomId(16).toUpperCase(), recharge.getTenantId(), -1L);
         this.companyId = recharge.getCompanyId();
         this.storeId = recharge.getStoreId();
-        this.storeGroupId = recharge.getStoreGroupId();
+        this.storeIds = recharge.getStoreIds();
         this.rechargeScope = recharge.getRechargeScope();
-        this.storeIds = null;
     }
 
     RechargeBalanceEntity(String id, ResultSet res) {
@@ -39,14 +35,16 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         try {
             this.companyId = res.getInt("companyId");
             this.storeId = res.getInt("storeId");
-            this.storeGroupId = res.getString("storeGroupId");
             this.rechargeScope = RechargeScope.paras(res.getInt("rechargeScope"));
-            this.balance = res.getLong("balance");
-            this.storeIds = Sets.newHashSet();
-            String _storeIds = res.getString("storeIds");
-            if (StringUtils.isNotEmpty(_storeIds)) {
-                Stream.of(StringUtils.split(_storeIds, ',')).forEach(x -> this.storeIds.add(Integer.valueOf(x)));
+            if (this.rechargeScope == RechargeScope.StoreGroup) {
+                String storeIds_raw = res.getString("storeIds");
+                Preconditions.checkArgument(!Strings.isNullOrEmpty(storeIds_raw), "数据异常 storeIds 值为空...");
+                this.storeIds = ImmutableList.copyOf(Stream.of(StringUtils.split(storeIds_raw, ',')).mapToInt(Integer::parseInt).boxed()
+                        .collect(Collectors.toList()));
+            } else {
+                this.storeIds = null;
             }
+            this.balance = res.getLong("balance");
         } catch (SQLException e) {
             throw new RuntimeException("Restore RechargeBalanceEntity has SQLException", e);
         }
@@ -58,10 +56,6 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
 
     Integer getStoreId() {
         return storeId;
-    }
-
-    String getStoreGroupId() {
-        return storeGroupId;
     }
 
     long deduction(long size) {
@@ -82,11 +76,6 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
 
     public void addBalance(int smsNum) {
         this.balance += smsNum;
-    }
-
-    public Optional<Set<Integer>> getStoreIds() {
-        Preconditions.checkState(RechargeScope.StoreGroup == rechargeScope, "非法的访问...%s", rechargeScope);
-        return Optional.ofNullable(CollectionUtils.isEmpty(storeIds) ? null : storeIds);
     }
 
     boolean hasBlance() {
@@ -121,7 +110,7 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
                 "storeGroupId", "rechargeScope", "balance");
         params.put("companyId", companyId);
         params.put("storeId", storeId == null ? -1 : storeId);
-        params.put("storeGroupId", storeGroupId == null ? "NONE" : storeGroupId);
+        params.put("storeIds", CollectionUtils.isEmpty(this.storeIds) ? null : Joiner.on(',').join(this.storeIds));
         params.put("rechargeScope", rechargeScope.getScope());
         params.put("balance", balance);
         return params;
@@ -146,7 +135,7 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         return MoreObjects.toStringHelper(this)
                 .add("companyId", companyId)
                 .add("storeId", storeId)
-                .add("storeGroupId", storeGroupId)
+                .add("storeIds", storeIds)
                 .add("rechargeScope", rechargeScope)
                 .add("balance", balance)
                 .add("storeIds", storeIds)

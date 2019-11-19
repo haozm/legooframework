@@ -5,7 +5,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,22 +28,22 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
         super(null);
     }
 
-    public void addBalance(RechargeDetailEntity recharge, int smsNum) {
-        Preconditions.checkNotNull(recharge);
-        RechargeBalanceEntity instance = new RechargeBalanceEntity(recharge);
+    public void addBalance(RechargeResDto rechargeResDto) {
+        Preconditions.checkNotNull(rechargeResDto);
+        RechargeBalanceEntity instance = new RechargeBalanceEntity(rechargeResDto.getRechargeDetail());
         Optional<RechargeBalanceEntity> exits = findByInstance(instance);
         if (exits.isPresent()) {
-            exits.get().addBalance(smsNum);
+            exits.get().addBalance(rechargeResDto.getTotalQuantity());
             super.updateAction(exits.get(), "update");
         } else {
-            instance.addBalance(smsNum);
+            instance.addBalance(rechargeResDto.getTotalQuantity());
             super.updateAction(instance, "insert");
         }
         if (logger.isDebugEnabled())
-            logger.debug(String.format("addBalance(%s,%s) is ok", recharge, smsNum));
+            logger.debug(String.format("addBalance(%s) is ok", rechargeResDto));
     }
 
-    Optional<RechargeBalanceEntity> findByInstance(RechargeBalanceEntity instance) {
+    private Optional<RechargeBalanceEntity> findByInstance(RechargeBalanceEntity instance) {
         Optional<RechargeBalanceEntity> optional = queryForEntity("findByInstance", instance.toParamMap(), getRowMapper());
         if (logger.isDebugEnabled())
             logger.debug(String.format("findByInstance(%s) res %s", instance, optional.orElse(null)));

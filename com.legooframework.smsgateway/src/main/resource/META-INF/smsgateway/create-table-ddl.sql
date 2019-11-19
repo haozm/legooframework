@@ -134,7 +134,7 @@ CREATE TABLE SMS_RECHARGE_DETAIL
   id              CHAR(16)         NOT NULL,
   company_id      INT(11)          NOT NULL,
   store_id        INT(11)          NOT NULL DEFAULT -1,
-  store_group_id  VARCHAR(36)      NULL     DEFAULT NULL,
+  store_ids       VARCHAR(256)     NULL     DEFAULT NULL,
   recharge_scope  TINYINT UNSIGNED NOT NULL,
   recharge_type   TINYINT UNSIGNED NOT NULL,
   rule_id         CHAR(16)         NOT NULL,
@@ -147,6 +147,29 @@ CREATE TABLE SMS_RECHARGE_DETAIL
   createTime      DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
   editor          BIGINT(20)       NULL     DEFAULT NULL,
   editTime        DATETIME         NULL     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id)
+) DEFAULT CHARSET = utf8mb4
+  COLLATE = 'utf8mb4_general_ci'
+  ENGINE = InnoDB;
+
+CREATE INDEX SMS_RECHARGE_DETAIL_MIXED_IDX USING BTREE ON SMS_RECHARGE_DETAIL (company_id,store_id,store_ids);
+
+-- SMSTransportLogSplitter 短信余额表
+DROP TABLE IF EXISTS SMS_RECHARGE_BALANCE;
+CREATE TABLE SMS_RECHARGE_BALANCE
+(
+  id             CHAR(16)         NOT NULL,
+  company_id     INT(11)          NOT NULL,
+  store_id       INT(11)          NOT NULL DEFAULT -1,
+  store_ids      VARCHAR(256)     NULL     DEFAULT NULL,
+  recharge_scope TINYINT UNSIGNED NOT NULL,
+  sms_balance    BIGINT(20)       NOT NULL DEFAULT 0,
+  delete_flag    TINYINT UNSIGNED NOT NULL DEFAULT 0,
+  tenant_id      BIGINT(20)       NULL     DEFAULT NULL,
+  creator        BIGINT(20)       NOT NULL DEFAULT -1,
+  createTime     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  editor         BIGINT(20)       NULL     DEFAULT NULL,
+  editTime       DATETIME         NULL     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
 ) DEFAULT CHARSET = utf8mb4
   COLLATE = 'utf8mb4_general_ci'
@@ -167,27 +190,6 @@ CREATE TABLE SMS_RECHARGE_DEDUCTION_DETAIL
   createTime   DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
   editor       BIGINT(20)       NULL     DEFAULT NULL,
   editTime     DATETIME         NULL     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (id)
-) DEFAULT CHARSET = utf8mb4
-  COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
-
--- SMSTransportLogSplitter 短信余额表
-DROP TABLE IF EXISTS SMS_RECHARGE_BALANCE;
-CREATE TABLE SMS_RECHARGE_BALANCE
-(
-  id             CHAR(16)         NOT NULL,
-  company_id     INT(11)          NOT NULL,
-  store_id       INT(11)          NOT NULL DEFAULT -1,
-  store_group_id VARCHAR(36)      NULL     DEFAULT NULL,
-  recharge_scope TINYINT UNSIGNED NOT NULL,
-  sms_balance    BIGINT(20)       NOT NULL DEFAULT 0,
-  delete_flag    TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  tenant_id      BIGINT(20)       NULL     DEFAULT NULL,
-  creator        BIGINT(20)       NOT NULL DEFAULT -1,
-  createTime     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  editor         BIGINT(20)       NULL     DEFAULT NULL,
-  editTime       DATETIME         NULL     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (id)
 ) DEFAULT CHARSET = utf8mb4
   COLLATE = 'utf8mb4_general_ci'

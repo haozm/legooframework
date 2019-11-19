@@ -1,8 +1,11 @@
 package com.legooframework.model.smsgateway.entity;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
@@ -10,11 +13,16 @@ import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.utils.CommonsUtils;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 短信费用充值明细
@@ -22,7 +30,7 @@ import java.util.Map;
 public class RechargeDetailEntity extends BaseEntity<String> implements BatchSetter {
 
     private final Integer companyId, storeId;
-    private final String storeGroupId;
+    private final List<Integer> storeIds;
     private final RechargeScope rechargeScope;
     private final String ruleId;
     private final long amount;
@@ -35,11 +43,17 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         try {
             this.companyId = res.getInt("companyId");
             this.storeId = res.getInt("storeId");
-            this.storeGroupId = res.getString("storeGroupId");
-            this.amount = res.getLong("amount");
             this.rechargeType = RechargeType.paras(res.getInt("rechargeType"));
-            this.totalQuantity = res.getInt("totalQuantity");
             this.rechargeScope = RechargeScope.paras(res.getInt("rechargeScope"));
+            if (rechargeScope == RechargeScope.StoreGroup) {
+                String storeIds_raw = res.getString("storeIds");
+                this.storeIds = ImmutableList.copyOf(Stream.of(StringUtils.split(storeIds_raw, ',')).mapToInt(Integer::parseInt).boxed()
+                        .sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
+            } else {
+                this.storeIds = null;
+            }
+            this.amount = res.getLong("amount");
+            this.totalQuantity = res.getInt("totalQuantity");
             this.ruleId = res.getString("ruleId");
             this.usedQuantity = res.getInt("usedQuantity");
         } catch (SQLException e) {
@@ -57,8 +71,8 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
 //                recharge_amount, total_quantity,  tenant_id, creator, createTime)
         ps.setObject(1, this.getId());
         ps.setObject(2, this.companyId);
-        ps.setObject(3, this.storeId);
-        ps.setObject(4, this.storeGroupId);
+        ps.setObject(3, this.storeId == null ? -1 : storeId);
+        ps.setObject(4, CollectionUtils.isEmpty(this.storeIds) ? null : Joiner.on(',').join(this.storeIds));
         ps.setObject(5, this.rechargeScope.getScope());
         ps.setObject(6, this.rechargeType.getType());
         ps.setObject(7, this.ruleId);
@@ -66,19 +80,36 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         ps.setObject(9, this.totalQuantity);
         ps.setObject(10, this.getTenantId());
         ps.setObject(11, this.getCreator());
-        ps.setObject(12, this.getCreateTime().toDate());
     }
 
-    private RechargeDetailEntity(Integer companyId, Integer storeId, String storeGroupId, RechargeScope rechargeScope,
+    private RechargeDetailEntity(Integer companyId, Integer storeId, Set<Integer> storeIds, RechargeScope rechargeScope,
                                  RechargeRuleEntity rechargeRule, long rechargeAmount, RechargeType rechargeType,
                                  int totalQuantity, LoginContext user) {
         super(CommonsUtils.randomId(16), companyId.longValue(), user.getLoginId());
         Preconditions.checkArgument(rechargeAmount >= 0, "充值金额必须大于或者等于0");
         this.companyId = companyId;
         this.rechargeType = rechargeType;
-        this.storeId = storeId;
-        this.storeGroupId = storeGroupId;
         this.rechargeScope = rechargeScope;
+        Preconditions.checkNotNull(rechargeScope, "参数 rechargeScope 不可以为空值...");
+        switch (rechargeScope) {
+            case Company:
+                this.storeId = null;
+                this.storeIds = null;
+                break;
+            case Store:
+                this.storeId = storeId;
+                this.storeIds = null;
+                break;
+            case StoreGroup:
+                this.storeId = null;
+                Preconditions.checkArgument(CollectionUtils.isNotEmpty(storeIds), "需指定充值的门店列表...");
+                List<Integer> _temp_list = Lists.newArrayList(storeIds);
+                _temp_list.sort(Comparator.naturalOrder());
+                this.storeIds = ImmutableList.copyOf(_temp_list);
+                break;
+            default:
+                throw new IllegalArgumentException(String.format("非法的参数 rechargeScope =%s", rechargeScope));
+        }
         switch (rechargeType) {
             case Recharge:
                 this.ruleId = rechargeRule.getId();
@@ -124,13 +155,14 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
                         RechargeScope.Company, null, 0, RechargeType.Reimburse, smsNum, LoginContextHolder.getAnonymousCtx());
                 break;
             case StoreGroup:
-                res = new RechargeDetailEntity(balanceEntity.getCompanyId(), -1, balanceEntity.getStoreGroupId(),
-                        RechargeScope.StoreGroup, null, 0, RechargeType.Reimburse, smsNum, LoginContextHolder.getAnonymousCtx());
+                // TODO
+//                res = new RechargeDetailEntity(balanceEntity.getCompanyId(), -1, balanceEntity.getStoreIds(),
+//                        RechargeScope.StoreGroup, null, 0, RechargeType.Reimburse, smsNum, LoginContextHolder.getAnonymousCtx());
                 break;
             default:
                 throw new RuntimeException("异常的充值范围...");
         }
-        return res;
+        return null;
     }
 
     static RechargeDetailEntity rechargeByStore(StoEntity store, RechargeRuleEntity rechargeRule, long rechargeAmount) {
@@ -149,20 +181,26 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
                 LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity rechargeByStoreGroup(OrgEntity company, String storeGroupId,
+    static RechargeDetailEntity rechargeByStoreGroup(OrgEntity company, Collection<StoEntity> stores,
                                                      RechargeRuleEntity rechargeRule, long rechargeAmount) {
-        return new RechargeDetailEntity(company.getId(), -1, storeGroupId, RechargeScope.StoreGroup,
+        Preconditions.checkArgument(CollectionUtils.isNotEmpty(stores), "待充值的门店数量非法....");
+        Set<Integer> storeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toSet());
+        return new RechargeDetailEntity(company.getId(), -1, storeIds, RechargeScope.StoreGroup,
                 rechargeRule, rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity prechargeByStoreGroup(OrgEntity company, String storeGroupId,
+    static RechargeDetailEntity prechargeByStoreGroup(OrgEntity company, Collection<StoEntity> stores,
                                                       RechargeRuleEntity rechargeRule, long rechargeAmount) {
-        return new RechargeDetailEntity(company.getId(), -1, storeGroupId, RechargeScope.StoreGroup,
+        Preconditions.checkArgument(CollectionUtils.isNotEmpty(stores), "待充值的门店数量非法....");
+        Set<Integer> storeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toSet());
+        return new RechargeDetailEntity(company.getId(), -1, storeIds, RechargeScope.StoreGroup,
                 rechargeRule, rechargeAmount, RechargeType.Precharge, 0, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity freechargeByStoreGroup(OrgEntity company, String storeGroupId, int totalQuantity) {
-        return new RechargeDetailEntity(company.getId(), -1, storeGroupId, RechargeScope.StoreGroup,
+    static RechargeDetailEntity freechargeByStoreGroup(OrgEntity company, Collection<StoEntity> stores, int totalQuantity) {
+        Preconditions.checkArgument(CollectionUtils.isNotEmpty(stores), "待充值的门店数量非法....");
+        Set<Integer> storeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toSet());
+        return new RechargeDetailEntity(company.getId(), -1, storeIds, RechargeScope.StoreGroup,
                 null, 0L, RechargeType.FreeCharge, totalQuantity, LoginContextHolder.get());
     }
 
@@ -188,7 +226,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         this.companyId = recharge.companyId;
         this.rechargeType = RechargeType.Deduction;
         this.storeId = recharge.storeId;
-        this.storeGroupId = recharge.storeGroupId;
+        this.storeIds = recharge.storeIds;
         this.rechargeScope = recharge.rechargeScope;
         this.ruleId = recharge.ruleId;
         this.totalQuantity = 0 - recharge.totalQuantity;
@@ -208,8 +246,8 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         return storeId;
     }
 
-    String getStoreGroupId() {
-        return storeGroupId;
+    List<Integer> getStoreIds() {
+        return storeIds;
     }
 
     public int getTotalQuantity() {
@@ -224,8 +262,8 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         params.put("ruleId", ruleId);
         params.put("amount", amount);
         params.put("companyId", companyId);
-        params.put("storeId", storeId);
-        params.put("storeGroupId", storeGroupId);
+        params.put("storeId", storeId == null ? -1 : storeId);
+        params.put("storeIds", CollectionUtils.isEmpty(storeIds) ? null : Joiner.on(',').join(this.storeIds));
         params.put("totalQuantity", totalQuantity);
         params.put("usedQuantity", usedQuantity);
         return params;
@@ -244,7 +282,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         return amount == that.amount &&
                 totalQuantity == that.totalQuantity &&
                 Objects.equal(companyId, that.companyId) &&
-                Objects.equal(storeGroupId, that.storeGroupId) &&
+                ListUtils.isEqualList(this.storeIds, that.storeIds) &&
                 Objects.equal(storeId, that.storeId) &&
                 rechargeScope == that.rechargeScope &&
                 rechargeType == that.rechargeType &&
@@ -253,7 +291,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(super.hashCode(), companyId, storeId, storeGroupId, rechargeScope, rechargeType,
+        return Objects.hashCode(super.hashCode(), companyId, storeId, storeIds, rechargeScope, rechargeType,
                 ruleId, amount, totalQuantity);
     }
 
@@ -266,7 +304,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         return MoreObjects.toStringHelper(this)
                 .add("companyId", companyId)
                 .add("storeId", storeId)
-                .add("storeGroupId", storeGroupId)
+                .add("storeIds", storeIds)
                 .add("rechargeScope", rechargeScope)
                 .add("rechargeType", rechargeType)
                 .add("ruleId", ruleId)

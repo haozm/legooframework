@@ -204,7 +204,7 @@
                   srd.id AS 'id',
                   srd.company_id AS 'companyId',
                   srd.store_id AS 'storeId',
-                  srd.store_group_id AS 'storeGroupId',
+                  srd.store_ids AS 'storeIds',
                   srd.recharge_scope AS 'rechargeScope',
                   srd.recharge_type AS 'rechargeType',
                   srd.rule_id AS 'ruleId',
@@ -228,19 +228,19 @@
         <sql id="insert">
             <body><![CDATA[
           INSERT INTO SMS_RECHARGE_DETAIL
-                      (id, company_id, store_id, store_group_id, recharge_scope, recharge_type, rule_id,
-                       recharge_amount, total_quantity,  tenant_id, creator, createTime)
-               VALUES (:id,:companyId, :storeId, :storeGroupId, :rechargeScope, :rechargeType, :ruleId,
-                       :amount,        :totalQuantity ,  :tenantId, :creator, :createTime)
+                      (id, company_id, store_id, store_ids, recharge_scope, recharge_type, rule_id,
+                       recharge_amount, total_quantity,  tenant_id, creator)
+               VALUES (:id,:companyId, :storeId, :storeIds, :rechargeScope, :rechargeType, :ruleId,
+                       :amount,        :totalQuantity ,  :tenantId, :creator)
             ]]></body>
         </sql>
         <sql id="batchInsert">
             <body><![CDATA[
           INSERT INTO SMS_RECHARGE_DETAIL
-                      (id, company_id, store_id, store_group_id, recharge_scope, recharge_type, rule_id,
-                       recharge_amount, total_quantity,  tenant_id, creator, createTime)
+                      (id, company_id, store_id, store_ids, recharge_scope, recharge_type, rule_id,
+                       recharge_amount, total_quantity,  tenant_id, creator)
                VALUES (?,           ?,       ?,                ?,             ?,              ?,       ?,
-                                      ?,              ? ,         ?,       ?,          ?)
+                                      ?,              ? ,         ?,       ?)
             ]]></body>
         </sql>
         <sql id="batchInsertDeduction">
@@ -258,19 +258,14 @@
            WHERE srd.recharge_type = 2
              AND srd.recharge_scope = :rechargeScope
              AND srd.company_id = :companyId
-           <#if (rechargeScope == 1)>
-             AND srd.store_group_id IS NULL
-             AND srd.store_id = -1
-           <#elseif (rechargeScope == 2)>
-             AND srd.store_group_id = :storeGroupId
-             AND srd.store_id = -1
+           <#if (rechargeScope == 2)>
+             AND srd.store_ids = :storeIds
            <#elseif (rechargeScope == 3)>
-             AND srd.store_group_id IS NULL
              AND srd.store_id = :storeId
            </#if>
              AND srd.id NOT IN ( SELECT ded.deduction_id
                                    FROM SMS_RECHARGE_DEDUCTION_DETAIL AS ded
-                                  WHERE ded.finish_flag <> 1)
+                                  WHERE ded.finish_flag = 1)
             ]]></body>
         </sql>
         <sql id="batchBillByStore">
@@ -288,15 +283,9 @@
                  smb.id AS 'id',
                  smb.company_id AS 'companyId',
                  smb.store_id AS 'storeId',
-                 smb.store_group_id AS 'storeGroupId',
+                 smb.store_ids AS 'storeIds',
                  smb.sms_balance AS 'balance',
-                 smb.recharge_scope AS 'rechargeScope',
-                 ( CASE smb.recharge_scope
-                   WHEN 2 THEN (SELECT asv.storeIds
-                                  FROM acp_store_view asv
-                                 WHERE asv.tree_type = 2
-                                   AND asv.id = smb.store_group_id )
-                   ELSE NULL END ) AS 'storeIds',
+                 smb.recharge_scope AS 'rechargeScope'
 	         </#macro>
 	          ]]>
         </macro>

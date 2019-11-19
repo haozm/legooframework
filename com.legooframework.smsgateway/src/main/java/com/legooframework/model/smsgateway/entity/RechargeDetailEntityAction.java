@@ -38,19 +38,20 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param rechargeAmount
      * @return
      */
-    public RechargeRes recharge(OrgEntity company, StoEntity store, String storeGroupId,
-                                RechargeRuleEntity rechargeRule, long rechargeAmount) {
+    public RechargeResDto recharge(OrgEntity company, StoEntity store, Collection<StoEntity> stores, RechargeRuleEntity rechargeRule,
+                                   long rechargeAmount) {
         Preconditions.checkNotNull(company);
         Preconditions.checkArgument(rechargeAmount > 0);
         RechargeDetailEntity recharge;
         final LoginContext user = LoginContextHolder.get();
-        if (null != storeGroupId) {
-            recharge = RechargeDetailEntity.rechargeByStoreGroup(company, storeGroupId, rechargeRule, rechargeAmount);
+        if (CollectionUtils.isNotEmpty(stores)) {
+            recharge = RechargeDetailEntity.rechargeByStoreGroup(company, stores, rechargeRule, rechargeAmount);
         } else if (store != null) {
             recharge = RechargeDetailEntity.rechargeByStore(store, rechargeRule, rechargeAmount);
         } else {
             recharge = RechargeDetailEntity.rechargeByCompany(company, rechargeRule, rechargeAmount);
         }
+        // 历史预充值 抵扣
         Optional<List<RechargeDetailEntity>> deductions = loadUnDeductionRecharge(recharge);
         if (deductions.isPresent()) {
             Integer nums = deductions.get().stream()
@@ -62,14 +63,14 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
         if (logger.isDebugEnabled())
             logger.debug(String.format("recharge(%s,%s) change %s return %s", company.getId(),
                     store == null ? null : store.getId(), rechargeAmount, recharge.getId()));
-        final RechargeRes rechargeRes = new RechargeRes(recharge);
+        final RechargeResDto rechargeResDto = new RechargeResDto(recharge);
         List<RechargeDeductionDetailEntity> details = Lists.newArrayList();
         List<RechargeDetailEntity> new_deductions = Lists.newArrayList();
         final RechargeDetailEntity recharge_source = recharge;
         deductions.ifPresent(ds -> ds.forEach(d -> {
             RechargeDetailEntity clone = d.deduction(user);
             new_deductions.add(clone);
-            rechargeRes.subtraction(d.getTotalQuantity());
+            rechargeResDto.subtraction(d.getTotalQuantity());
             RechargeDeductionDetailEntity deductionDetail = new RechargeDeductionDetailEntity(recharge_source,
                     d, clone, user);
             details.add(deductionDetail);
@@ -78,7 +79,7 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
             super.batchInsert("batchInsert", new_deductions);
             super.batchInsert("batchInsertDeduction", details);
         }
-        return rechargeRes;
+        return rechargeResDto;
     }
 
     /**
@@ -90,13 +91,13 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param rechargeAmount
      * @return
      */
-    public RechargeRes precharge(OrgEntity company, StoEntity store, String storeGroupId,
-                                 RechargeRuleEntity rechargeRule, long rechargeAmount) {
+    public RechargeResDto precharge(OrgEntity company, StoEntity store, Collection<StoEntity> stores, RechargeRuleEntity rechargeRule,
+                                    long rechargeAmount) {
         Preconditions.checkNotNull(company);
         Preconditions.checkArgument(rechargeAmount > 0);
         RechargeDetailEntity recharge;
-        if (null != storeGroupId) {
-            recharge = RechargeDetailEntity.prechargeByStoreGroup(company, storeGroupId, rechargeRule, rechargeAmount);
+        if (CollectionUtils.isNotEmpty(stores)) {
+            recharge = RechargeDetailEntity.prechargeByStoreGroup(company, stores, rechargeRule, rechargeAmount);
         } else if (store != null) {
             recharge = RechargeDetailEntity.prechargeByStore(store, rechargeRule, rechargeAmount);
         } else {
@@ -106,7 +107,7 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
         if (logger.isDebugEnabled())
             logger.debug(String.format("precharge(%s,%s) change %s return %s", company.getId(),
                     store == null ? null : store.getId(), rechargeAmount, recharge.getId()));
-        return new RechargeRes(recharge.getId(), recharge.getTotalQuantity());
+        return new RechargeResDto(recharge);
     }
 
     /**
@@ -117,12 +118,11 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param totalQuantity 数量
      * @return RechargeRes 充值结果
      */
-    public RechargeRes freecharge(OrgEntity company, StoEntity store, String storeGroupId,
-                                  int totalQuantity) {
+    public RechargeResDto freecharge(OrgEntity company, StoEntity store, Collection<StoEntity> stores, int totalQuantity) {
         Preconditions.checkNotNull(company);
         RechargeDetailEntity recharge;
-        if (null != storeGroupId) {
-            recharge = RechargeDetailEntity.freechargeByStoreGroup(company, storeGroupId, totalQuantity);
+        if (CollectionUtils.isNotEmpty(stores)) {
+            recharge = RechargeDetailEntity.freechargeByStoreGroup(company, stores, totalQuantity);
         } else if (store != null) {
             recharge = RechargeDetailEntity.freechargeByStore(store, totalQuantity);
         } else {
@@ -132,7 +132,7 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
         if (logger.isDebugEnabled())
             logger.debug(String.format("freecharge(%s,%s) change %s return %s", company.getId(),
                     store == null ? null : store.getId(), totalQuantity, recharge.getId()));
-        return new RechargeRes(recharge.getId(), recharge.getTotalQuantity());
+        return new RechargeResDto(recharge);
     }
 
     private Optional<List<RechargeDetailEntity>> loadUnDeductionRecharge(RechargeDetailEntity rechargeDetail) {

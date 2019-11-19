@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.junit.Before;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -50,6 +51,14 @@ public class StoEntityAction extends BaseEntityAction<StoEntity> {
 
     public Optional<List<StoEntity>> findByIds(Collection<Integer> storeIds) {
         if (CollectionUtils.isEmpty(storeIds)) return Optional.empty();
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("storeIds", storeIds);
+        params.put("sql", "findByIds");
+        return super.queryForEntities("query4list", params, getRowMapper());
+    }
+
+    public Optional<List<StoEntity>> findByIds(Integer... storeIds) {
+        if (ArrayUtils.isEmpty(storeIds)) return Optional.empty();
         Map<String, Object> params = Maps.newHashMap();
         params.put("storeIds", storeIds);
         params.put("sql", "findByIds");

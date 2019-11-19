@@ -14,8 +14,8 @@ public class RechargeReqDto {
     private final String remarke;
     private final int rechargeAmount, totalQuantity;
 
-    RechargeReqDto(Integer companyId, Integer storeId, String storeGroupId, RechargeType rechargeType, double unitPrice, int rechargeAmount,
-                   int totalQuantity, String remarke) {
+    RechargeReqDto(Integer companyId, Integer storeId, String storeGroupId, RechargeType rechargeType, double unitPrice,
+                   int rechargeAmount, int totalQuantity, String remarke) {
         this.companyId = companyId;
         this.storeId = storeId;
         this.storeGroupId = storeGroupId;
@@ -63,9 +63,11 @@ public class RechargeReqDto {
     public Integer getCompanyId() {
         return companyId;
     }
+
     public Integer getStoreId() {
         return storeId;
     }
+
     public String getStoreGroupId() {
         return storeGroupId;
     }

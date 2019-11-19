@@ -42,11 +42,11 @@ public class RechargeController extends SmsBaseController {
         Preconditions.checkArgument(ArrayUtils.contains(CHANNELS, channel), "非法的取值 %s,取值范围为：%s", channel, CHANNELS);
         Integer companyId = MapUtils.getInteger(requestBody, "companyId");
         Preconditions.checkNotNull(companyId, "公司Id不可以为空值...");
-        String storeGroupId = MapUtils.getString(requestBody, "storeGroupId", null);
+        String storeGroupId = MapUtils.getString(requestBody, "storeIds", null);
         Integer storeId = MapUtils.getInteger(requestBody, "storeId");
-        String rechargeType_str = MapUtils.getString(requestBody, "rechargeType");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(rechargeType_str), "入参 rechargeType 不可以为空...");
-        RechargeType rechargeType = Enum.valueOf(RechargeType.class, rechargeType_str);
+        String type = MapUtils.getString(requestBody, "type");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(type), "入参 type 不可以为空...");
+        RechargeType rechargeType = Enum.valueOf(RechargeType.class, type);
         double unitPrice = MapUtils.getDoubleValue(requestBody, "unitPrice", 0.0D);
         String remarke = MapUtils.getString(requestBody, "remarke");
         int rechargeAmount = MapUtils.getIntValue(requestBody, "rechargeAmount");
