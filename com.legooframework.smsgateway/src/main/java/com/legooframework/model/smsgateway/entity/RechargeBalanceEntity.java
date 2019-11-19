@@ -68,6 +68,7 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
                 this.storeIds = null;
             }
             this.balance = res.getLong("balance");
+            this.groupName = res.getString("groupName");
         } catch (SQLException e) {
             throw new RuntimeException("Restore RechargeBalanceEntity has SQLException", e);
         }
