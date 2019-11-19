@@ -317,6 +317,7 @@
                  <@crud_fixed_select "smb"/>
             FROM SMS_RECHARGE_BALANCE AS smb
            WHERE smb.id IN (<#list balanceIds as id>'${id}'<#sep>,</#list>)
+             AND smb.delete_flag = 0
             ]]></body>
         </sql>
         <sql id="findByInstance" macros="sms_balance_fields,crud_fixed">
@@ -328,6 +329,7 @@
              AND smb.recharge_scope = :rechargeScope
              AND smb.store_id = :storeId
              AND smb.store_group_id = :storeGroupId
+             AND smb.delete_flag = 0
             ]]></body>
         </sql>
         <sql id="update">

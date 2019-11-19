@@ -1,27 +1,28 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.*;
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.utils.CommonsUtils;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.SetUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class RechargeBalanceEntity extends BaseEntity<String> {
 
     private final Integer companyId, storeId;
-    private final List<Integer> storeIds;
+    private List<Integer> storeIds;
     private String groupName;
     private final RechargeScope rechargeScope;
     private Long balance = 0L;
@@ -98,6 +99,34 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         }
     }
 
+    boolean addStores(List<StoEntity> stores) {
+        Preconditions.checkState(RechargeScope.StoreGroup == this.rechargeScope);
+        boolean addFlag = false;
+        for (StoEntity $it : stores) {
+            if (this.storeIds.contains($it.getId()))
+                continue;
+            this.storeIds.add($it.getId());
+            addFlag = true;
+        }
+        this.storeIds.sort(Comparator.naturalOrder());
+        return addFlag;
+    }
+
+    boolean delStores(List<StoEntity> stores) {
+        Preconditions.checkState(RechargeScope.StoreGroup == this.rechargeScope);
+        boolean delFlag = false;
+        Set<Integer> removeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toSet());
+        Set<Integer> rawIds = Sets.newHashSet(this.storeIds);
+        rawIds.removeAll(removeIds);
+        delFlag = SetUtils.isEqualSet(rawIds, this.storeIds);
+        if (delFlag) this.storeIds = Lists.newArrayList(rawIds);
+        return delFlag;
+    }
+
+    boolean isEmptyStoreIds() {
+        return CollectionUtils.isEmpty(this.storeIds);
+    }
+
     RechargeScope getRechargeScope() {
         return rechargeScope;
     }
@@ -108,6 +137,10 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
 
     boolean hasBlance() {
         return this.balance > 0;
+    }
+
+    String getStoreIdsRaw() {
+        return Joiner.on(',').join(this.storeIds);
     }
 
     boolean contains(StoEntity store) {
@@ -130,6 +163,10 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
 
     long getBalance() {
         return balance;
+    }
+
+    boolean isEmpty() {
+        return balance == 0L;
     }
 
     @Override

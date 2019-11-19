@@ -9,6 +9,7 @@ import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -45,6 +46,33 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
         }
         super.updateAction(instance, "insert");
         return instance;
+    }
+
+    public void editStoreGroupBalance(String blanceId, int action, List<StoEntity> stores) {
+        if (CollectionUtils.isEmpty(stores)) return;
+        Preconditions.checkState(ArrayUtils.contains(new int[]{0, 1}, action), "非法入参 action=%s", action);
+        RechargeBalanceEntity instance = loadById(blanceId);
+        Preconditions.checkState(RechargeScope.StoreGroup == instance.getRechargeScope());
+        Preconditions.checkState(instance.isEmpty(), "该节点下有充值记录无法编辑");
+        if (action == 1) {
+            boolean addFlag = instance.addStores(stores);
+            if (addFlag) {
+                Objects.requireNonNull(getJdbcTemplate()).update("UPDATE SMS_RECHARGE_BALANCE SET store_ids = ? WHERE id = ?",
+                        instance.getStoreIdsRaw(), instance.getId());
+            }
+        } else {
+            boolean delFlag = instance.delStores(stores);
+            if (delFlag) {
+                if (instance.isEmptyStoreIds()) {
+                    Objects.requireNonNull(getJdbcTemplate()).update("UPDATE SMS_RECHARGE_BALANCE SET delete_flag = 1 WHERE id = ?",
+                            instance.getId());
+                } else {
+                    Objects.requireNonNull(getJdbcTemplate()).update("UPDATE SMS_RECHARGE_BALANCE SET store_ids = ? WHERE id = ?",
+                            instance.getStoreIdsRaw(), instance.getId());
+                }
+            }
+        }
+
     }
 
     public Optional<List<RechargeBalanceEntity>> findAllStoreGroupBalance(OrgEntity company) {
