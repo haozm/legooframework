@@ -1,13 +1,18 @@
 package com.legooframework.model.httpproxy.entity;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.util.MimeType;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,6 +36,17 @@ public class HttpRequestDto {
 
     String getUri() {
         return uri;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Optional<Integer> getUserId() {
+        String userId = this.uriComponents.getQueryParams().getFirst("userId");
+        if (Strings.isNullOrEmpty(userId) && this.body instanceof Map) {
+            userId = MapUtils.getString((Map<? super Object, ?>) this.body, "userId");
+        }
+        if (!Strings.isNullOrEmpty(userId))
+            Preconditions.checkState(NumberUtils.isDigits(userId), "非法登录用户ID...");
+        return Strings.isNullOrEmpty(userId) ? Optional.empty() : Optional.of(Integer.parseInt(userId));
     }
 
     public boolean isPost() {

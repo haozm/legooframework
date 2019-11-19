@@ -104,7 +104,7 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
 
     public void batchUpdateBalance(Collection<RechargeBalanceEntity> balances) {
         Objects.requireNonNull(getJdbcTemplate())
-                .batchUpdate("UPDATE SMS_RECHARGE_BALANCE SET sms_balance = ?  WHERE id = ?", balances, 256,
+                .batchUpdate("UPDATE SMS_RECHARGE_BALANCE SET sms_balance = ? WHERE id = ?", balances, 256,
                         (ps, balance) -> {
                             ps.setObject(1, balance.getBalance());
                             ps.setObject(2, balance.getId());

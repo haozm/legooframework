@@ -25,7 +25,7 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
     private List<Integer> storeIds;
     private String groupName;
     private final RechargeScope rechargeScope;
-    private Long balance = 0L;
+    private long balance = 0L;
 
     // 创建虚拟分组
     RechargeBalanceEntity(OrgEntity company, List<StoEntity> stores, String groupName) {
