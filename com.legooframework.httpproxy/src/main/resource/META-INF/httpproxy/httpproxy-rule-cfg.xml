@@ -12,4 +12,7 @@
     <module id="smsresult" params="mod=smsresult" fuse="2000" timeout="20">
         <target domain="http://testold.csosm.com/" path="smsresult/api/"/>
     </module>
+    <module id="smsgateway" params="mod=smsgateway" fuse="2000" timeout="20">
+        <target domain="http://testold.csosm.com/" path="smsgateway/api/"/>
+    </module>
 </modules>
