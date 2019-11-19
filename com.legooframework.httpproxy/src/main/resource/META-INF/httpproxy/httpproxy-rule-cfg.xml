@@ -13,6 +13,6 @@
         <target domain="http://testold.csosm.com/" path="smsresult/api/"/>
     </module>
     <module id="smsgateway" params="mod=smsgateway" fuse="2000" timeout="20">
-        <target domain="http://testold.csosm.com/" path="smsgateway/api/"/>
+        <target domain="http://localhost.com:5050/" path="smsgateway/api/"/>
     </module>
 </modules>
