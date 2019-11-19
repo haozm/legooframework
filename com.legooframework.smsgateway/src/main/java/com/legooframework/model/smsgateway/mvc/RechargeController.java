@@ -1,8 +1,11 @@
 package com.legooframework.model.smsgateway.mvc;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.JdbcQuerySupport;
@@ -10,6 +13,7 @@ import com.legooframework.model.core.jdbc.PagingResult;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
+import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.smsgateway.entity.RechargeType;
 import com.legooframework.model.smsgateway.service.BundleService;
 import org.apache.commons.collections4.MapUtils;
@@ -24,8 +28,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @RestController
 @RequestMapping(value = "/recharge")
@@ -33,16 +39,20 @@ public class RechargeController extends SmsBaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(RechargeController.class);
 
-    @PostMapping(value = "/{channel}/recharge.json")
-    public JsonMessage recharge(@PathVariable(value = "channel") String channel,
-                                @RequestBody(required = false) Map<String, Object> requestBody,
-                                HttpServletRequest request) throws Exception {
+    @PostMapping(value = "/action.json")
+    public JsonMessage rechargeAction(@RequestBody(required = false) Map<String, Object> requestBody,
+                                      HttpServletRequest request) throws Exception {
         if (logger.isDebugEnabled())
             logger.debug(String.format("recharge(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
-        Preconditions.checkArgument(ArrayUtils.contains(CHANNELS, channel), "非法的取值 %s,取值范围为：%s", channel, CHANNELS);
+        UserAuthorEntity user = loadLoginUser(requestBody, request);
         Integer companyId = MapUtils.getInteger(requestBody, "companyId");
         Preconditions.checkNotNull(companyId, "公司Id不可以为空值...");
-        String storeGroupId = MapUtils.getString(requestBody, "storeIds", null);
+        Set<Integer> storeIds = Sets.newHashSet();
+        String storeIds_raw = MapUtils.getString(requestBody, "storeIds", null);
+        if (!Strings.isNullOrEmpty(storeIds_raw)) {
+            Iterable<String> _ids = Splitter.on(',').trimResults().split(storeIds_raw);
+            _ids.forEach(x -> storeIds.add(Integer.parseInt(x)));
+        }
         Integer storeId = MapUtils.getInteger(requestBody, "storeId");
         String type = MapUtils.getString(requestBody, "type");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(type), "入参 type 不可以为空...");
@@ -51,8 +61,7 @@ public class RechargeController extends SmsBaseController {
         String remarke = MapUtils.getString(requestBody, "remarke");
         int rechargeAmount = MapUtils.getIntValue(requestBody, "rechargeAmount");
         int totalQuantity = MapUtils.getIntValue(requestBody, "totalQuantity");
-        LoginContext user = LoginContextHolder.get();
-        RechargeReqDto rechargeDto = new RechargeReqDto(companyId, storeId, storeGroupId, rechargeType, unitPrice,
+        RechargeReqDto rechargeDto = new RechargeReqDto(companyId, storeId, storeIds, rechargeType, unitPrice,
                 rechargeAmount, totalQuantity, remarke);
         Message<RechargeReqDto> msg_request = MessageBuilder.withPayload(rechargeDto)
                 .setHeader("user", user)

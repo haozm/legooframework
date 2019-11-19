@@ -17,6 +17,9 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public abstract class BundleService extends BaseService {
@@ -28,8 +31,14 @@ public abstract class BundleService extends BaseService {
         return getBean("smsGateWayBundle", Bundle.class);
     }
 
-    StoEntity getStore(Integer companyId, Integer storeId) {
+    StoEntity getStore(Integer storeId) {
         return getBean(StoEntityAction.class).loadById(storeId);
+    }
+
+    List<StoEntity> getStores(Collection<Integer> storeIds) {
+        Optional<List<StoEntity>> _tems = getBean(StoEntityAction.class).findByIds(storeIds);
+        Preconditions.checkState(_tems.isPresent());
+        return _tems.get();
     }
 
     JdbcQuerySupport getJdbcQuerySupport() {

@@ -2,7 +2,9 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:int="http://www.springframework.org/schema/integration"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
     <bean id="smsGateWayBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/smsgateway/legoo-model-cfg.xml"/>
@@ -119,8 +121,15 @@
     <bean id="smsTempCacheService" class="com.legooframework.model.smsgateway.service.SmsTempCacheService"/>
     <bean id="smsRechargeService" class="com.legooframework.model.smsgateway.service.SMSRechargeService"/>
     <bean id="smsGatewayService" class="com.legooframework.model.smsgateway.service.SmsGatewayService"/>
-
     <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
+
+    <int:channel id="channel_sms_billing">
+        <int:queue capacity="128"/>
+    </int:channel>
+    <int:service-activator input-channel="channel_sms_billing" ref="smsGatewayService" method="billingAndDeduction"
+                           auto-startup="true">
+        <int:poller max-messages-per-poll="1" fixed-delay="500" receive-timeout="300000"/>
+    </int:service-activator>
     <!--
     <task:scheduler id="sms-client-scheduler" pool-size="8"/>
     <task:executor id="sms-client-executor" pool-size="4-32" queue-capacity="512" rejection-policy="CALLER_RUNS"/>
@@ -138,10 +147,7 @@
         <int:queue/>
     </int:channel>
 
-    <int:service-activator input-channel="channel_sms_billing" ref="smsIntegrationService" method="billingAndSettlement"
-                           auto-startup="true">
-        <int:poller max-messages-per-poll="1" fixed-delay="1000" task-executor="sms-client-executor"/>
-    </int:service-activator>
+
 
     <int:outbound-channel-adapter channel="channel_sms_sending" ref="smsIntegrationService" method="sendingSMSService"
                                   auto-startup="true">

@@ -28,7 +28,7 @@ import java.util.Optional;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
-@RestController
+@RestController(value = "smsgatewayRechargeRuleController")
 @RequestMapping(value = "/recharge/rule")
 public class RechargeRuleController extends SmsBaseController {
 
@@ -93,7 +93,8 @@ public class RechargeRuleController extends SmsBaseController {
             logger.debug(String.format("loadAllRules(url=%s,param=%s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setAnonymousCtx();
         try {
-            Integer companyId = MapUtils.getInteger(requestBody, "companyId");
+            Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
+            Preconditions.checkArgument(companyId > 0, "参数 companyId =%s 非法", companyId);
             OrgEntity company = loadCompanyById(companyId, request);
             Optional<List<RechargeRuleEntity>> rulesOpt = getBean(RechargeRuleEntityAction.class, request).loadAllRules();
             if (!rulesOpt.isPresent()) return JsonMessageBuilder.OK().toMessage();

@@ -3,22 +3,24 @@ package com.legooframework.model.smsgateway.mvc;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.legooframework.model.smsgateway.entity.RechargeType;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.collections4.CollectionUtils;
+
+import java.util.Collection;
 
 public class RechargeReqDto {
 
     private final Integer companyId, storeId;
-    private final String storeGroupId;
+    private final Collection<Integer> storeIds;
     private final RechargeType rechargeType;
     private final double unitPrice;
     private final String remarke;
     private final int rechargeAmount, totalQuantity;
 
-    RechargeReqDto(Integer companyId, Integer storeId, String storeGroupId, RechargeType rechargeType, double unitPrice,
+    RechargeReqDto(Integer companyId, Integer storeId, Collection<Integer> storeIds, RechargeType rechargeType, double unitPrice,
                    int rechargeAmount, int totalQuantity, String remarke) {
         this.companyId = companyId;
-        this.storeId = storeId;
-        this.storeGroupId = storeGroupId;
+        this.storeId = storeId == null ? -1 : storeId;
+        this.storeIds = storeIds;
         this.rechargeType = rechargeType;
         this.unitPrice = unitPrice;
         this.remarke = remarke;
@@ -45,7 +47,7 @@ public class RechargeReqDto {
     }
 
     public boolean isStoreRange() {
-        return null != storeId;
+        return -1 != storeId;
     }
 
     public int getRechargeAmount() {
@@ -53,11 +55,11 @@ public class RechargeReqDto {
     }
 
     public boolean isStoreGroupRange() {
-        return null == storeId && StringUtils.isNotEmpty(storeGroupId);
+        return CollectionUtils.isNotEmpty(this.storeIds);
     }
 
     public boolean isCompanyRange() {
-        return null == storeId && StringUtils.isEmpty(storeGroupId);
+        return -1 == storeId && CollectionUtils.isEmpty(this.storeIds);
     }
 
     public Integer getCompanyId() {
@@ -68,8 +70,8 @@ public class RechargeReqDto {
         return storeId;
     }
 
-    public String getStoreGroupId() {
-        return storeGroupId;
+    public Collection<Integer> getStoreIds() {
+        return storeIds;
     }
 
     public RechargeType getRechargeType() {
@@ -89,7 +91,7 @@ public class RechargeReqDto {
         return MoreObjects.toStringHelper(this)
                 .add("companyId", companyId)
                 .add("storeId", storeId)
-                .add("storeGroupId", storeGroupId)
+                .add("storeIds", storeIds)
                 .add("rechargeType", rechargeType)
                 .add("unitPrice", unitPrice)
                 .add("remarke", remarke)

@@ -8,6 +8,8 @@ import com.legooframework.model.smsgateway.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public class SMSRechargeService extends BundleService {
@@ -33,15 +35,15 @@ public class SMSRechargeService extends BundleService {
      * 免费充值
      *
      * @param companyId     公司ID
-     * @param storeGroupId  组织中间ID
+     * @param storeIds      组织中间ID
      * @param storId        门店ID
      * @param totalQuantity 总量
      */
-    void freecharge(Integer companyId, String storeGroupId, Integer storId, int totalQuantity) {
+    void freecharge(Integer companyId, Collection<Integer> storeIds, Integer storId, int totalQuantity) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("freecharge(%s,%s,%s,%s)", companyId, storeGroupId, storId, totalQuantity));
+            logger.debug(String.format("freecharge(%s,%s,%s,%s)", companyId, storeIds, storId, totalQuantity));
         OrgEntity company = getCompany(companyId);
-        StoEntity store = storId == null ? null : getStore(companyId, storId);
+        StoEntity store = storId == null ? null : getStore(storId);
 //        RechargeRes rechargeRes = getBean(RechargeDetailEntityAction.class).freecharge(company, store, storeGroupId, totalQuantity);
 //        addBalance(rechargeRes);
     }
@@ -70,21 +72,22 @@ public class SMSRechargeService extends BundleService {
      * 组织充值
      *
      * @param companyId      公司
-     * @param storeGroupId   机构
+     * @param storeIds       机构
      * @param rechargeAmount 金额
      */
-    public void rechargeByStoreGroup(Integer companyId, String storeGroupId, long rechargeAmount, RechargeType rechargeType) {
+    public void rechargeByStoreGroup(Integer companyId, Collection<Integer> storeIds, long rechargeAmount, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("rechargeByStoreGroup(%s,%s,%s)", companyId, storeGroupId, rechargeAmount));
+            logger.debug(String.format("rechargeByStoreGroup(%s,%s,%s)", companyId, storeIds, rechargeAmount));
         OrgEntity company = getCompany(companyId);
+        List<StoEntity> stores = getStores(storeIds);
         RechargeRuleEntity rule = getRechargeRule(company, rechargeAmount);
         RechargeResDto rechargeResDto = null;
         switch (rechargeType) {
             case Recharge:
-                rechargeResDto = getRechargeAction().recharge(company, null, null, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().recharge(company, null, stores, rule, rechargeAmount);
                 break;
             case Precharge:
-                rechargeResDto = getRechargeAction().precharge(company, null, null, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().precharge(company, null, stores, rule, rechargeAmount);
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法的参数值：rechargeType= %s", rechargeType));
@@ -92,19 +95,20 @@ public class SMSRechargeService extends BundleService {
         getBean(RechargeBalanceEntityAction.class).addBalance(rechargeResDto);
     }
 
-    public void rechargeByStoreGroupOnce(Integer companyId, String storeGroupId, long rechargeAmount, double unitPrice,
+    public void rechargeByStoreGroupOnce(Integer companyId, Collection<Integer> storeIds, long rechargeAmount, double unitPrice,
                                          String remarke, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("rechargeByOrgOnce(%s,%s,%s)", companyId, storeGroupId, rechargeAmount));
+            logger.debug(String.format("rechargeByOrgOnce(%s,%s,%s)", companyId, storeIds, rechargeAmount));
         OrgEntity company = getCompany(companyId);
+        List<StoEntity> stores = getStores(storeIds);
         RechargeRuleEntity rule = createTemporaryRule(company, rechargeAmount, unitPrice, remarke);
         RechargeResDto rechargeResDto = null;
         switch (rechargeType) {
             case Recharge:
-                rechargeResDto = getRechargeAction().recharge(company, null, null, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().recharge(company, null, stores, rule, rechargeAmount);
                 break;
             case Precharge:
-                rechargeResDto = getRechargeAction().precharge(company, null, null, rule, rechargeAmount);
+                rechargeResDto = getRechargeAction().precharge(company, null, stores, rule, rechargeAmount);
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法的参数值：rechargeType= %s", rechargeType));
@@ -123,7 +127,7 @@ public class SMSRechargeService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByStore(%s,%s,%s)", companyId, storeId, rechargeAmount));
         OrgEntity company = getCompany(companyId);
-        StoEntity store = getStore(companyId, storeId);
+        StoEntity store = getStore(storeId);
         RechargeRuleEntity rule = getRechargeRule(company, rechargeAmount);
         RechargeResDto rechargeResDto = null;
         switch (rechargeType) {
@@ -155,7 +159,7 @@ public class SMSRechargeService extends BundleService {
                     unitPrice, remarke));
         OrgEntity company = getBean(OrgEntityAction.class).loadComById(companyId);
         RechargeRuleEntity rule = createTemporaryRule(company, rechargeAmount, unitPrice, remarke);
-        StoEntity store = getStore(companyId, storeId);
+        StoEntity store = getStore(storeId);
         RechargeResDto rechargeResDto = null;
         switch (rechargeType) {
             case Recharge:

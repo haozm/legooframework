@@ -10,6 +10,7 @@ import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.CommonsUtils;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.covariant.entity.StoEntity;
+import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.*;
 import com.legooframework.model.smsgateway.mvc.DeductionReqDto;
@@ -52,20 +53,19 @@ public class SmsGatewayService extends BundleService {
      * @param payload 有效负载
      * @return Message 消息
      */
-    public Message<?> billingAndSettlement(@Header(name = "user") LoginContext user, @Header(name = "action") String action,
-                                           @Payload Object payload) {
+    public Message<?> billingAndDeduction(@Header(name = "user") UserAuthorEntity user, @Header(name = "action") String action,
+                                          @Payload Object payload) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("billingAndSettlement(user:%s,action:%s,payload:....)", user.getLoginId(),
-                    action));
-        LoginContextHolder.setCtx(user);
+            logger.debug(String.format("billingAndDeduction(user:%s,action:%s,payload:....)", user.getId(), action));
+        LoginContextHolder.setCtx(user.toLoginContext());
         try {
             if (StringUtils.equals("recharge", action)) {// 充值行为
                 RechargeReqDto rechargeDto = (RechargeReqDto) payload;
                 this.recharge(rechargeDto);
             } else if (StringUtils.equals("charge", action)) { // 计费统计
                 DeductionReqDto deduction = (DeductionReqDto) payload;
-                String batch_no = this.charge(user, deduction.getSmses(), deduction.getBusinessType(), deduction.getStore(),
-                        deduction.getSmsContext());
+                String batch_no = this.charge(LoginContextHolder.get(), deduction.getSmses(), deduction.getBusinessType(),
+                        deduction.getStore(), deduction.getSmsContext());
                 return MessageBuilder.withPayload(batch_no).build();
             } else if (StringUtils.equals("writeOff", action)) { // 退款行为
                 String sendBatchNo = (String) payload;
@@ -77,7 +77,7 @@ public class SmsGatewayService extends BundleService {
             }
             return MessageBuilder.withPayload("ok").build();
         } catch (Exception e) {
-            logger.error("billingAndSettlement(%s) has error", e);
+            logger.error("billingAndDeduction(%s) has error", e);
             return MessageBuilder.withPayload(e).build();
         } finally {
             LoginContextHolder.clear();
@@ -281,11 +281,17 @@ public class SmsGatewayService extends BundleService {
         }
     }
 
+    /**
+     * 系统充值相关接口
+     *
+     * @param rechargeDto OOX
+     * @throws Exception 异常或
+     */
     private void recharge(RechargeReqDto rechargeDto) throws Exception {
         TransactionStatus ts = startTx(null);
         try {
             if (rechargeDto.isFreeCharge()) {
-                getBean(SMSRechargeService.class).freecharge(rechargeDto.getCompanyId(), rechargeDto.getStoreGroupId(),
+                getBean(SMSRechargeService.class).freecharge(rechargeDto.getCompanyId(), rechargeDto.getStoreIds(),
                         rechargeDto.getStoreId(), rechargeDto.getTotalQuantity());
             } else {
                 if (rechargeDto.hasUnitPrice()) {
@@ -296,7 +302,7 @@ public class SmsGatewayService extends BundleService {
                                 rechargeDto.getRechargeType());
                     } else if (rechargeDto.isStoreGroupRange()) {
                         getBean(SMSRechargeService.class).rechargeByStoreGroupOnce(rechargeDto.getCompanyId(),
-                                rechargeDto.getStoreGroupId(),
+                                rechargeDto.getStoreIds(),
                                 rechargeDto.getRechargeAmount(), rechargeDto.getUnitPrice(), rechargeDto.getRemarke(),
                                 rechargeDto.getRechargeType());
                     } else {
@@ -310,8 +316,8 @@ public class SmsGatewayService extends BundleService {
                                 rechargeDto.getRechargeAmount(), rechargeDto.getRechargeType());
                     } else if (rechargeDto.isStoreGroupRange()) {
                         getBean(SMSRechargeService.class).rechargeByStoreGroup(rechargeDto.getCompanyId(),
-                                rechargeDto.getStoreGroupId(),
-                                rechargeDto.getRechargeAmount(), rechargeDto.getRechargeType());
+                                rechargeDto.getStoreIds(),
+                                rechargeDto.getStoreId(), rechargeDto.getRechargeType());
                     } else {
                         getBean(SMSRechargeService.class).rechargeByCompany(rechargeDto.getCompanyId(),
                                 rechargeDto.getRechargeAmount(), rechargeDto.getRechargeType());
