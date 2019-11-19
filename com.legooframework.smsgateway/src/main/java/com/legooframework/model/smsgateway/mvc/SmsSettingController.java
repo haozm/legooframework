@@ -2,6 +2,7 @@ package com.legooframework.model.smsgateway.mvc;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.covariant.entity.StoEntity;
@@ -12,10 +13,7 @@ import com.legooframework.model.smsgateway.entity.SMSSettingEntityAction;
 import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -23,17 +21,25 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping(value = "/smssetting")
 public class SmsSettingController extends SmsBaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(SmsSettingController.class);
+
+    @RequestMapping(value = "/welcome.json")
+    @ResponseBody
+    public JsonMessage welcome(HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("welcome(url=%s)", request.getRequestURI()));
+        Bundle bundle = getBean("smsGateWayBundle", Bundle.class, request);
+        return JsonMessageBuilder.OK().withPayload(bundle.toDesc()).toMessage();
+    }
 
     /**
      * @param requestBody 请求负载
      * @param request     请求
      * @return EEE
      */
-    @PostMapping(value = "/check/sms/prefix.json")
+    @PostMapping(value = "/smssetting/check/sms/prefix.json")
     public JsonMessage checkSmsPrefix(@RequestBody(required = false) Map<String, Object> requestBody,
                                       HttpServletRequest request) throws Exception {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
@@ -52,7 +58,7 @@ public class SmsSettingController extends SmsBaseController {
      * @param request     请求
      * @return EEE
      */
-    @PostMapping(value = "/edit/sms/prefix.json")
+    @PostMapping(value = "/smssetting/edit/sms/prefix.json")
     public JsonMessage settingSmsPrefix(@RequestBody(required = false) Map<String, Object> requestBody,
                                         HttpServletRequest request) throws Exception {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
@@ -70,7 +76,7 @@ public class SmsSettingController extends SmsBaseController {
      * @param request     请求
      * @return EEE
      */
-    @PostMapping(value = "/load/sms/prefix.json")
+    @PostMapping(value = "/smssetting/load/sms/prefix.json")
     public JsonMessage loadSmsPreix(@RequestBody(required = false) Map<String, Object> requestBody,
                                     HttpServletRequest request) throws Exception {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
