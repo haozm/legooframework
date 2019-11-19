@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="OFF">
     <Appenders>
-<!--        <RollingFile name="APP_RUN_LOG" fileName="${sys:catalina.home}/logs/@log.file@_run.log"-->
-<!--                     filePattern="${sys:catalina.home}/logs/@log.file@_run-%d{yyyy-MM-dd}.log">-->
-<!--            <PatternLayout pattern="[%-5level] [%d{yyyy-MM-dd HH:mm:ss,SSS}] [%t] %class{36} [%M] - %msg%xEx%n"/>-->
-<!--            <Policies>-->
-<!--                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>-->
-<!--            </Policies>-->
-<!--        </RollingFile>-->
-        <Console name="APP_RUN_LOG" target="SYSTEM_OUT">
-            <PatternLayout pattern="[%-5level][%d{yyyy-MM-dd HH:mm:ss}][%t]%class{36} [%M] - %msg%xEx%n"/>
-        </Console>
+        <RollingFile name="APP_RUN_LOG" fileName="${sys:catalina.home}/logs/@log.file@_run.log"
+                     filePattern="${sys:catalina.home}/logs/@log.file@_run-%d{yyyy-MM-dd}.log">
+            <PatternLayout pattern="[%-5level] [%d{yyyy-MM-dd HH:mm:ss,SSS}] [%t] %class{36} [%M] - %msg%xEx%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy modulate="true" interval="1"/>
+            </Policies>
+        </RollingFile>
     </Appenders>
     <Loggers>
         <Root level="ERROR">
