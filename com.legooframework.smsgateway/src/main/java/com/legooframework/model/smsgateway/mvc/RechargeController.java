@@ -70,7 +70,7 @@ public class RechargeController extends SmsBaseController {
         }
     }
 
-    @PostMapping(value = "/tree/add.json")
+    @PostMapping(value = "/tree/node/add.json")
     public JsonMessage addRechargeTreeNode(@RequestBody(required = false) Map<String, Object> requestBody,
                                            HttpServletRequest request) {
         if (logger.isDebugEnabled())
@@ -95,7 +95,7 @@ public class RechargeController extends SmsBaseController {
         }
     }
 
-    @PostMapping(value = "/tree/edit.json")
+    @PostMapping(value = "/tree/node/edit.json")
     public JsonMessage editRechargeTreeNode(@RequestBody(required = false) Map<String, Object> requestBody,
                                             HttpServletRequest request) {
         if (logger.isDebugEnabled())

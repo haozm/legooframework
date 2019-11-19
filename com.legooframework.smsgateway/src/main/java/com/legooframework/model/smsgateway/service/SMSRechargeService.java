@@ -8,8 +8,6 @@ import com.legooframework.model.smsgateway.entity.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Optional;
 
 public class SMSRechargeService extends BundleService {
@@ -79,7 +77,8 @@ public class SMSRechargeService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByStoreGroup(%s,%s,%s)", companyId, storeIds, rechargeAmount));
         OrgEntity company = getCompany(companyId);
-        getBean(RechargeBalanceEntityAction.class).loadById(storeIds);
+        RechargeBalanceEntity rechargeBalance = getBean(RechargeBalanceEntityAction.class).loadById(storeIds);
+        Preconditions.checkState(!rechargeBalance.isEmptyStoreIds(), "当前节点无门店信息，无法完成充值");
         RechargeRuleEntity rule = getRechargeRule(company, rechargeAmount);
         RechargeResDto rechargeResDto = null;
         switch (rechargeType) {
@@ -100,7 +99,8 @@ public class SMSRechargeService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByOrgOnce(%s,%s,%s)", companyId, storeIds, rechargeAmount));
         OrgEntity company = getCompany(companyId);
-        getBean(RechargeBalanceEntityAction.class).loadById(storeIds);
+        RechargeBalanceEntity rechargeBalance = getBean(RechargeBalanceEntityAction.class).loadById(storeIds);
+        Preconditions.checkState(!rechargeBalance.isEmptyStoreIds(), "当前节点无门店信息，无法完成充值");
         RechargeRuleEntity rule = createTemporaryRule(company, rechargeAmount, unitPrice, remarke);
         RechargeResDto rechargeResDto = null;
         switch (rechargeType) {

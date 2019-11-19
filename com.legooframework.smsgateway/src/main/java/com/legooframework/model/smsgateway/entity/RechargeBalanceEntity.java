@@ -124,11 +124,13 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         Set<Integer> rawIds = Sets.newHashSet(this.storeIds);
         rawIds.removeAll(removeIds);
         delFlag = SetUtils.isEqualSet(rawIds, this.storeIds);
-        if (delFlag) this.storeIds = Lists.newArrayList(rawIds);
+        if (delFlag) {
+            this.storeIds = CollectionUtils.isEmpty(rawIds) ? null : Lists.newArrayList(rawIds);
+        }
         return delFlag;
     }
 
-    boolean isEmptyStoreIds() {
+    public boolean isEmptyStoreIds() {
         return CollectionUtils.isEmpty(this.storeIds);
     }
 
