@@ -32,9 +32,12 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         super(CommonsUtils.randomId(16).toUpperCase(), company.getId().longValue(), -1L);
         this.companyId = company.getId();
         this.storeId = null;
-        Preconditions.checkArgument(CollectionUtils.isNotEmpty(stores));
-        this.storeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toList());
-        this.storeIds.sort(Comparator.naturalOrder());
+        if (CollectionUtils.isEmpty(stores)) {
+            this.storeIds = null;
+        } else {
+            this.storeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toList());
+            this.storeIds.sort(Comparator.naturalOrder());
+        }
         this.groupName = groupName;
         this.rechargeScope = RechargeScope.StoreGroup;
         this.balance = 0L;
@@ -102,6 +105,7 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
     boolean addStores(List<StoEntity> stores) {
         Preconditions.checkState(RechargeScope.StoreGroup == this.rechargeScope);
         boolean addFlag = false;
+        if (this.storeIds == null) this.storeIds = Lists.newArrayList();
         for (StoEntity $it : stores) {
             if (this.storeIds.contains($it.getId()))
                 continue;
@@ -113,6 +117,7 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
     }
 
     boolean delStores(List<StoEntity> stores) {
+        if (isEmptyStoreIds()) return false;
         Preconditions.checkState(RechargeScope.StoreGroup == this.rechargeScope);
         boolean delFlag = false;
         Set<Integer> removeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toSet());

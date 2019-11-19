@@ -39,6 +39,7 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
             List<RechargeBalanceEntity> exits_list = exits_list_opt.get();
             Set<Integer> _raw = Sets.newHashSet(instance.getStoreIds());
             for (RechargeBalanceEntity exits : exits_list) {
+                if (exits.isEmptyStoreIds()) continue;
                 Set<Integer> $it = Sets.newHashSet(exits.getStoreIds());
                 Sets.SetView<Integer> intersection = Sets.intersection(_raw, $it);
                 Preconditions.checkState(CollectionUtils.isEmpty(intersection), "已经存在门店%s 在其他分组", intersection);

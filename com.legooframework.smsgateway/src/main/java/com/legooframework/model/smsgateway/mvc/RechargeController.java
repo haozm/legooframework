@@ -71,23 +71,24 @@ public class RechargeController extends SmsBaseController {
     }
 
     @PostMapping(value = "/tree/add.json")
-    public JsonMessage addRechargeTree(@RequestBody(required = false) Map<String, Object> requestBody,
-                                       HttpServletRequest request) {
+    public JsonMessage addRechargeTreeNode(@RequestBody(required = false) Map<String, Object> requestBody,
+                                           HttpServletRequest request) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("editRechargeTree(url=%s,param=%s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setAnonymousCtx();
         try {
             Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
             String groupName = MapUtils.getString(requestBody, "groupName", null);
-            String storeIds_raw = MapUtils.getString(requestBody, "storeIds", null);
             Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName), "分组名称[groupName]不可以为空...");
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(storeIds_raw), "待分组的门店[storeIds]不可以为空...");
             OrgEntity company = loadCompanyById(companyId, request);
-            List<Integer> storeIds = Splitter.on(',').splitToList(storeIds_raw).stream()
-                    .mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
-            Optional<List<StoEntity>> stores = getBean(StoEntityAction.class, request).findByIds(storeIds);
-            Preconditions.checkState(stores.isPresent(), "给定的列表无合法的门店....");
-            getBean(RechargeBalanceEntityAction.class, request).createStoreGroupBalance(company, stores.get(), groupName);
+            Optional<List<StoEntity>> stores = Optional.empty();
+            String storeIds_raw = MapUtils.getString(requestBody, "storeIds", null);
+            if (!Strings.isNullOrEmpty(storeIds_raw)) {
+                List<Integer> storeIds = Splitter.on(',').splitToList(storeIds_raw).stream()
+                        .mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
+                stores = getBean(StoEntityAction.class, request).findByIds(storeIds);
+            }
+            getBean(RechargeBalanceEntityAction.class, request).createStoreGroupBalance(company, stores.orElse(null), groupName);
             return JsonMessageBuilder.OK().toMessage();
         } finally {
             LoginContextHolder.clear();
@@ -95,8 +96,8 @@ public class RechargeController extends SmsBaseController {
     }
 
     @PostMapping(value = "/tree/edit.json")
-    public JsonMessage editRechargeTree(@RequestBody(required = false) Map<String, Object> requestBody,
-                                        HttpServletRequest request) {
+    public JsonMessage editRechargeTreeNode(@RequestBody(required = false) Map<String, Object> requestBody,
+                                            HttpServletRequest request) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("editRechargeTree(url=%s,param=%s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setAnonymousCtx();
@@ -104,7 +105,7 @@ public class RechargeController extends SmsBaseController {
             Integer action = MapUtils.getInteger(requestBody, "action", -1);
             String nodeId = MapUtils.getString(requestBody, "nodeId");
             String storeIds_raw = MapUtils.getString(requestBody, "storeIds", null);
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(storeIds_raw), "待分组的门店[storeIds]不可以为空...");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(storeIds_raw), "待编辑的门店[storeIds]不可以为空...");
             List<Integer> storeIds = Splitter.on(',').splitToList(storeIds_raw).stream()
                     .mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
             Optional<List<StoEntity>> stores = getBean(StoEntityAction.class, request).findByIds(storeIds);
@@ -115,7 +116,7 @@ public class RechargeController extends SmsBaseController {
             LoginContextHolder.clear();
         }
     }
-    
+
     @PostMapping(value = "/action.json")
     public JsonMessage rechargeAction(@RequestBody(required = false) Map<String, Object> requestBody,
                                       HttpServletRequest request) throws Exception {
