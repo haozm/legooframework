@@ -68,7 +68,7 @@ public class RechargeController extends SmsBaseController {
                     }));
                 }
             }
-            return JsonMessageBuilder.OK().withPayload(treeRoot.toMap()).toMessage();
+            return JsonMessageBuilder.OK().withPayload(new Object[]{treeRoot.toMap()}).toMessage();
         } finally {
             LoginContextHolder.clear();
         }
