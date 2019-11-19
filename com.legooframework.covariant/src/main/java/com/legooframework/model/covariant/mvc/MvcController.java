@@ -53,6 +53,22 @@ public class MvcController extends BaseController {
         return JsonMessageBuilder.OK().toMessage();
     }
 
+    @RequestMapping(value = "/load/{orgType}/all.json")
+    @ResponseBody
+    public JsonMessage loadOrgByType(@PathVariable(value = "orgType") String orgType, HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("loadOrgByType(url=%s)", request.getRequestURI()));
+        LoginContextHolder.setAnonymousCtx();
+        if (StringUtils.equalsAnyIgnoreCase("company", orgType)) {
+            Optional<List<OrgEntity>> companyies = getBean(OrgEntityAction.class, request).loadAllCompany();
+            List<Map<String, Object>> list = companyies.map(x -> x.stream().map(OrgEntity::toViewMap)
+                    .collect(Collectors.toList())).orElse(null);
+            return JsonMessageBuilder.OK().withPayload(list).toMessage();
+        }
+        LoginContextHolder.clear();
+        return JsonMessageBuilder.OK().toMessage();
+    }
+
     @RequestMapping(value = "/enum/{enumType}/list.json")
     @ResponseBody
     public JsonMessage enumTypeList(@PathVariable(value = "enumType") String enumType, HttpServletRequest request) {

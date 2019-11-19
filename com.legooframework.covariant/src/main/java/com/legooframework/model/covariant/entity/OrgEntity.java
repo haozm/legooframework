@@ -37,6 +37,19 @@ public class OrgEntity extends BaseEntity<Integer> implements ToReplace {
         }
     }
 
+    @Override
+    public Map<String, Object> toViewMap() {
+        Map<String, Object> params = Maps.newHashMap();
+        if (isCompany()) {
+            params.put("companyId", getId());
+        } else {
+            params.put("orgId", getId());
+        }
+        params.put("name", this.name);
+        params.put("type", this.type);
+        return params;
+    }
+
     public String getShortName() {
         return shortName;
     }

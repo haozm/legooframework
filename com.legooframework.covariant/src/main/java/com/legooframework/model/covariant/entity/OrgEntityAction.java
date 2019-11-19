@@ -55,6 +55,12 @@ public class OrgEntityAction extends BaseEntityAction<OrgEntity> {
         return all_orgs.get();
     }
 
+    public Optional<List<OrgEntity>> loadAllCompany() {
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("sql", "loadAllCompany");
+        return super.queryForEntities("query4list", params, getRowMapper());
+    }
+
     @Override
     protected RowMapper<OrgEntity> getRowMapper() {
         return new RowMapperImpl();

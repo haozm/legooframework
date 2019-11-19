@@ -12,6 +12,9 @@
      <#if (sql=="loadAllByCompanyId")>
        AND (code = '${companyId}' OR code LIKE '${companyId}\_%')
   ORDER BY LENGTH(code)
+     <#elseif (sql=="loadAllCompany")>
+        AND orgType = 1
+   ORDER BY id
      </#if>
             ]]></body>
         </sql>
