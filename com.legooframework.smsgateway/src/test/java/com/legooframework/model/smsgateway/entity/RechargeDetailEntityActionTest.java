@@ -52,7 +52,7 @@ public class RechargeDetailEntityActionTest {
         Optional<List<StoEntity>> stores = storeAction.findByIds(27, 28, 29, 30, 31, 32, 33);
         RechargeRuleSet rules = ruleEntityAction.loadAllRuleSet();
         Optional<RechargeRuleEntity> rule = rules.getSuitableRule(company, 300000);
-        RechargeResDto rechargeResDto = rechargeDetailEntityAction.recharge(company, null, stores.get(), rule.get(), 500000);
+        RechargeResDto rechargeResDto = rechargeDetailEntityAction.recharge(company, null, "asdasd", rule.get(), 500000);
         System.out.println(rechargeResDto);
     }
 
@@ -63,7 +63,7 @@ public class RechargeDetailEntityActionTest {
         Optional<List<StoEntity>> stores = storeAction.findByIds(27, 28, 29, 30, 31, 32, 33);
         RechargeRuleSet rules = ruleEntityAction.loadAllRuleSet();
         Optional<RechargeRuleEntity> rule = rules.getSuitableRule(company, 300000);
-        rechargeDetailEntityAction.precharge(company, null, stores.get(), rule.get(), 300000);
+        rechargeDetailEntityAction.precharge(company, null, "asdasd", rule.get(), 300000);
     }
 
     @Test

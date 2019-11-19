@@ -1,9 +1,12 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
+import com.google.common.collect.Sets;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
+import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
@@ -26,6 +29,29 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
 
     public RechargeBalanceEntityAction() {
         super(null);
+    }
+
+    public RechargeBalanceEntity createStoreGroupBalance(OrgEntity company, List<StoEntity> stores, String name) {
+        RechargeBalanceEntity instance = new RechargeBalanceEntity(company, stores, name);
+        Optional<List<RechargeBalanceEntity>> exits_list_opt = findAllStoreGroupBalance(company);
+        if (exits_list_opt.isPresent()) {
+            List<RechargeBalanceEntity> exits_list = exits_list_opt.get();
+            Set<Integer> _raw = Sets.newHashSet(instance.getStoreIds());
+            for (RechargeBalanceEntity exits : exits_list) {
+                Set<Integer> $it = Sets.newHashSet(exits.getStoreIds());
+                Sets.SetView<Integer> intersection = Sets.intersection(_raw, $it);
+                Preconditions.checkState(CollectionUtils.isEmpty(intersection), "已经存在门店%s 在其他分组", intersection);
+            }
+        }
+        super.updateAction(instance, "insert");
+        return instance;
+    }
+
+    public Optional<List<RechargeBalanceEntity>> findAllStoreGroupBalance(OrgEntity company) {
+        Map<String, Object> params = company.toParamMap();
+        params.put("rechargeScope", RechargeScope.StoreGroup.getScope());
+        params.put("sql", "findAllStoreGroupBalance");
+        return super.queryForEntities("findAllStoreGroupBalance", params, getRowMapper());
     }
 
     public void addBalance(RechargeResDto rechargeResDto) {
@@ -51,10 +77,12 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
     }
 
     public void batchUpdateBalance(Collection<RechargeBalanceEntity> balances) {
-        super.batchUpdate("batchUpdateBalance", (ps, balance) -> {
-            ps.setObject(1, balance.getBalance());
-            ps.setObject(2, balance.getId());
-        }, balances);
+        Objects.requireNonNull(getJdbcTemplate())
+                .batchUpdate("UPDATE SMS_RECHARGE_BALANCE SET sms_balance = ?  WHERE id = ?", balances, 256,
+                        (ps, balance) -> {
+                            ps.setObject(1, balance.getBalance());
+                            ps.setObject(2, balance.getId());
+                        });
     }
 
     /**
@@ -70,6 +98,12 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
         Optional<List<RechargeBalanceEntity>> balanceList = super.queryForEntities("loadByIds", params, getRowMapper());
         Preconditions.checkState(balanceList.isPresent());
         return balanceList.get();
+    }
+
+    @Override
+    public RechargeBalanceEntity loadById(Object id) {
+        List<RechargeBalanceEntity> list = this.loadByIds(Lists.newArrayList(id.toString()));
+        return list.get(0);
     }
 
     /**
@@ -102,7 +136,7 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<RechargeBalanceEntity> {
+    private static class RowMapperImpl implements RowMapper<RechargeBalanceEntity> {
         @Override
         public RechargeBalanceEntity mapRow(ResultSet res, int i) throws SQLException {
             return new RechargeBalanceEntity(res.getString("id"), res);

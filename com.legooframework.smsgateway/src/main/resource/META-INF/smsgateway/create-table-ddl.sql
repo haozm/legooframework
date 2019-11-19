@@ -164,6 +164,7 @@ CREATE TABLE SMS_RECHARGE_BALANCE
   store_ids      VARCHAR(256)     NULL     DEFAULT NULL,
   recharge_scope TINYINT UNSIGNED NOT NULL,
   sms_balance    BIGINT(20)       NOT NULL DEFAULT 0,
+  group_name     VARCHAR(256)     NULL     DEFAULT NULL,
   delete_flag    TINYINT UNSIGNED NOT NULL DEFAULT 0,
   tenant_id      BIGINT(20)       NULL     DEFAULT NULL,
   creator        BIGINT(20)       NOT NULL DEFAULT -1,

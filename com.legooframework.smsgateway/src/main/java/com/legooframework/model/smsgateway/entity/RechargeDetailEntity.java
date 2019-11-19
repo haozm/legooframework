@@ -1,9 +1,7 @@
 package com.legooframework.model.smsgateway.entity;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.MoreObjects;
+import com.google.common.base.*;
 import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.entity.BaseEntity;
@@ -30,7 +28,7 @@ import java.util.stream.Stream;
 public class RechargeDetailEntity extends BaseEntity<String> implements BatchSetter {
 
     private final Integer companyId, storeId;
-    private final List<Integer> storeIds;
+    private final String storeIds;
     private final RechargeScope rechargeScope;
     private final String ruleId;
     private final long amount;
@@ -46,9 +44,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
             this.rechargeType = RechargeType.paras(res.getInt("rechargeType"));
             this.rechargeScope = RechargeScope.paras(res.getInt("rechargeScope"));
             if (rechargeScope == RechargeScope.StoreGroup) {
-                String storeIds_raw = res.getString("storeIds");
-                this.storeIds = ImmutableList.copyOf(Stream.of(StringUtils.split(storeIds_raw, ',')).mapToInt(Integer::parseInt).boxed()
-                        .sorted(Comparator.naturalOrder()).collect(Collectors.toList()));
+                this.storeIds = res.getString("storeIds");
             } else {
                 this.storeIds = null;
             }
@@ -72,7 +68,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         ps.setObject(1, this.getId());
         ps.setObject(2, this.companyId);
         ps.setObject(3, this.storeId == null ? -1 : storeId);
-        ps.setObject(4, CollectionUtils.isEmpty(this.storeIds) ? null : Joiner.on(',').join(this.storeIds));
+        ps.setObject(4, this.storeIds);
         ps.setObject(5, this.rechargeScope.getScope());
         ps.setObject(6, this.rechargeType.getType());
         ps.setObject(7, this.ruleId);
@@ -82,7 +78,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         ps.setObject(11, this.getCreator());
     }
 
-    private RechargeDetailEntity(Integer companyId, Integer storeId, Set<Integer> storeIds, RechargeScope rechargeScope,
+    private RechargeDetailEntity(Integer companyId, Integer storeId, String storeIds, RechargeScope rechargeScope,
                                  RechargeRuleEntity rechargeRule, long rechargeAmount, RechargeType rechargeType,
                                  int totalQuantity, LoginContext user) {
         super(CommonsUtils.randomId(16), companyId.longValue(), user.getLoginId());
@@ -102,10 +98,8 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
                 break;
             case StoreGroup:
                 this.storeId = null;
-                Preconditions.checkArgument(CollectionUtils.isNotEmpty(storeIds), "需指定充值的门店列表...");
-                List<Integer> _temp_list = Lists.newArrayList(storeIds);
-                _temp_list.sort(Comparator.naturalOrder());
-                this.storeIds = ImmutableList.copyOf(_temp_list);
+                Preconditions.checkArgument(!Strings.isNullOrEmpty(storeIds));
+                this.storeIds = storeIds;
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法的参数 rechargeScope =%s", rechargeScope));
@@ -181,25 +175,19 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
                 LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity rechargeByStoreGroup(OrgEntity company, Collection<StoEntity> stores,
+    static RechargeDetailEntity rechargeByStoreGroup(OrgEntity company, String storeIds,
                                                      RechargeRuleEntity rechargeRule, long rechargeAmount) {
-        Preconditions.checkArgument(CollectionUtils.isNotEmpty(stores), "待充值的门店数量非法....");
-        Set<Integer> storeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toSet());
         return new RechargeDetailEntity(company.getId(), -1, storeIds, RechargeScope.StoreGroup,
                 rechargeRule, rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity prechargeByStoreGroup(OrgEntity company, Collection<StoEntity> stores,
+    static RechargeDetailEntity prechargeByStoreGroup(OrgEntity company, String storeIds,
                                                       RechargeRuleEntity rechargeRule, long rechargeAmount) {
-        Preconditions.checkArgument(CollectionUtils.isNotEmpty(stores), "待充值的门店数量非法....");
-        Set<Integer> storeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toSet());
         return new RechargeDetailEntity(company.getId(), -1, storeIds, RechargeScope.StoreGroup,
                 rechargeRule, rechargeAmount, RechargeType.Precharge, 0, LoginContextHolder.get());
     }
 
-    static RechargeDetailEntity freechargeByStoreGroup(OrgEntity company, Collection<StoEntity> stores, int totalQuantity) {
-        Preconditions.checkArgument(CollectionUtils.isNotEmpty(stores), "待充值的门店数量非法....");
-        Set<Integer> storeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toSet());
+    static RechargeDetailEntity freechargeByStoreGroup(OrgEntity company, String storeIds, int totalQuantity) {
         return new RechargeDetailEntity(company.getId(), -1, storeIds, RechargeScope.StoreGroup,
                 null, 0L, RechargeType.FreeCharge, totalQuantity, LoginContextHolder.get());
     }
@@ -246,11 +234,15 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         return storeId;
     }
 
-    List<Integer> getStoreIds() {
+    boolean isStoreGroup() {
+        return RechargeScope.StoreGroup == this.rechargeScope;
+    }
+
+    String getStoreIds() {
         return storeIds;
     }
 
-    public int getTotalQuantity() {
+    int getTotalQuantity() {
         return totalQuantity;
     }
 
@@ -263,7 +255,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         params.put("amount", amount);
         params.put("companyId", companyId);
         params.put("storeId", storeId == null ? -1 : storeId);
-        params.put("storeIds", CollectionUtils.isEmpty(storeIds) ? null : Joiner.on(',').join(this.storeIds));
+        params.put("storeIds", storeIds);
         params.put("totalQuantity", totalQuantity);
         params.put("usedQuantity", usedQuantity);
         return params;
@@ -282,7 +274,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         return amount == that.amount &&
                 totalQuantity == that.totalQuantity &&
                 Objects.equal(companyId, that.companyId) &&
-                ListUtils.isEqualList(this.storeIds, that.storeIds) &&
+                Objects.equal(storeIds, that.storeIds) &&
                 Objects.equal(storeId, that.storeId) &&
                 rechargeScope == that.rechargeScope &&
                 rechargeType == that.rechargeType &&

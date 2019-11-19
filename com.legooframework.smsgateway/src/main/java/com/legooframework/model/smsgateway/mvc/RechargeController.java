@@ -13,7 +13,13 @@ import com.legooframework.model.core.jdbc.PagingResult;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
+import com.legooframework.model.covariant.entity.OrgEntity;
+import com.legooframework.model.covariant.entity.StoEntity;
+import com.legooframework.model.covariant.entity.StoEntityAction;
 import com.legooframework.model.covariant.entity.UserAuthorEntity;
+import com.legooframework.model.smsgateway.entity.RechargeBalanceEntity;
+import com.legooframework.model.smsgateway.entity.RechargeBalanceEntityAction;
+import com.legooframework.model.smsgateway.entity.RechargeTreeDto;
 import com.legooframework.model.smsgateway.entity.RechargeType;
 import com.legooframework.model.smsgateway.service.BundleService;
 import org.apache.commons.collections4.MapUtils;
@@ -39,6 +45,34 @@ public class RechargeController extends SmsBaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(RechargeController.class);
 
+    @PostMapping(value = "/tree.json")
+    public JsonMessage loadRechargeTree(@RequestBody(required = false) Map<String, Object> requestBody,
+                                        HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("loadRechargeTree(url=%s,param=%s)", request.getRequestURL(), requestBody));
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
+            OrgEntity company = loadCompanyById(companyId, request);
+            RechargeTreeDto treeRoot = new RechargeTreeDto(company);
+            Optional<List<RechargeBalanceEntity>> node_list_opt = getBean(RechargeBalanceEntityAction.class, request)
+                    .findAllStoreGroupBalance(company);
+            if (node_list_opt.isPresent()) {
+                for (RechargeBalanceEntity $it : node_list_opt.get()) {
+                    RechargeTreeDto node = new RechargeTreeDto($it, treeRoot.getId());
+                    treeRoot.addChild(node);
+                    Optional<List<StoEntity>> stores = getBean(StoEntityAction.class, request).findByIds($it.getStoreIds());
+                    stores.ifPresent(x -> x.forEach(s -> {
+                        node.addChild(new RechargeTreeDto(s, $it.getId()));
+                    }));
+                }
+            }
+            return JsonMessageBuilder.OK().withPayload(treeRoot.toMap()).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
     @PostMapping(value = "/action.json")
     public JsonMessage rechargeAction(@RequestBody(required = false) Map<String, Object> requestBody,
                                       HttpServletRequest request) throws Exception {
@@ -47,13 +81,11 @@ public class RechargeController extends SmsBaseController {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
         Integer companyId = MapUtils.getInteger(requestBody, "companyId");
         Preconditions.checkNotNull(companyId, "公司Id不可以为空值...");
-        Set<Integer> storeIds = Sets.newHashSet();
-        String storeIds_raw = MapUtils.getString(requestBody, "storeIds", null);
-        if (!Strings.isNullOrEmpty(storeIds_raw)) {
-            Iterable<String> _ids = Splitter.on(',').trimResults().split(storeIds_raw);
-            _ids.forEach(x -> storeIds.add(Integer.parseInt(x)));
+        String storeIds = MapUtils.getString(requestBody, "storeIds", null);
+        Integer storeId = null;
+        if (Strings.isNullOrEmpty(storeIds)) {
+            storeId = MapUtils.getInteger(requestBody, "storeId", -1);
         }
-        Integer storeId = MapUtils.getInteger(requestBody, "storeId");
         String type = MapUtils.getString(requestBody, "type");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(type), "入参 type 不可以为空...");
         RechargeType rechargeType = Enum.valueOf(RechargeType.class, type);

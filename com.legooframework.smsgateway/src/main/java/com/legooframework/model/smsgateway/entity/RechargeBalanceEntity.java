@@ -4,12 +4,15 @@ import com.google.common.base.*;
 import com.google.common.collect.ImmutableList;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.utils.CommonsUtils;
+import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,15 +22,35 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
 
     private final Integer companyId, storeId;
     private final List<Integer> storeIds;
+    private String groupName;
     private final RechargeScope rechargeScope;
     private Long balance = 0L;
 
+    // 创建虚拟分组
+    RechargeBalanceEntity(OrgEntity company, List<StoEntity> stores, String groupName) {
+        super(CommonsUtils.randomId(16).toUpperCase(), company.getId().longValue(), -1L);
+        this.companyId = company.getId();
+        this.storeId = null;
+        Preconditions.checkArgument(CollectionUtils.isNotEmpty(stores));
+        this.storeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toList());
+        this.storeIds.sort(Comparator.naturalOrder());
+        this.groupName = groupName;
+        this.rechargeScope = RechargeScope.StoreGroup;
+        this.balance = 0L;
+    }
+
+    // 充值创建分组
     RechargeBalanceEntity(RechargeDetailEntity recharge) {
-        super(CommonsUtils.randomId(16).toUpperCase(), recharge.getTenantId(), -1L);
+        super(recharge.isStoreGroup() ? recharge.getStoreIds() : CommonsUtils.randomId(16).toUpperCase(),
+                recharge.getTenantId(), -1L);
         this.companyId = recharge.getCompanyId();
         this.storeId = recharge.getStoreId();
-        this.storeIds = recharge.getStoreIds();
         this.rechargeScope = recharge.getRechargeScope();
+        this.storeIds = null;
+    }
+
+    String getGroupName() {
+        return groupName;
     }
 
     RechargeBalanceEntity(String id, ResultSet res) {
@@ -56,6 +79,10 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
 
     Integer getStoreId() {
         return storeId;
+    }
+
+    public List<Integer> getStoreIds() {
+        return storeIds;
     }
 
     long deduction(long size) {
@@ -100,7 +127,7 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         return matched;
     }
 
-    public Long getBalance() {
+    long getBalance() {
         return balance;
     }
 
@@ -113,6 +140,7 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         params.put("storeIds", CollectionUtils.isEmpty(this.storeIds) ? null : Joiner.on(',').join(this.storeIds));
         params.put("rechargeScope", rechargeScope.getScope());
         params.put("balance", balance);
+        params.put("groupName", groupName);
         return params;
     }
 

@@ -285,7 +285,8 @@
                  smb.store_id AS 'storeId',
                  smb.store_ids AS 'storeIds',
                  smb.sms_balance AS 'balance',
-                 smb.recharge_scope AS 'rechargeScope'
+                 smb.group_name AS 'groupName',
+                 smb.recharge_scope AS 'rechargeScope',
 	         </#macro>
 	          ]]>
         </macro>
@@ -297,6 +298,17 @@
                  <@crud_fixed_select "smb"/>
             FROM SMS_RECHARGE_BALANCE AS smb
            WHERE smb.company_id = :companyId
+             AND smb.delete_flag = 0
+            ]]></body>
+        </sql>
+        <sql id="findAllStoreGroupBalance" macros="sms_balance_fields,crud_fixed">
+            <body><![CDATA[
+          SELECT <@sms_balance_fields />
+                 <@crud_fixed_select "smb"/>
+            FROM SMS_RECHARGE_BALANCE AS smb
+           WHERE smb.company_id = :companyId
+             AND smb.recharge_scope = :rechargeScope
+             AND smb.delete_flag = 0
             ]]></body>
         </sql>
         <sql id="loadByIds" macros="sms_balance_fields,crud_fixed">
@@ -318,13 +330,6 @@
              AND smb.store_group_id = :storeGroupId
             ]]></body>
         </sql>
-        <sql id="batchUpdateBalance">
-            <body><![CDATA[
-          UPDATE SMS_RECHARGE_BALANCE
-             SET sms_balance = ?
-           WHERE id = ?
-            ]]></body>
-        </sql>
         <sql id="update">
             <body><![CDATA[
           UPDATE SMS_RECHARGE_BALANCE
@@ -335,8 +340,8 @@
         <sql id="insert">
             <body><![CDATA[
   INSERT INTO SMS_RECHARGE_BALANCE
-              (id, company_id, store_id, store_group_id, recharge_scope, sms_balance,  tenant_id, creator, createTime, editTime)
-       VALUES (:id, :companyId, :storeId, :storeGroupId, :rechargeScope, :balance,     :tenantId, -1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+              ( id, company_id, store_id, store_ids, recharge_scope, group_name, sms_balance,  tenant_id )
+       VALUES (:id, :companyId, :storeId, :storeIds, :rechargeScope, :groupName,    :balance,  :tenantId )
             ]]></body>
         </sql>
     </model>

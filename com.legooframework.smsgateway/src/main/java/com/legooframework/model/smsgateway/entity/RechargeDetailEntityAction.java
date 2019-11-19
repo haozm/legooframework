@@ -8,6 +8,8 @@ import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.util.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -38,14 +40,14 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param rechargeAmount
      * @return
      */
-    public RechargeResDto recharge(OrgEntity company, StoEntity store, Collection<StoEntity> stores, RechargeRuleEntity rechargeRule,
+    public RechargeResDto recharge(OrgEntity company, StoEntity store, String storeIds, RechargeRuleEntity rechargeRule,
                                    long rechargeAmount) {
         Preconditions.checkNotNull(company);
         Preconditions.checkArgument(rechargeAmount > 0);
         RechargeDetailEntity recharge;
         final LoginContext user = LoginContextHolder.get();
-        if (CollectionUtils.isNotEmpty(stores)) {
-            recharge = RechargeDetailEntity.rechargeByStoreGroup(company, stores, rechargeRule, rechargeAmount);
+        if (Strings.isNotEmpty(storeIds)) {
+            recharge = RechargeDetailEntity.rechargeByStoreGroup(company, storeIds, rechargeRule, rechargeAmount);
         } else if (store != null) {
             recharge = RechargeDetailEntity.rechargeByStore(store, rechargeRule, rechargeAmount);
         } else {
@@ -91,13 +93,13 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param rechargeAmount
      * @return
      */
-    public RechargeResDto precharge(OrgEntity company, StoEntity store, Collection<StoEntity> stores, RechargeRuleEntity rechargeRule,
+    public RechargeResDto precharge(OrgEntity company, StoEntity store, String storeIds, RechargeRuleEntity rechargeRule,
                                     long rechargeAmount) {
         Preconditions.checkNotNull(company);
         Preconditions.checkArgument(rechargeAmount > 0);
         RechargeDetailEntity recharge;
-        if (CollectionUtils.isNotEmpty(stores)) {
-            recharge = RechargeDetailEntity.prechargeByStoreGroup(company, stores, rechargeRule, rechargeAmount);
+        if (StringUtils.isNotEmpty(storeIds)) {
+            recharge = RechargeDetailEntity.prechargeByStoreGroup(company, storeIds, rechargeRule, rechargeAmount);
         } else if (store != null) {
             recharge = RechargeDetailEntity.prechargeByStore(store, rechargeRule, rechargeAmount);
         } else {
@@ -118,11 +120,11 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
      * @param totalQuantity 数量
      * @return RechargeRes 充值结果
      */
-    public RechargeResDto freecharge(OrgEntity company, StoEntity store, Collection<StoEntity> stores, int totalQuantity) {
+    public RechargeResDto freecharge(OrgEntity company, StoEntity store, String storeIds, int totalQuantity) {
         Preconditions.checkNotNull(company);
         RechargeDetailEntity recharge;
-        if (CollectionUtils.isNotEmpty(stores)) {
-            recharge = RechargeDetailEntity.freechargeByStoreGroup(company, stores, totalQuantity);
+        if (StringUtils.isNotEmpty(storeIds)) {
+            recharge = RechargeDetailEntity.freechargeByStoreGroup(company, storeIds, totalQuantity);
         } else if (store != null) {
             recharge = RechargeDetailEntity.freechargeByStore(store, totalQuantity);
         } else {

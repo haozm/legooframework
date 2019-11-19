@@ -2,6 +2,7 @@ package com.legooframework.model.smsgateway.mvc;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.legooframework.model.smsgateway.entity.RechargeType;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -10,13 +11,13 @@ import java.util.Collection;
 public class RechargeReqDto {
 
     private final Integer companyId, storeId;
-    private final Collection<Integer> storeIds;
+    private final String storeIds;
     private final RechargeType rechargeType;
     private final double unitPrice;
     private final String remarke;
     private final int rechargeAmount, totalQuantity;
 
-    RechargeReqDto(Integer companyId, Integer storeId, Collection<Integer> storeIds, RechargeType rechargeType, double unitPrice,
+    RechargeReqDto(Integer companyId, Integer storeId, String storeIds, RechargeType rechargeType, double unitPrice,
                    int rechargeAmount, int totalQuantity, String remarke) {
         this.companyId = companyId;
         this.storeId = storeId == null ? -1 : storeId;
@@ -55,11 +56,11 @@ public class RechargeReqDto {
     }
 
     public boolean isStoreGroupRange() {
-        return CollectionUtils.isNotEmpty(this.storeIds);
+        return !Strings.isNullOrEmpty(this.storeIds);
     }
 
     public boolean isCompanyRange() {
-        return -1 == storeId && CollectionUtils.isEmpty(this.storeIds);
+        return -1 == storeId && Strings.isNullOrEmpty(this.storeIds);
     }
 
     public Integer getCompanyId() {
@@ -70,7 +71,7 @@ public class RechargeReqDto {
         return storeId;
     }
 
-    public Collection<Integer> getStoreIds() {
+    public String getStoreIds() {
         return storeIds;
     }
 
