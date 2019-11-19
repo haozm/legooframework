@@ -80,7 +80,7 @@
     <bean id="smsKeywordEntityAction"
           class="com.legooframework.model.smsgateway.entity.SMSKeywordEntityAction"
           parent="smsClientEntityAction"/>
-    <bean id="smsConfigSettingEntityAction" class="com.legooframework.model.smsgateway.entity.SMSSettingEntityAction"
+    <bean id="smsConfigSettingEntityAction" class="com.legooframework.model.smsprovider.entity.SMSSettingEntityAction"
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
     </bean>
