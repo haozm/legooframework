@@ -125,7 +125,7 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         ps.setObject(12, this.getCreator());
         ps.setObject(13, this.freeSend ? 1 : 0);
         ps.setObject(14, this.smsChannel.getChannel());
-        ps.setObject(15, this.businessType.toString());
+        ps.setObject(15, this.businessType.getType());
         ps.setObject(16, this.sms.getJobId());
         ps.setObject(17, this.sms.isEnbaled() ? 1 : 0);
         ps.setObject(18, sms.getCommunicationChannel().getChannel());

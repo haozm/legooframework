@@ -43,13 +43,13 @@ public class SendMsg4InitEntityActionTest {
                     String.format("【武商广场沙驰男装】您好HXJ，在穿着过程中有搭配方面的问题吗，可以随时到店帮您搭配哦，请记得洗涤保养技巧--%d，祝您愉快每一天。退订回T", i));
             smses.add(sms);
         }
-        sendMsg4InitEntityAction.batchMarketChannelInsert(smses, store, batchNo, false, BusinessType.COMMONSMS);
+        sendMsg4InitEntityAction.batchMarketChannelInsert(smses, store, batchNo, false, BusinessType.CUSTOM_CARE);
     }
 
     @Test
     public void loadNeedSyncStateSmsIds() {
         Optional<List<String>> lisr = sendMsg4InitEntityAction.loadNeedSyncStateSmsIds();
-        lisr.ifPresent(asd-> System.out.println(asd));
+        lisr.ifPresent(asd -> System.out.println(asd));
     }
 
 

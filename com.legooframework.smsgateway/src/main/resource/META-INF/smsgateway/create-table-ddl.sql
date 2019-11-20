@@ -263,7 +263,7 @@ CREATE TABLE SMS_TRANSPORT_LOG
   sms_channel           TINYINT UNSIGNED NOT NULL,
   send_mode             TINYINT UNSIGNED NOT NULL DEFAULT 2,
   send_status           TINYINT UNSIGNED NOT NULL,
-  businsess_type        VARCHAR(32)      NOT NULL,
+  businsess_type        TINYINT UNSIGNED NOT NULL,
   send_batchno          VARCHAR(64)      NOT NULL,
   final_state           TINYINT UNSIGNED NOT NULL DEFAULT 0,
   final_state_date      DATETIME         NULL,

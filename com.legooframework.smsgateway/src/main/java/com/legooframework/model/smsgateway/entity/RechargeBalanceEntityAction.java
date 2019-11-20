@@ -35,7 +35,7 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
     public RechargeBalanceEntity createStoreGroupBalance(OrgEntity company, List<StoEntity> stores, String name) {
         RechargeBalanceEntity instance = new RechargeBalanceEntity(company, stores, name);
         Optional<List<RechargeBalanceEntity>> exits_list_opt = findAllStoreGroupBalance(company);
-        if (exits_list_opt.isPresent()) {
+        if (exits_list_opt.isPresent() && !instance.isEmptyStoreIds()) {
             List<RechargeBalanceEntity> exits_list = exits_list_opt.get();
             Set<Integer> _raw = Sets.newHashSet(instance.getStoreIds());
             for (RechargeBalanceEntity exits : exits_list) {

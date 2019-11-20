@@ -20,7 +20,7 @@ public class SMSRechargeService extends BundleService {
      * @param companyId      公司ID
      * @param rechargeAmount 充值金额
      */
-    public void rechargeByCompany(Integer companyId, long rechargeAmount, RechargeType rechargeType) {
+    void rechargeByCompany(Integer companyId, long rechargeAmount, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByCompany(%s,%s)", companyId, rechargeAmount));
         OrgEntity company = getCompany(companyId);
@@ -42,8 +42,8 @@ public class SMSRechargeService extends BundleService {
             logger.debug(String.format("freecharge(%s,%s,%s,%s)", companyId, storeIds, storId, totalQuantity));
         OrgEntity company = getCompany(companyId);
         StoEntity store = storId == null ? null : getStore(storId);
-//        RechargeRes rechargeRes = getBean(RechargeDetailEntityAction.class).freecharge(company, store, storeGroupId, totalQuantity);
-//        addBalance(rechargeRes);
+        RechargeResDto rechargeResDto = getBean(RechargeDetailEntityAction.class).freecharge(company, store, storeIds, totalQuantity);
+        getBean(RechargeBalanceEntityAction.class).addBalance(rechargeResDto);
     }
 
 
@@ -55,8 +55,8 @@ public class SMSRechargeService extends BundleService {
      * @param unitPrice      单价
      * @param remarke        备注
      */
-    public void rechargeByCompanyOnce(Integer companyId, long rechargeAmount, double unitPrice, String remarke,
-                                      RechargeType rechargeType) {
+    void rechargeByCompanyOnce(Integer companyId, long rechargeAmount, double unitPrice, String remarke,
+                               RechargeType rechargeType) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByCompanyOnce(%s,%s,%s,%s)", companyId, rechargeAmount,
                     unitPrice, remarke));
@@ -73,7 +73,7 @@ public class SMSRechargeService extends BundleService {
      * @param storeIds       机构
      * @param rechargeAmount 金额
      */
-    public void rechargeByStoreGroup(Integer companyId, String storeIds, long rechargeAmount, RechargeType rechargeType) {
+    void rechargeByStoreGroup(Integer companyId, String storeIds, long rechargeAmount, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByStoreGroup(%s,%s,%s)", companyId, storeIds, rechargeAmount));
         OrgEntity company = getCompany(companyId);
@@ -94,8 +94,8 @@ public class SMSRechargeService extends BundleService {
         getBean(RechargeBalanceEntityAction.class).addBalance(rechargeResDto);
     }
 
-    public void rechargeByStoreGroupOnce(Integer companyId, String storeIds, long rechargeAmount, double unitPrice,
-                                         String remarke, RechargeType rechargeType) {
+    void rechargeByStoreGroupOnce(Integer companyId, String storeIds, long rechargeAmount, double unitPrice,
+                                  String remarke, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByOrgOnce(%s,%s,%s)", companyId, storeIds, rechargeAmount));
         OrgEntity company = getCompany(companyId);
@@ -123,7 +123,7 @@ public class SMSRechargeService extends BundleService {
      * @param storeId        门店
      * @param rechargeAmount 金额
      */
-    public void rechargeByStore(Integer companyId, Integer storeId, long rechargeAmount, RechargeType rechargeType) {
+    void rechargeByStore(Integer companyId, Integer storeId, long rechargeAmount, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByStore(%s,%s,%s)", companyId, storeId, rechargeAmount));
         OrgEntity company = getCompany(companyId);
@@ -152,8 +152,8 @@ public class SMSRechargeService extends BundleService {
      * @param unitPrice      单价 分
      * @param remarke        备注
      */
-    public void rechargeByStoreOnce(Integer companyId, Integer storeId, long rechargeAmount, double unitPrice,
-                                    String remarke, RechargeType rechargeType) {
+    void rechargeByStoreOnce(Integer companyId, Integer storeId, long rechargeAmount, double unitPrice,
+                             String remarke, RechargeType rechargeType) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeByStoreOnce(%s,%s,%s,%s,%s)", companyId, storeId, rechargeAmount,
                     unitPrice, remarke));
