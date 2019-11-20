@@ -60,12 +60,16 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
             if (addFlag) {
                 Objects.requireNonNull(getJdbcTemplate()).update("UPDATE SMS_RECHARGE_BALANCE SET store_ids = ? WHERE id = ?",
                         instance.getStoreIdsRaw(), instance.getId());
+                if (logger.isDebugEnabled())
+                    logger.debug(String.format("新增门店[%d]个成功", stores.size()));
             }
         } else if (action == 0) {
             boolean delFlag = instance.delStores(stores);
             if (delFlag) {
                 Objects.requireNonNull(getJdbcTemplate()).update("UPDATE SMS_RECHARGE_BALANCE SET store_ids = ? WHERE id = ?",
                         instance.getStoreIdsRaw(), instance.getId());
+                if (logger.isDebugEnabled())
+                    logger.debug(String.format("软删除门店[%d]个成功", stores.size()));
             }
         } else {
             Objects.requireNonNull(getJdbcTemplate()).update("UPDATE SMS_RECHARGE_BALANCE SET delete_flag = 1 WHERE id = ?",

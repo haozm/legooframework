@@ -67,8 +67,9 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
             this.rechargeScope = RechargeScope.paras(res.getInt("rechargeScope"));
             if (this.rechargeScope == RechargeScope.StoreGroup && !Strings.isNullOrEmpty(res.getString("storeIds"))) {
                 String storeIds_raw = res.getString("storeIds");
-                this.storeIds = ImmutableList.copyOf(Stream.of(StringUtils.split(storeIds_raw, ','))
-                        .mapToInt(Integer::parseInt).boxed().collect(Collectors.toList()));
+                this.storeIds = Stream.of(StringUtils.split(storeIds_raw, ','))
+                        .mapToInt(Integer::parseInt).boxed().collect(Collectors.toList());
+                this.storeIds.sort(Comparator.naturalOrder());
             } else {
                 this.storeIds = null;
             }
@@ -124,11 +125,11 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         Set<Integer> removeIds = stores.stream().mapToInt(BaseEntity::getId).boxed().collect(Collectors.toSet());
         Set<Integer> rawIds = Sets.newHashSet(this.storeIds);
         rawIds.removeAll(removeIds);
-        delFlag = SetUtils.isEqualSet(rawIds, this.storeIds);
-        if (!delFlag) {
+        delFlag = !SetUtils.isEqualSet(rawIds, this.storeIds);
+        if (delFlag) {
             this.storeIds = CollectionUtils.isEmpty(rawIds) ? null : Lists.newArrayList(rawIds);
         }
-        return !delFlag;
+        return delFlag;
     }
 
     public boolean isEmptyStoreIds() {
