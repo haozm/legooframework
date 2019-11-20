@@ -125,10 +125,10 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         Set<Integer> rawIds = Sets.newHashSet(this.storeIds);
         rawIds.removeAll(removeIds);
         delFlag = SetUtils.isEqualSet(rawIds, this.storeIds);
-        if (delFlag) {
+        if (!delFlag) {
             this.storeIds = CollectionUtils.isEmpty(rawIds) ? null : Lists.newArrayList(rawIds);
         }
-        return delFlag;
+        return !delFlag;
     }
 
     public boolean isEmptyStoreIds() {
