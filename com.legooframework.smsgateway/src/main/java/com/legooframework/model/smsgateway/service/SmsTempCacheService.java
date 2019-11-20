@@ -54,12 +54,12 @@ public class SmsTempCacheService extends BundleService {
 //                final String resulat, final String weixinId, final String deviceId, final AutoRunChannel autoRunChannel
 
                 template.setContext(_tems[2]);
-                template.setResulat(_tems[3]);
+                //template.setResulat(_tems[3]);
                 template.setWeixinInfo(_tems[4], _tems[5]);
             } else {
 
                 template.setContext("EMPTY");
-                template.setResulat("NOTEXITS");
+                //template.setResulat("NOTEXITS");
                 template.setWeixinInfo(null, null);
             }
         });
