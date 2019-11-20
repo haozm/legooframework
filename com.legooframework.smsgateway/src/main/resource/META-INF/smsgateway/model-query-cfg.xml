@@ -164,7 +164,7 @@
              AND srd.store_id = :storeId
       </#if>
       <#if storeIds??>
-            AND srd.store_ids = :storeIds
+            AND srd.id = :storeIds
       </#if>
       <#if rechargeDate??>
             AND DATE_FORMAT(srd.createTime,'%Y-%m-%d') BETWEEN :rechargeDate_start AND :rechargeDate_end
@@ -217,7 +217,7 @@
             AND srd.store_id = :storeId
       </#if>
       <#if storeIds??>
-            AND srd.store_ids = :storeIds
+            AND srd.id = :storeIds
       </#if>
       <#if rechargeDate??>
             AND DATE_FORMAT(srd.createTime,'%Y-%m-%d') BETWEEN :rechargeDate_start AND :rechargeDate_end
