@@ -1,6 +1,7 @@
 package com.legooframework.model.membercare.entity;
 
 import com.google.common.base.Enums;
+import com.legooframework.model.smsprovider.entity.SMSChannel;
 
 public enum BusinessType {
 
@@ -76,6 +77,10 @@ public enum BusinessType {
 
     private final String desc;
     private final int type, smsChannel;
+
+    public SMSChannel getSMSChannel() {
+        return SMSChannel.paras(this.smsChannel);
+    }
 
     BusinessType(int type, int smsChannel, String desc) {
         this.type = type;

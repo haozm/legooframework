@@ -23,7 +23,7 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
     private final boolean freeSend;
     private SendStatus sendStatus;
 
-    private SendMsg4InitEntity(Integer companyId, Integer storeId, SMSEntity sms, String sendBatchNo, SMSChannel smsChannel,
+    private SendMsg4InitEntity(Integer companyId, Integer storeId, SMSEntity sms, String sendBatchNo,
                                boolean freeSend, BusinessType businessType) {
         super(sms.getSmsId(), companyId.longValue(), -1L);
         this.sms = sms;
@@ -31,7 +31,7 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         this.companyId = companyId;
         this.storeId = storeId;
         this.sendBatchNo = sendBatchNo;
-        this.smsChannel = smsChannel;
+        this.smsChannel = businessType.getSMSChannel();
         this.freeSend = freeSend;
         this.businessType = businessType;
     }
@@ -40,10 +40,16 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         this.sendBatchNo = sendBatchNo;
     }
 
-    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, String smsBatchNo, SMSChannel smsChannel,
+    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, String smsBatchNo,
                                                     boolean freeSend, BusinessType businessType) {
-        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, smsBatchNo, smsChannel,
+        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, smsBatchNo,
                 freeSend, businessType);
+    }
+
+    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, String smsBatchNo,
+                                                    BusinessType businessType) {
+        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, smsBatchNo,
+                false, businessType);
     }
 
     public Integer getStoreId() {
