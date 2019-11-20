@@ -201,7 +201,7 @@ public class RechargeController extends SmsBaseController {
     }
 
     private JdbcQuerySupport getQueryEngine(HttpServletRequest request) {
-        return getBean("smsGateWayQueryFactory", JdbcQuerySupport.class, request);
+        return getBean("smsJdbcQuerySupport", JdbcQuerySupport.class, request);
     }
 
     private MessagingTemplate getMessagingTemplate(HttpServletRequest request) {
