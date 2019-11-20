@@ -234,7 +234,7 @@
              AND srb.company_id = :companyId
              AND srb.recharge_scope = :rechargeScope
         <#if (rechargeScope==2)>
-             AND srb.store_ids = :storeIds
+             AND srb.id = :storeIds
         <#elseif (rechargeScope==3)>
              AND srb.store_id = :storeId
         </#if>
