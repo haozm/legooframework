@@ -49,7 +49,7 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
         return instance;
     }
 
-    public void editStoreGroupBalance(String blanceId, int action, List<StoEntity> stores) {
+    public void editStoreGroupBalance(OrgEntity company, String blanceId, int action, List<StoEntity> stores) {
         Preconditions.checkState(ArrayUtils.contains(new int[]{0, 1, -1}, action), "非法入参 action=%s", action);
         if (action != -1 && CollectionUtils.isEmpty(stores)) return;
         RechargeBalanceEntity instance = loadById(blanceId);
@@ -58,6 +58,17 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
         if (action == 1) {
             boolean addFlag = instance.addStores(stores);
             if (addFlag) {
+                Optional<List<RechargeBalanceEntity>> exits_list_opt = findAllStoreGroupBalance(company);
+                if (exits_list_opt.isPresent()) {
+                    List<RechargeBalanceEntity> exits_list = exits_list_opt.get();
+                    Set<Integer> _raw = Sets.newHashSet(instance.getStoreIds());
+                    for (RechargeBalanceEntity exits : exits_list) {
+                        if (exits.isEmptyStoreIds() || exits.getId().equals(blanceId)) continue;
+                        Set<Integer> $it = Sets.newHashSet(exits.getStoreIds());
+                        Sets.SetView<Integer> intersection = Sets.intersection(_raw, $it);
+                        Preconditions.checkState(CollectionUtils.isEmpty(intersection), "已经存在门店%s 在其他分组", intersection);
+                    }
+                }
                 Objects.requireNonNull(getJdbcTemplate()).update("UPDATE SMS_RECHARGE_BALANCE SET store_ids = ? WHERE id = ?",
                         instance.getStoreIdsRaw(), instance.getId());
                 if (logger.isDebugEnabled())

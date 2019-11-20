@@ -102,6 +102,8 @@ public class RechargeController extends SmsBaseController {
         LoginContextHolder.setAnonymousCtx();
         try {
             Integer action = MapUtils.getInteger(requestBody, "action", 2);
+            Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
+            OrgEntity company = loadCompanyById(companyId, request);
             String nodeId = MapUtils.getString(requestBody, "nodeId");
             String storeIds_raw = MapUtils.getString(requestBody, "storeIds", null);
             Optional<List<StoEntity>> stores = Optional.empty();
@@ -112,7 +114,7 @@ public class RechargeController extends SmsBaseController {
                 stores = getBean(StoEntityAction.class, request).findByIds(storeIds);
                 Preconditions.checkState(stores.isPresent(), "给定的列表无合法的门店....");
             }
-            getBean(RechargeBalanceEntityAction.class, request).editStoreGroupBalance(nodeId, action, stores.orElse(null));
+            getBean(RechargeBalanceEntityAction.class, request).editStoreGroupBalance(company, nodeId, action, stores.orElse(null));
             return JsonMessageBuilder.OK().toMessage();
         } finally {
             LoginContextHolder.clear();
