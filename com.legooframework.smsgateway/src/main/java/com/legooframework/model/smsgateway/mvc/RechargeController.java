@@ -150,26 +150,31 @@ public class RechargeController extends SmsBaseController {
     }
 
     @PostMapping(value = "/balance/total.json")
-    public JsonMessage rechargeBlance(@RequestBody(required = false) Map<String, Object> requestBody,
-                                      HttpServletRequest request) {
+    public JsonMessage rechargeBlanceTotal(@RequestBody(required = false) Map<String, Object> requestBody,
+                                           HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("rechargeBlance(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
-        Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
-        OrgEntity company = loadCompanyById(companyId, request);
-        int scope = MapUtils.getInteger(requestBody, "scope", -1);
-        RechargeScope rechargeScope = RechargeScope.paras(scope);
-        String nodeId = MapUtils.getString(requestBody, "nodeId");
-        Map<String, Object> params = company.toParamMap();
-        params.put("rechargeScope", rechargeScope.getScope());
-        if (RechargeScope.StoreGroup == rechargeScope) {
-            params.put("storeIds", nodeId);
-        } else if (RechargeScope.Store == rechargeScope) {
-            params.put("storeId", Integer.parseInt(nodeId));
+            logger.debug(String.format("rechargeBlanceTotal(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
+        try {
+            LoginContextHolder.setIfNotExitsAnonymousCtx();
+            Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
+            OrgEntity company = loadCompanyById(companyId, request);
+            int scope = MapUtils.getInteger(requestBody, "scope", -1);
+            RechargeScope rechargeScope = RechargeScope.paras(scope);
+            String nodeId = MapUtils.getString(requestBody, "nodeId");
+            Map<String, Object> params = company.toParamMap();
+            params.put("rechargeScope", rechargeScope.getScope());
+            if (RechargeScope.StoreGroup == rechargeScope) {
+                params.put("storeIds", nodeId);
+            } else if (RechargeScope.Store == rechargeScope) {
+                params.put("storeId", Integer.parseInt(nodeId));
+            }
+            Map<String, Object> res = Maps.newHashMap();
+            Optional<Long> size = getQueryEngine(request).queryForObject("RechargeDetailEntity", "loadBalanceByInstance", params, Long.class);
+            res.put("balance", size.orElse(0L));
+            return JsonMessageBuilder.OK().withPayload(res).toMessage();
+        } finally {
+            LoginContextHolder.clear();
         }
-        Map<String, Object> res = Maps.newHashMap();
-        Optional<Long> size = getQueryEngine(request).queryForObject("RechargeDetailEntity", "loadBalanceByInstance", params, Long.class);
-        res.put("balance", size.orElse(0L));
-        return JsonMessageBuilder.OK().withPayload(res).toMessage();
     }
 
     @PostMapping(value = "/{channel}/{range}/detail.json")
@@ -195,11 +200,11 @@ public class RechargeController extends SmsBaseController {
         return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
     }
 
-    JdbcQuerySupport getQueryEngine(HttpServletRequest request) {
+    private JdbcQuerySupport getQueryEngine(HttpServletRequest request) {
         return getBean("smsGateWayQueryFactory", JdbcQuerySupport.class, request);
     }
 
-    MessagingTemplate getMessagingTemplate(HttpServletRequest request) {
+    private MessagingTemplate getMessagingTemplate(HttpServletRequest request) {
         return getBean("smsMessagingTemplate", MessagingTemplate.class, request);
     }
 
