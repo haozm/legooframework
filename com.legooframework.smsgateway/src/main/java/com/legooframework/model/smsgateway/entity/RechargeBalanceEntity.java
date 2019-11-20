@@ -1,7 +1,6 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.*;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.legooframework.model.core.base.entity.BaseEntity;
@@ -180,11 +179,12 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
 
     @Override
     public Map<String, Object> toParamMap(String... excludes) {
-        Map<String, Object> params = super.toParamMap("companyId", "storeId", "storeIds",
-                "storeGroupId", "rechargeScope", "balance");
+        Map<String, Object> params = super.toParamMap("companyId", "storeId", "storeIds", "rechargeScope", "balance");
         params.put("companyId", companyId);
         params.put("storeId", storeId == null ? -1 : storeId);
-        params.put("storeIds", CollectionUtils.isEmpty(this.storeIds) ? null : Joiner.on(',').join(this.storeIds));
+        if (CollectionUtils.isNotEmpty(this.storeIds)) {
+            params.put("storeIds", Joiner.on(',').join(this.storeIds));
+        }
         params.put("rechargeScope", rechargeScope.getScope());
         params.put("balance", balance);
         params.put("groupName", groupName);
