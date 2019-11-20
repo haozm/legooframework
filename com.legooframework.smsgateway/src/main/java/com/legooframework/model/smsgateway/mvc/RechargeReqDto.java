@@ -8,6 +8,7 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.Collection;
 
+// 充值包
 public class RechargeReqDto {
 
     private final Integer companyId, storeId;

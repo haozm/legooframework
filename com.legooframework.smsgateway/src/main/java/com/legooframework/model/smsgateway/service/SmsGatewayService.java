@@ -60,8 +60,7 @@ public class SmsGatewayService extends BundleService {
         LoginContextHolder.setCtx(user.toLoginContext());
         try {
             if (StringUtils.equals("recharge", action)) {// 充值行为
-                RechargeReqDto rechargeDto = (RechargeReqDto) payload;
-                this.recharge(rechargeDto);
+                this.recharge((RechargeReqDto) payload);
             } else if (StringUtils.equals("charge", action)) { // 计费统计
                 DeductionReqDto deduction = (DeductionReqDto) payload;
                 String batch_no = this.charge(LoginContextHolder.get(), deduction.getSmses(), deduction.getBusinessType(),
