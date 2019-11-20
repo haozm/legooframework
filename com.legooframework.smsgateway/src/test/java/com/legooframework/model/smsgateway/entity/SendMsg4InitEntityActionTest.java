@@ -33,7 +33,8 @@ public class SendMsg4InitEntityActionTest {
         StoEntity store = stoEntityAction.loadById(1120);
         for (int i = 0; i < 10; i++) {
             SMSEntity sms = SMSEntity.createSMSMsgWithNoJob(UUID.randomUUID().toString(), 12, "18588828127", "HAOXIAOJIE",
-                    String.format("【武商广场沙驰男装】您好HXJ，在穿着过程中有搭配方面的问题吗，可以随时到店帮您搭配哦，请记得洗涤保养技巧--%d，祝您愉快每一天。退订回T", i));
+                    String.format("【武商广场沙驰男装】您好HXJ，在穿着过程中有搭配方面的问题吗，可以随时到店帮您搭配哦，请记得洗涤保养技巧--%d，祝您愉快每一天。退订回T", i)
+                    , null);
             smses.add(sms);
         }
         // sendMsg4InitEntityAction.batchMarketChannelInsert(smses, store, batchNo, false, BusinessType.CUSTOM_CARE);

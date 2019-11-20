@@ -8,6 +8,7 @@ import com.google.common.collect.Lists;
 import com.legooframework.model.commons.entity.SendChannel;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.core.utils.WebUtils;
+import com.legooframework.model.membercare.entity.BusinessType;
 import org.apache.commons.lang3.StringUtils;
 
 import java.sql.ResultSet;
@@ -28,8 +29,10 @@ public class SMSEntity {
     private final String weixinId, deviceId;
     private String remark;
 
+    private BusinessType businessType;
+
     private SMSEntity(String originalId, String content, String phoneNo, Integer memberId, String memberName,
-                      Integer jobId, boolean enbaled, String remark) {
+                      Integer jobId, boolean enbaled, String remark, BusinessType businessType) {
         this.content = content;
         this.smsId = originalId;
         this.wordCount = content.length();
@@ -43,10 +46,11 @@ public class SMSEntity {
         this.weixinId = null;
         this.deviceId = null;
         this.remark = remark;
+        this.businessType = businessType;
     }
 
     private SMSEntity(String originalId, String content, Integer memberId, String memberName, Integer jobId,
-                      String weixinId, String deviceId, boolean enbaled, String remark) {
+                      String weixinId, String deviceId, boolean enbaled, String remark, BusinessType businessType) {
         this.content = content;
         this.smsId = originalId;
         this.wordCount = content.length();
@@ -60,6 +64,7 @@ public class SMSEntity {
         this.weixinId = weixinId;
         this.deviceId = deviceId;
         this.remark = remark;
+        this.businessType = businessType;
     }
 
 //    public static SMSEntity createSMSMsgWithJob(String smsId, Integer memberId, String phoneNo,
@@ -69,9 +74,9 @@ public class SMSEntity {
 //    }
 
     public static SMSEntity createSMSMsgWithNoJob(String smsId, Integer memberId, String phoneNo, String memberName,
-                                                  String content) {
+                                                  String content, BusinessType businessType) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(StringUtils.trimToNull(content)), "短信内容为空,创建短信失败....");
-        return new SMSEntity(smsId, content, phoneNo, memberId, memberName, 0, true, null);
+        return new SMSEntity(smsId, content, phoneNo, memberId, memberName, 0, true, null, businessType);
     }
 
     public static List<SMSEntity> createSMSMsg(SendMessageTemplate msgTmp) {
@@ -97,7 +102,7 @@ public class SMSEntity {
         if (msgTmp.isWxExits()) {
             SMSEntity res = new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMemberId(),
                     msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.getWeixinId(), msgTmp.getDeviceId(), msgTmp.isOK(),
-                    msgTmp.getRemark());
+                    msgTmp.getRemark(), msgTmp.getBusinessType());
             return Optional.of(res);
         }
         return Optional.empty();
@@ -107,14 +112,17 @@ public class SMSEntity {
         if (msgTmp.isOK()) {
             if (msgTmp.hasLegalPhone()) {
                 return new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
-                        msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.isOK(), msgTmp.getRemark());
+                        msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(),
+                        msgTmp.isOK(), msgTmp.getRemark(), msgTmp.getBusinessType());
             } else {
                 return new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
-                        msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), false, "非法的移动电话号码...");
+                        msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), false,
+                        "非法的移动电话号码...", msgTmp.getBusinessType());
             }
         } else {
             return new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
-                    msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), false, msgTmp.getRemark());
+                    msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), false,
+                    msgTmp.getRemark(), msgTmp.getBusinessType());
         }
     }
 
@@ -151,6 +159,9 @@ public class SMSEntity {
         return SendChannel.WEIXIN == this.sendChannel;
     }
 
+    public BusinessType getBusinessType() {
+        return businessType;
+    }
 
     static SMSEntity createInstance(ResultSet res) {
         return new SMSEntity(res);

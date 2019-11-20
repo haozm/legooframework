@@ -24,7 +24,7 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
     private final boolean freeSend;
     private SendStatus sendStatus;
 
-    private SendMsg4InitEntity(Integer companyId, Integer storeId, SMSEntity sms, boolean freeSend, BusinessType businessType) {
+    private SendMsg4InitEntity(Integer companyId, Integer storeId, SMSEntity sms, boolean freeSend) {
         super(sms.getSmsId(), companyId.longValue(), -1L);
         this.sms = sms;
         if (this.sms.isEnbaled()) {
@@ -34,9 +34,9 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         }
         this.companyId = companyId;
         this.storeId = storeId;
-        this.smsChannel = businessType.getSMSChannel();
+        this.smsChannel = sms.getBusinessType().getSMSChannel();
         this.freeSend = freeSend;
-        this.businessType = businessType;
+        this.businessType = sms.getBusinessType();
     }
 
     void setSendBatchNo(String sendBatchNo) {
@@ -44,12 +44,12 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
             this.sendBatchNo = sendBatchNo;
     }
 
-    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, boolean freeSend, BusinessType businessType) {
-        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, freeSend, businessType);
+    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, boolean freeSend) {
+        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, freeSend);
     }
 
-    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, BusinessType businessType) {
-        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, false, businessType);
+    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms) {
+        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, false);
     }
 
     public boolean isSMSMsg() {

@@ -8,6 +8,7 @@ import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
+import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.RowMapper;
@@ -33,11 +34,11 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
 
     /**
      * @param store     OOXX
-     * @param batchNo   批次好
      * @param instances 信息实例
      */
-    public void batchInsert(StoEntity store, String batchNo, Collection<SendMsg4InitEntity> instances) {
-        if (CollectionUtils.isEmpty(instances)) return;
+    public String batchInsert(StoEntity store, Collection<SendMsg4InitEntity> instances) {
+        Preconditions.checkArgument(CollectionUtils.isNotEmpty(instances));
+        String batchNo = String.format("%d-%d-%s", store.getCompanyId(), store.getId(), LocalDateTime.now().toString("yyyyMMddHHmmss"));
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchInsert(store=%d,batchNo=%s,Collection<SendMsg4SendEntity> = %d) start", store.getId(),
                     batchNo, instances.size()));
@@ -49,6 +50,7 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchInsert(store=%d,batchNo=%s,Collection<SendMsg4SendEntity> = %d) end", store.getId(),
                     batchNo, instances.size()));
+        return batchNo;
     }
 
     public void updateSendState(SendMsg4SendEntity sendEntity) {

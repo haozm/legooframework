@@ -34,7 +34,7 @@ public class SMSBatchSaveLogEntityActionTest {
         List<SMSEntity> smses = Lists.newArrayList();
         for (int i = 0; i < 3000; i++) {
             smses.add(SMSEntity.createSMSMsgWithNoJob(UUID.randomUUID().toString(), -1, "18588828127",
-                    null, String.format(ssm, i)));
+                    null, String.format(ssm, i), null));
         }
         KvDictEntity businessType = kvDictEntityAction.findByValue("SMS_BUS_TYPE", "90TOUCHED").get();
         final SMSSendRuleEntity sendRule = smsSendRuleEntityAction.loadByType(BusinessType.TOUCHED90);
