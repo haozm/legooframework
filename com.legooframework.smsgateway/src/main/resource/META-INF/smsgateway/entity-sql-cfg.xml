@@ -328,7 +328,7 @@
            WHERE smb.company_id = :companyId
              AND smb.recharge_scope = :rechargeScope
              AND smb.store_id = :storeId
-             AND smb.store_group_id = :storeGroupId
+             AND smb.store_ids = :storeIds
              AND smb.delete_flag = 0
             ]]></body>
         </sql>
