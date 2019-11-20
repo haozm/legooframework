@@ -184,6 +184,8 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         params.put("storeId", storeId == null ? -1 : storeId);
         if (CollectionUtils.isNotEmpty(this.storeIds)) {
             params.put("storeIds", Joiner.on(',').join(this.storeIds));
+        } else {
+            params.put("storeIds", null);
         }
         params.put("rechargeScope", rechargeScope.getScope());
         params.put("balance", balance);
