@@ -17,7 +17,7 @@ public enum RechargeScope {
         this.desc = desc;
     }
 
-    static RechargeScope paras(int val) {
+    public static RechargeScope paras(int val) {
         RechargeScope res;
         switch (val) {
             case 1:

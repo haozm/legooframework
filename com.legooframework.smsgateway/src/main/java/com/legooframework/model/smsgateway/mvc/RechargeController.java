@@ -14,10 +14,7 @@ import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.StoEntityAction;
 import com.legooframework.model.covariant.entity.UserAuthorEntity;
-import com.legooframework.model.smsgateway.entity.RechargeBalanceEntity;
-import com.legooframework.model.smsgateway.entity.RechargeBalanceEntityAction;
-import com.legooframework.model.smsgateway.entity.RechargeTreeDto;
-import com.legooframework.model.smsgateway.entity.RechargeType;
+import com.legooframework.model.smsgateway.entity.*;
 import com.legooframework.model.smsgateway.service.BundleService;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -152,23 +149,25 @@ public class RechargeController extends SmsBaseController {
         return JsonMessageBuilder.OK().toMessage();
     }
 
-    @PostMapping(value = "/{channel}/balance.json")
-    public JsonMessage rechargelance(@PathVariable(value = "channel") String channel,
-                                     @RequestBody(required = false) Map<String, Object> requestBody,
-                                     HttpServletRequest request) {
+    @PostMapping(value = "/balance/total.json")
+    public JsonMessage rechargeBlance(@RequestBody(required = false) Map<String, Object> requestBody,
+                                      HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("recharge(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
-        Preconditions.checkArgument(ArrayUtils.contains(CHANNELS, channel), "非法的取值 %s,取值范围为：%s", channel, CHANNELS);
+            logger.debug(String.format("rechargeBlance(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
         Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
-        int storeId = MapUtils.getIntValue(requestBody, "storeId", -1);
-        String storeGroupId = MapUtils.getString(requestBody, "storeGroupId", "NONE");
+        int scope = MapUtils.getInteger(requestBody, "scope", -1);
+        RechargeScope rechargeScope = RechargeScope.paras(scope);
+        String nodeId = MapUtils.getString(requestBody, "nodeId");
         Map<String, Object> params = Maps.newHashMap();
         params.put("companyId", companyId);
-        params.put("storeId", storeId);
-        params.put("storeGroupId", storeGroupId);
+        params.put("rechargeScope", rechargeScope.getScope());
+        if (RechargeScope.StoreGroup == rechargeScope) {
+            params.put("storeIds", nodeId);
+        } else if (RechargeScope.Store == rechargeScope) {
+            params.put("storeId", Integer.parseInt(nodeId));
+        }
         Map<String, Object> res = Maps.newHashMap();
-        Optional<Long> size = getQueryEngine(request)
-                .queryForObject("RechargeDetailEntity", "loadBalanceByInstance", params, Long.class);
+        Optional<Long> size = getQueryEngine(request).queryForObject("RechargeDetailEntity", "loadBalanceByInstance", params, Long.class);
         res.put("balance", size.orElse(0L));
         return JsonMessageBuilder.OK().withPayload(res).toMessage();
     }

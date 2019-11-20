@@ -185,7 +185,7 @@
                 srd.company_id AS 'companyId',
                 org.name AS 'companyName',
                 srd.store_id AS 'storeId',
-                srd.store_group_id AS 'storeGroupId',
+                srd.store_ids AS 'storeGroupId',
                 srd.recharge_type AS 'rechargeType',
                 CASE srd.recharge_type
                     WHEN 1 THEN '充值'
@@ -234,9 +234,14 @@
             <body><![CDATA[
           SELECT srb.sms_balance
             FROM SMS_RECHARGE_BALANCE srb
-           WHERE srb.company_id = :companyId
+           WHERE srb.delete_flag = 0
+             AND srb.company_id = :companyId
+             AND srb.recharge_scope = :rechargeScope
+        <#if (rechargeScope==2)>
+             AND srb.store_ids = :storeIds
+        <#elseif (rechargeScope==3)>
              AND srb.store_id = :storeId
-             AND srb.store_group_id = :storeGroupId
+        </#if>
             ]]></body>
         </sql>
     </model>
