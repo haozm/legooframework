@@ -121,12 +121,13 @@
     <bean id="smsTempCacheService" class="com.legooframework.model.smsgateway.service.SmsTempCacheService"/>
     <bean id="smsRechargeService" class="com.legooframework.model.smsgateway.service.SMSRechargeService"/>
     <bean id="smsGatewayService" class="com.legooframework.model.smsgateway.service.SmsGatewayService"/>
+    <bean id="smsAnyListenerService" class="com.legooframework.model.smsgateway.service.SmsAnyListenerService"/>
     <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
 
     <int:channel id="channel_sms_billing">
         <int:queue capacity="128"/>
     </int:channel>
-    <int:service-activator input-channel="channel_sms_billing" ref="smsGatewayService" method="billingAndDeduction"
+    <int:service-activator input-channel="channel_sms_billing" ref="smsAnyListenerService" method="billingAndDeduction"
                            auto-startup="true">
         <int:poller max-messages-per-poll="1" fixed-delay="500" receive-timeout="300000"/>
     </int:service-activator>
