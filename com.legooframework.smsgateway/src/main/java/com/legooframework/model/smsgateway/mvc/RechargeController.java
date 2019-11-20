@@ -4,10 +4,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
-import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.JdbcQuerySupport;
-import com.legooframework.model.core.jdbc.PagingResult;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.covariant.entity.OrgEntity;
@@ -18,14 +16,16 @@ import com.legooframework.model.smsgateway.entity.*;
 import com.legooframework.model.smsgateway.service.BundleService;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.integration.core.MessagingTemplate;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -122,31 +122,36 @@ public class RechargeController extends SmsBaseController {
     public JsonMessage rechargeAction(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) throws Exception {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeAction(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
-        UserAuthorEntity user = loadLoginUser(requestBody, request);
-        Integer companyId = MapUtils.getInteger(requestBody, "companyId");
-        Preconditions.checkNotNull(companyId, "公司Id不可以为空值...");
-        String storeIds = MapUtils.getString(requestBody, "storeIds", null);
-        Integer storeId = null;
-        if (Strings.isNullOrEmpty(storeIds)) {
-            storeId = MapUtils.getInteger(requestBody, "storeId", -1);
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            Integer companyId = MapUtils.getInteger(requestBody, "companyId");
+            Preconditions.checkNotNull(companyId, "公司Id不可以为空值...");
+            String storeIds = MapUtils.getString(requestBody, "storeIds", null);
+            Integer storeId = null;
+            if (Strings.isNullOrEmpty(storeIds)) {
+                storeId = MapUtils.getInteger(requestBody, "storeId", -1);
+            }
+            String type = MapUtils.getString(requestBody, "type");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(type), "入参 type 不可以为空...");
+            RechargeType rechargeType = Enum.valueOf(RechargeType.class, type);
+            double unitPrice = MapUtils.getDoubleValue(requestBody, "unitPrice", 0.0D);
+            String remarke = MapUtils.getString(requestBody, "remarke");
+            int rechargeAmount = MapUtils.getIntValue(requestBody, "rechargeAmount");
+            int totalQuantity = MapUtils.getIntValue(requestBody, "totalQuantity");
+            RechargeReqDto rechargeDto = new RechargeReqDto(companyId, storeId, storeIds, rechargeType, unitPrice,
+                    rechargeAmount, totalQuantity, remarke);
+            Message<RechargeReqDto> msg_request = MessageBuilder.withPayload(rechargeDto)
+                    .setHeader("user", user)
+                    .setHeader("action", "recharge")
+                    .build();
+            Message<?> message_rsp = getMessagingTemplate(request).sendAndReceive(BundleService.CHANNEL_SMS_BILLING, msg_request);
+            if (message_rsp.getPayload() instanceof Exception)
+                throw (Exception) message_rsp.getPayload();
+            return JsonMessageBuilder.OK().toMessage();
+        } finally {
+            LoginContextHolder.clear();
         }
-        String type = MapUtils.getString(requestBody, "type");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(type), "入参 type 不可以为空...");
-        RechargeType rechargeType = Enum.valueOf(RechargeType.class, type);
-        double unitPrice = MapUtils.getDoubleValue(requestBody, "unitPrice", 0.0D);
-        String remarke = MapUtils.getString(requestBody, "remarke");
-        int rechargeAmount = MapUtils.getIntValue(requestBody, "rechargeAmount");
-        int totalQuantity = MapUtils.getIntValue(requestBody, "totalQuantity");
-        RechargeReqDto rechargeDto = new RechargeReqDto(companyId, storeId, storeIds, rechargeType, unitPrice,
-                rechargeAmount, totalQuantity, remarke);
-        Message<RechargeReqDto> msg_request = MessageBuilder.withPayload(rechargeDto)
-                .setHeader("user", user)
-                .setHeader("action", "recharge")
-                .build();
-        Message<?> message_rsp = getMessagingTemplate(request).sendAndReceive(BundleService.CHANNEL_SMS_BILLING, msg_request);
-        if (message_rsp.getPayload() instanceof Exception)
-            throw (Exception) message_rsp.getPayload();
-        return JsonMessageBuilder.OK().toMessage();
     }
 
     @PostMapping(value = "/balance/total.json")
@@ -177,27 +182,24 @@ public class RechargeController extends SmsBaseController {
         }
     }
 
-    @PostMapping(value = "/{channel}/{range}/detail.json")
-    public JsonMessage rechargeDetails4Manager(@PathVariable(value = "channel") String channel,
-                                               @PathVariable(value = "range") String range,
-                                               @RequestBody(required = false) Map<String, Object> requestBody,
+    @PostMapping(value = "/balance/detail.json")
+    public JsonMessage rechargeDetails4Manager(@RequestBody(required = false) Map<String, Object> requestBody,
                                                HttpServletRequest request) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeDetails4Manager(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
-        Preconditions.checkArgument(ArrayUtils.contains(CHANNELS, channel), "非法的取值 %s,取值范围为：%s", channel, CHANNELS);
         int pageNum = MapUtils.getIntValue(requestBody, "pageNum", 1);
         int pageSize = MapUtils.getIntValue(requestBody, "pageSize", 10);
-        Preconditions.checkArgument(StringUtils.containsAny(range, "all", "company"), "非法的参数请求%s", range);
-        Map<String, Object> params = Maps.newHashMap(requestBody);
-        if (StringUtils.equals("company", range)) {
-            LoginContext user = LoginContextHolder.get();
-            params.put("companyId", user.getTenantId().intValue());
-            if (user.isStoreManager()) {
-                params.put("storeId", user.getStoreId());
-            }
-        }
-        PagingResult page = getQueryEngine(request).queryForPage("RechargeDetailEntity", "list", pageNum, pageSize, params);
-        return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
+//        Preconditions.checkArgument(StringUtils.containsAny(range, "all", "company"), "非法的参数请求%s", range);
+//        Map<String, Object> params = Maps.newHashMap(requestBody);
+//        if (StringUtils.equals("company", range)) {
+//            LoginContext user = LoginContextHolder.get();
+//            params.put("companyId", user.getTenantId().intValue());
+//            if (user.isStoreManager()) {
+//                params.put("storeId", user.getStoreId());
+//            }
+//        }
+//        PagingResult page = getQueryEngine(request).queryForPage("RechargeDetailEntity", "rechargeDetail", pageNum, pageSize, params);
+        return JsonMessageBuilder.OK().withPayload(null).toMessage();
     }
 
     private JdbcQuerySupport getQueryEngine(HttpServletRequest request) {

@@ -154,7 +154,7 @@
         </sql>
     </model>
     <model id="RechargeDetailEntity">
-        <sql id="list_count" dynamic="true">
+        <sql id="rechargeDetail_count" dynamic="true">
             <body><![CDATA[
           SELECT COUNT(srd.id)
             FROM SMS_RECHARGE_DETAIL srd
@@ -173,11 +173,11 @@
       </#if>
             ]]></body>
         </sql>
-        <sql id="list" dynamic="true">
+        <sql id="rechargeDetail" dynamic="true">
             <params>
                 <p name="companyId" type="INT"/>
                 <p name="storeId" type="INT"/>
-                <p name="storeGroupId" type="STRING"/>
+                <p name="storeIds" type="STRING"/>
                 <p name="rechargeDate" type="DATERANGE"/>
             </params>
             <body><![CDATA[
