@@ -6,6 +6,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.JdbcQuerySupport;
+import com.legooframework.model.core.jdbc.PagingResult;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.covariant.entity.OrgEntity;
@@ -159,8 +160,8 @@ public class RechargeController extends SmsBaseController {
                                            HttpServletRequest request) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeBlanceTotal(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
         try {
-            LoginContextHolder.setIfNotExitsAnonymousCtx();
             Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
             OrgEntity company = loadCompanyById(companyId, request);
             int scope = MapUtils.getInteger(requestBody, "scope", -1);
@@ -183,23 +184,23 @@ public class RechargeController extends SmsBaseController {
     }
 
     @PostMapping(value = "/balance/detail.json")
-    public JsonMessage rechargeDetails4Manager(@RequestBody(required = false) Map<String, Object> requestBody,
-                                               HttpServletRequest request) {
+    public JsonMessage rechargeDetails4Manager(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeDetails4Manager(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
         int pageNum = MapUtils.getIntValue(requestBody, "pageNum", 1);
-        int pageSize = MapUtils.getIntValue(requestBody, "pageSize", 10);
-//        Preconditions.checkArgument(StringUtils.containsAny(range, "all", "company"), "非法的参数请求%s", range);
-//        Map<String, Object> params = Maps.newHashMap(requestBody);
-//        if (StringUtils.equals("company", range)) {
-//            LoginContext user = LoginContextHolder.get();
-//            params.put("companyId", user.getTenantId().intValue());
-//            if (user.isStoreManager()) {
-//                params.put("storeId", user.getStoreId());
-//            }
-//        }
-//        PagingResult page = getQueryEngine(request).queryForPage("RechargeDetailEntity", "rechargeDetail", pageNum, pageSize, params);
-        return JsonMessageBuilder.OK().withPayload(null).toMessage();
+        int pageSize = MapUtils.getIntValue(requestBody, "pageSize", 20);
+        try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
+            Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
+            Map<String, Object> params = user.toViewMap();
+            params.put("companyId", companyId);
+            params.putAll(requestBody);
+            PagingResult page = getQueryEngine(request).queryForPage("RechargeDetailEntity", "rechargeDetail", pageNum, pageSize, params);
+            return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
     }
 
     private JdbcQuerySupport getQueryEngine(HttpServletRequest request) {
