@@ -320,7 +320,7 @@ public class SmsAnyListenerService extends BundleService {
                     } else if (rechargeDto.isStoreGroupRange()) {
                         getBean(SMSRechargeService.class).rechargeByStoreGroup(rechargeDto.getCompanyId(),
                                 rechargeDto.getStoreIds(),
-                                rechargeDto.getStoreId(), rechargeDto.getRechargeType());
+                                rechargeDto.getRechargeAmount(), rechargeDto.getRechargeType());
                     } else {
                         getBean(SMSRechargeService.class).rechargeByCompany(rechargeDto.getCompanyId(),
                                 rechargeDto.getRechargeAmount(), rechargeDto.getRechargeType());
