@@ -149,7 +149,7 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
     }
 
     String getStoreIdsRaw() {
-        return Joiner.on(',').join(this.storeIds);
+        return CollectionUtils.isEmpty(this.storeIds) ? null : Joiner.on(',').join(this.storeIds);
     }
 
     boolean contains(StoEntity store) {
