@@ -2,6 +2,7 @@ package com.legooframework.model.smsprovider.mvc;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
@@ -46,14 +47,19 @@ public class MvcController extends BaseController {
     public JsonMessage checkSmsPrefix(@RequestBody(required = false) Map<String, Object> requestBody,
                                       HttpServletRequest request) throws Exception {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
-        String prefix = MapUtils.getString(requestBody, "smsPrefix");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix), "入参 smsPrefix 不可以未空...");
-        Preconditions.checkState(prefix.length() <= 13, "短信前缀最大长度需>=13");
-        Preconditions.checkState(user.hasStore(), "需指定修改的门店....");
-        StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
-        Optional<List<SMSSettingEntity>> list = getBean(SMSSettingEntityAction.class, request)
-                .checkSmsPrefix(store, prefix);
-        return JsonMessageBuilder.OK().withPayload(list.map(List::size).orElse(0)).toMessage();
+        try {
+            LoginContextHolder.setCtx(user.toLoginContext());
+            String prefix = MapUtils.getString(requestBody, "smsPrefix");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix), "入参 smsPrefix 不可以未空...");
+            Preconditions.checkState(prefix.length() <= 13, "短信前缀最大长度需>=13");
+            Preconditions.checkState(user.hasStore(), "需指定修改的门店....");
+            StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
+            Optional<List<SMSSettingEntity>> list = getBean(SMSSettingEntityAction.class, request)
+                    .checkSmsPrefix(store, prefix);
+            return JsonMessageBuilder.OK().withPayload(list.map(List::size).orElse(0)).toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
     }
 
     /**
@@ -83,13 +89,18 @@ public class MvcController extends BaseController {
     public JsonMessage loadSmsPreix(@RequestBody(required = false) Map<String, Object> requestBody,
                                     HttpServletRequest request) throws Exception {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
-        if (user.hasStore()) {
-            getBean(SMSSettingEntityAction.class, request).loadByStoreId(user.getCompanyId(), user.getStoreId().orElse(0));
-        } else if (user.hasStores() && user.getSubStoreIds().isPresent()) {
-            getBean(SMSSettingEntityAction.class, request).loadByStoreIds(user.getCompanyId(),
-                    user.getSubStoreIds().get().toArray(new Integer[0]));
+        try {
+            LoginContextHolder.setCtx(user.toLoginContext());
+            if (user.hasStore()) {
+                getBean(SMSSettingEntityAction.class, request).loadByStoreId(user.getCompanyId(), user.getStoreId().orElse(0));
+            } else if (user.hasStores() && user.getSubStoreIds().isPresent()) {
+                getBean(SMSSettingEntityAction.class, request).loadByStoreIds(user.getCompanyId(),
+                        user.getSubStoreIds().get().toArray(new Integer[0]));
+            }
+            return JsonMessageBuilder.OK().toMessage();
+        } finally {
+            LoginContextHolder.clear();
         }
-        return JsonMessageBuilder.OK().toMessage();
     }
 
     UserAuthorEntity loadLoginUser(Map<String, Object> requestBody, HttpServletRequest request) {
