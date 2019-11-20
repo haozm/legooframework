@@ -69,7 +69,7 @@ public class RechargeReqDto {
     }
 
     public Integer getStoreId() {
-        return storeId;
+        return storeId == null ? -1 : storeId;
     }
 
     public String getStoreIds() {

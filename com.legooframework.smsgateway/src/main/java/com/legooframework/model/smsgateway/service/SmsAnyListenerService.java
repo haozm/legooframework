@@ -234,8 +234,10 @@ public class SmsAnyListenerService extends BundleService {
 
         if (logger.isDebugEnabled())
             logger.debug(String.format("writeOffService() total : %s", total));
-        Multimap<String, ChargeDetailEntity> chargeDetail_map = getBean(ChargeDetailEntityAction.class).loadBySmsBatchNos(total.keySet());
-        List<String> balanceIds = chargeDetail_map.entries().stream().map(x -> x.getValue().getBalanceId()).collect(Collectors.toList());
+        Multimap<String, ChargeDetailEntity> chargeDetail_map = getBean(ChargeDetailEntityAction.class)
+                .loadBySmsBatchNos(total.keySet());
+        List<String> balanceIds = chargeDetail_map.entries().stream().map(x -> x.getValue().getBalanceId())
+                .collect(Collectors.toList());
         List<RechargeBalanceEntity> balances = getBean(RechargeBalanceEntityAction.class).loadByIds(balanceIds);
         final List<ChargeDetailEntity> change_detail = Lists.newArrayList();
         final List<RechargeBalanceEntity> change_balance = Lists.newArrayList();
@@ -290,8 +292,10 @@ public class SmsAnyListenerService extends BundleService {
         TransactionStatus ts = startTx(null);
         try {
             if (rechargeDto.isFreeCharge()) {
-                getBean(SMSRechargeService.class).freecharge(rechargeDto.getCompanyId(), rechargeDto.getStoreIds(),
-                        rechargeDto.getStoreId(), rechargeDto.getTotalQuantity());
+                getBean(SMSRechargeService.class).freecharge(rechargeDto.getCompanyId(),
+                        rechargeDto.isStoreGroupRange() ? rechargeDto.getStoreIds() : null,
+                        rechargeDto.isStoreRange() ? rechargeDto.getStoreId() : null,
+                        rechargeDto.getTotalQuantity());
             } else {
                 if (rechargeDto.hasUnitPrice()) {
                     if (rechargeDto.isStoreRange()) {
