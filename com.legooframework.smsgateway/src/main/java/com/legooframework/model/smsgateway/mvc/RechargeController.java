@@ -138,7 +138,7 @@ public class RechargeController extends SmsBaseController {
             RechargeType rechargeType = Enum.valueOf(RechargeType.class, type);
             double unitPrice = MapUtils.getDoubleValue(requestBody, "unitPrice", 0.0D);
             String remarke = MapUtils.getString(requestBody, "remarke");
-            int rechargeAmount = MapUtils.getIntValue(requestBody, "rechargeAmount");
+            int rechargeAmount = MapUtils.getIntValue(requestBody, "rechargeAmount", 0) * 100;
             int totalQuantity = MapUtils.getIntValue(requestBody, "totalQuantity");
             RechargeReqDto rechargeDto = new RechargeReqDto(companyId, storeId, storeIds, rechargeType, unitPrice,
                     rechargeAmount, totalQuantity, remarke);

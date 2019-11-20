@@ -177,7 +177,8 @@ public class SMSRechargeService extends BundleService {
     private RechargeRuleEntity getRechargeRule(OrgEntity company, long rechargeAmount) {
         RechargeRuleSet ruleSet = getBean(RechargeRuleEntityAction.class).loadAllRuleSet();
         Optional<RechargeRuleEntity> rule = ruleSet.getSuitableRule(company, rechargeAmount);
-        Preconditions.checkState(rule.isPresent(), "无合适的规则适用于本次扣费");
+        Preconditions.checkState(rule.isPresent(), "无合适的规则适用于本次扣费(company=%s,rechargeAmount=%s)",
+                company.getId(), rechargeAmount);
         return rule.get();
     }
 
