@@ -50,8 +50,8 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
     }
 
     public void editStoreGroupBalance(String blanceId, int action, List<StoEntity> stores) {
-        if (CollectionUtils.isEmpty(stores)) return;
         Preconditions.checkState(ArrayUtils.contains(new int[]{0, 1, -1}, action), "非法入参 action=%s", action);
+        if (action != -1 && CollectionUtils.isEmpty(stores)) return;
         RechargeBalanceEntity instance = loadById(blanceId);
         Preconditions.checkState(RechargeScope.StoreGroup == instance.getRechargeScope());
         Preconditions.checkState(instance.isEmpty(), "该节点下有充值记录无法编辑");
@@ -122,7 +122,7 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
         Map<String, Object> params = Maps.newHashMap();
         params.put("balanceIds", balanceIds);
         Optional<List<RechargeBalanceEntity>> balanceList = super.queryForEntities("loadByIds", params, getRowMapper());
-        Preconditions.checkState(balanceList.isPresent());
+        Preconditions.checkState(balanceList.isPresent(), "无对应的实体信息[%s]", balanceIds);
         return balanceList.get();
     }
 
