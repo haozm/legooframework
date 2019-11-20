@@ -155,11 +155,11 @@ public class RechargeController extends SmsBaseController {
         if (logger.isDebugEnabled())
             logger.debug(String.format("rechargeBlance(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
         Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
+        OrgEntity company = loadCompanyById(companyId, request);
         int scope = MapUtils.getInteger(requestBody, "scope", -1);
         RechargeScope rechargeScope = RechargeScope.paras(scope);
         String nodeId = MapUtils.getString(requestBody, "nodeId");
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("companyId", companyId);
+        Map<String, Object> params = company.toParamMap();
         params.put("rechargeScope", rechargeScope.getScope());
         if (RechargeScope.StoreGroup == rechargeScope) {
             params.put("storeIds", nodeId);
@@ -196,7 +196,7 @@ public class RechargeController extends SmsBaseController {
     }
 
     JdbcQuerySupport getQueryEngine(HttpServletRequest request) {
-        return getBean(JdbcQuerySupport.class, request);
+        return getBean("smsGateWayQueryFactory", JdbcQuerySupport.class, request);
     }
 
     MessagingTemplate getMessagingTemplate(HttpServletRequest request) {
