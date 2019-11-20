@@ -2,9 +2,9 @@ package com.legooframework.model.commons.entity;
 
 import com.google.common.base.MoreObjects;
 
-public enum CommunicationChannel {
+public enum SendChannel {
 
-    SMS(1, "短信"), WEIXIN(2, "微信模式");
+    SMS(1, "短信"), WEIXIN(2, "微信");
 
     private final int channel;
     private final String desc;
@@ -17,14 +17,14 @@ public enum CommunicationChannel {
         return desc;
     }
 
-    public static CommunicationChannel paras(int val) {
-        CommunicationChannel res;
+    public static SendChannel paras(int val) {
+        SendChannel res;
         switch (val) {
             case 1:
-                res = CommunicationChannel.SMS;
+                res = SendChannel.SMS;
                 break;
             case 2:
-                res = CommunicationChannel.WEIXIN;
+                res = SendChannel.WEIXIN;
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法的入参:%s", val));
@@ -32,7 +32,7 @@ public enum CommunicationChannel {
         return res;
     }
 
-    CommunicationChannel(int channel, String desc) {
+    SendChannel(int channel, String desc) {
         this.channel = channel;
         this.desc = desc;
     }

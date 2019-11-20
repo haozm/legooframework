@@ -255,7 +255,7 @@ CREATE TABLE SMS_TRANSPORT_LOG
   company_id            INT(11)          NOT NULL,
   store_id              INT(11)          NOT NULL,
   member_id             INT(11)          NULL     DEFAULT -1,
-  communication_channel TINYINT UNSIGNED NOT NULL DEFAULT 1,
+  send_channel          TINYINT UNSIGNED NOT NULL DEFAULT 1,
   job_id                INT(18)          NULL     DEFAULT NULL,
   weixin_id             VARCHAR(128)     NULL     DEFAULT NULL,
   device_id             VARCHAR(128)     NULL     DEFAULT NULL,

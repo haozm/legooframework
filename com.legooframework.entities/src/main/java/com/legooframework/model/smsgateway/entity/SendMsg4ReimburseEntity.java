@@ -2,7 +2,7 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.legooframework.model.commons.entity.CommunicationChannel;
+import com.legooframework.model.commons.entity.SendChannel;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import org.joda.time.LocalDateTime;
@@ -12,7 +12,7 @@ import java.sql.ResultSet;
 public class SendMsg4ReimburseEntity extends BaseEntity<String> {
 
     private final boolean freeSend = false;
-    private final CommunicationChannel communicationChannel = CommunicationChannel.SMS;
+    private final SendChannel sendChannel = SendChannel.SMS;
     private final int smsCount;
     private final String sendBatchNo;
     private boolean reimburseState;
@@ -58,14 +58,14 @@ public class SendMsg4ReimburseEntity extends BaseEntity<String> {
         return freeSend == that.freeSend &&
                 smsCount == that.smsCount &&
                 reimburseState == that.reimburseState &&
-                communicationChannel == that.communicationChannel &&
+                sendChannel == that.sendChannel &&
                 Objects.equal(sendBatchNo, that.sendBatchNo) &&
                 Objects.equal(reimburseDate, that.reimburseDate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(super.hashCode(), freeSend, communicationChannel, smsCount, sendBatchNo, reimburseState,
+        return Objects.hashCode(super.hashCode(), freeSend, sendChannel, smsCount, sendBatchNo, reimburseState,
                 reimburseDate);
     }
 
@@ -74,7 +74,7 @@ public class SendMsg4ReimburseEntity extends BaseEntity<String> {
         return MoreObjects.toStringHelper(this)
                 .add("id", getId())
                 .add("freeSend", freeSend)
-                .add("communicationChannel", communicationChannel)
+                .add("communicationChannel", sendChannel)
                 .add("smsCount", smsCount)
                 .add("sendBatchNo", sendBatchNo)
                 .add("reimburseState", reimburseState)

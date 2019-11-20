@@ -416,7 +416,7 @@
           SELECT stl.id AS 'id',
                   stl.company_id AS 'companyId',
                   stl.store_id AS 'storeId',
-                  stl.communication_channel AS 'communicationChannel',
+                  stl.send_channel AS 'sendChannel',
                   stl.weixin_id AS 'weixinId',
                   stl.device_id AS 'deviceId',
                   stl.job_id AS 'jobId',
@@ -526,6 +526,26 @@
          AND rec.final_state = 0
          AND TIMESTAMPDIFF(HOUR,rec.send_local_date,NOW()) <= 4
          AND TIMESTAMPDIFF(MINUTE,rec.send_local_date,NOW()) >= 10
+            ]]></body>
+        </sql>
+        <sql id="updateWxMsg4SendByBatchNo">
+            <body><![CDATA[
+      UPDATE SMS_TRANSPORT_LOG
+         SET send_status = 1
+       WHERE send_status = 0
+         AND send_channel = 2
+         AND sms_enabled = 1
+         AND send_batchno = :batchNo
+            ]]></body>
+        </sql>
+        <sql id="loadSmsMsg4SendByBatchNo">
+            <body><![CDATA[
+      SELECT stl.id,stl.sms_count
+        FROM SMS_TRANSPORT_LOG AS stl
+       WHERE send_status = 0
+         AND send_channel = 1
+         AND sms_enabled = 1
+         AND send_batchno = :batchNo
             ]]></body>
         </sql>
     </model>

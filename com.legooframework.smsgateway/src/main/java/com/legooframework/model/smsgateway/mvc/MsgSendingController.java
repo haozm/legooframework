@@ -207,8 +207,8 @@ public class MsgSendingController extends SmsBaseController {
         List<SMSEntity> smses = Lists.newArrayListWithCapacity(send_smses.size());
         send_smses.forEach(x -> smses.addAll(SMSEntity.createSMSMsg(x)));
         if (logger.isDebugEnabled()) {
-            long sms_size = smses.stream().filter(SMSEntity::isSMSMsg).count();
-            logger.debug(String.format("本次处理消息共计 %s 条，其中短信 %s 条， 微信 %s 条", smses.size(), sms_size, smses.size() - sms_size));
+//            long sms_size = smses.stream().filter(SMSEntity::isSMSMsg).count();
+//            logger.debug(String.format("本次处理消息共计 %s 条，其中短信 %s 条， 微信 %s 条", smses.size(), sms_size, smses.size() - sms_size));
         }
         DeductionReqDto payload = new DeductionReqDto(store, businessType, smses, template, sendMode);
         Message<DeductionReqDto> message = MessageBuilder.withPayload(payload).setHeader("user", user)

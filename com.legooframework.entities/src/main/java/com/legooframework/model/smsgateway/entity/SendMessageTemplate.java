@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.membercare.entity.BusinessType;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.Optional;
 
@@ -16,7 +18,11 @@ public class SendMessageTemplate implements Cloneable {
     private boolean wxExits = false;
     private AutoRunChannel autoRunChannel;
     private boolean error = false;
-    private String errmsg;
+    private String remark;
+
+    public String getRemark() {
+        return remark;
+    }
 
     public SendMessageTemplate createWithJobWithTemplate(BusinessType businessType, int detailId, int memberId,
                                                          AutoRunChannel runChannel, String ctxTemplate) {
@@ -45,9 +51,13 @@ public class SendMessageTemplate implements Cloneable {
         return businessType;
     }
 
-    public void setError(String errmsg) {
+    public void setError(String remark) {
         this.error = true;
-        this.errmsg = errmsg;
+        this.remark = remark;
+    }
+
+    boolean hasLegalPhone() {
+        return StringUtils.isNotEmpty(this.mobile) && this.mobile.length() == 11 && NumberUtils.isDigits(this.mobile);
     }
 
     private SendMessageTemplate(BusinessType businessType, int detailId, int memberId, AutoRunChannel autoRunChannel,

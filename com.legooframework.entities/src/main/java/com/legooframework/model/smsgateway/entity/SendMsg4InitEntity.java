@@ -1,6 +1,7 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Strings;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
@@ -23,33 +24,40 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
     private final boolean freeSend;
     private SendStatus sendStatus;
 
-    private SendMsg4InitEntity(Integer companyId, Integer storeId, SMSEntity sms, String sendBatchNo,
-                               boolean freeSend, BusinessType businessType) {
+    private SendMsg4InitEntity(Integer companyId, Integer storeId, SMSEntity sms, boolean freeSend, BusinessType businessType) {
         super(sms.getSmsId(), companyId.longValue(), -1L);
         this.sms = sms;
-        this.sendStatus = SendStatus.SMS4Transport;
+        if (this.sms.isEnbaled()) {
+            this.sendStatus = SendStatus.SMS4Inited;
+        } else {
+            this.sendStatus = SendStatus.SMS4InitError;
+        }
         this.companyId = companyId;
         this.storeId = storeId;
-        this.sendBatchNo = sendBatchNo;
         this.smsChannel = businessType.getSMSChannel();
         this.freeSend = freeSend;
         this.businessType = businessType;
     }
 
     void setSendBatchNo(String sendBatchNo) {
-        this.sendBatchNo = sendBatchNo;
+        if (Strings.isNullOrEmpty(this.sendBatchNo))
+            this.sendBatchNo = sendBatchNo;
     }
 
-    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, String smsBatchNo,
-                                                    boolean freeSend, BusinessType businessType) {
-        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, smsBatchNo,
-                freeSend, businessType);
+    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, boolean freeSend, BusinessType businessType) {
+        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, freeSend, businessType);
     }
 
-    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, String smsBatchNo,
-                                                    BusinessType businessType) {
-        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, smsBatchNo,
-                false, businessType);
+    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, BusinessType businessType) {
+        return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, false, businessType);
+    }
+
+    public boolean isSMSMsg() {
+        return sms.isSMSMsg();
+    }
+
+    public boolean isWxMsg() {
+        return sms.isWxMsg();
     }
 
     public Integer getStoreId() {
@@ -115,8 +123,9 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
 
     @Override
     public void setValues(PreparedStatement ps) throws SQLException {
-//        id, company_id, store_id, member_id, send_batchno,  phone_no, sms_count, word_count, member_name, sms_context, tenant_id,
-//                creator, free_send, sms_channel, businsess_type, send_status, job_id, send_mode, sms_enabled
+//  id, company_id, store_id, member_id, send_batchno, " +
+//  "phone_no, sms_count, word_count, member_name, sms_context, tenant_id, creator, free_send, sms_channel, " +
+//  "businsess_type, send_status, job_id, sms_enabled, communication_channel, weixin_id, device_id, remarks
         ps.setObject(1, sms.getSmsId());
         ps.setObject(2, this.companyId);
         ps.setObject(3, this.storeId);
@@ -134,9 +143,10 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         ps.setObject(15, this.businessType.getType());
         ps.setObject(16, this.sms.getJobId());
         ps.setObject(17, this.sms.isEnbaled() ? 1 : 0);
-        ps.setObject(18, sms.getCommunicationChannel().getChannel());
+        ps.setObject(18, sms.getSendChannel().getChannel());
         ps.setObject(19, sms.getWeixinId());
         ps.setObject(20, sms.getDeviceId());
+        ps.setObject(21, sms.getRemark());
     }
 
     @Override

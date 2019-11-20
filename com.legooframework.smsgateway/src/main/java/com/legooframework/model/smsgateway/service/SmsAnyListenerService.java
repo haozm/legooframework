@@ -5,17 +5,13 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
-import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.core.utils.CommonsUtils;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.UserAuthorEntity;
-import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.*;
-import com.legooframework.model.smsgateway.mvc.DeductionReqDto;
 import com.legooframework.model.smsgateway.mvc.RechargeReqDto;
-import com.legooframework.model.smsprovider.entity.*;
+import com.legooframework.model.smsprovider.entity.SMSProxyEntityAction;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -61,11 +57,10 @@ public class SmsAnyListenerService extends BundleService {
         try {
             if (StringUtils.equals("recharge", action)) {// 充值行为
                 this.recharge((RechargeReqDto) payload);
-            } else if (StringUtils.equals("charge", action)) { // 计费统计
-                DeductionReqDto deduction = (DeductionReqDto) payload;
-                String batch_no = this.charge(LoginContextHolder.get(), deduction.getSmses(), deduction.getBusinessType(),
-                        deduction.getStore(), deduction.getSmsContext());
-                return MessageBuilder.withPayload(batch_no).build();
+            } else if (StringUtils.equals("deduction", action)) { // 计费行为
+                String sendBathcNo = (String) payload;
+                this.deduction(sendBathcNo);
+                return MessageBuilder.withPayload(new Object()).build();
             } else if (StringUtils.equals("writeOff", action)) { // 退款行为
                 String sendBatchNo = (String) payload;
                 Optional<List<SendMsg4ReimburseEntity>> list_opt = getBean(SendMsg4ReimburseEntityAction.class)
@@ -84,23 +79,36 @@ public class SmsAnyListenerService extends BundleService {
     }
 
     /**
-     * @param user 我的而用户
+     * OOXX
+     *
      * @return 行走的银行
      */
-    private String charge(LoginContext user, List<SMSEntity> smses, BusinessType businessType, StoEntity store,
-                          String smsCtx) {
+    private void deduction(String sendBathcNo) {
+
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
+        SendMsg4InitEntityAction.MsgTransBatch batchInfo = getBean(SendMsg4InitEntityAction.class).loadBatchInfo(sendBathcNo);
+        if (batchInfo.isBilling()) return;
+        getBean(SendMsg4InitEntityAction.class).updateWxMsg4SendByBatchNo(batchInfo);
         TransactionStatus ts = startTx(null);
-        String summaryId;
         try {
-            summaryId = this.chargingAction(smses, businessType, store, smsCtx);
+            StoEntity store = getStore(batchInfo.getStoreId());
+            Optional<List<SendMsg4DeductionEntity>> smslist = getBean(SendMsg4InitEntityAction.class)
+                    .loadSmsMsg4SendByBatchNo(batchInfo);
+            if (smslist.isPresent()) {
+                RechargeBalanceList balanceList = getBean(RechargeBalanceEntityAction.class).loadOrderEnabledByStore(store);
+                
+            }
             commitTx(ts);
         } catch (Exception e) {
-            logger.error(String.format("charge(%s,businessType:%s) has error...,rollback 事务", store, businessType), e);
+            logger.error(String.format("deduction(%s) has error...,rollback 事务", sendBathcNo), e);
             rollbackTx(ts);
+
             throw e;
+        } finally {
+            getBean(SendMsg4InitEntityAction.class).finishedBill(batchInfo);
         }
-        Optional<ChargeSummaryEntity> chargeSummary = getBean(ChargeSummaryEntityAction.class).findById(summaryId);
-        Preconditions.checkState(chargeSummary.isPresent(), "数据异常: Id=%s 对应的充值计费不存在...", summaryId);
+//        Optional<ChargeSummaryEntity> chargeSummary = getBean(ChargeSummaryEntityAction.class).findById(summaryId);
+//        Preconditions.checkState(chargeSummary.isPresent(), "数据异常: Id=%s 对应的充值计费不存在...", summaryId);
 
         // 按照批次号获取短信送入发送通道
 //        Optional<List<SendMsg4SendEntity>> send_sms_list_opt = getBean(SendMsg4SendEntityAction.class)
@@ -164,65 +172,6 @@ public class SmsAnyListenerService extends BundleService {
 //            }
         //}
         //  return chargeSummary.get().getSmsBatchNo();
-        return null;
-    }
-
-    /**
-     * 短信发送计费服务
-     *
-     * @param smses        待发送的短信
-     * @param businessType 业务类型
-     * @param store        所属门店
-     * @param smsContext   短信摘要
-     */
-    private String chargingAction(List<SMSEntity> smses, final BusinessType businessType, final StoEntity store,
-                                  String smsContext) {
-        Preconditions.checkArgument(CollectionUtils.isNotEmpty(smses), "待发送的短信数不可以为空...");
-        LoginContext user = LoginContextHolder.get();
-        final String sms_batch_no = String.format("%s_%s_%s", store.getCompanyId(), store.getId(),
-                CommonsUtils.randomId(12));
-        List<SMSEntity> wx_msgs = smses.stream().filter(SMSEntity::isWxMsg).collect(Collectors.toList());
-        List<SMSEntity> sms_msgs = smses.stream().filter(SMSEntity::isSMSMsg).collect(Collectors.toList());
-        long wx_size = CollectionUtils.isEmpty(wx_msgs) ? 0 : wx_msgs.size();
-        List<SendMsg4InitEntity> batchSaveLogs = Lists.newArrayList();
-        boolean isFree = true;
-        String summaryId = null;
-        SMSChannel smsChannel = SMSChannel.TradeChannel;
-        if (CollectionUtils.isNotEmpty(sms_msgs)) {
-            final SMSSettingEntity sms_setting = getBean(SMSSettingEntityAction.class).loadByStoreId(store.getCompanyId(),
-                    store.getId());
-            final SMSProviderEntity smsProvider = getBean(SMSProviderEntityAction.class).loadSMSSupplier();
-            SMSSendRuleEntity sendRule = getBean(SMSSendRuleEntityAction.class).loadByType(businessType);
-            isFree = sendRule.isFreeSend();
-            smsChannel = sendRule.isMarketChannel() ? SMSChannel.MarketChannel : SMSChannel.TradeChannel;
-            if (sendRule.isMarketChannel()) {
-                String sms_suffix = smsProvider.getSmsSuffix(SMSChannel.MarketChannel).orElse(null);
-                sms_msgs.forEach(sms -> sms.addPrefixAndSuffix(sms_setting.getSmsPrefix(), sms_suffix));
-            } else if (sendRule.isTradeChannel()) {
-                sms_msgs.forEach(sms -> sms.addPrefix(sms_setting.getSmsPrefix()));
-            } // end_if
-            long sms_count = sms_msgs.stream().map(SMSEntity::getSmsNum).count();
-            summaryId = getSummaryAction().insert(store, sendRule, null, sms_batch_no, sms_count, wx_size,
-                    user.isAnonymous(), smsContext);
-            if (!sendRule.isFreeSend()) {
-                RechargeBalanceList balancesList = getBean(RechargeBalanceEntityAction.class).loadOrderEnabledByStore(store);
-                List<ChargeDetailEntity> chargeDetails = balancesList.deduction(store, sms_batch_no, sms_count);
-                List<RechargeBalanceEntity> rechargeBalances = balancesList.getDeductionList();
-                getBean(ChargeDetailEntityAction.class).batchInsert(chargeDetails);
-                getBean(RechargeBalanceEntityAction.class).batchUpdateBalance(rechargeBalances);
-            }
-        } else {
-            summaryId = getSummaryAction().insert(store, null, businessType, sms_batch_no, 0L, wx_size,
-                    user.isAnonymous(), smsContext);
-        }
-
-        for (SMSEntity sms : smses) {
-            batchSaveLogs.add(SendMsg4InitEntity.createInstance(store, sms, sms_batch_no, smsChannel,
-                    isFree, businessType));
-        }
-        // save_msg_log_4_sending
-        //getBean(SendMsg4InitEntityAction.class).batchInsert(batchSaveLogs);
-        return summaryId;
     }
 
     void reimburseAction(Collection<SendMsg4ReimburseEntity> reimburses) {

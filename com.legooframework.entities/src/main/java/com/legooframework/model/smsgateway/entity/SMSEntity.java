@@ -5,7 +5,7 @@ import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.legooframework.model.commons.entity.CommunicationChannel;
+import com.legooframework.model.commons.entity.SendChannel;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.core.utils.WebUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -24,11 +24,12 @@ public class SMSEntity {
     private final Integer memberId;
     private Integer jobId;
     private boolean enbaled;
-    private final CommunicationChannel communicationChannel;
+    private final SendChannel sendChannel;
     private final String weixinId, deviceId;
+    private String remark;
 
     private SMSEntity(String originalId, String content, String phoneNo, Integer memberId, String memberName,
-                      Integer jobId, boolean enbaled) {
+                      Integer jobId, boolean enbaled, String remark) {
         this.content = content;
         this.smsId = originalId;
         this.wordCount = content.length();
@@ -38,13 +39,14 @@ public class SMSEntity {
         this.phoneNo = phoneNo;
         this.jobId = jobId;
         this.enbaled = enbaled;
-        this.communicationChannel = CommunicationChannel.SMS;
+        this.sendChannel = SendChannel.SMS;
         this.weixinId = null;
         this.deviceId = null;
+        this.remark = remark;
     }
 
     private SMSEntity(String originalId, String content, Integer memberId, String memberName, Integer jobId,
-                      String weixinId, String deviceId, boolean enbaled) {
+                      String weixinId, String deviceId, boolean enbaled, String remark) {
         this.content = content;
         this.smsId = originalId;
         this.wordCount = content.length();
@@ -54,48 +56,70 @@ public class SMSEntity {
         this.phoneNo = null;
         this.jobId = jobId;
         this.enbaled = enbaled;
-        this.communicationChannel = CommunicationChannel.WEIXIN;
+        this.sendChannel = SendChannel.WEIXIN;
         this.weixinId = weixinId;
         this.deviceId = deviceId;
+        this.remark = remark;
     }
 
-    public static SMSEntity createSMSMsgWithJob(String smsId, Integer memberId, String phoneNo,
-                                                String memberName, String content, Integer jobId) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(StringUtils.trimToNull(content)), "短信内容为空,创建短信失败....");
-        return new SMSEntity(smsId, content, phoneNo, memberId, memberName, jobId, true);
-    }
+//    public static SMSEntity createSMSMsgWithJob(String smsId, Integer memberId, String phoneNo,
+//                                                String memberName, String content, Integer jobId) {
+//        Preconditions.checkArgument(!Strings.isNullOrEmpty(StringUtils.trimToNull(content)), "短信内容为空,创建短信失败....");
+//        return new SMSEntity(smsId, content, phoneNo, memberId, memberName, jobId, true);
+//    }
 
     public static SMSEntity createSMSMsgWithNoJob(String smsId, Integer memberId, String phoneNo, String memberName,
                                                   String content) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(StringUtils.trimToNull(content)), "短信内容为空,创建短信失败....");
-        return new SMSEntity(smsId, content, phoneNo, memberId, memberName, 0, true);
+        return new SMSEntity(smsId, content, phoneNo, memberId, memberName, 0, true, null);
     }
 
     public static List<SMSEntity> createSMSMsg(SendMessageTemplate msgTmp) {
         List<SMSEntity> list = Lists.newArrayListWithCapacity(2);
         if (msgTmp.getAutoRunChannel() == AutoRunChannel.SMS_ONLY) {
-            list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
-                    msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.isOK()));
+            list.add(createSms(msgTmp));
         } else if (msgTmp.getAutoRunChannel() == AutoRunChannel.WX_ONLY) {
-            list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMemberId(),
-                    msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.getWeixinId(), msgTmp.getDeviceId(), msgTmp.isOK()));
+            createWx(msgTmp).ifPresent(list::add);
         } else if (msgTmp.getAutoRunChannel() == AutoRunChannel.WX_THEN_SMS) {
             if (msgTmp.isWxExits()) {
-                list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMemberId(),
-                        msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.getWeixinId(), msgTmp.getDeviceId(), msgTmp.isOK()));
+                createWx(msgTmp).ifPresent(list::add);
             } else {
-                list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
-                        msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.isOK()));
+                createSms(msgTmp);
             }
         } else {
-            list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
-                    msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.isOK()));
-            if (msgTmp.isWxExits()) {
-                list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMemberId(),
-                        msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.getWeixinId(), msgTmp.getDeviceId(), msgTmp.isOK()));
-            }
+            list.add(createSms(msgTmp));
+            createWx(msgTmp).ifPresent(list::add);
         }
         return list;
+    }
+
+    private static Optional<SMSEntity> createWx(SendMessageTemplate msgTmp) {
+        if (msgTmp.isWxExits()) {
+            SMSEntity res = new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMemberId(),
+                    msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.getWeixinId(), msgTmp.getDeviceId(), msgTmp.isOK(),
+                    msgTmp.getRemark());
+            return Optional.of(res);
+        }
+        return Optional.empty();
+    }
+
+    private static SMSEntity createSms(SendMessageTemplate msgTmp) {
+        if (msgTmp.isOK()) {
+            if (msgTmp.hasLegalPhone()) {
+                return new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
+                        msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.isOK(), msgTmp.getRemark());
+            } else {
+                return new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
+                        msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), false, "非法的移动电话号码...");
+            }
+        } else {
+            return new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
+                    msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), false, msgTmp.getRemark());
+        }
+    }
+
+    String getRemark() {
+        return remark;
     }
 
     // 构造4DB
@@ -110,20 +134,21 @@ public class SMSEntity {
             this.memberName = ResultSetUtil.getOptString(res, "memberName", null);
             this.jobId = ResultSetUtil.getOptObject(res, "jobId", Integer.class).orElse(null);
             this.enbaled = ResultSetUtil.getBooleanByInt(res, "enabled");
-            this.communicationChannel = CommunicationChannel.paras(res.getInt("communicationChannel"));
+            this.sendChannel = SendChannel.paras(res.getInt("sendChannel"));
             this.weixinId = ResultSetUtil.getOptString(res, "weixinId", null);
             this.deviceId = ResultSetUtil.getOptString(res, "deviceId", null);
+            this.remark = ResultSetUtil.getOptString(res, "remarks", null);
         } catch (SQLException e) {
             throw new RuntimeException("Restore SMSEntity has SQLException", e);
         }
     }
 
-    public boolean isSMSMsg() {
-        return CommunicationChannel.SMS == this.communicationChannel;
+    boolean isSMSMsg() {
+        return SendChannel.SMS == this.sendChannel;
     }
 
-    public boolean isWxMsg() {
-        return CommunicationChannel.WEIXIN == this.communicationChannel;
+    boolean isWxMsg() {
+        return SendChannel.WEIXIN == this.sendChannel;
     }
 
 
@@ -145,7 +170,7 @@ public class SMSEntity {
         this.memberId = null;
         this.memberName = null;
         this.enbaled = true;
-        this.communicationChannel = CommunicationChannel.SMS;
+        this.sendChannel = SendChannel.SMS;
         this.weixinId = null;
         this.deviceId = null;
     }
@@ -168,7 +193,7 @@ public class SMSEntity {
         this.memberId = null;
         this.memberName = null;
         this.enbaled = true;
-        this.communicationChannel = CommunicationChannel.SMS;
+        this.sendChannel = SendChannel.SMS;
         this.deviceId = null;
         this.weixinId = null;
     }
@@ -204,8 +229,8 @@ public class SMSEntity {
         return memberName;
     }
 
-    CommunicationChannel getCommunicationChannel() {
-        return communicationChannel;
+    SendChannel getSendChannel() {
+        return sendChannel;
     }
 
     public Optional<String> getWeixinIdIfExists() {
@@ -253,13 +278,13 @@ public class SMSEntity {
                 Objects.equal(smsId, smsEntity.smsId) &&
                 Objects.equal(weixinId, smsEntity.weixinId) &&
                 Objects.equal(deviceId, smsEntity.deviceId) &&
-                Objects.equal(communicationChannel, smsEntity.communicationChannel) &&
+                Objects.equal(sendChannel, smsEntity.sendChannel) &&
                 Objects.equal(phoneNo, smsEntity.phoneNo);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(smsId, content, phoneNo, communicationChannel, weixinId, deviceId);
+        return Objects.hashCode(smsId, content, phoneNo, sendChannel, weixinId, deviceId);
     }
 
     @Override
@@ -272,7 +297,7 @@ public class SMSEntity {
                 .add("content", content)
                 .add("weixinId", weixinId)
                 .add("deviceId", deviceId)
-                .add("communicationChannel", communicationChannel)
+                .add("communicationChannel", sendChannel)
                 .toString();
     }
 }
