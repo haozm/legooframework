@@ -52,14 +52,12 @@ public class SmsTempCacheService extends BundleService {
                 String[] _tems = replaceHoldList.replaceMembers(replace, replaces.getTemplate());
 //                final String mobile, final String name, final String context,
 //                final String resulat, final String weixinId, final String deviceId, final AutoRunChannel autoRunChannel
-                template.setMobile(_tems[0]);
-                template.setMemberName(_tems[1]);
+
                 template.setContext(_tems[2]);
                 template.setResulat(_tems[3]);
                 template.setWeixinInfo(_tems[4], _tems[5]);
             } else {
-                template.setMobile("0000");
-                template.setMemberName("EMPTY");
+
                 template.setContext("EMPTY");
                 template.setResulat("NOTEXITS");
                 template.setWeixinInfo(null, null);

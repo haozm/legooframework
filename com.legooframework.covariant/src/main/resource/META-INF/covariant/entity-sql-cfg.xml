@@ -139,7 +139,10 @@
         <sql id="query4list" dynamic="true">
             <body><![CDATA[
        SELECT emp.id AS 'id',emp.name AS 'empName', GROUP_CONCAT(empr.role_id) AS 'roleIds',
-              com.id AS 'comId',org.id AS 'orgId',sto.id as 'storeId',
+              com.id AS 'comId',org.id AS 'orgId',
+              sto.id as 'storeId',
+              com.name AS 'companyName',
+              sto.name AS 'storeName',
               ( CASE WHEN org.id IS NULL THEN NULL
                      ELSE ( SELECT GROUP_CONCAT(_temp.id)
                               FROM acp.acp_organization AS _temp

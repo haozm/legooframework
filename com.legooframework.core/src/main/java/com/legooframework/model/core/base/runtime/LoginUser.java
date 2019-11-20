@@ -7,6 +7,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -18,7 +19,7 @@ public class LoginUser implements LoginContext {
     private String userName, password, loginName, token, companyName, storeName;
     private Set<GrantedAuthority> authorities;
     private Collection<Integer> roleIds;
-    private final DateTime loginTime;
+    private final LocalDateTime loginTime;
     private Integer storeId, orgId;
     private List<Integer> storeIds;
 
@@ -33,7 +34,7 @@ public class LoginUser implements LoginContext {
         this.userName = userName;
         this.password = password;
         this.tenantId = companyId;
-        this.loginTime = DateTime.now();
+        this.loginTime = LocalDateTime.now();
         this.authorities = Sets.newHashSet();
         this.authorities.add(new SimpleGrantedAuthority("ROLE_LOGINER"));
         if (CollectionUtils.isNotEmpty(roles)) {
@@ -55,12 +56,11 @@ public class LoginUser implements LoginContext {
         if (CollectionUtils.isNotEmpty(roles)) {
             roles.forEach(x -> this.authorities.add(new SimpleGrantedAuthority(x)));
         }
-        this.loginTime = DateTime.now();
+        this.loginTime = LocalDateTime.now();
         this.storeId = storeId;
         this.orgId = orgId;
         this.roleIds = roleIds;
-        if (this.tenantId.intValue() == this.orgId)
-            this.orgId = -1;
+        if (this.tenantId.intValue() == this.orgId) this.orgId = -1;
         if (CollectionUtils.isNotEmpty(storeIds)) this.storeIds = storeIds;
     }
 
@@ -68,7 +68,7 @@ public class LoginUser implements LoginContext {
         this.loginId = loginId == null ? -1L : loginId;
         this.password = "{noop}123456";
         this.tenantId = tenantId == null ? -1L : tenantId;
-        this.loginTime = DateTime.now();
+        this.loginTime = LocalDateTime.now();
         this.authorities = Sets.newHashSet();
         this.authorities.add(new SimpleGrantedAuthority("ROLE_ANONYMOU"));
         this.authorities.add(new SimpleGrantedAuthority("ROLE_LOGINER"));

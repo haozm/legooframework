@@ -20,7 +20,6 @@ public class JobDetailTemplate4Replace {
         this.template = encoding ? WebUtils.decodeUrl(args[1]) : args[1];
         args = StringUtils.split(args[0], '|');
         List<SendMessageTemplate> _list = Lists.newArrayListWithCapacity(args.length);
-        Stream.of(args).forEach(x -> _list.add(SendMessageTemplate.createByMemberId(x)));
         this.jobDetails = _list;
         this.employeeId = employeeId;
         this.companyId = companyId;

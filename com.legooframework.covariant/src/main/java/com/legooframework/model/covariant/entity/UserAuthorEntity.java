@@ -23,7 +23,7 @@ import java.util.stream.Stream;
 public class UserAuthorEntity extends BaseEntity<Integer> implements ToReplace {
 
     private final static Comparator<Integer> COMPARATOR = Comparator.naturalOrder();
-    private String name;
+    private final String name, companyName, storeName;
     private List<Integer> roleIds, subOrgIds, subStoreIds;
     private Integer companyId, orgId, storeId;
     private final static Ordering<Integer> ORDER_INT = Ordering.natural();
@@ -33,6 +33,8 @@ public class UserAuthorEntity extends BaseEntity<Integer> implements ToReplace {
         try {
             this.name = res.getString("empName");
             this.companyId = res.getInt("comId");
+            this.companyName = res.getString("companyName");
+            this.storeName = res.getString("storeName");
             this.orgId = res.getObject("orgId") == null ? null : res.getInt("orgId");
             this.storeId = res.getObject("storeId") == null ? null : res.getInt("storeId");
             String _roleIds = res.getString("roleIds");
@@ -56,8 +58,8 @@ public class UserAuthorEntity extends BaseEntity<Integer> implements ToReplace {
     }
 
     public LoginContext toLoginContext() {
-        return new LoginUser(this.getId().longValue(), this.getCompanyId().longValue(), this.name, "password",
-                null, roleIds, storeId, orgId, subStoreIds, null, null);
+        return new LoginUser(this.getId().longValue(), this.getCompanyId().longValue(), this.name, "*********",
+                null, roleIds, storeId, orgId == null ? -1 : orgId, subStoreIds, companyName, storeName);
     }
 
     public int getMaxRoleId() {

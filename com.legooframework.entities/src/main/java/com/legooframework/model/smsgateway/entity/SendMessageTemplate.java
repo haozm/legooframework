@@ -3,43 +3,71 @@ package com.legooframework.model.smsgateway.entity;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.legooframework.model.core.utils.WebUtils;
+import com.legooframework.model.membercare.entity.BusinessType;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Optional;
 
 public class SendMessageTemplate implements Cloneable {
 
-    private Integer memberId, detailId;
-    private String memberName, mobile, weixinId, context, resulat, deviceId;
+    private final Integer memberId, detailId;
+    private final BusinessType businessType;
+    private final String ctxTemplate;
+    private String memberName, mobile, weixinId, deviceId, context, resulat;
     private boolean wxExits = false;
     private AutoRunChannel autoRunChannel;
+    private boolean error = false;
+    private String errmsg;
 
-    private SendMessageTemplate(String baseInfo) {
-        String[] args = StringUtils.split(baseInfo, ',');
-        Preconditions.checkArgument(args.length == 3, "非法的报文%s", baseInfo);
-        this.detailId = Integer.valueOf(args[0]);
-        this.memberId = Integer.valueOf(args[1]);
-        this.autoRunChannel = AutoRunChannel.parse(Integer.parseInt(args[2]));
-        this.weixinId = null;
-        this.deviceId = null;
+    public SendMessageTemplate createWithJobWithTemplate(BusinessType businessType, int detailId, int memberId,
+                                                         AutoRunChannel runChannel, String ctxTemplate) {
+        Preconditions.checkArgument(detailId > 0, "非法的任务ID=%s", detailId);
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(ctxTemplate), "消息模板不可以为空值...");
+        return new SendMessageTemplate(businessType, detailId, memberId, runChannel, ctxTemplate);
     }
 
-    private SendMessageTemplate(Integer detailId, Integer memberId, int autoRunChannel, String weixinInfo, String mobile,
-                                String memberName, String context, String resulat) {
+    public SendMessageTemplate createWithoutJobWithTemplate(BusinessType businessType, int memberId,
+                                                            AutoRunChannel runChannel, String ctxTemplate) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(ctxTemplate), "消息模板不可以为空值...");
+        return new SendMessageTemplate(businessType, 0, memberId, runChannel, ctxTemplate);
+    }
+
+    public SendMessageTemplate createWithJobNoTemplate(BusinessType businessType, int detailId, int memberId,
+                                                       AutoRunChannel runChannel) {
+        Preconditions.checkArgument(detailId > 0, "非法的任务ID=%s", detailId);
+        return new SendMessageTemplate(businessType, detailId, memberId, runChannel, null);
+    }
+
+    public SendMessageTemplate createWithoutJobNoTemplate(BusinessType businessType, int memberId, AutoRunChannel runChannel) {
+        return new SendMessageTemplate(businessType, 0, memberId, runChannel, null);
+    }
+
+    public void setError(String errmsg) {
+        this.error = true;
+        this.errmsg = errmsg;
+    }
+
+    private SendMessageTemplate(BusinessType businessType, int detailId, int memberId, AutoRunChannel autoRunChannel,
+                                String ctxTemplate) {
+        Preconditions.checkArgument(memberId > 0, "非法的会员ID %d", memberId);
+        Preconditions.checkNotNull(autoRunChannel, "错误的入参 autoRunChannel");
+        Preconditions.checkNotNull(businessType, "错误的入参 businessType");
         this.memberId = memberId;
         this.detailId = detailId;
-        this.memberName = memberName;
-        this.autoRunChannel = AutoRunChannel.parse(autoRunChannel);
-        this.mobile = mobile;
-        this.context = context;
-        this.resulat = resulat;
-        if (!Strings.isNullOrEmpty(weixinInfo)) {
-            String[] args = StringUtils.split(weixinInfo, '@');
-            this.weixinId = args[0];
-            this.deviceId = args[1];
-            this.wxExits = true;
-        }
+        this.businessType = businessType;
+        this.autoRunChannel = autoRunChannel;
+        this.ctxTemplate = ctxTemplate;
     }
 
-    public AutoRunChannel getAutoRunChannel() {
+    boolean hasCtxTemplate() {
+        return !Strings.isNullOrEmpty(this.ctxTemplate);
+    }
+
+    public Optional<String> getCtxTemplate() {
+        return Optional.ofNullable(ctxTemplate);
+    }
+
+    AutoRunChannel getAutoRunChannel() {
         return autoRunChannel;
     }
 
@@ -48,28 +76,21 @@ public class SendMessageTemplate implements Cloneable {
                 AutoRunChannel.WX_ONLY == autoRunChannel;
     }
 
-    public static SendMessageTemplate createByMemberId(String baseInfo) {
-        return new SendMessageTemplate(baseInfo);
-    }
-
-    public static SendMessageTemplate deCoding(String fullInfo) {
-        String[] args = StringUtils.split(fullInfo, ',');
-        return new SendMessageTemplate(Integer.valueOf(args[0]), Integer.valueOf(args[1]), Integer.valueOf(args[2]),
-                StringUtils.equals("NULL", args[3]) ? null : args[3],
-                args[4], StringUtils.equals("NULL", args[5]) ? null : WebUtils.decodeUrl(args[5]),
-                WebUtils.decodeUrl(args[6]), args[7]);
-    }
-
-    public Integer getMemberId() {
+    public int getMemberId() {
         return memberId;
     }
 
-    public void setMemberName(String memberName) {
-        this.memberName = memberName;
+    public void setContext(String context) {
+        if (Strings.isNullOrEmpty(this.context))
+            this.context = context;
     }
 
-    public void setMobile(String mobile) {
-        this.mobile = mobile;
+
+    public void setMemberInfo(String mobile, String memberName) {
+        if (Strings.isNullOrEmpty(this.memberName))
+            this.memberName = memberName;
+        if (Strings.isNullOrEmpty(this.mobile))
+            this.mobile = mobile;
     }
 
     public void setResulat(String resulat) {
@@ -88,9 +109,6 @@ public class SendMessageTemplate implements Cloneable {
         }
     }
 
-    public void setContext(String context) {
-        this.context = context;
-    }
 
     public Integer getDetailId() {
         return detailId;
