@@ -70,6 +70,8 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
         } else {
             Objects.requireNonNull(getJdbcTemplate()).update("UPDATE SMS_RECHARGE_BALANCE SET delete_flag = 1 WHERE id = ?",
                     instance.getId());
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("软删除节点[%s]成功", instance));
         }
     }
 

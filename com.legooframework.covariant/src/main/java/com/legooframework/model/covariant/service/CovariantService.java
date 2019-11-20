@@ -109,13 +109,14 @@ public class CovariantService extends BundleService {
         StoEntity store = getBean(StoEntityAction.class).loadById(storeId);
         String batchNo = UUID.randomUUID().toString();
         MemberAgg memberAgg = loadMemberAgg(memberId);
+        String sms_prefix = getBean(SendSmsEntityAction.class).getSmsPrefix(store);
         String content = replace(ctxTemp, memberAgg.toReplaceMap());
         Optional<List<EmpEntity>> _emps = getBean(EmpEntityAction.class).findEmpsByStore(store, empIds);
         List<EmpEntity> emps_list = _emps.orElse(null);
         Preconditions.checkState(CollectionUtils.isNotEmpty(emps_list), "指定人员ID为空...");
         List<SendSmsEntity> sms_list = Lists.newArrayList();
         emps_list.forEach(x -> {
-            SendSmsEntity sms = SendSmsEntity.createSmsByStore(content, x.getPhone(), x.getName(), store, businessType, batchNo, null);
+            SendSmsEntity sms = SendSmsEntity.createSmsByStore(sms_prefix + content, x.getPhone(), x.getName(), store, businessType, batchNo, null);
             sms_list.add(sms);
         });
         int sms_sum = sms_list.stream().mapToInt(SendSmsEntity::getSmsCount).sum();
@@ -126,7 +127,6 @@ public class CovariantService extends BundleService {
         }
         getBean(SendSmsEntityAction.class).batchAdd4Send(sms_list);
     }
-
 
     public String preViewSmsByStore(Integer memberId, String ctxTemp) {
         MemberAgg memberAgg = loadMemberAgg(memberId);
