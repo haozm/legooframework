@@ -65,33 +65,34 @@ public class SMSEntity {
         return new SMSEntity(smsId, content, phoneNo, memberId, memberName, jobId, true);
     }
 
-    public static SMSEntity createSMSMsgWithNoJob(String smsId, Integer memberId, String phoneNo, String memberName, String content) {
+    public static SMSEntity createSMSMsgWithNoJob(String smsId, Integer memberId, String phoneNo, String memberName,
+                                                  String content) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(StringUtils.trimToNull(content)), "短信内容为空,创建短信失败....");
         return new SMSEntity(smsId, content, phoneNo, memberId, memberName, 0, true);
     }
 
-    public static List<SMSEntity> createSMSMsg(SendMessageTemplate message) {
+    public static List<SMSEntity> createSMSMsg(SendMessageTemplate msgTmp) {
         List<SMSEntity> list = Lists.newArrayListWithCapacity(2);
-        if (message.getAutoRunChannel() == AutoRunChannel.SMS_ONLY) {
-            list.add(new SMSEntity(UUID.randomUUID().toString(), message.getContext(), message.getMobile(),
-                    message.getMemberId(), message.getMemberName(), message.getDetailId(), message.isOK()));
-        } else if (message.getAutoRunChannel() == AutoRunChannel.WX_ONLY) {
-            list.add(new SMSEntity(UUID.randomUUID().toString(), message.getContext(), message.getMemberId(),
-                    message.getMemberName(), message.getDetailId(), message.getWeixinId(), message.getDeviceId(), message.isOK()));
-        } else if (message.getAutoRunChannel() == AutoRunChannel.WX_THEN_SMS) {
-            if (message.isWxExits()) {
-                list.add(new SMSEntity(UUID.randomUUID().toString(), message.getContext(), message.getMemberId(),
-                        message.getMemberName(), message.getDetailId(), message.getWeixinId(), message.getDeviceId(), message.isOK()));
+        if (msgTmp.getAutoRunChannel() == AutoRunChannel.SMS_ONLY) {
+            list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
+                    msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.isOK()));
+        } else if (msgTmp.getAutoRunChannel() == AutoRunChannel.WX_ONLY) {
+            list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMemberId(),
+                    msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.getWeixinId(), msgTmp.getDeviceId(), msgTmp.isOK()));
+        } else if (msgTmp.getAutoRunChannel() == AutoRunChannel.WX_THEN_SMS) {
+            if (msgTmp.isWxExits()) {
+                list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMemberId(),
+                        msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.getWeixinId(), msgTmp.getDeviceId(), msgTmp.isOK()));
             } else {
-                list.add(new SMSEntity(UUID.randomUUID().toString(), message.getContext(), message.getMobile(),
-                        message.getMemberId(), message.getMemberName(), message.getDetailId(), message.isOK()));
+                list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
+                        msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.isOK()));
             }
         } else {
-            list.add(new SMSEntity(UUID.randomUUID().toString(), message.getContext(), message.getMobile(),
-                    message.getMemberId(), message.getMemberName(), message.getDetailId(), message.isOK()));
-            if (message.isWxExits()) {
-                list.add(new SMSEntity(UUID.randomUUID().toString(), message.getContext(), message.getMemberId(),
-                        message.getMemberName(), message.getDetailId(), message.getWeixinId(), message.getDeviceId(), message.isOK()));
+            list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
+                    msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.isOK()));
+            if (msgTmp.isWxExits()) {
+                list.add(new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMemberId(),
+                        msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.getWeixinId(), msgTmp.getDeviceId(), msgTmp.isOK()));
             }
         }
         return list;

@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.membercare.entity.BusinessType;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Optional;
 
@@ -13,7 +12,7 @@ public class SendMessageTemplate implements Cloneable {
     private final Integer memberId, detailId;
     private final BusinessType businessType;
     private final String ctxTemplate;
-    private String memberName, mobile, weixinId, deviceId, context, resulat;
+    private String memberName, mobile, weixinId, deviceId, context;
     private boolean wxExits = false;
     private AutoRunChannel autoRunChannel;
     private boolean error = false;
@@ -42,6 +41,10 @@ public class SendMessageTemplate implements Cloneable {
         return new SendMessageTemplate(businessType, 0, memberId, runChannel, null);
     }
 
+    public BusinessType getBusinessType() {
+        return businessType;
+    }
+
     public void setError(String errmsg) {
         this.error = true;
         this.errmsg = errmsg;
@@ -57,6 +60,10 @@ public class SendMessageTemplate implements Cloneable {
         this.businessType = businessType;
         this.autoRunChannel = autoRunChannel;
         this.ctxTemplate = ctxTemplate;
+    }
+
+    public boolean isOK() {
+        return !this.error;
     }
 
     boolean hasCtxTemplate() {
@@ -85,20 +92,11 @@ public class SendMessageTemplate implements Cloneable {
             this.context = context;
     }
 
-
     public void setMemberInfo(String mobile, String memberName) {
         if (Strings.isNullOrEmpty(this.memberName))
             this.memberName = memberName;
         if (Strings.isNullOrEmpty(this.mobile))
             this.mobile = mobile;
-    }
-
-    public void setResulat(String resulat) {
-        this.resulat = resulat;
-    }
-
-    public void setAutoRunChannel(AutoRunChannel autoRunChannel) {
-        this.autoRunChannel = autoRunChannel;
     }
 
     public void setWeixinInfo(String weixinId, String deviceId) {
@@ -148,10 +146,6 @@ public class SendMessageTemplate implements Cloneable {
         }
     }
 
-    public boolean isOK() {
-        return StringUtils.equals("OK", this.resulat);
-    }
-
     @Override
     public String toString() {
         // detailId|memberId|sendChanel|weixinId@deviceId|mobile|{encoding}memberName|{encoding}context|resulat
@@ -159,7 +153,6 @@ public class SendMessageTemplate implements Cloneable {
                 this.wxExits ? String.format("%s@%s", weixinId, deviceId) : "NULL",
                 Strings.isNullOrEmpty(mobile) ? "0000" : mobile,
                 Strings.isNullOrEmpty(memberName) ? "NULL" : WebUtils.encodeUrl(memberName),
-                Strings.isNullOrEmpty(context) ? "NULL" : WebUtils.encodeUrl(context),
-                Strings.isNullOrEmpty(resulat) ? "NOTEXITS" : resulat);
+                Strings.isNullOrEmpty(context) ? "NULL" : WebUtils.encodeUrl(context));
     }
 }

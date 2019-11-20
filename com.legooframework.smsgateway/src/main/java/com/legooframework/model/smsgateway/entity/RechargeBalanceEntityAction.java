@@ -99,14 +99,20 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
 
     public void addBalance(RechargeResDto rechargeResDto) {
         Preconditions.checkNotNull(rechargeResDto);
-        RechargeBalanceEntity instance = new RechargeBalanceEntity(rechargeResDto.getRechargeDetail());
-        Optional<RechargeBalanceEntity> exits = findByInstance(instance);
-        if (exits.isPresent()) {
-            exits.get().addBalance(rechargeResDto.getTotalQuantity());
-            super.updateAction(exits.get(), "update");
+        if (rechargeResDto.getRechargeDetail().isStoreGroup()) {
+            RechargeBalanceEntity exits = loadById(rechargeResDto.getRechargeDetail().getStoreIds());
+            exits.addBalance(rechargeResDto.getTotalQuantity());
+            super.updateAction(exits, "update");
         } else {
-            instance.addBalance(rechargeResDto.getTotalQuantity());
-            super.updateAction(instance, "insert");
+            RechargeBalanceEntity instance = new RechargeBalanceEntity(rechargeResDto.getRechargeDetail());
+            Optional<RechargeBalanceEntity> exits = findByInstance(instance);
+            if (exits.isPresent()) {
+                exits.get().addBalance(rechargeResDto.getTotalQuantity());
+                super.updateAction(exits.get(), "update");
+            } else {
+                instance.addBalance(rechargeResDto.getTotalQuantity());
+                super.updateAction(instance, "insert");
+            }
         }
         if (logger.isDebugEnabled())
             logger.debug(String.format("addBalance(%s) is ok", rechargeResDto));
