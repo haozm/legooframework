@@ -1,7 +1,6 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.*;
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -15,7 +14,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -63,11 +65,10 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
             this.companyId = res.getInt("companyId");
             this.storeId = res.getInt("storeId");
             this.rechargeScope = RechargeScope.paras(res.getInt("rechargeScope"));
-            if (this.rechargeScope == RechargeScope.StoreGroup) {
+            if (this.rechargeScope == RechargeScope.StoreGroup && !Strings.isNullOrEmpty(res.getString("storeIds"))) {
                 String storeIds_raw = res.getString("storeIds");
-                Preconditions.checkArgument(!Strings.isNullOrEmpty(storeIds_raw), "数据异常 storeIds 值为空...");
-                this.storeIds = ImmutableList.copyOf(Stream.of(StringUtils.split(storeIds_raw, ',')).mapToInt(Integer::parseInt).boxed()
-                        .collect(Collectors.toList()));
+                this.storeIds = ImmutableList.copyOf(Stream.of(StringUtils.split(storeIds_raw, ','))
+                        .mapToInt(Integer::parseInt).boxed().collect(Collectors.toList()));
             } else {
                 this.storeIds = null;
             }
