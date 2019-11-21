@@ -81,7 +81,8 @@ public class SmsGatewayService extends BundleService {
         boolean flag = false;
         TransactionStatus tx = startTx(null);
         try {
-            getBean(SendMsg4InitEntityAction.class).batchInsert(store, instances);
+            String batchNo = sendMsg4InitEntityAction.batchInsert(store, instances);
+            msgTransportBatchEntityAction.insert(store, batchNo, instances);
             commitTx(tx);
             flag = true;
         } catch (Exception e) {

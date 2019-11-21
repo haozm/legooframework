@@ -347,7 +347,7 @@
             ]]></body>
         </sql>
     </model>
-    <model id="ChargeDetailEntity">
+    <model id="DeductionDetailEntity">
         <sql id="batchInsert">
             <body><![CDATA[
           INSERT INTO SMS_CHARGE_DETAIL
@@ -381,7 +381,7 @@
             ]]></body>
         </sql>
     </model>
-    <model id="ChargeSummaryEntity">
+    <model id="DeductionTotalEntity">
         <sql id="insert">
             <body><![CDATA[
           INSERT INTO SMS_CHARGE_SUMMARY
@@ -546,6 +546,24 @@
          AND stl.send_channel = 1
          AND stl.sms_enabled = 1
          AND stl.send_batchno = :batchNo
+            ]]></body>
+        </sql>
+    </model>
+    <model id="MsgTransportBatchEntity">
+        <sql id="insert">
+            <body><![CDATA[
+    INSERT INTO SMS_TRANSPORT_BATCH
+                (company_id, store_id, send_batchno, is_billing, sms_write_count, sms_write_ok_count, wx_write_count, wx_write_ok_count, delete_flag, tenant_id, creator)
+         VALUES (         ?,        ?,             ?,         ?,               ?.                  ?,              ?,                 ?,           0,         ?,      -1)
+            ]]></body>
+        </sql>
+        <sql id="query4list" dynamic="true">
+            <body><![CDATA[
+    SELECT id, company_id, store_id, send_batchno, is_billing, sms_write_count, sms_write_ok_count, wx_write_count, wx_write_ok_count, delete_flag, tenant_id, creator, createTime, editor, editTime
+      FROM acp.SMS_TRANSPORT_BATCH
+      <#if (sql=="loadByBatchNo")>
+     WHERE send_batchno = :batchNo
+      </#if>
             ]]></body>
         </sql>
     </model>

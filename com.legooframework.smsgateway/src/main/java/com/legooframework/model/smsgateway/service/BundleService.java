@@ -9,8 +9,7 @@ import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.OrgEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.StoEntityAction;
-import com.legooframework.model.smsgateway.entity.DeductionTotalEntityAction;
-import com.legooframework.model.smsgateway.entity.RechargeDetailEntityAction;
+import com.legooframework.model.smsgateway.entity.*;
 import org.springframework.integration.core.MessagingTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -79,4 +78,24 @@ public abstract class BundleService extends BaseService {
         return getBean("smsMessagingTemplate", MessagingTemplate.class);
     }
 
+    SendMsg4InitEntityAction sendMsg4InitEntityAction;
+    RechargeBalanceEntityAction rechargeBalanceEntityAction;
+    DeductionDetailEntityAction deductionDetailEntityAction;
+    MsgTransportBatchEntityAction msgTransportBatchEntityAction;
+
+    public void setMsgTransportBatchEntityAction(MsgTransportBatchEntityAction msgTransportBatchEntityAction) {
+        this.msgTransportBatchEntityAction = msgTransportBatchEntityAction;
+    }
+
+    public void setDeductionDetailEntityAction(DeductionDetailEntityAction deductionDetailEntityAction) {
+        this.deductionDetailEntityAction = deductionDetailEntityAction;
+    }
+
+    public void setSendMsg4InitEntityAction(SendMsg4InitEntityAction sendMsg4InitEntityAction) {
+        this.sendMsg4InitEntityAction = sendMsg4InitEntityAction;
+    }
+
+    public void setRechargeBalanceEntityAction(RechargeBalanceEntityAction rechargeBalanceEntityAction) {
+        this.rechargeBalanceEntityAction = rechargeBalanceEntityAction;
+    }
 }

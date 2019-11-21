@@ -84,37 +84,38 @@ public class SmsAnyListenerService extends BundleService {
      *
      * @return 行走的银行
      */
-    void deduction(String sendBathcNo) {
+    void deduction(String batchNo) {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
-        SendMsg4InitEntityAction.MsgTransBatch batchInfo = sendMsg4InitEntityAction.loadBatchInfo(sendBathcNo);
-        if (batchInfo.isBilling()) return;
+        MsgTransportBatchEntity transportBatch = msgTransportBatchEntityAction.loadByBatchNo(batchNo);
+        if (transportBatch.isBilling()) return;
         try {
-            getBean(SendMsg4InitEntityAction.class).updateWxMsg4SendByBatchNo(batchInfo);
+            sendMsg4InitEntityAction.updateWxMsg4SendByBatchNo(transportBatch);
         } catch (Exception e) {
-            logger.error(String.format("updateWxMsg4SendByBatchNo(%s) has error...,rollback 事务", sendBathcNo), e);
+            logger.error(String.format("updateWxMsg4SendByBatchNo(%s) has error...,rollback 事务", batchNo), e);
         }
-        StoEntity store = getStore(batchInfo.getStoreId());
+        StoEntity store = getStore(transportBatch.getStoreId());
         Optional<List<SendMsg4DeductionEntity>> deduction_sms_list = sendMsg4InitEntityAction
-                .loadSmsMsg4SendByBatchNo(batchInfo);
+                .loadSmsMsg4SendByBatchNo(transportBatch);
         if (!deduction_sms_list.isPresent()) {
-            sendMsg4InitEntityAction.finishedBill(batchInfo);
+            // sendMsg4InitEntityAction.finishedBill(batchInfo);
+            msgTransportBatchEntityAction.finishBilling(transportBatch);
         } else {
             TransactionStatus ts = startTx(null);
             try {
                 RechargeBalanceAgg balanceAgg = rechargeBalanceEntityAction.loadOrderEnabledByStore(store);
-                balanceAgg.deduction(store, batchInfo.getBatchNo(), deduction_sms_list.get());
+                balanceAgg.deduction(transportBatch, deduction_sms_list.get());
                 sendMsg4InitEntityAction.batchUpdateMsg4Deductions(balanceAgg.getDeductionSmses());
                 balanceAgg.getChargeDetails().ifPresent(x -> deductionDetailEntityAction.batchInsert(x));
                 balanceAgg.getDeductionBalances().ifPresent(x -> rechargeBalanceEntityAction.batchUpdateBalance(x));
                 commitTx(ts);
             } catch (Exception e) {
-                logger.error(String.format("deduction(%s) has error...,rollback 事务", sendBathcNo), e);
+                logger.error(String.format("deduction(%s) has error...,rollback 事务", batchNo), e);
                 rollbackTx(ts);
                 String msg = e.getMessage();
                 if (msg.length() > 512) msg = msg.substring(0, 512);
                 sendMsg4InitEntityAction.batchFailMsg4Deductions(deduction_sms_list.get(), msg);
             } finally {
-                sendMsg4InitEntityAction.finishedBill(batchInfo);
+                msgTransportBatchEntityAction.finishBilling(transportBatch);
             }
         }
     }
@@ -312,19 +313,4 @@ public class SmsAnyListenerService extends BundleService {
         }
     }
 
-    private SendMsg4InitEntityAction sendMsg4InitEntityAction;
-    private RechargeBalanceEntityAction rechargeBalanceEntityAction;
-    private DeductionDetailEntityAction deductionDetailEntityAction;
-
-    public void setDeductionDetailEntityAction(DeductionDetailEntityAction deductionDetailEntityAction) {
-        this.deductionDetailEntityAction = deductionDetailEntityAction;
-    }
-
-    public void setSendMsg4InitEntityAction(SendMsg4InitEntityAction sendMsg4InitEntityAction) {
-        this.sendMsg4InitEntityAction = sendMsg4InitEntityAction;
-    }
-
-    public void setRechargeBalanceEntityAction(RechargeBalanceEntityAction rechargeBalanceEntityAction) {
-        this.rechargeBalanceEntityAction = rechargeBalanceEntityAction;
-    }
 }

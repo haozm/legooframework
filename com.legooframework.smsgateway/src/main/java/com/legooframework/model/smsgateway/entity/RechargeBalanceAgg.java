@@ -22,7 +22,7 @@ public class RechargeBalanceAgg {
         this.rawBalances = rawBalances;
     }
 
-    public void deduction(StoEntity store, final String sms_batch_no, List<SendMsg4DeductionEntity> deduction_smses) {
+    public void deduction(MsgTransportBatchEntity transportBatch, List<SendMsg4DeductionEntity> deduction_smses) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(deduction_smses), "待扣费的短信列表非法...为空.");
         ArrayDeque<SendMsg4DeductionEntity> deductionQueues = Queues.newArrayDeque(deduction_smses);
         SendMsg4DeductionEntity cursor = null;
@@ -30,7 +30,7 @@ public class RechargeBalanceAgg {
             if (deductionQueues.isEmpty()) break;
             if (!balance.hasBlance()) continue;
             List<SendMsg4DeductionEntity> _temp_de_list = Lists.newArrayList();
-            DeductionDetailEntity _chargeDetail = new DeductionDetailEntity(sms_batch_no, store, balance);
+            DeductionDetailEntity _chargeDetail = new DeductionDetailEntity(transportBatch, balance);
             for (; ; ) {
                 if (deductionQueues.isEmpty()) break;
                 cursor = deductionQueues.peekFirst();

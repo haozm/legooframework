@@ -83,6 +83,10 @@
           class="com.legooframework.model.smsgateway.entity.SMSKeywordEntityAction"
           parent="smsClientEntityAction"/>
 
+    <bean id="msgTransportBatchEntityAction"
+          class="com.legooframework.model.smsgateway.entity.MsgTransportBatchEntityAction"
+          parent="smsClientEntityAction"/>
+
     <bean id="smsBlackListEntityAction" class="com.legooframework.model.smsgateway.entity.SMSBlackListEntityAction"
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
@@ -94,15 +98,21 @@
         <property name="cacheManager" ref="smsClientCacheManager"/>
     </bean>
 
-    <bean id="smsRechargeService" class="com.legooframework.model.smsgateway.service.SMSRechargeService"/>
-    <bean id="smsGatewayService" class="com.legooframework.model.smsgateway.service.SmsGatewayService">
-        <property name="covariantService" ref="covariantService"/>
-    </bean>
-    <bean id="smsAnyListenerService" class="com.legooframework.model.smsgateway.service.SmsAnyListenerService">
+    <bean id="abstractSmsBundleService" class="com.legooframework.model.smsgateway.service.BundleService"
+          abstract="true">
         <property name="sendMsg4InitEntityAction" ref="sendMsg4InitEntityAction"/>
         <property name="rechargeBalanceEntityAction" ref="rechargeBalanceEntityAction"/>
         <property name="deductionDetailEntityAction" ref="deductionDetailEntityAction"/>
+        <property name="msgTransportBatchEntityAction" ref="msgTransportBatchEntityAction"/>
     </bean>
+    <bean id="smsRechargeService" class="com.legooframework.model.smsgateway.service.SMSRechargeService"
+          parent="abstractSmsBundleService"/>
+    <bean id="smsGatewayService" class="com.legooframework.model.smsgateway.service.SmsGatewayService"
+          parent="abstractSmsBundleService">
+        <property name="covariantService" ref="covariantService"/>
+    </bean>
+    <bean id="smsAnyListenerService" class="com.legooframework.model.smsgateway.service.SmsAnyListenerService"
+          parent="abstractSmsBundleService"/>
     <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
 
     <!--

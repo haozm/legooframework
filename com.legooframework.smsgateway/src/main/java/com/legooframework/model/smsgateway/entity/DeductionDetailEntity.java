@@ -6,7 +6,6 @@ import com.google.common.base.Preconditions;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
-import com.legooframework.model.covariant.entity.StoEntity;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,11 +23,11 @@ public class DeductionDetailEntity extends BaseEntity<String> implements BatchSe
     private long deductionNum, reimburseNum;
     private final RechargeScope rechargeScope;
 
-    DeductionDetailEntity(String smsBatchNo, StoEntity store, RechargeBalanceEntity balance) {
-        super(UUID.randomUUID().toString().toUpperCase(), store.getCompanyId().longValue(), -1L);
-        this.smsBatchNo = smsBatchNo;
-        this.companyId = store.getCompanyId();
-        this.storeId = store.getId();
+    DeductionDetailEntity(MsgTransportBatchEntity transportBatch, RechargeBalanceEntity balance) {
+        super(UUID.randomUUID().toString().toUpperCase(), transportBatch.getCompanyId().longValue(), -1L);
+        this.smsBatchNo = transportBatch.getBatchNo();
+        this.companyId = transportBatch.getCompanyId();
+        this.storeId = transportBatch.getStoreId();
         this.balanceId = balance.getId();
         this.balanceNum = balance.getBalance();
         this.deductionNum = 0;
