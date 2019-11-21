@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController(value = "smsproviderController")
 public class MvcController extends BaseController {
@@ -96,15 +97,20 @@ public class MvcController extends BaseController {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
         try {
             if (user.hasStore()) {
-                getBean(SMSSettingEntityAction.class, request).loadByStoreId(user.getCompanyId(), user.getStoreId().orElse(0));
+                SMSSettingEntity smsSetting = getBean(SMSSettingEntityAction.class, request)
+                        .loadByStoreId(user.getCompanyId(), user.getStoreId().orElse(0));
+                return JsonMessageBuilder.OK().withPayload(smsSetting.toViewMap()).toMessage();
             } else if (user.hasStores() && user.getSubStoreIds().isPresent()) {
-                getBean(SMSSettingEntityAction.class, request).loadByStoreIds(user.getCompanyId(),
-                        user.getSubStoreIds().get().toArray(new Integer[0]));
+                List<SMSSettingEntity> smsSettings = getBean(SMSSettingEntityAction.class, request)
+                        .loadByStoreIds(user.getCompanyId(), user.getSubStoreIds().get().toArray(new Integer[0]));
+                List<Map<String, Object>> params = smsSettings.stream().map(SMSSettingEntity::toViewMap)
+                        .collect(Collectors.toList());
+                return JsonMessageBuilder.OK().withPayload(params).toMessage();
             }
-            return JsonMessageBuilder.OK().toMessage();
         } finally {
             LoginContextHolder.clear();
         }
+        return JsonMessageBuilder.OK().toMessage();
     }
 
     private UserAuthorEntity loadLoginUser(Map<String, Object> requestBody, HttpServletRequest request) {
