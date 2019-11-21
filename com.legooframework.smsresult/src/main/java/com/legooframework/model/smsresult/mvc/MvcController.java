@@ -12,8 +12,10 @@ import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.smsgateway.entity.SMSEntity;
-import com.legooframework.model.smsresult.entity.*;
-import com.legooframework.model.smsresult.service.SmsResultService;
+import com.legooframework.model.smsresult.entity.SMSBlackListEntity;
+import com.legooframework.model.smsresult.entity.SMSBlackListEntityAction;
+import com.legooframework.model.smsresult.entity.SMSResultEntity;
+import com.legooframework.model.smsresult.entity.SMSResultEntityAction;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.RandomUtils;
@@ -121,22 +123,6 @@ public class MvcController extends BaseController {
         } finally {
             LoginContextHolder.clear();
         }
-    }
-
-    @PostMapping(value = "/smses/manua/syncstate.json")
-    @ResponseBody
-    public JsonMessage manualSyncState(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("manualSyncState(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
-        LoginContextHolder.setAnonymousCtx();
-        try {
-            int start = MapUtils.getInteger(requestBody, "start", 1);
-            int end = MapUtils.getInteger(requestBody, "end", 12);
-            getBean(SmsResultService.class, request).manualSyncState(start, end);
-        } finally {
-            LoginContextHolder.clear();
-        }
-        return JsonMessageBuilder.OK().toMessage();
     }
 
     /**

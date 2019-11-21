@@ -31,7 +31,6 @@
     <task:scheduled-tasks scheduler="smsresult-scheduler">
         <task:scheduled ref="smsResultService" method="replay" cron="0 0/30 * * * ?"/>
         <task:scheduled ref="smsResultService" method="batchSyncStateJob" initial-delay="60000" fixed-delay="30000"/>
-        <task:scheduled ref="smsResultService" method="autoSyncDayStateJob" cron="0 0 0/1 * * ?"/>
     </task:scheduled-tasks>
     <!-- ================== SMS SENDING CHANNEL ================== -->
     <int:publish-subscribe-channel id="channel_sms_splitter"/>
@@ -72,17 +71,17 @@
     </int-jdbc:outbound-gateway>
 
     <!-- ================== SMS SYNC STATUS ================== -->
-    <int:channel id="channel_sync_state">
-        <int:queue/>
-        <int:interceptors>
-            <int:wire-tap channel="channel_logger"/>
-        </int:interceptors>
-    </int:channel>
-    <int:outbound-channel-adapter channel="channel_sync_state" ref="smsResultService" method="syncState"
-                                  auto-startup="true">
-        <int:poller max-messages-per-poll="512" fixed-delay="10" time-unit="SECONDS"
-                    task-executor="sms-smsresult-executor"/>
-    </int:outbound-channel-adapter>
+<!--    <int:channel id="channel_sync_state">-->
+<!--        <int:queue/>-->
+<!--        <int:interceptors>-->
+<!--            <int:wire-tap channel="channel_logger"/>-->
+<!--        </int:interceptors>-->
+<!--    </int:channel>-->
+<!--    <int:outbound-channel-adapter channel="channel_sync_state" ref="smsResultService" method="syncState"-->
+<!--                                  auto-startup="true">-->
+<!--        <int:poller max-messages-per-poll="512" fixed-delay="10" time-unit="SECONDS"-->
+<!--                    task-executor="sms-smsresult-executor"/>-->
+<!--    </int:outbound-channel-adapter>-->
 
     <beans profile="devp">
         <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/smsgateway"/>
