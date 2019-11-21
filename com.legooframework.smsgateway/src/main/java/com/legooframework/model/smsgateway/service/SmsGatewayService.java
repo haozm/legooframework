@@ -9,10 +9,7 @@ import com.legooframework.model.covariant.entity.TemplateReplaceException;
 import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.covariant.service.CovariantService;
 import com.legooframework.model.covariant.service.MemberAgg;
-import com.legooframework.model.smsgateway.entity.SMSEntity;
-import com.legooframework.model.smsgateway.entity.SendMessageTemplate;
-import com.legooframework.model.smsgateway.entity.SendMsg4InitEntity;
-import com.legooframework.model.smsgateway.entity.SendMsg4InitEntityAction;
+import com.legooframework.model.smsgateway.entity.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.text.StringSubstitutor;
@@ -82,7 +79,8 @@ public class SmsGatewayService extends BundleService {
         TransactionStatus tx = startTx(null);
         try {
             String batchNo = sendMsg4InitEntityAction.batchInsert(store, instances);
-            msgTransportBatchEntityAction.insert(store, batchNo, instances);
+            SendMode sendMode = sendMsgTemplates.size() == 1 ? SendMode.ManualSingle : SendMode.ManualBatch;
+            msgTransportBatchEntityAction.insert(store, batchNo, sendMode, instances);
             commitTx(tx);
             flag = true;
         } catch (Exception e) {

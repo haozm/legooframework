@@ -37,8 +37,8 @@ public class MsgTransportBatchEntityAction extends BaseEntityAction<MsgTransport
         return Optional.ofNullable(CollectionUtils.isEmpty(list) ? null : list);
     }
 
-    public void insert(StoEntity store, String batchNo, Collection<SendMsg4InitEntity> messages) {
-        MsgTransportBatchEntity instance = new MsgTransportBatchEntity(store, batchNo, messages);
+    public void insert(StoEntity store, String batchNo, SendMode sendMode, Collection<SendMsg4InitEntity> messages) {
+        MsgTransportBatchEntity instance = new MsgTransportBatchEntity(store, batchNo, sendMode, messages);
         super.batchInsert("insert", Lists.newArrayList(instance));
         if (logger.isDebugEnabled())
             logger.debug(String.format("Save MsgTransportBatchEntity (%s) finish", instance.toString()));

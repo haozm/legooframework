@@ -17,6 +17,7 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
     private final Integer companyId, storeId;
     private final String batchNo;
     private boolean billing;
+    private final SendMode sendMode;
     private final int smsWriteCount, smsWriteOkCount, wxWriteCount, wxWriteOkCount;
 
     MsgTransportBatchEntity(long id, ResultSet res) {
@@ -25,6 +26,7 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
             this.companyId = res.getInt("company_id");
             this.storeId = res.getInt("store_id");
             this.batchNo = res.getString("send_batchno");
+            this.sendMode = SendMode.paras(res.getInt("send_mode"));
             this.smsWriteCount = res.getInt("sms_write_count");
             this.billing = res.getInt("is_billing") == 1;
             this.smsWriteOkCount = res.getInt("sms_write_ok_count");
@@ -35,12 +37,13 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
         }
     }
 
-    MsgTransportBatchEntity(StoEntity store, String batchNo, Collection<SendMsg4InitEntity> message) {
+    MsgTransportBatchEntity(StoEntity store, String batchNo, SendMode sendMode, Collection<SendMsg4InitEntity> message) {
         super(0L);
         this.companyId = store.getCompanyId();
         this.storeId = store.getId();
         this.batchNo = batchNo;
         this.billing = false;
+        this.sendMode = sendMode == null ? SendMode.ManualSingle : sendMode;
         this.smsWriteCount = (int) message.stream().filter(SendMsg4InitEntity::isSMSMsg).count();
         this.wxWriteCount = (int) message.stream().filter(SendMsg4InitEntity::isWxMsg).count();
         this.smsWriteOkCount = (int) message.stream().filter(SendMsg4InitEntity::isSMSMsg).filter(SendMsg4InitEntity::isEnbaled).count();
@@ -76,6 +79,7 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
         ps.setObject(7, wxWriteCount);
         ps.setObject(8, wxWriteOkCount);
         ps.setObject(9, companyId);
+        ps.setObject(10, sendMode.getMode());
     }
 
     @Override
@@ -85,6 +89,7 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
         params.put("storeId", storeId);
         params.put("batchNo", batchNo);
         params.put("billing", billing ? 1 : 0);
+        params.put("sendMode", sendMode.getMode());
         return params;
     }
 
@@ -95,6 +100,7 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
                 .add("storeId", storeId)
                 .add("batchNo", batchNo)
                 .add("billing", billing)
+                .add("sendMode", sendMode)
                 .add("smsWriteCount", smsWriteCount)
                 .add("smsWriteOkCount", smsWriteOkCount)
                 .add("wxWriteCount", wxWriteCount)
