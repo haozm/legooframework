@@ -58,27 +58,22 @@ public class SmsResultService extends BundleService {
             LoginContextHolder.clear();
             _lock.release();
         }
-        LoginContextHolder.setIfNotExitsAnonymousCtx();
-        try {
-            getMessagingTemplate().send("channel_sms_result", MessageBuilder.withPayload(payload).build());
-        } finally {
-            LoginContextHolder.clear();
-        }
+        getMessagingTemplate().send("channel_sms_result", MessageBuilder.withPayload(payload).build());
     }
 
     private void finshSend(Map<String, Object> payload, SendedSmsDto replayDto) {
-        payload.put("finalState", FinalState.SENDEDOK.getState());
+        payload.put("sendState", SendState.SENDED.getState());
         payload.put("sendMsgId", replayDto.getSmsSendId());
         payload.put("sendDate", LocalDateTime.now().toDate());
-        payload.put("remarks", replayDto.getExitsRespons());
+        payload.put("sendRemark", replayDto.getExitsRespons());
         payload.put("account", replayDto.getAccount());
     }
 
     private void errorSend(Map<String, Object> payload, String account, String errMsg) {
-        payload.put("finalState", FinalState.SENDEDERROR.getState());
+        payload.put("sendState", SendState.ERROR.getState());
         payload.put("sendMsgId", null);
-        payload.put("sendDate", null);
-        payload.put("remarks", errMsg);
+        payload.put("sendDate", LocalDateTime.now().toDate());
+        payload.put("sendRemark", errMsg);
         payload.put("account", account);
     }
 
@@ -154,8 +149,8 @@ public class SmsResultService extends BundleService {
                 Map<String, Object> params = Maps.newHashMap();
                 params.put("sendMsgId", items[0]);
                 params.put("phoneNo", items[1]);
-                params.put("finalStateDesc", items[2]);
-                params.put("finalStateDate", DateTimeUtils.parseDateTime(items[3]).toDate());
+                params.put("finalDesc", items[2]);
+                params.put("finalDate", DateTimeUtils.parseDateTime(items[3]).toDate());
                 params.put("finalState", StringUtils.equals(items[2], "DELIVRD") ? FinalState.DELIVRD.getState() :
                         FinalState.UNDELIV.getState());
                 mapList.add(params);

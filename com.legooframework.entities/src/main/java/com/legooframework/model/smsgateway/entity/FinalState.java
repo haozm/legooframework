@@ -1,4 +1,4 @@
-package com.legooframework.model.smsresult.entity;
+package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.MoreObjects;
 

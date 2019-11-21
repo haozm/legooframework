@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sqls>
     <model id="SMSResultEntity">
-        <sql id="insert">
-            <body><![CDATA[
-          INSERT INTO SMS_SENDING_LOG
-                      (id, company_id, store_id, sms_channel, send_status,  phone_no, sms_count, word_count, sms_context, sms_ext, tenant_id, final_state, creator, createTime)
-               VALUES (:id,:companyId, :storeId, :smsChannel, :sendStatus, :phoneNo,  :smsCount, :wordCount, :smsContext, :smsExt, :tenantId,           0,      -1, CURRENT_TIMESTAMP)
-            ]]></body>
-        </sql>
         <sql id="load4SyncState">
             <body><![CDATA[
        SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate', sms_account AS 'account'
          FROM SMS_SENDING_LOG
-        WHERE final_state = 98
+        WHERE send_state = 1
           AND TIMESTAMPDIFF(HOUR,send_date,NOW()) BETWEEN :start AND :end
             ]]></body>
         </sql>
@@ -24,15 +17,15 @@
                  sslt.company_id AS 'companyId',
                  sslt.sms_channel AS 'smsChannel',
                  sslt.sms_account AS 'sms_account',
-                 sslt.send_status AS 'sendStatus',
+                 sslt.send_state AS 'sendState',
+                 sslt.send_date AS 'sendDate',
                  sslt.send_msg_id AS 'sendMsgId',
+                 sslt.send_remarks AS 'sendRemark',
                  sslt.sms_channel AS 'smsChannle',
                  sslt.sms_ext AS 'smsExt',
-                 sslt.send_date AS 'sendDate',
                  sslt.final_state AS 'finalState',
-                 sslt.final_state_date AS 'finalStateDate',
-                 sslt.final_state_desc AS 'finalStateDesc',
-                 sslt.remarks AS 'remarks',
+                 sslt.final_date AS 'finalDate',
+                 sslt.final_desc AS 'finalDesc',
                  sslt.phone_no AS 'phoneNo',
                  sslt.sms_count AS 'smsCount',
                  sslt.word_count AS 'wordCount',

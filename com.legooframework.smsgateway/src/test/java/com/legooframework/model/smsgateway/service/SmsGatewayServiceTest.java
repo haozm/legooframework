@@ -11,10 +11,6 @@ import com.legooframework.model.covariant.entity.UserAuthorEntityAction;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.AutoRunChannel;
 import com.legooframework.model.smsgateway.entity.SendMessageTemplate;
-import com.legooframework.model.smsgateway.entity.SendMsg4ReimburseEntityAction;
-import com.legooframework.model.smsgateway.entity.SendStatus;
-import com.legooframework.model.smsprovider.entity.SMSChannel;
-import com.legooframework.model.smsresult.entity.SMSSendTransportProtocol;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,7 +29,6 @@ import javax.annotation.Resource;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -50,11 +45,11 @@ public class SmsGatewayServiceTest {
     public void sendingSMSService() {
         List<String> list = Lists.newArrayList();
         for (int i = 0; i < 2; i++) {
-            String payload = SMSSendTransportProtocol.encoding4Flat(UUID.randomUUID().toString(),
-                    100098, 1315, SMSChannel.MarketChannel,
-                    SendStatus.SMS4Sending, "18588828127", 67,
-                    1, "【新的梦特娇】亲爱的肖永秀，感谢您的信任，很荣幸为您挑选到合适您的产品，请按我们沟通的洗涤方法洗涤，祝您生活愉快！");
-            list.add(payload);
+//            String payload = SMSSendTransportProtocol.encoding4Flat(UUID.randomUUID().toString(),
+//                    100098, 1315, SMSChannel.MarketChannel,
+//                    SendStatus.SMS4Sending, "18588828127", 67,
+//                    1, "【新的梦特娇】亲爱的肖永秀，感谢您的信任，很荣幸为您挑选到合适您的产品，请按我们沟通的洗涤方法洗涤，祝您生活愉快！");
+            list.add(null);
         }
         String payload = StringUtils.join(list, "||");
         System.out.println(payload);

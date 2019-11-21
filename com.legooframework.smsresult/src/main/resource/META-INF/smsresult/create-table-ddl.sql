@@ -8,13 +8,13 @@ CREATE TABLE SMS_SENDING_LOG
     sms_channel      TINYINT UNSIGNED NOT NULL,
     sms_account      VARCHAR(64)      NULL,
     sms_ext          BIGINT(10)       NOT NULL,
-    send_status      TINYINT UNSIGNED NOT NULL,
+    send_state       TINYINT UNSIGNED NOT NULL DEFAULT 0,
     send_msg_id      VARCHAR(64)      NULL,
     send_date        DATETIME         NULL,
+    send_remarks     VARCHAR(255)     NULL,
     final_state      TINYINT UNSIGNED NOT NULL DEFAULT 0,
-    final_state_date DATETIME         NULL,
-    final_state_desc VARCHAR(1024)    NULL,
-    remarks          VARCHAR(1024)    NULL,
+    final_date       DATETIME         NULL,
+    final_desc       VARCHAR(1024)    NULL,
     phone_no         VARCHAR(64)      NOT NULL,
     sms_count        TINYINT UNSIGNED NOT NULL DEFAULT 0,
     word_count       TINYINT UNSIGNED NOT NULL DEFAULT 0,
@@ -29,6 +29,9 @@ CREATE TABLE SMS_SENDING_LOG
 ) DEFAULT CHARSET = utf8mb4
   COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
+
+CREATE INDEX SMS_SENDING_LOG_MIXING_IDX USING BTREE ON SMS_TRANSPORT_BATCH (company_id,store_id);
+CREATE INDEX SMS_SENDING_LOG_SEND_MSG_ID_IDX USING BTREE ON SMS_TRANSPORT_BATCH (send_msg_id);
 
 -- 客户短信回复表
 DROP TABLE IF EXISTS SMS_REPLAY_LOG;

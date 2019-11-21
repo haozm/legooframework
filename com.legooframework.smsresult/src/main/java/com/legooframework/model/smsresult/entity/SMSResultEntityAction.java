@@ -6,11 +6,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessException;
-import org.springframework.jdbc.core.PreparedStatementCallback;
 import org.springframework.jdbc.core.RowMapper;
 
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -24,13 +21,6 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
         super(null);
     }
 
-    public void insert(SMSResultEntity instance) {
-        String INSERT_SQL = "INSERT INTO SMS_SENDING_LOG (id, company_id, store_id, sms_channel, send_status, phone_no, sms_count," +
-                " word_count, sms_context, sms_ext, tenant_id, final_state ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
-        Objects.requireNonNull(getJdbcTemplate()).update(INSERT_SQL, instance::setValues);
-        if (logger.isDebugEnabled()) logger.debug(String.format("insert(sms %s )  OK", instance.getId()));
-    }
-
     /**
      * 批量插入
      *
@@ -38,9 +28,9 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
      */
     public void batchInsert(Collection<SMSResultEntity> instances) {
         if (CollectionUtils.isEmpty(instances)) return;
-        String INSERT_SQL = "INSERT INTO SMS_SENDING_LOG (id, company_id, store_id, sms_channel, send_status, phone_no, sms_count, \n" +
-                " word_count, sms_context, sms_ext, tenant_id, final_state ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
-        Objects.requireNonNull(getJdbcTemplate()).batchUpdate(INSERT_SQL, instances, 256, (ps, instance) -> instance.setValues(ps));
+        String INSERT_SQL = "INSERT INTO SMS_SENDING_LOG (id, company_id, store_id, sms_channel, send_state, phone_no, sms_count, \n" +
+                " word_count, sms_context, sms_ext, tenant_id ) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+        Objects.requireNonNull(getJdbcTemplate()).batchUpdate(INSERT_SQL, instances, 128, (ps, instance) -> instance.setValues(ps));
         if (logger.isDebugEnabled()) logger.debug(String.format("batchInsert(sms) size is %s.", instances.size()));
     }
 
@@ -69,16 +59,16 @@ public class SMSResultEntityAction extends BaseEntityAction<SMSResultEntity> {
 
     public void updateState(Collection<Map<String, Object>> statusMaps) {
         if (CollectionUtils.isEmpty(statusMaps)) return;
-        String update_sql = "UPDATE SMS_SENDING_LOG SET final_state = ?, final_state_date = ?, final_state_desc = ? WHERE phone_no = ? AND send_msg_id = ? AND final_state = 98";
+        String update_sql = "UPDATE SMS_SENDING_LOG SET final_state = ?, final_date = ?, final_desc = ? WHERE phone_no = ? AND send_msg_id = ? AND send_state = 1";
         int[][] size = Objects.requireNonNull(getJdbcTemplate()).batchUpdate(update_sql, statusMaps, 512, (ps, map) -> {
             ps.setObject(1, MapUtils.getInteger(map, "finalState"));
-            ps.setObject(2, MapUtils.getObject(map, "finalStateDate"));
-            ps.setObject(3, MapUtils.getString(map, "finalStateDesc"));
+            ps.setObject(2, MapUtils.getObject(map, "finalDate"));
+            ps.setObject(3, MapUtils.getString(map, "finalDesc"));
             ps.setObject(4, MapUtils.getString(map, "phoneNo"));
             ps.setObject(5, MapUtils.getLong(map, "sendMsgId"));
         });
         if (logger.isDebugEnabled())
-            logger.debug(String.format("updateState() retuen batch is %s", size.length));
+            logger.debug(String.format("updateState() retuen batch'size is %s", size.length));
     }
 
     @Override

@@ -7,7 +7,6 @@ import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.core.utils.DateTimeUtils;
-import com.legooframework.model.smsresult.entity.FinalState;
 import org.joda.time.LocalDateTime;
 
 import java.sql.PreparedStatement;

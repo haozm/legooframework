@@ -43,8 +43,7 @@ public class SMSBlackListEntity extends BaseEntity<String> implements BatchSette
     }
 
     public static SMSBlackListEntity creatInstance(SMSReplyEntity replayInfo) {
-        return new SMSBlackListEntity(replayInfo.getCompanyId(), replayInfo.getStoreId(), replayInfo.getMobile(),
-                "退订回T");
+        return new SMSBlackListEntity(replayInfo.getCompanyId(), replayInfo.getStoreId(), replayInfo.getMobile(), "退订回T");
     }
 
     public boolean enabled() {

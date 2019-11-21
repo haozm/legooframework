@@ -7,13 +7,16 @@ import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.core.utils.DateTimeUtils;
+import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
+import com.legooframework.model.smsgateway.entity.SMSEntity;
 import com.legooframework.model.smsresult.entity.*;
 import com.legooframework.model.smsresult.service.SmsResultService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
@@ -47,10 +50,29 @@ public class MvcController extends BaseController {
         return JsonMessageBuilder.OK().withPayload(bundle.toDesc()).toMessage();
     }
 
+    private static SMSResultEntity decoding(String[] payload) {
+        Preconditions.checkState(payload.length == 9, "报文格式异常,数据缺失");
+        try {
+            String smsId = payload[0];
+            int companyId = Integer.parseInt(payload[1]);
+            int storeId = Integer.parseInt(payload[2]);
+            int channel = Integer.parseInt(payload[3]);
+            String mobile = payload[4];
+            int count = Integer.parseInt(payload[5]);
+            int sum = Integer.parseInt(payload[6]);
+            boolean encoding = StringUtils.equals("1", payload[7]);
+            String content = encoding ? WebUtils.decodeUrl(payload[8]) : payload[8];
+            SMSEntity sendSMS = SMSEntity.create4Sending(smsId, content, mobile, count, sum);
+            return new SMSResultEntity(companyId, storeId, sendSMS, channel, RandomUtils.nextLong(1L, 9999999999L));
+        } catch (Exception e) {
+            logger.error(String.format("decodingByFlat(%s) has exception", Arrays.toString(payload)), e);
+            throw new RuntimeException("报文解析异常", e);
+        }
+    }
 
     /**
      * 接受短信进行存储,用户稍后发送 协议如下
-     * smsId|companyId|storeId|channel|status|mobile|count|sum|encoding|content
+     * smsId|companyId|storeId|channel|mobile|count|sum|encoding|content
      * %s|0000|OK  %s wei id
      *
      * @param requestBody 请求
@@ -76,7 +98,7 @@ public class MvcController extends BaseController {
                     if (logger.isTraceEnabled())
                         logger.trace("[SMS-GATEWAT]" + Arrays.toString(sms_args));
                     smsId = sms_args[0];
-                    SMSResultEntity instance = SMSSendTransportProtocol.decodingByFlat(sms_args);
+                    SMSResultEntity instance = decoding(sms_args);
                     cacheList.add(instance);
                     result.add(String.format("%s|0000|OK", instance.getId()));
                     if (cacheList.size() >= 512) {

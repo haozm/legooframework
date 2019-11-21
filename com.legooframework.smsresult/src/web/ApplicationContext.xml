@@ -44,13 +44,12 @@
     </int:channel>
     <int:publish-subscribe-channel id="channel_sms_result"/>
     <int-jdbc:inbound-channel-adapter channel="channel_sms_splitter" data-source="smsResultDataSource"
-                                      update="UPDATE SMS_SENDING_LOG SET final_state = 99 WHERE id IN ( :id )"
+                                      update="UPDATE SMS_SENDING_LOG SET send_state = 99 WHERE id IN ( :id )"
                                       auto-startup="true">
         <int-jdbc:query><![CDATA[
-    SELECT id AS 'id', company_id AS 'companyId',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo',
-           sms_context AS 'smsContext'
+    SELECT id AS 'id', company_id AS 'companyId',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', sms_context AS 'smsContext'
       FROM SMS_SENDING_LOG
-     WHERE final_state = 0
+     WHERE send_state = 0
   ORDER BY createTime
      LIMIT 1024
         ]]></int-jdbc:query>
@@ -66,8 +65,8 @@
                                data-source="smsResultDataSource">
         <int-jdbc:update><![CDATA[
     UPDATE SMS_SENDING_LOG
-       SET final_state = :payload[finalState], send_msg_id = :payload[sendMsgId], send_date = :payload[sendDate],
-           remarks = :payload[remarks], sms_account = :payload[account]
+       SET send_state = :payload[sendState], send_msg_id = :payload[sendMsgId], send_date = :payload[sendDate],
+           send_remarks = :payload[sendRemark], sms_account = :payload[account]
      WHERE id = :payload[id]
         ]]></int-jdbc:update>
     </int-jdbc:outbound-gateway>
