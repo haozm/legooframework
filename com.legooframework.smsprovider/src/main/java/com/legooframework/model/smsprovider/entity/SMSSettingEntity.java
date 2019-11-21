@@ -4,6 +4,7 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
@@ -70,7 +71,7 @@ public class SMSSettingEntity extends BaseEntity<Integer> {
 
     @Override
     public Map<String, Object> toViewMap() {
-        Map<String, Object> map = super.toViewMap();
+        Map<String, Object> map = Maps.newHashMap();
         map.put("companyId", this.companyId);
         map.put("storeId", this.storeId);
         map.put("smsPrefix", this.smsPrefix);
