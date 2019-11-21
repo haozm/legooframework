@@ -13,6 +13,7 @@ import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.covariant.entity.UserAuthorEntityAction;
 import com.legooframework.model.smsprovider.entity.SMSSettingEntity;
 import com.legooframework.model.smsprovider.entity.SMSSettingEntityAction;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,13 +100,15 @@ public class MvcController extends BaseController {
             if (user.hasStore()) {
                 SMSSettingEntity smsSetting = getBean(SMSSettingEntityAction.class, request)
                         .loadByStoreId(user.getCompanyId(), user.getStoreId().orElse(0));
-                return JsonMessageBuilder.OK().withPayload(smsSetting.toViewMap()).toMessage();
+                return JsonMessageBuilder.OK().withPayload(smsSetting == null ? null : smsSetting.toViewMap()).toMessage();
             } else if (user.hasStores() && user.getSubStoreIds().isPresent()) {
                 List<SMSSettingEntity> smsSettings = getBean(SMSSettingEntityAction.class, request)
                         .loadByStoreIds(user.getCompanyId(), user.getSubStoreIds().get().toArray(new Integer[0]));
-                List<Map<String, Object>> params = smsSettings.stream().map(SMSSettingEntity::toViewMap)
-                        .collect(Collectors.toList());
-                return JsonMessageBuilder.OK().withPayload(params).toMessage();
+                if (CollectionUtils.isNotEmpty(smsSettings)) {
+                    List<Map<String, Object>> params = smsSettings.stream().map(SMSSettingEntity::toViewMap)
+                            .collect(Collectors.toList());
+                    return JsonMessageBuilder.OK().withPayload(params).toMessage();
+                }
             }
         } finally {
             LoginContextHolder.clear();
