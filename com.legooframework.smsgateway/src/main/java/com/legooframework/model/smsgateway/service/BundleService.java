@@ -52,10 +52,6 @@ public abstract class BundleService extends BaseService {
         return getBean(RechargeDetailEntityAction.class);
     }
 
-    DeductionTotalEntityAction getSummaryAction() {
-        return getBean(DeductionTotalEntityAction.class);
-    }
-
     TransactionStatus startTx(String txName) {
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         String tx_name = Strings.isNullOrEmpty(txName) ? UUID.randomUUID().toString() : txName;

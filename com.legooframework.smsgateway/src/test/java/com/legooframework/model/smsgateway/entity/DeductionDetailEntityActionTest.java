@@ -49,6 +49,4 @@ public class DeductionDetailEntityActionTest {
     SMSSendRuleEntityAction businessRuleEntityAction;
     @Autowired
     RechargeBalanceEntityAction balanceEntityAction;
-    @Autowired
-    DeductionTotalEntityAction billingSummaryEntityAction;
 }

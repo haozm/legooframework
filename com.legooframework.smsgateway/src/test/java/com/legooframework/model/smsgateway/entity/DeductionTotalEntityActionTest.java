@@ -10,7 +10,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
 
 import javax.annotation.Resource;
-import java.util.Optional;
 
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -34,21 +33,13 @@ public class DeductionTotalEntityActionTest {
 //                9966, "asdasdasdasdasd");
     }
 
-    @Test
-    public void findById() {
-        LoginContextHolder.setAnonymousCtx();
-        Optional<DeductionTotalEntity> res = billingSummaryEntityAction.findById("3C88C03E-A43A-46BE-99F5-2F69BED2069F");
-        res.ifPresent(System.out::println);
-    }
 
     @Resource(name = "smsKvDictEntityAction")
     KvDictEntityAction kvDictEntityAction;
-//    @Autowired
+    //    @Autowired
 //    CrmOrganizationEntityAction organizationEntityAction;
 //    @Autowired
 //    CrmStoreEntityAction storeEntityAction;
     @Autowired
     SMSSendRuleEntityAction businessRuleEntityAction;
-    @Autowired
-    DeductionTotalEntityAction billingSummaryEntityAction;
 }

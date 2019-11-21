@@ -62,10 +62,6 @@
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
     </bean>
-    <bean id="deductionTotalEntityAction" class="com.legooframework.model.smsgateway.entity.DeductionTotalEntityAction"
-          parent="smsClientEntityAction">
-        <property name="cacheManager" ref="smsClientCacheManager"/>
-    </bean>
     <bean id="smsBusinessRuleEntityAction" class="com.legooframework.model.smsgateway.entity.SMSSendRuleEntityAction"
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
@@ -116,8 +112,6 @@
     <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
 
     <!--
-
-
     <task:scheduler id="sms-client-scheduler" pool-size="8"/>
     <task:executor id="sms-client-executor" pool-size="4-32" queue-capacity="512" rejection-policy="CALLER_RUNS"/>
     <task:scheduled-tasks scheduler="sms-client-scheduler">
