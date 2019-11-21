@@ -519,13 +519,13 @@
         <sql id="insert">
             <body><![CDATA[
     INSERT INTO SMS_TRANSPORT_BATCH
-                (company_id, store_id, send_batchno, is_billing, sms_write_count, sms_write_ok_count, wx_write_count, wx_write_ok_count, delete_flag, tenant_id, creator)
-         VALUES (         ?,        ?,             ?,         ?,               ?,                  ?,              ?,                 ?,           0,         ?,      -1)
+                (company_id, store_id, send_batchno, is_billing, sms_write_count, sms_write_ok_count, wx_write_count, wx_write_ok_count, delete_flag, tenant_id, creator, send_mode)
+         VALUES (         ?,        ?,             ?,         ?,               ?,                  ?,              ?,                 ?,           0,         ?,      -1,         ?)
             ]]></body>
         </sql>
         <sql id="query4list" dynamic="true">
             <body><![CDATA[
-    SELECT id, company_id, store_id, send_batchno, is_billing, sms_write_count, sms_write_ok_count, wx_write_count, wx_write_ok_count, delete_flag, tenant_id, creator, createTime, editor, editTime
+    SELECT id, company_id, store_id, send_batchno, is_billing, send_mode, sms_write_count, sms_write_ok_count, wx_write_count, wx_write_ok_count, delete_flag, tenant_id, creator, createTime, editor, editTime
       FROM acp.SMS_TRANSPORT_BATCH
       <#if (sql=="loadByBatchNo")>
      WHERE send_batchno = :batchNo
