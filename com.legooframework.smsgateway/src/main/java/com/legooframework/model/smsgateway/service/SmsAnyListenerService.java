@@ -55,11 +55,7 @@ public class SmsAnyListenerService extends BundleService {
             if (StringUtils.equals("recharge", action)) {// 充值行为
                 this.recharge((RechargeReqDto) payload);
             } else if (StringUtils.equals("deduction", action)) { // 计费行为
-                @SuppressWarnings("unchecked")
-                Collection<Map<String, Object>> payloadMap = (Collection<Map<String, Object>>) payload;
-                for (Map<String, Object> map : payloadMap) {
-                    this.deduction(MapUtils.getString(map, "batchNo"));
-                }
+                this.deduction((String) payload);
                 return MessageBuilder.withPayload(new Object()).build();
             } else if (StringUtils.equals("writeOff", action)) { // 退款行为
 //                String sendBatchNo = (String) payload;
