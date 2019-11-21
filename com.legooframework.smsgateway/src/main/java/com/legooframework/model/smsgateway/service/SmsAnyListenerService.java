@@ -180,7 +180,7 @@ public class SmsAnyListenerService extends BundleService {
     /**
      * @param payload 发送监听
      */
-    public void listen4SendSMS(@Payload Map<String, Object> payload) {
+    public void sendSmsEndpoint(@Payload Map<String, Object> payload) {
         String smsId = MapUtils.getString(payload, "id");
         String mixed = MapUtils.getString(payload, "mixed");
         String context = MapUtils.getString(payload, "ctx");

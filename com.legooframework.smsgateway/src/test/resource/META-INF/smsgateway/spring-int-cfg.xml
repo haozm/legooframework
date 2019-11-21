@@ -21,8 +21,8 @@
            rec.sms_context AS 'ctx'
       FROM SMS_TRANSPORT_LOG AS rec
 INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
-     WHERE bat.is_billing = 0
-       AND rec.send_status = 0
+     WHERE bat.is_billing = 1
+       AND rec.send_status = 1
   ORDER BY rec.createTime
      LIMIT 2048
         ]]></int-jdbc:query>
