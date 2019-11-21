@@ -30,7 +30,7 @@
     <task:scheduler id="smsresult-scheduler" pool-size="4"/>
     <task:scheduled-tasks scheduler="smsresult-scheduler">
         <task:scheduled ref="smsResultService" method="replay" cron="0 0/30 * * * ?"/>
-        <task:scheduled ref="smsResultService" method="autoSyncStateJob" initial-delay="120000" fixed-delay="300000"/>
+        <task:scheduled ref="smsResultService" method="batchSyncStateJob" initial-delay="60000" fixed-delay="30000"/>
         <task:scheduled ref="smsResultService" method="autoSyncDayStateJob" cron="0 0 0/1 * * ?"/>
     </task:scheduled-tasks>
     <!-- ================== SMS SENDING CHANNEL ================== -->

@@ -15,7 +15,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -51,7 +50,7 @@ public class SmsService extends BundleService {
                 .uri(account.getHttpSendUrl(), pathVariables)
                 .contentType(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(String.class);
-        String response = mono.block(Duration.ofSeconds(20L));
+        String response = mono.block(Duration.ofSeconds(40L));
         stopwatch.stop(); // optional
         if (logger.isDebugEnabled())
             logger.debug(String.format("send(mobile=%s, smsExt=%d) return %s [%s]", mobile, smsExt, response, stopwatch));
@@ -107,6 +106,31 @@ public class SmsService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("sync(account=%s, mobile=%s, start=%s, end=%s) return %s [%s]",
                     account, mobile, start, end, response, stopwatch));
+        if (StringUtils.equals("no record", response) || StringUtils.startsWith(response, "error:"))
+            return Optional.empty();
+        return Optional.ofNullable(response);
+    }
+
+    /**
+     * 查询指定时间段内的 短信号码发送情况
+     *
+     * @param account 账户信息
+     * @return response
+     */
+    public Optional<String> batchSync(String account) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("sync(account=%s) start...", account));
+        SMSSubAccountEntity subAccount = getSMSProvider().loadSubAccountByAccount(account);
+        Map<String, Object> pathVariables = Maps.newHashMap();
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        Mono<String> mono = WebClient.create().method(HttpMethod.GET)
+                .uri(subAccount.getHttpStatusUrl(), pathVariables)
+                .contentType(MediaType.APPLICATION_JSON)
+                .retrieve().bodyToMono(String.class);
+        String response = mono.block(Duration.ofSeconds(20L));
+        stopwatch.stop(); // optional
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("sync(account=%s) return %s [%s]", account, response, stopwatch));
         if (StringUtils.equals("no record", response) || StringUtils.startsWith(response, "error:"))
             return Optional.empty();
         return Optional.ofNullable(response);

@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Stream;
 
 public class SmsResultService extends BundleService {
 
@@ -144,20 +145,55 @@ public class SmsResultService extends BundleService {
             String[] payloads = StringUtils.split(optional.get(), ';');
             if (ArrayUtils.isEmpty(payloads)) return;
             List<Map<String, Object>> mapList = Lists.newArrayListWithCapacity(payloads.length);
-            for (String $it : payloads) {
-                String[] items = StringUtils.split($it, ',');
-                Map<String, Object> params = Maps.newHashMap();
-                params.put("sendMsgId", items[0]);
-                params.put("phoneNo", items[1]);
-                params.put("finalDesc", items[2]);
-                params.put("finalDate", DateTimeUtils.parseDateTime(items[3]).toDate());
-                params.put("finalState", StringUtils.equals(items[2], "DELIVRD") ? FinalState.DELIVRD.getState() :
-                        FinalState.UNDELIV.getState());
-                mapList.add(params);
-            }
+            Stream.of(payloads).forEach($it -> mapList.add(decodeState($it)));
             getBean(SMSResultEntityAction.class).updateState(mapList);
         } catch (Exception e) {
             logger.error(String.format("syncState(%s) has error", payload), e);
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
+    private Map<String, Object> decodeState(String replay) {
+        String[] items = StringUtils.split(replay, ',');
+        Map<String, Object> params = Maps.newHashMap();
+        if (items.length == 4) {
+            params.put("sendMsgId", items[0]);
+            params.put("phoneNo", items[1]);
+            params.put("finalDesc", items[2]);
+            params.put("finalDate", DateTimeUtils.parseDateTime(items[3]).toDate());
+            params.put("finalState", StringUtils.equals(items[2], "DELIVRD") ? FinalState.DELIVRD.getState() :
+                    FinalState.UNDELIV.getState());
+        } else if (items.length == 5) {
+            params.put("smsExt", items[0]);
+            params.put("sendMsgId", items[1]);
+            params.put("phoneNo", items[2]);
+            params.put("finalDesc", items[3]);
+            params.put("finalDate", DateTimeUtils.parseDateTime(items[4]).toDate());
+            params.put("finalState", StringUtils.equals(items[3], "DELIVRD") ? FinalState.DELIVRD.getState() :
+                    FinalState.UNDELIV.getState());
+        } else {
+            throw new IllegalStateException(String.format("异常返回状态报文：%s", replay));
+        }
+        return params;
+    }
+
+    public void batchSyncStateJob() {
+        LoginContextHolder.setAnonymousCtx();
+        Optional<List<SMSSubAccountEntity>> subAccounts = getSmsService().findEnabledSubAccounts();
+        if (!subAccounts.isPresent()) return;
+        try {
+            for (SMSSubAccountEntity subAccount : subAccounts.get()) {
+                Optional<String> optional = getSmsService().batchSync(subAccount.getUsername());
+                if (!optional.isPresent()) return;
+                String[] payloads = StringUtils.split(optional.get(), ';');
+                if (ArrayUtils.isEmpty(payloads)) return;
+                List<Map<String, Object>> mapList = Lists.newArrayListWithCapacity(payloads.length);
+                Stream.of(payloads).forEach($it -> mapList.add(decodeState($it)));
+                getBean(SMSResultEntityAction.class).updateState(mapList);
+            }
+        } catch (Exception e) {
+            logger.error("batchSyncState() has error", e);
         } finally {
             LoginContextHolder.clear();
         }
