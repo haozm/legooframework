@@ -9,7 +9,7 @@ import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.OrgEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.StoEntityAction;
-import com.legooframework.model.smsgateway.entity.ChargeSummaryEntityAction;
+import com.legooframework.model.smsgateway.entity.DeductionTotalEntityAction;
 import com.legooframework.model.smsgateway.entity.RechargeDetailEntityAction;
 import org.springframework.integration.core.MessagingTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
@@ -53,8 +53,8 @@ public abstract class BundleService extends BaseService {
         return getBean(RechargeDetailEntityAction.class);
     }
 
-    ChargeSummaryEntityAction getSummaryAction() {
-        return getBean(ChargeSummaryEntityAction.class);
+    DeductionTotalEntityAction getSummaryAction() {
+        return getBean(DeductionTotalEntityAction.class);
     }
 
     TransactionStatus startTx(String txName) {

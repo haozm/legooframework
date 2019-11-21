@@ -540,12 +540,12 @@
         </sql>
         <sql id="loadSmsMsg4SendByBatchNo">
             <body><![CDATA[
-      SELECT stl.id,stl.sms_count
+      SELECT stl.id,stl.sms_count,stl.send_status,stl.remarks
         FROM SMS_TRANSPORT_LOG AS stl
-       WHERE send_status = 0
-         AND send_channel = 1
-         AND sms_enabled = 1
-         AND send_batchno = :batchNo
+       WHERE stl.send_status = 0
+         AND stl.send_channel = 1
+         AND stl.sms_enabled = 1
+         AND stl.send_batchno = :batchNo
             ]]></body>
         </sql>
     </model>

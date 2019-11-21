@@ -91,15 +91,13 @@ public class RechargeBalanceEntity extends BaseEntity<String> {
         return storeIds;
     }
 
-    long deduction(long size) {
-        Preconditions.checkState(size > 0, "待扣除的短信数量需为正数，非法取值：%s", size);
+    boolean deduction(int size) {
+        Preconditions.checkState(size >= 0, "待扣除的短信数量需为正数，非法取值：%s", size);
         if (this.balance >= size) {
             this.balance = this.balance - size;
-            return size;
+            return true;
         } else {
-            long enbaled_size = this.balance;
-            this.balance = 0L;
-            return size - enbaled_size;
+            return false;
         }
     }
 

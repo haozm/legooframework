@@ -11,8 +11,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -89,6 +91,7 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
 
     public Optional<List<SendMsg4DeductionEntity>> loadSmsMsg4SendByBatchNo(MsgTransBatch transBatch) {
         Map<String, Object> params = transBatch.toParamMap();
+        params.put("sql", "loadSmsMsg4SendByBatchNo");
         String query_sql = getStatementFactory().getExecSql(getModelName(), "loadSmsMsg4SendByBatchNo", params);
         List<SendMsg4DeductionEntity> list = Objects.requireNonNull(getNamedParameterJdbcTemplate())
                 .query(query_sql, params, new DeductionBatchRowMapperImpl());
@@ -96,6 +99,24 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
             logger.debug(String.format("loadSmsMsg4SendByBatchNo(%s) return list size is %d", transBatch.getBatchNo(),
                     CollectionUtils.isEmpty(list) ? 0 : list.size()));
         return Optional.ofNullable(CollectionUtils.isEmpty(list) ? null : list);
+    }
+
+    public void batchUpdateMsg4Deductions(Collection<SendMsg4DeductionEntity> deductions) {
+        String update_sql = "UPDATE SMS_TRANSPORT_LOG SET send_status = ?,remarks = ? WHERE id = ?";
+        Objects.requireNonNull(getJdbcTemplate()).batchUpdate(update_sql, deductions, 1024, (ps, et) -> {
+            ps.setObject(1, et.getSendStatus().getStatus());
+            ps.setObject(2, et.getRemarks());
+            ps.setObject(3, et.getId());
+        });
+    }
+
+    public void batchFailMsg4Deductions(Collection<SendMsg4DeductionEntity> deductions, String errMsg) {
+        String update_sql = "UPDATE SMS_TRANSPORT_LOG SET send_status = ?,remarks = ? WHERE id = ?";
+        Objects.requireNonNull(getJdbcTemplate()).batchUpdate(update_sql, deductions, 1024, (ps, et) -> {
+            ps.setObject(1, SendStatus.SMS4SendError);
+            ps.setObject(2, errMsg);
+            ps.setObject(3, et.getId());
+        });
     }
 
     public void updateWxMsg4SendByBatchNo(MsgTransBatch transBatch) {

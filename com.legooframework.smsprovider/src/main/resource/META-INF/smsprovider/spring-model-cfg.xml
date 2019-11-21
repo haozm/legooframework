@@ -32,6 +32,10 @@
           parent="smsBaseProviderAction">
         <property name="cacheManager" ref="smsProviderCacheManager"/>
     </bean>
+    <bean id="smsConfigSettingEntityAction" class="com.legooframework.model.smsprovider.entity.SMSSettingEntityAction"
+          parent="smsBaseProviderAction">
+        <property name="cacheManager" ref="smsProviderCacheManager"/>
+    </bean>
     <bean id="smsProxyEntityAction" class="com.legooframework.model.smsprovider.entity.SMSProxyEntityAction">
         <constructor-arg name="domian" value="testold.csosm.com"/>
     </bean>

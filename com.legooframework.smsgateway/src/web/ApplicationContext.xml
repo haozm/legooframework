@@ -28,6 +28,13 @@
     <import resource="classpath*:META-INF/smsprovider/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/smsgateway/spring-model-cfg.xml"/>
 
+    <int:channel id="channel_sms_billing">
+        <int:queue capacity="128"/>
+    </int:channel>
+    <int:service-activator input-channel="channel_sms_billing" ref="smsAnyListenerService" method="billingAndDeduction"
+                           auto-startup="true">
+        <int:poller max-messages-per-poll="1" fixed-delay="500" receive-timeout="300000"/>
+    </int:service-activator>
     <!--
     <task:scheduler id="smsgateway-scheduler" pool-size="4"/>
     <task:scheduled-tasks scheduler="smsgateway-scheduler">

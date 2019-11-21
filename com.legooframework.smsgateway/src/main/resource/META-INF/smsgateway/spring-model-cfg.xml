@@ -57,11 +57,12 @@
           class="com.legooframework.model.smsgateway.entity.RechargeBalanceEntityAction"
           parent="smsClientEntityAction">
     </bean>
-    <bean id="billingDetailEntityAction" class="com.legooframework.model.smsgateway.entity.ChargeDetailEntityAction"
+    <bean id="deductionDetailEntityAction"
+          class="com.legooframework.model.smsgateway.entity.DeductionDetailEntityAction"
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
     </bean>
-    <bean id="billingSummaryEntityAction" class="com.legooframework.model.smsgateway.entity.ChargeSummaryEntityAction"
+    <bean id="deductionTotalEntityAction" class="com.legooframework.model.smsgateway.entity.DeductionTotalEntityAction"
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
     </bean>
@@ -73,8 +74,7 @@
           class="com.legooframework.model.smsgateway.entity.WechatMessageEntityAction"
           parent="smsClientEntityAction"/>
 
-    <bean id="sendMsg4InitEntityAction"
-          class="com.legooframework.model.smsgateway.entity.SendMsg4InitEntityAction"
+    <bean id="sendMsg4InitEntityAction" class="com.legooframework.model.smsgateway.entity.SendMsg4InitEntityAction"
           parent="smsClientEntityAction"/>
     <bean id="sendMsg4ReimburseEntityAction"
           class="com.legooframework.model.smsgateway.entity.SendMsg4ReimburseEntityAction"
@@ -82,58 +82,32 @@
     <bean id="smsKeywordEntityAction"
           class="com.legooframework.model.smsgateway.entity.SMSKeywordEntityAction"
           parent="smsClientEntityAction"/>
-    <bean id="smsConfigSettingEntityAction" class="com.legooframework.model.smsprovider.entity.SMSSettingEntityAction"
-          parent="smsClientEntityAction">
-        <property name="cacheManager" ref="smsClientCacheManager"/>
-    </bean>
+
     <bean id="smsBlackListEntityAction" class="com.legooframework.model.smsgateway.entity.SMSBlackListEntityAction"
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
     </bean>
-    <bean id="smsKvDictEntityAction"
-          class="com.legooframework.model.dict.entity.KvDictEntityAction"
+    <bean id="smsKvDictEntityAction" class="com.legooframework.model.dict.entity.KvDictEntityAction"
           parent="smsClientEntityAction">
         <constructor-arg name="tableName" value="SMS_DICT_INFO"/>
         <constructor-arg name="cacheName" value="smsGateWayCache"/>
         <property name="cacheManager" ref="smsClientCacheManager"/>
     </bean>
-    <bean id="mobileNumberCheckInterceptor"
-          class="com.legooframework.model.smsgateway.filter.MobileNumberCheckInterceptor">
-        <constructor-arg name="kvDictEntityAction" ref="smsKvDictEntityAction"/>
-    </bean>
-    <bean id="mobileNumberBlackListInterceptor"
-          class="com.legooframework.model.smsgateway.filter.MobileNumberBlackListInterceptor">
-        <constructor-arg name="blackListEntityAction" ref="smsBlackListEntityAction"/>
-    </bean>
-    <bean id="encodeUrlCheckInterceptor"
-          class="com.legooframework.model.smsgateway.filter.EncodeUrlCheckInterceptor"/>
 
-    <util:list id="smsSendInterceptor" value-type="com.legooframework.model.smsgateway.filter.SmsSendInterceptor">
-        <ref bean="mobileNumberCheckInterceptor"/>
-        <ref bean="mobileNumberBlackListInterceptor"/>
-        <ref bean="encodeUrlCheckInterceptor"/>
-    </util:list>
-
-    <bean id="smsBeforeSendInterceptor" class="com.legooframework.model.smsgateway.filter.SMSBeforeSendInterceptor">
-        <constructor-arg name="interceptors" ref="smsSendInterceptor"/>
-    </bean>
-
-    <bean id="smsTempCacheService" class="com.legooframework.model.smsgateway.service.SmsTempCacheService"/>
     <bean id="smsRechargeService" class="com.legooframework.model.smsgateway.service.SMSRechargeService"/>
     <bean id="smsGatewayService" class="com.legooframework.model.smsgateway.service.SmsGatewayService">
         <property name="covariantService" ref="covariantService"/>
     </bean>
-    <bean id="smsAnyListenerService" class="com.legooframework.model.smsgateway.service.SmsAnyListenerService"/>
+    <bean id="smsAnyListenerService" class="com.legooframework.model.smsgateway.service.SmsAnyListenerService">
+        <property name="sendMsg4InitEntityAction" ref="sendMsg4InitEntityAction"/>
+        <property name="rechargeBalanceEntityAction" ref="rechargeBalanceEntityAction"/>
+        <property name="deductionDetailEntityAction" ref="deductionDetailEntityAction"/>
+    </bean>
     <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
 
-    <int:channel id="channel_sms_billing">
-        <int:queue capacity="128"/>
-    </int:channel>
-    <int:service-activator input-channel="channel_sms_billing" ref="smsAnyListenerService" method="billingAndDeduction"
-                           auto-startup="true">
-        <int:poller max-messages-per-poll="1" fixed-delay="500" receive-timeout="300000"/>
-    </int:service-activator>
     <!--
+
+
     <task:scheduler id="sms-client-scheduler" pool-size="8"/>
     <task:executor id="sms-client-executor" pool-size="4-32" queue-capacity="512" rejection-policy="CALLER_RUNS"/>
     <task:scheduled-tasks scheduler="sms-client-scheduler">

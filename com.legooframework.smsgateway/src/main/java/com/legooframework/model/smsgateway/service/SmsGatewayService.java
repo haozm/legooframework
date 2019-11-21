@@ -80,9 +80,8 @@ public class SmsGatewayService extends BundleService {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         boolean flag = false;
         TransactionStatus tx = startTx(null);
-        String batchNo = null;
         try {
-            batchNo = getBean(SendMsg4InitEntityAction.class).batchInsert(store, instances);
+            getBean(SendMsg4InitEntityAction.class).batchInsert(store, instances);
             commitTx(tx);
             flag = true;
         } catch (Exception e) {
