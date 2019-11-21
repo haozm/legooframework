@@ -78,7 +78,8 @@ public class SmsAnyListenerService extends BundleService {
         Optional<List<String>> optional = msgTransportBatchEntityAction.load4Deduction();
         if (!optional.isPresent()) return;
         optional.get().forEach(s -> {
-            Message<String> message = MessageBuilder.withPayload(s).setHeader("action", "deduction").build();
+            Message<String> message = MessageBuilder.withPayload(s).setReplyChannelName("nullChannel")
+                    .setHeader("action", "deduction").build();
             getMessagingTemplate().send(CHANNEL_SMS_BILLING, message);
         });
     }
