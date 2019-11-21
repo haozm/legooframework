@@ -554,7 +554,7 @@
             <body><![CDATA[
     INSERT INTO SMS_TRANSPORT_BATCH
                 (company_id, store_id, send_batchno, is_billing, sms_write_count, sms_write_ok_count, wx_write_count, wx_write_ok_count, delete_flag, tenant_id, creator)
-         VALUES (         ?,        ?,             ?,         ?,               ?.                  ?,              ?,                 ?,           0,         ?,      -1)
+         VALUES (         ?,        ?,             ?,         ?,               ?,                  ?,              ?,                 ?,           0,         ?,      -1)
             ]]></body>
         </sql>
         <sql id="query4list" dynamic="true">

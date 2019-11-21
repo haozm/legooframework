@@ -51,12 +51,6 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
         return companyId;
     }
 
-    boolean finishedBill() {
-        if (this.billing) return false;
-        this.billing = true;
-        return true;
-    }
-
     public boolean isBilling() {
         return billing;
     }

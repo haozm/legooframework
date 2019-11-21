@@ -14,8 +14,8 @@
         <property name="connectionTimeout" value="30000"/>
         <property name="idleTimeout" value="600000"/>
         <property name="maxLifetime" value="1800000"/>
-        <property name="maximumPoolSize" value="8"/>
-        <property name="minimumIdle" value="2"/>
+        <property name="maximumPoolSize" value="36"/>
+        <property name="minimumIdle" value="8"/>
     </bean>
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
         <property name="dataSource" ref="acpDataSource"/>
@@ -25,6 +25,9 @@
     <alias name="acpDataSource" alias="wechatcmdDataSource"/>
     <alias name="acpDataSource" alias="statisticalDataSource"/>
 
+
+    <alias name="acpDataSource" alias="smsProviderDataSource"/>
+    <alias name="acpDataSource" alias="smsGateWayDataSource"/>
     <alias name="acpDataSource" alias="jobDataSource"/>
     <alias name="acpDataSource" alias="saleRecordDataSource"/>
     <alias name="transactionManager" alias="jobTransactionManager"/>

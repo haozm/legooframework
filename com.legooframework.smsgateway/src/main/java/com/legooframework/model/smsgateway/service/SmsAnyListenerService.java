@@ -8,7 +8,6 @@ import com.google.gson.JsonElement;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.covariant.entity.StoEntity;
-import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.smsgateway.entity.*;
 import com.legooframework.model.smsgateway.mvc.RechargeReqDto;
 import com.legooframework.model.smsprovider.entity.SMSProxyEntityAction;
@@ -44,23 +43,23 @@ public class SmsAnyListenerService extends BundleService {
      * 充值缴费等相关请求处理
      * 监听队列 CHANNEL_SMS_CHARGE = "channel_sms_charge"
      *
-     * @param user    当前用户
      * @param action  动作
      * @param payload 有效负载
      * @return Message 消息
      */
-    public Message<?> billingAndDeduction(@Header(name = "user") UserAuthorEntity user,
-                                          @Header(name = "action") String action,
-                                          @Payload Object payload) {
+    public Message<?> billingAndDeduction(@Header(name = "action") String action, @Payload Object payload) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("billingAndDeduction(user:%s,action:%s,payload:....)", user.getId(), action));
-        LoginContextHolder.setCtx(user.toLoginContext());
+            logger.debug(String.format("billingAndDeduction(action:%s,payload:....)", action));
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
         try {
             if (StringUtils.equals("recharge", action)) {// 充值行为
                 this.recharge((RechargeReqDto) payload);
             } else if (StringUtils.equals("deduction", action)) { // 计费行为
-                String sendBathcNo = (String) payload;
-                this.deduction(sendBathcNo);
+                @SuppressWarnings("unchecked")
+                Collection<Map<String, Object>> payloadMap = (Collection<Map<String, Object>>) payload;
+                for (Map<String, Object> map : payloadMap) {
+                    this.deduction(MapUtils.getString(map, "batchNo"));
+                }
                 return MessageBuilder.withPayload(new Object()).build();
             } else if (StringUtils.equals("writeOff", action)) { // 退款行为
 //                String sendBatchNo = (String) payload;
@@ -79,10 +78,17 @@ public class SmsAnyListenerService extends BundleService {
         }
     }
 
+    public void deductionJob() {
+        Optional<List<String>> optional = msgTransportBatchEntityAction.load4Deduction();
+        if (!optional.isPresent()) return;
+        optional.get().forEach(s -> {
+            Message<String> message = MessageBuilder.withPayload(s).setHeader("action", "deduction").build();
+            getMessagingTemplate().send(CHANNEL_SMS_BILLING, message);
+        });
+    }
+
     /**
      * OOXX
-     *
-     * @return 行走的银行
      */
     void deduction(String batchNo) {
         LoginContextHolder.setIfNotExitsAnonymousCtx();

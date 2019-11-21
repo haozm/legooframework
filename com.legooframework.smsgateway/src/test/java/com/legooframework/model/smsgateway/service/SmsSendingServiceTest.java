@@ -39,7 +39,7 @@ public class SmsSendingServiceTest {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         String sql = "SELECT cm.id from acp.crm_member cm \n" +
                 "inner JOIN acp.crm_store_member csm on csm.member_id =cm.id\n" +
-                "where csm.store_id=15 and cm.status=1 limit 200";
+                "where csm.store_id=15 and cm.status=1 limit 60,120";
         List<Integer> cids = app.getBean("smsJdbcQuerySupport", JdbcQuerySupport.class).getJdbcTemplate()
                 .queryForList(sql, Integer.class);
         logger.debug(String.format("jdbcQuerySupport() mmdis is %d", cids.size()));

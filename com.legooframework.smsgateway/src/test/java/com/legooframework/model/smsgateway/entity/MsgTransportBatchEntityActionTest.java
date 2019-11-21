@@ -1,4 +1,4 @@
-package com.legooframework.model.smsgateway.service;
+package com.legooframework.model.smsgateway.entity;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,16 +15,17 @@ import static org.junit.Assert.*;
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/covariant/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsprovider/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/entities/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsgateway/spring-model-cfg.xml"}
 )
-public class SmsAnyListenerServiceTest {
+public class MsgTransportBatchEntityActionTest {
 
     @Test
-    public void deduction() {
-        smsAnyListenerService.deduction("1-1120-20191121151853");
+    public void load4Deduction() {
+        msgTransportBatchEntityAction.load4Deduction();
     }
 
-
     @Autowired
-    private SmsAnyListenerService smsAnyListenerService;
+    MsgTransportBatchEntityAction msgTransportBatchEntityAction;
+
 }
