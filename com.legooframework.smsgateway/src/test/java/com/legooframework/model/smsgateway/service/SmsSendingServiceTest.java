@@ -39,11 +39,11 @@ public class SmsSendingServiceTest {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         String sql = "SELECT cm.id from acp.crm_member cm \n" +
                 "inner JOIN acp.crm_store_member csm on csm.member_id =cm.id\n" +
-                "where csm.store_id=15 and cm.status=1 limit 60,120";
+                "where csm.store_id=1120 and cm.status=1 limit 30";
         List<Integer> cids = app.getBean("smsJdbcQuerySupport", JdbcQuerySupport.class).getJdbcTemplate()
                 .queryForList(sql, Integer.class);
         logger.debug(String.format("jdbcQuerySupport() mmdis is %d", cids.size()));
-        StoEntity store = app.getBean(StoEntityAction.class).loadById(15);
+        StoEntity store = app.getBean(StoEntityAction.class).loadById(1120);
         UserAuthorEntity user = app.getBean(UserAuthorEntityAction.class).loadUserById(15, 1);
         List<SendMessageTemplate> msgList = cids.stream().map(x -> SendMessageTemplate.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
                 x, AutoRunChannel.SMS_ONLY)).collect(Collectors.toList());

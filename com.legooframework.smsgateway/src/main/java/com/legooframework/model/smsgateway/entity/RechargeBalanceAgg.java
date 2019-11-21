@@ -71,10 +71,13 @@ public class RechargeBalanceAgg {
 
     @Override
     public String toString() {
+        int ok = (int) deductionSmses.stream().filter(SendMsg4DeductionEntity::isDeductionOK).count();
+        int fail = (int) deductionSmses.stream().filter(x -> !x.isDeductionOK()).count();
         return MoreObjects.toStringHelper(this)
-                .add("rawBalances", rawBalances)
                 .add("chargeDetails", chargeDetails)
                 .add("deductionSmses' size ", deductionSmses.size())
+                .add("deductionOk' size ", ok)
+                .add("deductionFail' size ", fail)
                 .toString();
     }
 }

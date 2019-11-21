@@ -132,6 +132,8 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
                             ps.setObject(1, balance.getBalance());
                             ps.setObject(2, balance.getId());
                         });
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("batchUpdateBalance() size  %d", balances.size()));
     }
 
     /**

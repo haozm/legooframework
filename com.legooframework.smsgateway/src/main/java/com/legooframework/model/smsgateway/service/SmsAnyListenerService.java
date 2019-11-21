@@ -100,13 +100,14 @@ public class SmsAnyListenerService extends BundleService {
         Optional<List<SendMsg4DeductionEntity>> deduction_sms_list = sendMsg4InitEntityAction
                 .loadSmsMsg4SendByBatchNo(transportBatch);
         if (!deduction_sms_list.isPresent()) {
-            // sendMsg4InitEntityAction.finishedBill(batchInfo);
             msgTransportBatchEntityAction.finishBilling(transportBatch);
         } else {
             TransactionStatus ts = startTx(null);
             try {
                 RechargeBalanceAgg balanceAgg = rechargeBalanceEntityAction.loadOrderEnabledByStore(store);
                 balanceAgg.deduction(transportBatch, deduction_sms_list.get());
+                if (logger.isDebugEnabled())
+                    logger.debug(String.format("deduction() is %s", balanceAgg));
                 sendMsg4InitEntityAction.batchUpdateMsg4Deductions(balanceAgg.getDeductionSmses());
                 balanceAgg.getChargeDetails().ifPresent(x -> deductionDetailEntityAction.batchInsert(x));
                 balanceAgg.getDeductionBalances().ifPresent(x -> rechargeBalanceEntityAction.batchUpdateBalance(x));
