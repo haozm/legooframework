@@ -37,10 +37,6 @@ public class SendMsg4SendEntity extends BaseEntity<String> {
         return SendStatus.SMS4SendError == getSendStatus();
     }
 
-    public boolean isSending() {
-        return SendStatus.SMS4Sending == getSendStatus();
-    }
-
     public void errorByException(Exception e) {
         Preconditions.checkState(SendStatus.SMS4Sending == getSendStatus());
         this.sendStatus = SendStatus.SMS4SendError;
@@ -70,13 +66,6 @@ public class SendMsg4SendEntity extends BaseEntity<String> {
         this.remarks = "号码设置无效或者回复TD退订";
     }
 
-    public void errorBySending(String msg) {
-        Preconditions.checkState(SendStatus.SMS4Sending == getSendStatus());
-        this.sendStatus = SendStatus.SMS4SendError;
-        this.sendResCode = "7103";
-        this.remarks = Strings.isNullOrEmpty(msg) ? "发送信息失败" : msg;
-    }
-
     public void errorByMobile() {
         Preconditions.checkState(SendStatus.SMS4Sending == getSendStatus());
         this.sendStatus = SendStatus.SMS4SendError;
@@ -91,7 +80,11 @@ public class SendMsg4SendEntity extends BaseEntity<String> {
         this.remarks = "提交网关完成";
     }
 
-    public boolean isFinshed() {
-        return SendStatus.SendedGateWay == getSendStatus();
+    public void errorBySending(String msg) {
+        Preconditions.checkState(SendStatus.SMS4Sending == getSendStatus());
+        this.sendStatus = SendStatus.SMS4SendError;
+        this.sendResCode = "9999";
+        this.remarks = Strings.isNullOrEmpty(msg) ? "上送信息到网关失败" : msg;
     }
+
 }

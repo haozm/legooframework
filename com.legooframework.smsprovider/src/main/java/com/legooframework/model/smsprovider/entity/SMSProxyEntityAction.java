@@ -47,11 +47,11 @@ public class SMSProxyEntityAction extends HttpBaseEntityAction<EmptyEntity> {
             String[] args = StringUtils.splitByWholeSeparator(rsp_payload, "|||");
             List<SendMsg4FinalEntity> res_list = Lists.newArrayListWithCapacity(args.length);
             for (String str : args) {
-                // 1858882831238231|28372e35-ed81-4867-97fd-c94855b693b8|4|2|2019-05-22 18:33:00|error:NOTEXITS
+                // 1858882831238231|28372e35-ed81-4867-97fd-c94855b693b8|9，0，1，2|2019-05-22 18:33:00|error:NOTEXITS
                 String[] arg = StringUtils.split(str, '|');
-                res_list.add(SendMsg4FinalEntity.create(arg[1], Integer.parseInt(arg[2]), Integer.parseInt(arg[3]), arg[4], arg[5]));
+                SendMsg4FinalEntity.create(arg[1], Integer.parseInt(arg[2]), arg[3], arg[4]).ifPresent(res_list::add);
             }
-            return Optional.of(res_list);
+            return Optional.ofNullable(CollectionUtils.isEmpty(res_list) ? null : res_list);
         } catch (Exception e) {
             logger.error("syncSmsState(...) has error", e);
             throw new RuntimeException(e);

@@ -2,7 +2,6 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
-import com.google.common.base.Preconditions;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
@@ -12,9 +11,10 @@ import org.joda.time.LocalDateTime;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSetter {
-    //18588828127|233b12b8-ad15-4637-8a00-8f97a4ab90ee|4|2|2019-11-12 21:41:49|UNDELIV
+    //18588828127|233b12b8-ad15-4637-8a00-8f97a4ab90ee|9,0,1,2|2019-11-12 21:41:49|UNDELIV
     private SendStatus sendStatus;
     private FinalState finalState;
     private LocalDateTime finalStateDate;
@@ -50,15 +50,22 @@ public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSett
         this.finalStateDesc = finalStateDesc;
     }
 
-    public static SendMsg4FinalEntity create(String id, int sendStatus, int finalState, String finalStateDate,
-                                             String finalStateDesc) {
-        SendStatus status = SendStatus.paras(sendStatus);
-        Preconditions.checkState(SendStatus.SendedGateWay == status || SendStatus.SMS4SendError == status,
-                "错误的发送状态%s", sendStatus);
-        FinalState state = FinalState.paras(finalState);
-        Preconditions.checkState(FinalState.DELIVRD == state || FinalState.UNDELIV == state,
-                "错误的发送状态%s", finalState);
-        return new SendMsg4FinalEntity(id, sendStatus, finalState, finalStateDate, finalStateDesc);
+    public static Optional<SendMsg4FinalEntity> create(String id, int recCode, String recDate, String recDesc) {
+        SendMsg4FinalEntity res = null;
+        switch (recCode) {
+            case 9:
+                res = new SendMsg4FinalEntity(id, SendStatus.SMS4SendError.getStatus(), FinalState.WAITING.getState(), null, null);
+                break;
+            case 1:
+                res = new SendMsg4FinalEntity(id, SendStatus.SendedGateWay.getStatus(), FinalState.DELIVRD.getState(), recDate, recDesc);
+                break;
+            case 2:
+                res = new SendMsg4FinalEntity(id, SendStatus.SendedGateWay.getStatus(), FinalState.UNDELIV.getState(), recDate, recDesc);
+                break;
+            default:
+                break;
+        }
+        return Optional.ofNullable(res);
     }
 
     @Override
