@@ -43,7 +43,7 @@ public class SendMessageTemplate implements Cloneable {
         return new SendMessageTemplate(businessType, detailId, memberId, runChannel, null);
     }
 
-    public SendMessageTemplate createWithoutJobNoTemplate(BusinessType businessType, int memberId, AutoRunChannel runChannel) {
+    public static SendMessageTemplate createWithoutJobNoTemplate(BusinessType businessType, int memberId, AutoRunChannel runChannel) {
         return new SendMessageTemplate(businessType, 0, memberId, runChannel, null);
     }
 

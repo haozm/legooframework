@@ -64,5 +64,11 @@
           parent="covariantAbsEntityAction"/>
     <bean id="covariantMsgTemplateAction" class="com.legooframework.model.covariant.entity.MsgTemplateEnityAction"
           parent="covariantAbsEntityAction"/>
-    <bean id="covariantService" class="com.legooframework.model.covariant.service.CovariantService"/>
+    <bean id="covariantService" class="com.legooframework.model.covariant.service.CovariantService">
+        <property name="memberAction" ref="covariantMemberAction"/>
+        <property name="storeAction" ref="covariantStoEntityAction"/>
+        <property name="employeeAction" ref="covariantEmpAction"/>
+        <property name="wxUserAction" ref="covariantWxUserAction"/>
+        <property name="eWeiShopMemberAction" ref="covariantEWeiShopMemberAction"/>
+    </bean>
 </beans>

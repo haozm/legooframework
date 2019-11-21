@@ -54,25 +54,28 @@ public class SmsGatewayService extends BundleService {
             partition = Lists.partition(sendMsgTemplates, 1000);
         }
         List<SendMsg4InitEntity> instances = Lists.newArrayList();
+        List<Throwable> errHolder = Lists.newArrayList();
         CompletableFuture.allOf(partition.stream()
                 .map(list -> CompletableFuture.supplyAsync(() -> initMessage(list, msgTemplate))
                         .thenAccept(msgs -> msgs.forEach(msg -> instances.add(SendMsg4InitEntity.createInstance(store, msg)))))
                 .toArray(CompletableFuture[]::new))
                 .whenComplete((v, th) -> {
                     if (null != th) {
-                        logger.error("initMessage(...) has error", th);
+                        logger.error("CompletableFuture.supplyAsync has  error ", th);
+                        errHolder.add(th);
                     } else {
                         if (logger.isDebugEnabled())
                             logger.debug(String.format("initMessage() size %d finished", sendMsgTemplates.size()));
                     }
-                });
+                }).join();
+        if (CollectionUtils.isNotEmpty(errHolder))
+            throw new RuntimeException(errHolder.get(0));
+
         List<SendMsg4InitEntity> sms_list = instances.stream().filter(SendMsg4InitEntity::isEnbaled)
                 .filter(SendMsg4InitEntity::isSMSMsg).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(sms_list)) {
             // 追加前缀与后坠
-
-
         }
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         boolean flag = false;
@@ -89,13 +92,6 @@ public class SmsGatewayService extends BundleService {
             rollbackTx(tx);
         } finally {
             LoginContextHolder.clear();
-        }
-        if (flag) {
-            Message<String> msg_request = MessageBuilder.withPayload(batchNo)
-                    .setHeader("user", user)
-                    .setHeader("action", "deduction")
-                    .build();
-            getMessagingTemplate().send(CHANNEL_SMS_BILLING, msg_request);
         }
         return flag;
     }
@@ -114,7 +110,7 @@ public class SmsGatewayService extends BundleService {
             for (SendMessageTemplate $temp : sendMsgTemplates) {
                 MemberAgg memberAgg;
                 try {
-                    memberAgg = getBean(CovariantService.class).loadMemberAgg($temp.getMemberId());
+                    memberAgg = covariantService.loadMemberAgg($temp.getMemberId());
                 } catch (Exception e) {
                     logger.error(String.format("loadMemberAgg(%d) has error...", $temp.getMemberId()), e);
                     $temp.setError(String.format("获取ID=%d的用户失败", $temp.getMemberId()));
@@ -148,4 +144,9 @@ public class SmsGatewayService extends BundleService {
         }
     }
 
+    private CovariantService covariantService;
+
+    public void setCovariantService(CovariantService covariantService) {
+        this.covariantService = covariantService;
+    }
 }

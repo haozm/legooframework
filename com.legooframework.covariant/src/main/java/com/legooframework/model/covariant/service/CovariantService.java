@@ -24,17 +24,17 @@ public class CovariantService extends BundleService {
      * @return StoreAgg
      */
     StoreAgg loadStoreAgg(Integer storeId) {
-        StoEntity store = getBean(StoEntityAction.class).loadById(storeId);
-        Optional<List<EmpEntity>> emps = getBean(EmpEntityAction.class).findEmpsByStore(store);
+        StoEntity store = storeAction.loadById(storeId);
+        Optional<List<EmpEntity>> emps = employeeAction.findEmpsByStore(store);
         return new StoreAgg(store, emps.orElse(null));
     }
 
     public EmployeeAgg loadEmployeeAgg(Integer empId) {
-        Optional<EmpEntity> employee = getBean(EmpEntityAction.class).findById(empId);
+        Optional<EmpEntity> employee = employeeAction.findById(empId);
         Preconditions.checkState(employee.isPresent(), String.format("empId=%d 对应的职员不存在...", empId));
         StoEntity store = null;
         if (employee.get().hasStore() && employee.get().getStoreId().isPresent()) {
-            store = getBean(StoEntityAction.class).loadById(employee.get().getStoreId().get());
+            store = storeAction.loadById(employee.get().getStoreId().get());
         }
         EmployeeAgg agg = new EmployeeAgg(employee.get(), store);
         if (logger.isDebugEnabled())
@@ -43,14 +43,14 @@ public class CovariantService extends BundleService {
     }
 
     public WxUserAgg loadWxUserAgg(Integer storeId, String userName) {
-        StoEntity store = getBean(StoEntityAction.class).loadById(storeId);
-        Optional<WxUserEntity> wxUser = getBean(WxUserEntityAction.class).findById(store, userName);
+        StoEntity store = storeAction.loadById(storeId);
+        Optional<WxUserEntity> wxUser = wxUserAction.findById(store, userName);
         Preconditions.checkState(wxUser.isPresent(), String.format("门店%d 对应的%s 微信不存在", store.getId(), userName));
-        Optional<MemberEntity> member = getBean(MemberEntityAction.class).findByWxUser(wxUser.get());
+        Optional<MemberEntity> member = memberAction.findByWxUser(wxUser.get());
         EmpEntity shoppingGuide = null;
         if (member.isPresent() && member.get().getShoppingGuideId().isPresent()) {
             try {
-                shoppingGuide = getBean(EmpEntityAction.class).loadById(member.get().getShoppingGuideId().get());
+                shoppingGuide = employeeAction.loadById(member.get().getShoppingGuideId().get());
             } catch (EntityNotExitsException e) {
                 logger.error(String.format("Member=%s 含导购 %s 对应的实体不存在...", member.get().getId(),
                         member.get().getShoppingGuideId().get()), e);
@@ -70,21 +70,21 @@ public class CovariantService extends BundleService {
      * @return StoreAgg
      */
     public MemberAgg loadMemberAgg(Integer memberId) {
-        Optional<MemberEntity> member = getBean(MemberEntityAction.class).findById(memberId);
+        Optional<MemberEntity> member = memberAction.findById(memberId);
         Preconditions.checkState(member.isPresent());
-        StoEntity store = getBean(StoEntityAction.class).loadById(member.get().getStoreId());
+        StoEntity store = storeAction.loadById(member.get().getStoreId());
         EmpEntity shoppingGuide = null;
         if (member.get().getShoppingGuideId().isPresent()) {
             try {
-                shoppingGuide = getBean(EmpEntityAction.class).loadById(member.get().getShoppingGuideId().get());
+                shoppingGuide = employeeAction.loadById(member.get().getShoppingGuideId().get());
             } catch (EntityNotExitsException e) {
                 logger.error(String.format("Member=%s 含导购 %s 对应的实体不存在...", member.get().getId(),
                         member.get().getShoppingGuideId().get()), e);
                 shoppingGuide = null;
             }
         }
-        Optional<WxUserEntity> wxUser = getBean(WxUserEntityAction.class).findByMember(member.get());
-        Optional<EWeiShopMemberEntity> shopUser = getBean(EWeiShopMemberEntityAction.class).findByMember(member.get());
+        Optional<WxUserEntity> wxUser = wxUserAction.findByMember(member.get());
+        Optional<EWeiShopMemberEntity> shopUser = eWeiShopMemberAction.findByMember(member.get());
         MemberAgg agg = new MemberAgg(member.get(), store, shoppingGuide, wxUser.orElse(null), shopUser.orElse(null));
         if (logger.isDebugEnabled())
             logger.debug(String.format("loadMemberAgg(%s) is %s", memberId, agg));
@@ -93,7 +93,7 @@ public class CovariantService extends BundleService {
 
     public void sendSmsByStore(Integer storeId, String content, String phone, String name, BusinessType businessType,
                                String batchNo) {
-        StoEntity store = getBean(StoEntityAction.class).loadById(storeId);
+        StoEntity store = storeAction.loadById(storeId);
         SendSmsEntity sms = SendSmsEntity.createSmsByStore(content, phone, name, store, businessType, batchNo, null);
         try {
             getBean(SmsBalanceEntityAction.class).billing(store, sms.getSmsCount());
@@ -106,12 +106,12 @@ public class CovariantService extends BundleService {
 
     public void preSendSmsByStore(Integer storeId, Integer memberId, Collection<Integer> empIds,
                                   BusinessType businessType, String ctxTemp) {
-        StoEntity store = getBean(StoEntityAction.class).loadById(storeId);
+        StoEntity store = storeAction.loadById(storeId);
         String batchNo = UUID.randomUUID().toString();
         MemberAgg memberAgg = loadMemberAgg(memberId);
         String sms_prefix = getBean(SendSmsEntityAction.class).getSmsPrefix(store);
         String content = replace(ctxTemp, memberAgg.toReplaceMap());
-        Optional<List<EmpEntity>> _emps = getBean(EmpEntityAction.class).findEmpsByStore(store, empIds);
+        Optional<List<EmpEntity>> _emps = employeeAction.findEmpsByStore(store, empIds);
         List<EmpEntity> emps_list = _emps.orElse(null);
         Preconditions.checkState(CollectionUtils.isNotEmpty(emps_list), "指定人员ID为空...");
         List<SendSmsEntity> sms_list = Lists.newArrayList();
@@ -158,7 +158,7 @@ public class CovariantService extends BundleService {
     }
 
     public void sendSmsesByStore(Integer storeId, Collection<SendSmsEntity> sendSmses) {
-        StoEntity store = getBean(StoEntityAction.class).loadById(storeId);
+        StoEntity store = storeAction.loadById(storeId);
         if (CollectionUtils.isEmpty(sendSmses)) return;
         int sms_sum = sendSmses.stream().mapToInt(SendSmsEntity::getSmsCount).sum();
         String errMsg = null;
@@ -177,8 +177,34 @@ public class CovariantService extends BundleService {
     public void sendWxMsgByStore(String msgTxt, String[] imageInfo, Collection<String> wechatIds, Integer storeId,
                                  BusinessType businessType) {
         if (CollectionUtils.isEmpty(wechatIds)) return;
-        StoEntity store = getBean(StoEntityAction.class).loadById(storeId);
+        StoEntity store = storeAction.loadById(storeId);
         Preconditions.checkState(store.hasWexin(), "门店%s无微信或者设备信息.....", store.getName());
         getBean(SendWechatEntityAction.class).sendMsg(msgTxt, imageInfo, wechatIds, store, businessType);
+    }
+
+    private MemberEntityAction memberAction;
+    private StoEntityAction storeAction;
+    private EmpEntityAction employeeAction;
+    private WxUserEntityAction wxUserAction;
+    private EWeiShopMemberEntityAction eWeiShopMemberAction;
+
+    public void seteWeiShopMemberAction(EWeiShopMemberEntityAction eWeiShopMemberAction) {
+        this.eWeiShopMemberAction = eWeiShopMemberAction;
+    }
+
+    public void setEmployeeAction(EmpEntityAction employeeAction) {
+        this.employeeAction = employeeAction;
+    }
+
+    public void setWxUserAction(WxUserEntityAction wxUserAction) {
+        this.wxUserAction = wxUserAction;
+    }
+
+    public void setStoreAction(StoEntityAction storeAction) {
+        this.storeAction = storeAction;
+    }
+
+    public void setMemberAction(MemberEntityAction memberAction) {
+        this.memberAction = memberAction;
     }
 }
