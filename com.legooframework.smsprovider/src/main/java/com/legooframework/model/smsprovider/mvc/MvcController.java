@@ -45,8 +45,8 @@ public class MvcController extends BaseController {
     @PostMapping(value = "/smssetting/check/sms/prefix.json")
     public JsonMessage checkSmsPrefix(@RequestBody(required = false) Map<String, Object> requestBody,
                                       HttpServletRequest request) throws Exception {
-        UserAuthorEntity user = loadLoginUser(requestBody, request);
         LoginContextHolder.setIfNotExitsAnonymousCtx();
+        UserAuthorEntity user = loadLoginUser(requestBody, request);
         try {
             String prefix = MapUtils.getString(requestBody, "smsPrefix");
             Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix), "入参 smsPrefix 不可以未空...");
@@ -69,8 +69,8 @@ public class MvcController extends BaseController {
     @PostMapping(value = "/smssetting/edit/sms/prefix.json")
     public JsonMessage settingSmsPrefix(@RequestBody(required = false) Map<String, Object> requestBody,
                                         HttpServletRequest request) throws Exception {
-        UserAuthorEntity user = loadLoginUser(requestBody, request);
         LoginContextHolder.setIfNotExitsAnonymousCtx();
+        UserAuthorEntity user = loadLoginUser(requestBody, request);
         try {
             String prefix = MapUtils.getString(requestBody, "smsPrefix");
             Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix), "入参 smsPrefix 不可以未空...");
@@ -92,8 +92,8 @@ public class MvcController extends BaseController {
     @PostMapping(value = "/smssetting/load/sms/prefix.json")
     public JsonMessage loadSmsPreix(@RequestBody(required = false) Map<String, Object> requestBody,
                                     HttpServletRequest request) throws Exception {
-        UserAuthorEntity user = loadLoginUser(requestBody, request);
         LoginContextHolder.setIfNotExitsAnonymousCtx();
+        UserAuthorEntity user = loadLoginUser(requestBody, request);
         try {
             if (user.hasStore()) {
                 getBean(SMSSettingEntityAction.class, request).loadByStoreId(user.getCompanyId(), user.getStoreId().orElse(0));
