@@ -54,6 +54,10 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
         return companyId;
     }
 
+    SendMode getSendMode() {
+        return sendMode;
+    }
+
     public boolean isBilling() {
         return billing;
     }
