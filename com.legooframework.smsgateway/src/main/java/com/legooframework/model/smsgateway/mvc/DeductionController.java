@@ -28,44 +28,32 @@ public class DeductionController extends SmsBaseController {
     /**
      * 返回按照批次号分类的 聚合
      *
-     * @param channel
      * @param range
      * @param requestBody
      * @param request
      * @return
      */
-    @PostMapping(value = "/{channel}/{range}/batch/list.json")
-    public JsonMessage chargeListAction(@PathVariable(value = "channel") String channel,
-                                        @PathVariable(value = "range") String range,
-                                        @RequestBody(required = false) Map<String, Object> requestBody,
-                                        HttpServletRequest request) {
+    @PostMapping(value = "/{range}/total/list.json")
+    public JsonMessage deductionTotalList(@PathVariable(value = "range") String range,
+                                          @RequestBody(required = false) Map<String, Object> requestBody,
+                                          HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("chargeListAction(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
+            logger.debug(String.format("deductionTotalList(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setAnonymousCtx();
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
-            Preconditions.checkArgument(ArrayUtils.contains(CHANNELS, channel), "非法的取值 %s,取值范围为：%s", channel, CHANNELS);
             Preconditions.checkArgument(ArrayUtils.contains(RANGES, range), "非法的取值 %s,取值范围为：%s", range, RANGES);
             int pageNum = MapUtils.getIntValue(requestBody, "pageNum", 1);
             int pageSize = MapUtils.getIntValue(requestBody, "pageSize", 10);
             Integer companyId = MapUtils.getInteger(requestBody, "companyId", -1);
             if (StringUtils.equals("company", range)) companyId = user.getCompanyId();
-
             int storeId = MapUtils.getIntValue(requestBody, "storeId", -1);
-            String storeIds = MapUtils.getString(requestBody, "storeIds");
-            String smsContext = MapUtils.getString(requestBody, "smsContext");
-            String createTime = MapUtils.getString(requestBody, "createTime", null);
-            int sendMode = MapUtils.getInteger(requestBody, "sendMode", -1);
-            int shoppingGuideId = MapUtils.getInteger(requestBody, "shoppingGuideId", -1);
+            String deductionDate = MapUtils.getString(requestBody, "deductionDate", null);
             Map<String, Object> params = Maps.newHashMap();
             params.put("companyId", companyId);
             if (-1 != storeId) params.put("storeId", storeId);
-            if (-1 != shoppingGuideId) params.put("shoppingGuideId", shoppingGuideId);
-            if (!Strings.isNullOrEmpty(storeIds)) params.put("storeIds", storeIds);
-            if (!Strings.isNullOrEmpty(smsContext)) params.put("smsContext", String.format("%%%s%%", smsContext));
-            if (!Strings.isNullOrEmpty(createTime)) params.put("createTime", createTime);
-            if (sendMode != -1) params.put("sendMode", sendMode);
-            PagingResult page = getQueryEngine(request).queryForPage("ChargeDetailEntity", "batch_list", pageNum, pageSize, params);
+            if (!Strings.isNullOrEmpty(deductionDate)) params.put("deductionDate", deductionDate);
+            PagingResult page = getQueryEngine(request).queryForPage("DeductionDetailEntity", "deductionTotal", pageNum, pageSize, params);
             return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
         } finally {
             LoginContextHolder.clear();
@@ -80,13 +68,12 @@ public class DeductionController extends SmsBaseController {
      * @param request
      * @return
      */
-    @PostMapping(value = "/{channel}/detail/list.json")
+    @PostMapping(value = "/detail/list.json")
     public JsonMessage chargeDetailListAction(@PathVariable(value = "channel") String channel,
                                               @RequestBody(required = false) Map<String, Object> requestBody,
                                               HttpServletRequest request) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("chargeDetailListAction(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
-        Preconditions.checkArgument(ArrayUtils.contains(CHANNELS, channel), "非法的取值 %s,取值范围为：%s", channel, CHANNELS);
         LoginContextHolder.setAnonymousCtx();
         try {
             int pageNum = MapUtils.getIntValue(requestBody, "pageNum", 1);

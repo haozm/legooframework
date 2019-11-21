@@ -1,90 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sqls>
-    <model id="ChargeDetailEntity">
-        <sql id="batch_list_count" dynamic="true">
+    <model id="DeductionDetailEntity">
+        <sql id="deductionTotal_count" dynamic="true">
             <body><![CDATA[
           SELECT COUNT(scs.id)
-            FROM SMS_CHARGE_SUMMARY scs
-           WHERE scs.delete_flag = 0
+            FROM SMS_TRANSPORT_BATCH stb
+           WHERE stb.is_billing =1
              AND scs.company_id = :companyId
-          <#if storeId??>
-             AND scs.store_id = :storeId
-          <#elseif storeIds??>
-             AND scs.store_id IN (${storeIds?join(",")})
-          </#if>
-          <#if smsContext??>
-             AND scs.sms_context LIKE :smsContext
-          </#if>
-          <#if shoppingGuideId??>
-             AND scs.creator = :shoppingGuideId
-          </#if>
-          <#if sendMode??>
-             AND scs.send_mode = :sendMode
-          </#if>
-          <#if createTime_start??>
-             AND DATE_FORMAT(scs.createTime,'%Y-%m-%d %H:%i:%s') BETWEEN :createTime_start AND :createTime_end
-          </#if>
+<#if storeId??> AND stb.store_id = :storeId</#if>
+<#if deductionDate??> AND DATE_FORMAT(stb.createTime,GET_FORMAT(DATE,'iso')) = :deductionDate</#if>
             ]]></body>
         </sql>
-        <sql id="batch_list" dynamic="true">
+        <sql id="deductionTotal" dynamic="true">
             <params>
                 <p name="companyId" type="INT" required="true"/>
                 <p name="storeId" type="INT"/>
-                <p name="storeIds" type="INTS"/>
-                <p name="sendMode" type="INT"/>
-                <p name="shoppingGuideId" type="INT"/>
-                <p name="smsContext" type="STRING"/>
-                <p name="createTime" type="DATERANGE"/>
             </params>
             <body><![CDATA[
-          SELECT scs.id AS 'id',
-                 scs.company_id AS 'companyId',
-                 scs.company_name AS 'companyName',
-                 scs.store_id AS 'storeId',
-                 scs.store_name AS 'storeName',
-                 scs.sms_batchno AS 'smsBatchNo',
-                 scs.sms_quantity AS 'smsQuantity',
-                 scs.creator AS 'creator',
-                 scs.sms_context AS 'smsContext',
-                 DATE_FORMAT(scs.createTime,'%Y-%m-%d %H:%i:%s') AS 'createTime',
-                 scs.business_type AS 'businessType',
-                 ( SELECT dict.field_name
-                     FROM SMS_DICT_INFO dict
-                    WHERE dict.dict_type = 'SMS_BUS_TYPE'
-                      AND dict.field_value = scs.business_type) AS 'businessTypeName',
-                 scs.send_mode AS 'sendMode',
-                 (  CASE scs.send_mode
-                    WHEN 0 THEN '自动任务'
-                    WHEN 1 THEN '手动单发'
-                    WHEN 2 THEN '手动群发'
-                    ELSE '异常数据' END ) AS 'sendModeName',
-                 scs.finish_send AS 'finishSend',
-                 ( SELECT GROUP_CONCAT(DISTINCT stl.send_status ORDER BY stl.send_status SEPARATOR  ',' )
-                     FROM SMS_TRANSPORT_LOG stl
-                    WHERE stl.send_batchno = scs.sms_batchno ) AS 'detailStatus',
-                   0 AS 'successQuantity',
-                   0 AS 'failureQuantity'
-            FROM SMS_CHARGE_SUMMARY scs
-           WHERE scs.delete_flag = 0
-             AND scs.company_id = :companyId
-          <#if storeId??>
-             AND scs.store_id = :storeId
-          <#elseif storeIds??>
-             AND scs.store_id IN (${storeIds?join(",")})
-          </#if>
-          <#if sendMode??>
-             AND scs.send_mode = :sendMode
-          </#if>
-          <#if shoppingGuideId??>
-             AND scs.creator = :shoppingGuideId
-          </#if>
-          <#if smsContext??>
-             AND scs.sms_context LIKE :smsContext
-          </#if>
-          <#if createTime_start??>
-             AND DATE_FORMAT(scs.createTime,'%Y-%m-%d %H:%i:%s') BETWEEN :createTime_start AND :createTime_end
-          </#if>
-       ORDER BY scs.createTime DESC
+          SELECT com.name AS 'companyName',sto.name 'storename',
+                 stb.*,
+                 DATE_FORMAT(stb.createTime,GET_FORMAT(DATETIME,'iso')) AS 'createTimeName'
+            FROM SMS_TRANSPORT_BATCH stb
+      INNER JOIN acp.acp_organization com ON com.id = stb.company_id AND com.orgType =1
+      INNER JOIN acp.acp_store sto ON sto.id = stb.store_id
+           WHERE stb.is_billing =1
+             AND stb.company_id = :companyId
+      <#if storeId??> AND stb.store_id = :storeId</#if>
+      <#if deductionDate??> AND DATE_FORMAT(stb.createTime,GET_FORMAT(DATE,'iso')) = :deductionDate</#if>
+       ORDER BY stb.createTime DESC
           LIMIT :offset,:rows
             ]]></body>
         </sql>

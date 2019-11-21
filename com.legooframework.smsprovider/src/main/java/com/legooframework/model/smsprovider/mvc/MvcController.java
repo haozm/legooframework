@@ -24,12 +24,11 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController(value = "smsproviderController")
-@RequestMapping(value = "smsprovider")
 public class MvcController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(MvcController.class);
 
-    @RequestMapping(value = "/welcome.json")
+    @RequestMapping(value = "/smsprovider/welcome.json")
     @ResponseBody
     public JsonMessage welcome(HttpServletRequest request) {
         if (logger.isDebugEnabled())
@@ -103,7 +102,7 @@ public class MvcController extends BaseController {
         }
     }
 
-    UserAuthorEntity loadLoginUser(Map<String, Object> requestBody, HttpServletRequest request) {
+    private UserAuthorEntity loadLoginUser(Map<String, Object> requestBody, HttpServletRequest request) {
         Integer userId = MapUtils.getInteger(requestBody, "userId", 0);
         Preconditions.checkArgument(userId != 0, "登陆用户userId值非法...");
         return getBean(UserAuthorEntityAction.class, request).loadUserById(userId, null);

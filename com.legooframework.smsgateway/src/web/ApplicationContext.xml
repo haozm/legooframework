@@ -30,9 +30,9 @@
     <task:scheduled-tasks scheduler="smsgateway-scheduler">
         <task:scheduled ref="smsAnyListenerService" method="deductionJob" initial-delay="5000" fixed-delay="2000"/>
     </task:scheduled-tasks>
-    
+
     <int:channel id="channel_sms_billing">
-        <int:queue capacity="128"/>
+        <int:queue capacity="2048"/>
     </int:channel>
     <int:service-activator input-channel="channel_sms_billing" ref="smsAnyListenerService" method="billingAndDeduction"
                            auto-startup="true">
