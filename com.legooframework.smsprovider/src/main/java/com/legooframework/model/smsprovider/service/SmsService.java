@@ -119,12 +119,11 @@ public class SmsService extends BundleService {
      */
     public Optional<String> batchSync(String account) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("sync(account=%s) start...", account));
+            logger.debug(String.format("batchSync(account=%s) start...", account));
         SMSSubAccountEntity subAccount = getSMSProvider().loadSubAccountByAccount(account);
-        Map<String, Object> pathVariables = Maps.newHashMap();
         Stopwatch stopwatch = Stopwatch.createStarted();
         Mono<String> mono = WebClient.create().method(HttpMethod.GET)
-                .uri(subAccount.getHttpStatusUrl(), pathVariables)
+                .uri(subAccount.getHttpBatchStatusUrl())
                 .contentType(MediaType.APPLICATION_JSON)
                 .retrieve().bodyToMono(String.class);
         String response = mono.block(Duration.ofSeconds(20L));

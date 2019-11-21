@@ -98,6 +98,10 @@ public class SMSSubAccountEntity extends BaseEntity<String> {
         return String.format("%s&from={start}&to={end}&mobile={mobile}", httpStatusUrlEncode);
     }
 
+    public String getHttpBatchStatusUrl() {
+        return httpStatusUrlEncode;
+    }
+
     Optional<String> getSmsSuffix() {
         return Optional.ofNullable(Strings.isNullOrEmpty(smsSuffix) ? null : smsSuffix);
     }
