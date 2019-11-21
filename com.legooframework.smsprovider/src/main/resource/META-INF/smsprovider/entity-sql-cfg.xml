@@ -19,4 +19,38 @@
             ]]></body>
         </sql>
     </model>
+    <model id="SMSSettingEntity">
+        <sql id="loadAllByCompany">
+            <body><![CDATA[
+          SELECT sto.company_id AS 'companyId', sto.id AS 'storeId',
+                 IFNULL((SELECT scs.sms_prefix
+                           FROM SMS_CONFIG_SETTING scs
+                          WHERE sto.id =scs.store_id
+                            AND sto.company_id = scs.company_id ), sto.name ) AS 'smsPrefix',
+                 -1 AS 'tenantId',-1 AS 'creator',NOW() AS 'createTime',-1 AS 'editor', NOW() AS 'editTime'
+            FROM acp_store AS sto
+           WHERE sto.status = 1
+            ]]></body>
+        </sql>
+        <sql id="findBySMSPrefix">
+            <body><![CDATA[
+          SELECT A.*
+            FROM (  SELECT sto.company_id AS 'companyId', sto.id AS 'storeId',
+                             IFNULL((SELECT scs.sms_prefix
+                                       FROM SMS_CONFIG_SETTING scs
+                                      WHERE sto.id =scs.store_id
+                                        AND sto.company_id = scs.company_id ), sto.name ) AS 'smsPrefix',
+                            -1 AS 'tenantId',-1 AS 'creator',NOW() AS 'createTime',-1 AS 'editor', NOW() AS 'editTime'
+                       FROM acp_store AS sto
+                      WHERE sto.status = 1 ) AS A
+             WHERE  A.smsPrefix = :smsPrefix
+            ]]></body>
+        </sql>
+        <sql id="updateSmsPrefix">
+            <body><![CDATA[
+         REPLACE INTO SMS_CONFIG_SETTING (company_id, store_id, sms_prefix, tenant_id, creator )
+               VALUES (:companyId, :storeId, :smsPrefix, :companyId, :editor )
+            ]]></body>
+        </sql>
+    </model>
 </sqls>
