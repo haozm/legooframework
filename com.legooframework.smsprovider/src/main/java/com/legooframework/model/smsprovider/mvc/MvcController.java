@@ -46,8 +46,8 @@ public class MvcController extends BaseController {
     public JsonMessage checkSmsPrefix(@RequestBody(required = false) Map<String, Object> requestBody,
                                       HttpServletRequest request) throws Exception {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
         try {
-            LoginContextHolder.setCtx(user.toLoginContext());
             String prefix = MapUtils.getString(requestBody, "smsPrefix");
             Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix), "入参 smsPrefix 不可以未空...");
             Preconditions.checkState(prefix.length() <= 13, "短信前缀最大长度需>=13");
@@ -70,13 +70,18 @@ public class MvcController extends BaseController {
     public JsonMessage settingSmsPrefix(@RequestBody(required = false) Map<String, Object> requestBody,
                                         HttpServletRequest request) throws Exception {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
-        String prefix = MapUtils.getString(requestBody, "smsPrefix");
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix), "入参 smsPrefix 不可以未空...");
-        Preconditions.checkState(prefix.length() <= 13, "短信前缀最大长度需>=13");
-        Preconditions.checkState(user.hasStore(), "需指定修改的门店....");
-        StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
-        getBean(SMSSettingEntityAction.class, request).changeSmsPrefix(store, prefix);
-        return JsonMessageBuilder.OK().toMessage();
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
+        try {
+            String prefix = MapUtils.getString(requestBody, "smsPrefix");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix), "入参 smsPrefix 不可以未空...");
+            Preconditions.checkState(prefix.length() <= 13, "短信前缀最大长度需>=13");
+            Preconditions.checkState(user.hasStore(), "需指定修改的门店....");
+            StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
+            getBean(SMSSettingEntityAction.class, request).changeSmsPrefix(store, prefix);
+            return JsonMessageBuilder.OK().toMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
     }
 
     /**
@@ -88,8 +93,8 @@ public class MvcController extends BaseController {
     public JsonMessage loadSmsPreix(@RequestBody(required = false) Map<String, Object> requestBody,
                                     HttpServletRequest request) throws Exception {
         UserAuthorEntity user = loadLoginUser(requestBody, request);
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
         try {
-            LoginContextHolder.setCtx(user.toLoginContext());
             if (user.hasStore()) {
                 getBean(SMSSettingEntityAction.class, request).loadByStoreId(user.getCompanyId(), user.getStoreId().orElse(0));
             } else if (user.hasStores() && user.getSubStoreIds().isPresent()) {

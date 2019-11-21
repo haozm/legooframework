@@ -196,34 +196,6 @@ CREATE TABLE SMS_RECHARGE_DEDUCTION_DETAIL
   COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
 
--- 扣费概要账户表
-DROP TABLE IF EXISTS SMS_CHARGE_SUMMARY;
-CREATE TABLE SMS_CHARGE_SUMMARY
-(
-  id            CHAR(36)         NOT NULL,
-  company_id    INT(11)          NOT NULL,
-  store_id      INT(11)          NOT NULL,
-  send_mode     TINYINT UNSIGNED NOT NULL,
-  finish_send   TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  sms_batchno   VARCHAR(32)      NOT NULL,
-  free_send     TINYINT UNSIGNED NOT NULL,
-  business_type VARCHAR(32)      NOT NULL,
-  sms_quantity  BIGINT(20)       NOT NULL DEFAULT 0,
-  wx_quantity   BIGINT(20)       NOT NULL DEFAULT 0,
-  sms_context   VARCHAR(255)     NULL,
-  store_name    VARCHAR(255)     NULL,
-  company_name  VARCHAR(255)     NULL,
-  delete_flag   TINYINT UNSIGNED NOT NULL DEFAULT 0,
-  tenant_id     BIGINT(20)       NULL     DEFAULT NULL,
-  creator       BIGINT(20)       NOT NULL DEFAULT -1,
-  createTime    DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  editor        BIGINT(20)       NULL     DEFAULT NULL,
-  editTime      DATETIME         NULL     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (id)
-) DEFAULT CHARSET = utf8mb4
-  COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
-
 -- 消费明细
 DROP TABLE IF EXISTS SMS_CHARGE_DETAIL;
 CREATE TABLE SMS_CHARGE_DETAIL

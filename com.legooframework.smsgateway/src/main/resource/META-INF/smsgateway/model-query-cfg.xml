@@ -9,6 +9,9 @@
              AND scs.company_id = :companyId
 <#if storeId??> AND stb.store_id = :storeId</#if>
 <#if deductionDate??> AND DATE_FORMAT(stb.createTime,GET_FORMAT(DATE,'iso')) = :deductionDate</#if>
+<#if msgctx??> AND stb.send_batchno IN ( SELECT DISTINCT stl.send_batchno
+                                                 FROM acp.SMS_TRANSPORT_LOG stl
+                                                 WHERE stl.sms_context LIKE :msgctx )</#if>
             ]]></body>
         </sql>
         <sql id="deductionTotal" dynamic="true">
@@ -27,11 +30,14 @@
              AND stb.company_id = :companyId
       <#if storeId??> AND stb.store_id = :storeId</#if>
       <#if deductionDate??> AND DATE_FORMAT(stb.createTime,GET_FORMAT(DATE,'iso')) = :deductionDate</#if>
+      <#if msgctx??> AND stb.send_batchno IN ( SELECT DISTINCT stl.send_batchno
+                                                 FROM acp.SMS_TRANSPORT_LOG stl
+                                                 WHERE stl.sms_context LIKE :msgctx )</#if>
        ORDER BY stb.createTime DESC
           LIMIT :offset,:rows
             ]]></body>
         </sql>
-        <sql id="detail_list_count" dynamic="true">
+        <sql id="deductionDetail_count" dynamic="true">
             <body><![CDATA[
           SELECT COUNT(stl.id)
             FROM SMS_TRANSPORT_LOG stl
@@ -45,11 +51,9 @@
         </#if>
             ]]></body>
         </sql>
-        <sql id="detail_list" dynamic="true">
+        <sql id="deductionDetail" dynamic="true">
             <params>
                 <p name="smsBatchNo" type="STRING" required="true"/>
-                <p name="phoneNo" type="STRING"/>
-                <p name="sendStatus" type="INT"/>
             </params>
             <body><![CDATA[
           SELECT stl.id AS 'id',

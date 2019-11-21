@@ -49,10 +49,12 @@ public class DeductionController extends SmsBaseController {
             if (StringUtils.equals("company", range)) companyId = user.getCompanyId();
             int storeId = MapUtils.getIntValue(requestBody, "storeId", -1);
             String deductionDate = MapUtils.getString(requestBody, "deductionDate", null);
+            String msgctx = MapUtils.getString(requestBody, "msgctx", null);
             Map<String, Object> params = Maps.newHashMap();
             params.put("companyId", companyId);
             if (-1 != storeId) params.put("storeId", storeId);
             if (!Strings.isNullOrEmpty(deductionDate)) params.put("deductionDate", deductionDate);
+            if (!Strings.isNullOrEmpty(msgctx)) params.put("msgctx", String.format("%%%s%%", msgctx));
             PagingResult page = getQueryEngine(request).queryForPage("DeductionDetailEntity", "deductionTotal", pageNum, pageSize, params);
             return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
         } finally {
@@ -69,11 +71,11 @@ public class DeductionController extends SmsBaseController {
      * @return
      */
     @PostMapping(value = "/detail/list.json")
-    public JsonMessage chargeDetailListAction(@PathVariable(value = "channel") String channel,
-                                              @RequestBody(required = false) Map<String, Object> requestBody,
-                                              HttpServletRequest request) {
+    public JsonMessage deductionDetailList(@PathVariable(value = "channel") String channel,
+                                           @RequestBody(required = false) Map<String, Object> requestBody,
+                                           HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("chargeDetailListAction(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
+            logger.debug(String.format("deductionDetailList(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setAnonymousCtx();
         try {
             int pageNum = MapUtils.getIntValue(requestBody, "pageNum", 1);
@@ -90,7 +92,7 @@ public class DeductionController extends SmsBaseController {
             if (!Strings.isNullOrEmpty(phoneNo)) params.put("phoneNo", phoneNo);
             if (!Strings.isNullOrEmpty(memberName)) params.put("memberName", String.format("%%%s%%", memberName));
             if (-1 != sendStatus) params.put("sendStatus", sendStatus);
-            PagingResult page = getQueryEngine(request).queryForPage("ChargeDetailEntity", "detail_list", pageNum, pageSize, params);
+            PagingResult page = getQueryEngine(request).queryForPage("DeductionDetailEntity", "deductionDetail", pageNum, pageSize, params);
             return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
         } finally {
             LoginContextHolder.clear();
