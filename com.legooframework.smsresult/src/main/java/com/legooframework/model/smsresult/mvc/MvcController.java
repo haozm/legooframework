@@ -4,6 +4,7 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.core.utils.DateTimeUtils;
@@ -20,7 +21,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.RandomUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,20 +147,16 @@ public class MvcController extends BaseController {
                 List<String> smsIds_list = Stream.of(StringUtils.split(smsIds, ',')).collect(Collectors.toList());
                 Optional<List<SMSResultEntity>> final_smses_opt = getBean(SMSResultEntityAction.class, request)
                         .loadByIds(smsIds_list);
-                String today_time = DateTime.now().toString("yyyy-MM-dd HH:mm:ss");
+                String today_time = LocalDateTime.now().toString("yyyy-MM-dd HH:mm:ss");
                 if (final_smses_opt.isPresent()) {
-                    smsIds_list.forEach(smsId -> {
-                        Optional<SMSResultEntity> opt = final_smses_opt.get().stream()
-                                .filter(x -> StringUtils.equals(x.getId(), smsId)).findFirst();
-                        if (opt.isPresent()) {
-                            if (opt.get().hasResult())
-                                res_list.add(opt.get().toFinalState());
-                        } else {
-                            res_list.add(String.format("%s|4|2|%s|%s", smsId, today_time, "error:NOTEXITS"));
-                        }
-                    });
+                    final_smses_opt.get().forEach(x -> res_list.add(x.toFinalState()));
+                    List<String> exits_ids = final_smses_opt.get().stream().map(BaseEntity::getId).collect(Collectors.toList());
+                    smsIds_list.removeAll(exits_ids);
+                    if (CollectionUtils.isNotEmpty(smsIds_list)) {
+                        smsIds_list.forEach(smsId -> res_list.add(String.format("%s|9|%s|%s", smsId, today_time, "error:NOTEXITS")));
+                    }
                 } else {
-                    smsIds_list.forEach(smsId -> res_list.add(String.format("%s|4|2|%s|%s", smsId, today_time, "error:NOTEXITS")));
+                    smsIds_list.forEach(smsId -> res_list.add(String.format("%s|9|%s|%s", smsId, today_time, "error:NOTEXITS")));
                 }
             }
             if (logger.isDebugEnabled())

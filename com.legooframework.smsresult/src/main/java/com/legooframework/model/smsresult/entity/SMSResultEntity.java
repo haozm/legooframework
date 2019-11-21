@@ -112,11 +112,11 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
 
     public String toFinalState() {
         if (SendState.ERROR == this.sendState) {
-            return String.format("%s|%s|9|%s|%s", getMobile(), getId(), this.sendDate == null ?
+            return String.format("%s|9|%s|%s", getId(), this.sendDate == null ?
                             LocalDateTime.now().toString("yyyy-MM-dd HH:mm:ss") : this.sendDate.toString("yyyy-MM-dd HH:mm:ss"),
                     this.sendRemark == null ? "error:SENDERROR" : this.sendRemark);
         }
-        return String.format("%s|%s|%s|%s|%s", getMobile(), getId(), this.finalState.getState(),
+        return String.format("%s|%s|%s|%s", getId(), this.finalState.getState(),
                 FinalState.WAITING == this.finalState ? LocalDateTime.now().toString("yyyy-MM-dd HH:mm:ss")
                         : this.finalDate.toString("yyyy-MM-dd HH:mm:ss"),
                 FinalState.WAITING == this.finalState ? "NONE" : this.finalState);
