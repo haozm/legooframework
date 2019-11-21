@@ -20,13 +20,6 @@ public class SMSSettingEntity extends BaseEntity<Integer> {
     private final Integer companyId, storeId;
     private String smsPrefix;
 
-    SMSSettingEntity(Integer companyId, Integer storeId, String smsPrefix) {
-        super(0);
-        this.companyId = companyId;
-        this.storeId = storeId;
-        this.smsPrefix = smsPrefix;
-    }
-
     SMSSettingEntity(ResultSet res) {
         super(0, res);
         try {
@@ -60,8 +53,7 @@ public class SMSSettingEntity extends BaseEntity<Integer> {
         return smsPrefix;
     }
 
-
-    public boolean isCompany(Integer companyId) {
+    boolean isCompany(Integer companyId) {
         return this.storeId == -1 && this.companyId.equals(companyId);
     }
 
