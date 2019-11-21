@@ -24,7 +24,7 @@ public class SMSSettingEntityAction extends BaseEntityAction<SMSSettingEntity> {
     private static final Logger logger = LoggerFactory.getLogger(SMSSettingEntityAction.class);
 
     public SMSSettingEntityAction() {
-        super("smsGateWayCache");
+        super("smsProviderCache");
     }
 
     public Optional<List<SMSSettingEntity>> checkSmsPrefix(StoEntity store, String smsPrefix) {
