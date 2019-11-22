@@ -2,34 +2,44 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableList;
 import com.legooframework.model.commons.entity.SendChannel;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalDateTime;
 
 import java.sql.ResultSet;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class SendMsg4ReimburseEntity extends BaseEntity<String> {
 
     private final boolean freeSend = false;
     private final SendChannel sendChannel = SendChannel.SMS;
     private final int smsCount;
-    private final String sendBatchNo;
-    private boolean reimburseState;
+    private final Integer companyId, storeId;
+
+    private final String reimburseBatchNo;
+    private boolean reimburseState;// 0 1 未开始 完成
     private LocalDateTime reimburseDate;
-//    reimburse_state       TINYINT UNSIGNED NOT NULL DEFAULT 0,
-//    reimburse_state_date  DATETIME         NULL,
 
     SendMsg4ReimburseEntity(String id, ResultSet res) {
-        super(id, res);
+        super(id);
         try {
-            this.smsCount = ResultSetUtil.getObject(res, "smsCount", Integer.class);
-            this.sendBatchNo = ResultSetUtil.getString(res, "sendBatchNo");
-            this.reimburseState = ResultSetUtil.getBooleanByInt(res, "reimburseState");
+            this.smsCount = res.getInt("sms_count");
+            this.companyId = res.getInt("company_id");
+            this.storeId = res.getInt("store_id");
+            this.reimburseState = res.getInt("reimburse_state") == 1;
             if (this.reimburseState) {
-                this.reimburseDate = LocalDateTime.fromDateFields(res.getTimestamp("reimburseDate"));
+                this.reimburseBatchNo = ResultSetUtil.getString(res, "reimburse_batchno");
+                this.reimburseDate = LocalDateTime.fromDateFields(res.getTimestamp("reimburse_date"));
             } else {
                 this.reimburseDate = null;
+                this.reimburseBatchNo = null;
             }
         } catch (Exception e) {
             if (e instanceof RuntimeException) throw (RuntimeException) e;
@@ -41,11 +51,7 @@ public class SendMsg4ReimburseEntity extends BaseEntity<String> {
         return smsCount;
     }
 
-    public String getSendBatchNo() {
-        return sendBatchNo;
-    }
-
-    public boolean isReimburse() {
+    public boolean isReimbursed() {
         return reimburseState;
     }
 
@@ -53,20 +59,21 @@ public class SendMsg4ReimburseEntity extends BaseEntity<String> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
         SendMsg4ReimburseEntity that = (SendMsg4ReimburseEntity) o;
         return freeSend == that.freeSend &&
                 smsCount == that.smsCount &&
                 reimburseState == that.reimburseState &&
                 sendChannel == that.sendChannel &&
-                Objects.equal(sendBatchNo, that.sendBatchNo) &&
+                Objects.equal(companyId, that.companyId) &&
+                Objects.equal(storeId, that.storeId) &&
+                Objects.equal(reimburseBatchNo, that.reimburseBatchNo) &&
                 Objects.equal(reimburseDate, that.reimburseDate);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(super.hashCode(), freeSend, sendChannel, smsCount, sendBatchNo, reimburseState,
-                reimburseDate);
+        return Objects.hashCode(super.hashCode(), freeSend, sendChannel, smsCount, reimburseBatchNo, reimburseState,
+                reimburseDate, companyId, storeId);
     }
 
     @Override
@@ -74,9 +81,11 @@ public class SendMsg4ReimburseEntity extends BaseEntity<String> {
         return MoreObjects.toStringHelper(this)
                 .add("id", getId())
                 .add("freeSend", freeSend)
-                .add("communicationChannel", sendChannel)
+                .add("companyId", companyId)
+                .add("storeId", storeId)
+                .add("sendChannel", sendChannel)
                 .add("smsCount", smsCount)
-                .add("sendBatchNo", sendBatchNo)
+                .add("reimburseBatchNo", reimburseBatchNo)
                 .add("reimburseState", reimburseState)
                 .add("reimburseDate", reimburseDate)
                 .toString();

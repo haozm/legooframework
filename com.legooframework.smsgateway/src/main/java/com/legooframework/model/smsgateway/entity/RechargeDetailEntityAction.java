@@ -164,9 +164,16 @@ public class RechargeDetailEntityAction extends BaseEntityAction<RechargeDetailE
         return res;
     }
 
-    public void batchWriteOff(Collection<RechargeDetailEntity> rechargeDetails) {
+    /**
+     * 退费操作
+     *
+     * @param rechargeDetails OXOX
+     */
+    public void batchReimburse(Collection<RechargeDetailEntity> rechargeDetails) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(rechargeDetails));
         super.batchInsert("batchInsert", rechargeDetails);
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("batchReimburs(%s)  is ok", rechargeDetails));
     }
 
     /**

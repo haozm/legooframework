@@ -1,9 +1,7 @@
 package com.legooframework.model.smsgateway.service;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
 import com.google.gson.JsonElement;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.utils.WebUtils;
@@ -29,7 +27,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -57,12 +54,9 @@ public class SmsAnyListenerService extends BundleService {
                 this.recharge((RechargeReqDto) payload);
             } else if (StringUtils.equals("deduction", action)) { // 计费行为
                 this.deduction((String) payload);
-                return MessageBuilder.withPayload(new Object()).build();
-            } else if (StringUtils.equals("writeOff", action)) { // 退款行为
-//                String sendBatchNo = (String) payload;
-//                Optional<List<SendMsg4ReimburseEntity>> list_opt = getBean(SendMsg4ReimburseEntityAction.class)
-//                        .loadBySendBatchNo(sendBatchNo);
-//                list_opt.ifPresent(this::reimburseAction);
+            } else if (StringUtils.equals("reimburse", action)) { // 退款行为
+                ReimburseResDto reimburseDto = (ReimburseResDto) payload;
+                this.reimburse(reimburseDto);
             } else {
                 throw new RuntimeException(String.format("非法的请求参数：%s", action));
             }
@@ -109,7 +103,7 @@ public class SmsAnyListenerService extends BundleService {
         } else {
             TransactionStatus ts = startTx(null);
             try {
-                RechargeBalanceAgg balanceAgg = rechargeBalanceEntityAction.loadOrderEnabledByStore(store);
+                RechargeBalanceAgg balanceAgg = rechargeBalanceEntityAction.loadOrder4RechargeByStore(store);
                 balanceAgg.deduction(transportBatch, deduction_sms_list.get());
                 if (logger.isDebugEnabled())
                     logger.debug(String.format("deduction() is %s", balanceAgg));
@@ -213,12 +207,27 @@ public class SmsAnyListenerService extends BundleService {
         }
     }
 
+    public void reimburseJob() {
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
+        try {
+            Optional<List<ReimburseResDto>> reimburseResDtos = reimburseEntityAction.loadUnReimburseDto();
+            if (!reimburseResDtos.isPresent()) return;
+            for (ReimburseResDto $it : reimburseResDtos.get()) {
+                Message<ReimburseResDto> message = MessageBuilder.withPayload($it).setReplyChannelName("nullChannel")
+                        .setHeader("action", "reimburse").build();
+                getMessagingTemplate().send(CHANNEL_SMS_BILLING, message);
+            }
+        } finally {
+            LoginContextHolder.clear();
+        }
+    }
+
     /**
      * 状态回查监听
      */
     public void syncStateJob() {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
-        Optional<List<String>> smsIds = getBean(SendMsgStateEntityAction.class).loadNeedSyncStateSmsIds();
+        Optional<List<String>> smsIds = sendMsgStateEntityAction.loadNeedSyncStateSmsIds();
         if (!smsIds.isPresent()) return;
         try {
             if (smsIds.get().size() <= 128) {
@@ -261,6 +270,34 @@ public class SmsAnyListenerService extends BundleService {
             logger.debug("autoSendWxMsgJob() .................. end");
     }
 
+
+    private void reimburse(ReimburseResDto reimburse) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("reimburseAction()  %s", reimburse));
+        LoginContextHolder.setAnonymousCtx();
+        StoEntity store = getStore(reimburse.getStoreId());
+        ReimburseBalanceAgg reimburseAgg = rechargeBalanceEntityAction.loadOrder4ReimburseByStore(store);
+        reimburseAgg.reimburse(reimburse);
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("reimburse() is %s", reimburseAgg));
+        TransactionStatus ts = startTx(null);
+        try {
+            reimburseAgg.getRechargeDetail().ifPresent(x -> rechargeDetailEntityAction.batchReimburse(Lists.newArrayList(x)));
+            reimburseAgg.getBalance().ifPresent(x -> rechargeBalanceEntityAction.batchUpdateBalance(Lists.newArrayList(x)));
+            if (reimburseAgg.getBalance().isPresent()) {
+                reimburseEntityAction.updateReimburseState(reimburse);
+            }
+            LoginContextHolder.clear();
+            commitTx(ts);
+        } catch (Exception e) {
+            logger.error(String.format("reimburseAction() has error..%s", reimburse), e);
+            rollbackTx(ts);
+            LoginContextHolder.clear();
+            throw e;
+        }
+    }
+
+
     /**
      * 同步黑名单
      */
@@ -298,61 +335,61 @@ public class SmsAnyListenerService extends BundleService {
         }
     }
 
-    void reimburseAction(Collection<SendMsg4ReimburseEntity> reimburses) {
-        Map<String, Long> total = Maps.newConcurrentMap();
-        reimburses.forEach(x -> {
-            long size = MapUtils.getIntValue(total, x.getSendBatchNo(), 0) + x.getSmsCount();
-            total.put(x.getSendBatchNo(), size);
-        });
-
-        if (logger.isDebugEnabled())
-            logger.debug(String.format("writeOffService() total : %s", total));
-        Multimap<String, DeductionDetailEntity> chargeDetail_map = getBean(DeductionDetailEntityAction.class)
-                .loadBySmsBatchNos(total.keySet());
-        List<String> balanceIds = chargeDetail_map.entries().stream().map(x -> x.getValue().getBalanceId())
-                .collect(Collectors.toList());
-        List<RechargeBalanceEntity> balances = getBean(RechargeBalanceEntityAction.class).loadByIds(balanceIds);
-        final List<DeductionDetailEntity> change_detail = Lists.newArrayList();
-        final List<RechargeBalanceEntity> change_balance = Lists.newArrayList();
-        final List<RechargeDetailEntity> change_recharge = Lists.newArrayList();
-        total.forEach((k, v) -> {
-            long size = v;
-            Optional<RechargeBalanceEntity> balance;
-            Collection<DeductionDetailEntity> details = chargeDetail_map.get(k);
-            for (DeductionDetailEntity $it : details) {
-                if ($it.getWriteOffNum() == 0L) continue;
-                balance = balances.stream().filter(x -> x.getId().equals($it.getBalanceId())).findFirst();
-                Preconditions.checkState(balance.isPresent());
-                if ($it.getWriteOffNum() >= size) {
-                    $it.reimburse(size);
-                    change_detail.add($it);
-                    balance.get().addBalance((int) size);
-                    change_balance.add(balance.get());
-                    change_recharge.add(RechargeDetailEntity.writeOff(balance.get(), (int) size));
-                    break;
-                } else {
-                    long _balance = $it.getWriteOffNum();
-                    $it.reimburse(_balance);
-                    change_detail.add($it);
-                    balance.get().addBalance((int) _balance);
-                    change_balance.add(balance.get());
-                    change_recharge.add(RechargeDetailEntity.writeOff(balance.get(), (int) _balance));
-                    size = size - $it.getWriteOffNum();
-                }
-            }
-        });
-        TransactionStatus ts = startTx(null);
-        try {
-            getBean(SendMsg4ReimburseEntityAction.class).batchReimburse(reimburses);
-            getBean(DeductionDetailEntityAction.class).batchWriteOff(change_detail);
-            getBean(RechargeBalanceEntityAction.class).batchUpdateBalance(change_balance);
-            getBean(RechargeDetailEntityAction.class).batchWriteOff(change_recharge);
-            commitTx(ts);
-        } catch (Exception e) {
-            logger.error(String.format("[Event-Driver]事件发布失败.....%s", "writeOff"), e);
-            rollbackTx(ts);
-            throw e;
-        }
-    }
+//    void reimburseAction(Collection<SendMsg4ReimburseEntity> reimburses) {
+//        Map<String, Long> total = Maps.newConcurrentMap();
+////        reimburses.forEach(x -> {
+////            long size = MapUtils.getIntValue(total, x.getSendBatchNo(), 0) + x.getSmsCount();
+////            total.put(x.getSendBatchNo(), size);
+////        });
+//
+//        if (logger.isDebugEnabled())
+//            logger.debug(String.format("writeOffService() total : %s", total));
+//        Multimap<String, DeductionDetailEntity> chargeDetail_map = getBean(DeductionDetailEntityAction.class)
+//                .loadBySmsBatchNos(total.keySet());
+//        List<String> balanceIds = chargeDetail_map.entries().stream().map(x -> x.getValue().getBalanceId())
+//                .collect(Collectors.toList());
+//        List<RechargeBalanceEntity> balances = getBean(RechargeBalanceEntityAction.class).loadByIds(balanceIds);
+//        final List<DeductionDetailEntity> change_detail = Lists.newArrayList();
+//        final List<RechargeBalanceEntity> change_balance = Lists.newArrayList();
+//        final List<RechargeDetailEntity> change_recharge = Lists.newArrayList();
+//        total.forEach((k, v) -> {
+//            long size = v;
+//            Optional<RechargeBalanceEntity> balance;
+//            Collection<DeductionDetailEntity> details = chargeDetail_map.get(k);
+//            for (DeductionDetailEntity $it : details) {
+//                if ($it.getWriteOffNum() == 0L) continue;
+//                balance = balances.stream().filter(x -> x.getId().equals($it.getBalanceId())).findFirst();
+//                Preconditions.checkState(balance.isPresent());
+//                if ($it.getWriteOffNum() >= size) {
+//                    $it.reimburse(size);
+//                    change_detail.add($it);
+//                    balance.get().addBalance((int) size);
+//                    change_balance.add(balance.get());
+//                    change_recharge.add(RechargeDetailEntity.writeOff(balance.get(), (int) size));
+//                    break;
+//                } else {
+//                    long _balance = $it.getWriteOffNum();
+//                    $it.reimburse(_balance);
+//                    change_detail.add($it);
+//                    balance.get().addBalance((int) _balance);
+//                    change_balance.add(balance.get());
+//                    change_recharge.add(RechargeDetailEntity.writeOff(balance.get(), (int) _balance));
+//                    size = size - $it.getWriteOffNum();
+//                }
+//            }
+//        });
+//        TransactionStatus ts = startTx(null);
+//        try {
+//            getBean(SendMsg4ReimburseEntityAction.class).batchReimburse(reimburses);
+//            getBean(DeductionDetailEntityAction.class).batchWriteOff(change_detail);
+//            getBean(RechargeBalanceEntityAction.class).batchUpdateBalance(change_balance);
+//            getBean(RechargeDetailEntityAction.class).batchWriteOff(change_recharge);
+//            commitTx(ts);
+//        } catch (Exception e) {
+//            logger.error(String.format("[Event-Driver]事件发布失败.....%s", "writeOff"), e);
+//            rollbackTx(ts);
+//            throw e;
+//        }
+//    }
 
 }

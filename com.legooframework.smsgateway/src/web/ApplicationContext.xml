@@ -31,9 +31,9 @@
     <task:scheduler id="smsgateway-scheduler" pool-size="4"/>
     <task:scheduled-tasks scheduler="smsgateway-scheduler">
         <task:scheduled ref="smsAnyListenerService" method="deductionJob" initial-delay="60000" fixed-delay="2000"/>
+        <task:scheduled ref="smsAnyListenerService" method="reimburseJob" cron="0 0 0/2 * * ?"/>
     </task:scheduled-tasks>
-
-
+    
     <int:channel id="channel_wx_sending">
         <int:queue capacity="2048"/>
     </int:channel>

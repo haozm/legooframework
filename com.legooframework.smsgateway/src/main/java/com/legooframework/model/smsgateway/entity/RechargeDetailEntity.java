@@ -2,8 +2,6 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.*;
 import com.google.common.base.Objects;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
@@ -11,16 +9,11 @@ import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.utils.CommonsUtils;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 短信费用充值明细
@@ -79,7 +72,8 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
     }
 
     private RechargeDetailEntity(Integer companyId, Integer storeId, String storeIds, RechargeScope rechargeScope,
-                                 RechargeRuleEntity rechargeRule, long rechargeAmount, RechargeType rechargeType,
+                                 RechargeRuleEntity rechargeRule, ReimburseResDto reimburseDto, long rechargeAmount,
+                                 RechargeType rechargeType,
                                  int totalQuantity, LoginContext user) {
         super(CommonsUtils.randomId(16), companyId.longValue(), user.getLoginId());
         Preconditions.checkArgument(rechargeAmount >= 0, "充值金额必须大于或者等于0");
@@ -121,7 +115,7 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
                 this.amount = 0L;
                 break;
             case Reimburse:
-                this.ruleId = "writeoff";
+                this.ruleId = reimburseDto.getBatchNo();
                 this.totalQuantity = totalQuantity;
                 this.amount = 0L;
                 break;
@@ -142,11 +136,11 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
         switch (balanceEntity.getRechargeScope()) {
             case Store:
                 res = new RechargeDetailEntity(balanceEntity.getCompanyId(), balanceEntity.getStoreId(), null,
-                        RechargeScope.Store, null, 0, RechargeType.Reimburse, smsNum, LoginContextHolder.getAnonymousCtx());
+                        RechargeScope.Store, null, null, 0, RechargeType.Reimburse, smsNum, LoginContextHolder.getAnonymousCtx());
                 break;
             case Company:
                 res = new RechargeDetailEntity(balanceEntity.getCompanyId(), -1, null,
-                        RechargeScope.Company, null, 0, RechargeType.Reimburse, smsNum, LoginContextHolder.getAnonymousCtx());
+                        RechargeScope.Company, null, null, 0, RechargeType.Reimburse, smsNum, LoginContextHolder.getAnonymousCtx());
                 break;
             case StoreGroup:
                 // TODO
@@ -161,52 +155,68 @@ public class RechargeDetailEntity extends BaseEntity<String> implements BatchSet
 
     static RechargeDetailEntity rechargeByStore(StoEntity store, RechargeRuleEntity rechargeRule, long rechargeAmount) {
         return new RechargeDetailEntity(store.getCompanyId(), store.getId(), null,
-                RechargeScope.Store, rechargeRule, rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
+                RechargeScope.Store, rechargeRule, null, rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
     }
 
     static RechargeDetailEntity prechargeByStore(StoEntity store, RechargeRuleEntity rechargeRule, long rechargeAmount) {
         return new RechargeDetailEntity(store.getCompanyId(), store.getId(), null,
-                RechargeScope.Store, rechargeRule, rechargeAmount, RechargeType.Precharge, 0, LoginContextHolder.get());
+                RechargeScope.Store, rechargeRule, null, rechargeAmount, RechargeType.Precharge, 0, LoginContextHolder.get());
     }
 
     static RechargeDetailEntity freechargeByStore(StoEntity store, int totalQuantity) {
         return new RechargeDetailEntity(store.getCompanyId(), store.getId(), null,
-                RechargeScope.Store, null, 0L, RechargeType.FreeCharge, totalQuantity,
+                RechargeScope.Store, null, null, 0L, RechargeType.FreeCharge, totalQuantity,
                 LoginContextHolder.get());
     }
 
     static RechargeDetailEntity rechargeByStoreGroup(OrgEntity company, String storeIds,
                                                      RechargeRuleEntity rechargeRule, long rechargeAmount) {
         return new RechargeDetailEntity(company.getId(), -1, storeIds, RechargeScope.StoreGroup,
-                rechargeRule, rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
+                rechargeRule, null, rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
     }
 
     static RechargeDetailEntity prechargeByStoreGroup(OrgEntity company, String storeIds,
                                                       RechargeRuleEntity rechargeRule, long rechargeAmount) {
         return new RechargeDetailEntity(company.getId(), -1, storeIds, RechargeScope.StoreGroup,
-                rechargeRule, rechargeAmount, RechargeType.Precharge, 0, LoginContextHolder.get());
+                rechargeRule, null, rechargeAmount, RechargeType.Precharge, 0, LoginContextHolder.get());
     }
 
     static RechargeDetailEntity freechargeByStoreGroup(OrgEntity company, String storeIds, int totalQuantity) {
         return new RechargeDetailEntity(company.getId(), -1, storeIds, RechargeScope.StoreGroup,
-                null, 0L, RechargeType.FreeCharge, totalQuantity, LoginContextHolder.get());
+                null, null, 0L, RechargeType.FreeCharge, totalQuantity, LoginContextHolder.get());
     }
 
     static RechargeDetailEntity rechargeByCompany(OrgEntity company, RechargeRuleEntity rechargeRule,
                                                   long rechargeAmount) {
         return new RechargeDetailEntity(company.getId(), -1, null, RechargeScope.Company, rechargeRule,
-                rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
+                null, rechargeAmount, RechargeType.Recharge, 0, LoginContextHolder.get());
     }
 
     static RechargeDetailEntity prechargeByCompany(OrgEntity company, RechargeRuleEntity rechargeRule,
                                                    long rechargeAmount) {
-        return new RechargeDetailEntity(company.getId(), -1, null, RechargeScope.Company, rechargeRule,
+        return new RechargeDetailEntity(company.getId(), -1, null, RechargeScope.Company, rechargeRule, null,
                 rechargeAmount, RechargeType.Precharge, 0, LoginContextHolder.get());
     }
 
     static RechargeDetailEntity freechargeByCompany(OrgEntity company, int totalQuantity) {
-        return new RechargeDetailEntity(company.getId(), -1, null, RechargeScope.Company, null,
+        return new RechargeDetailEntity(company.getId(), -1, null, RechargeScope.Company, null, null,
                 0L, RechargeType.FreeCharge, totalQuantity, LoginContextHolder.get());
+    }
+
+    static RechargeDetailEntity reimburseByCompany(ReimburseResDto reimburseDto) {
+        return new RechargeDetailEntity(reimburseDto.getCompanyId(), -1, null, RechargeScope.Company, null, reimburseDto,
+                0L, RechargeType.Reimburse, reimburseDto.getTotalSmsCount(), LoginContextHolder.get());
+    }
+
+    static RechargeDetailEntity reimburseByStoreGroup(RechargeBalanceEntity balance, ReimburseResDto reimburseDto) {
+        return new RechargeDetailEntity(reimburseDto.getCompanyId(), -1, balance.getId(), RechargeScope.StoreGroup, null,
+                reimburseDto, 0L, RechargeType.Reimburse, reimburseDto.getTotalSmsCount(), LoginContextHolder.get());
+    }
+
+    static RechargeDetailEntity reimburseByStore(ReimburseResDto reimburseDto) {
+        return new RechargeDetailEntity(reimburseDto.getCompanyId(), reimburseDto.getStoreId(), null,
+                RechargeScope.Store, null, reimburseDto,
+                0L, RechargeType.Reimburse, reimburseDto.getTotalSmsCount(), LoginContextHolder.get());
     }
 
     private RechargeDetailEntity(RechargeDetailEntity recharge, LoginContext user) {

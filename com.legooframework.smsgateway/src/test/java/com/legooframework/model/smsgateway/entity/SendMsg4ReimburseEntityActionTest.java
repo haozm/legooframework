@@ -11,13 +11,13 @@ import org.springframework.util.ResourceUtils;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.Assert.*;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
-        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-smsclient-cfg.xml",
+        locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-acp-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/core/spring-model-cfg.xml",
-                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/crmadapter/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/covariant/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsprovider/spring-model-cfg.xml",
+                ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/entities/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsgateway/spring-model-cfg.xml"}
 )
 public class SendMsg4ReimburseEntityActionTest {
@@ -25,16 +25,18 @@ public class SendMsg4ReimburseEntityActionTest {
     @Test
     public void loadBySendBatchNo() {
         LoginContextHolder.setAnonymousCtx();
-        Optional<List<SendMsg4ReimburseEntity>> res = sendMsg4ReimburseEntityAction.loadBySendBatchNo("100098_1315_931626dLLUZB");
-        res.ifPresent(System.out::println);
+//        Optional<List<SendMsg4ReimburseEntity>> res = sendMsg4ReimburseEntityAction.loadBySendBatchNo("100098_1315_931626dLLUZB");
+//        res.ifPresent(System.out::println);
     }
 
     @Test
     public void batchReimburse() {
         LoginContextHolder.setAnonymousCtx();
-        Optional<List<SendMsg4ReimburseEntity>> res = sendMsg4ReimburseEntityAction.loadBySendBatchNo("100098_1315_931626dLLUZB");
+        Optional<List<ReimburseResDto>> res = sendMsg4ReimburseEntityAction.loadUnReimburseDto();
         res.ifPresent(System.out::println);
-        sendMsg4ReimburseEntityAction.batchReimburse(res.get());
+        for (ReimburseResDto $it : res.get()) {
+            sendMsg4ReimburseEntityAction.updateReimburseState($it);
+        }
     }
 
     @Autowired

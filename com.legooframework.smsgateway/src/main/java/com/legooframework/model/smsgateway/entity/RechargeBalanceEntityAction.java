@@ -163,7 +163,7 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
      * @param store
      * @return
      */
-    public RechargeBalanceAgg loadOrderEnabledByStore(StoEntity store) {
+    public RechargeBalanceAgg loadOrder4RechargeByStore(StoEntity store) {
         Optional<List<RechargeBalanceEntity>> optional = loadAllByCompanyId(store.getCompanyId());
         Preconditions.checkState(optional.isPresent(), "当前门店以及公司没有可供支配的短信余额...");
         List<RechargeBalanceEntity> list = optional.get().stream().filter(x -> x.contains(store))
@@ -171,6 +171,22 @@ public class RechargeBalanceEntityAction extends BaseEntityAction<RechargeBalanc
         Preconditions.checkState(CollectionUtils.isNotEmpty(list), "当前门店以及公司没有可供支配的短信余额...");
         if (CollectionUtils.isNotEmpty(list)) list.sort(ordering);
         return new RechargeBalanceAgg(list);
+    }
+
+    /**
+     * 门店可供扣除的余额
+     *
+     * @param store
+     * @return
+     */
+    public ReimburseBalanceAgg loadOrder4ReimburseByStore(StoEntity store) {
+        Optional<List<RechargeBalanceEntity>> optional = loadAllByCompanyId(store.getCompanyId());
+        Preconditions.checkState(optional.isPresent(), "当前门店以及公司没有可供退款的账户信息...");
+        List<RechargeBalanceEntity> list = optional.get().stream().filter(x -> x.contains(store))
+                .filter(RechargeBalanceEntity::hasBlance).collect(Collectors.toList());
+        Preconditions.checkState(CollectionUtils.isNotEmpty(list), "当前门店以及公司没有可供退款的账户信息...");
+        if (CollectionUtils.isNotEmpty(list)) list.sort(ordering);
+        return new ReimburseBalanceAgg(list);
     }
 
     private Optional<List<RechargeBalanceEntity>> loadAllByCompanyId(Integer companyId) {

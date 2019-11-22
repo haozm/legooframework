@@ -94,6 +94,8 @@
         <property name="deductionDetailEntityAction" ref="deductionDetailEntityAction"/>
         <property name="msgTransportBatchEntityAction" ref="msgTransportBatchEntityAction"/>
         <property name="wechatMessageEntityAction" ref="wechatMessageEntityAction"/>
+        <property name="rechargeDetailEntityAction" ref="rechargeDetailEntityAction"/>
+        <property name="reimburseEntityAction" ref="sendMsg4ReimburseEntityAction"/>
     </bean>
     <bean id="smsRechargeService" class="com.legooframework.model.smsgateway.service.SMSRechargeService"
           parent="abstractSmsBundleService"/>

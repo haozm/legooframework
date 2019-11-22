@@ -364,26 +364,10 @@
         </sql>
     </model>
     <model id="SendMsg4ReimburseEntity">
-        <sql id="load4Reimburse" macros="crud_fixed">
-            <body><![CDATA[
-          SELECT stl.id AS 'id',
-                 stl.sms_count AS 'smsCount',
-                 stl.send_batchno AS 'sendBatchNo',
-                 stl.reimburse_state AS 'reimburseState',
-                 stl.reimburse_state_date AS 'reimburseDate',
-                 <@crud_fixed_select "stl" />
-            FROM SMS_TRANSPORT_LOG AS stl
-           WHERE stl.send_status = 4
-             AND stl.free_send = 0
-             AND stl.communication_channel = 1
-             AND stl.reimburse_state = 0
-             AND stl.send_batchno = :sendBatchNo
-            ]]></body>
-        </sql>
-        <sql id="update4Reimburse" dynamic="true">
+        <sql id="updateReimburseState" dynamic="true">
             <body><![CDATA[
           UPDATE SMS_TRANSPORT_LOG
-             SET reimburse_state = 1, reimburse_state_date = NOW()
+             SET reimburse_state = 1, reimburse_batchno = :batchNo, reimburse_date = NOW()
            WHERE id IN (${ids?join(",")})
             ]]></body>
         </sql>
