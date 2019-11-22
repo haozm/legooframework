@@ -106,11 +106,12 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
         });
     }
 
-    public void updateWxMsg4SendByBatchNo(MsgTransportBatchEntity transportBatch) {
+    public int updateWxMsg4SendByBatchNo(MsgTransportBatchEntity transportBatch) {
         Map<String, Object> params = transportBatch.toParamMap();
         int size = super.updateAction("updateWxMsg4SendByBatchNo", params);
         if (logger.isDebugEnabled())
             logger.debug(String.format("updateWxMsg4SendByBatchNo(%s) size is %d", transportBatch.getBatchNo(), size));
+        return size;
     }
 
     private final String BATCHINSERT_SQL = "INSERT INTO SMS_TRANSPORT_LOG (id, company_id, store_id, member_id, send_batchno, " +

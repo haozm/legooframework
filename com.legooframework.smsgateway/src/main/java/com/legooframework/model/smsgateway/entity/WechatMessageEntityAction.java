@@ -31,13 +31,12 @@ public class WechatMessageEntityAction extends BaseEntityAction<WechatMessageEnt
             logger.debug(String.format("本次发送微信Size 共计 %s 完成 ", messages.size()));
     }
 
-    public void sendWxMessage() {
-        Map<String, Object> params1 = Maps.newHashMap();
-        params1.put("batchSize", 512);
-        Optional<List<WechatMessageEntity>> messaeges = super.queryForEntities("loadMsg4Send", params1, getRowMapper());
+    public void sendWxMessage(MsgTransportBatchEntity transportBatch) {
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("batchNo", transportBatch.getBatchNo());
+        Optional<List<WechatMessageEntity>> messaeges = super.queryForEntities("loadMsg4Send", params, getRowMapper());
         if (!messaeges.isPresent()) return;
         List<String> msgIds = messaeges.get().stream().map(x -> String.format("'%s'", x.getId())).collect(Collectors.toList());
-        Map<String, Object> params = Maps.newHashMap();
         params.put("msgIds", msgIds);
         params.put("sendStatus", 2);
         super.updateAction("updateSendStatus", params);

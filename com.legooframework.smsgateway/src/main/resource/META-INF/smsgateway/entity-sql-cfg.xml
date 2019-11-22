@@ -429,7 +429,7 @@
          AND stl.sms_enabled = 1
          AND stl.send_status = 1
          AND stb.is_billing = 1
-       LIMIT :batchSize
+         AND stl.send_batchno = :batchNo
             ]]></body>
         </sql>
         <sql id="updateSendStatus" dynamic="true">

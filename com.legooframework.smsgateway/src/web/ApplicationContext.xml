@@ -31,9 +31,16 @@
     <task:scheduler id="smsgateway-scheduler" pool-size="4"/>
     <task:scheduled-tasks scheduler="smsgateway-scheduler">
         <task:scheduled ref="smsAnyListenerService" method="deductionJob" initial-delay="60000" fixed-delay="2000"/>
-        <task:scheduled ref="smsAnyListenerService" method="autoSendWxMsgJob" initial-delay="60000"
-                        fixed-delay="120000"/>
     </task:scheduled-tasks>
+
+
+    <int:channel id="channel_wx_sending">
+        <int:queue capacity="2048"/>
+    </int:channel>
+    <int:outbound-channel-adapter channel="channel_wx_sending" ref="smsAnyListenerService" method="sendWxEndpoint"
+                                  auto-startup="true">
+        <int:poller max-messages-per-poll="1" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="3000"/>
+    </int:outbound-channel-adapter>
 
     <int:channel id="channel_sms_billing">
         <int:queue capacity="2048"/>

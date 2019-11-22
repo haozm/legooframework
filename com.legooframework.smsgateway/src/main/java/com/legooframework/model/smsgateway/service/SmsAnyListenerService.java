@@ -93,7 +93,11 @@ public class SmsAnyListenerService extends BundleService {
         MsgTransportBatchEntity transportBatch = msgTransportBatchEntityAction.loadByBatchNo(batchNo);
         if (transportBatch.isBilling()) return;
         try {
-            sendMsg4InitEntityAction.updateWxMsg4SendByBatchNo(transportBatch);
+            int size = sendMsg4InitEntityAction.updateWxMsg4SendByBatchNo(transportBatch);
+            if (size > 0) {
+                Message<MsgTransportBatchEntity> message = MessageBuilder.withPayload(transportBatch).build();
+                getMessagingTemplate().send("channel_wx_sending", message);
+            }
         } catch (Exception e) {
             logger.error(String.format("updateWxMsg4SendByBatchNo(%s) has error...,rollback 事务", batchNo), e);
         }
@@ -245,12 +249,12 @@ public class SmsAnyListenerService extends BundleService {
         }
     }
 
-    public void autoSendWxMsgJob() {
+    public void sendWxEndpoint(@Payload MsgTransportBatchEntity transportBatch) {
         if (logger.isDebugEnabled())
             logger.debug("autoSendWxMsgJob() .................. start");
         LoginContextHolder.setAnonymousCtx();
         try {
-            wechatMessageEntityAction.sendWxMessage();
+            wechatMessageEntityAction.sendWxMessage(transportBatch);
         } finally {
             LoginContextHolder.clear();
         }
