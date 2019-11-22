@@ -23,6 +23,9 @@
             <body><![CDATA[
           SELECT com.name AS 'companyName',sto.name 'storename',
                  stb.*,
+                 (SELECT SUM(stl.sms_count)
+                    FROM SMS_TRANSPORT_LOG stl
+                   WHERE stl.send_batchno = stb.send_batchno AND stl.send_status =3 AND sms_channel=1 ) AS 'smsNums',
                  (SELECT GROUP_CONCAT( DISTINCT stl.businsess_type)
                     FROM SMS_TRANSPORT_LOG stl
                    WHERE stl.send_batchno = stb.send_batchno) AS 'businsessType',
