@@ -1,6 +1,5 @@
 package com.legooframework.model.reactor.entity;
 
-import com.legooframework.model.batchsupport.entity.LoginContextTest;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import org.junit.Before;
 import org.junit.Test;
@@ -10,8 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
-
-import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
@@ -25,7 +22,7 @@ public class RetailFactAggItemReaderTest {
 
     @Before
     public void setUp() throws Exception {
-        LoginContextHolder.setCtx(new LoginContextTest());
+        LoginContextHolder.setAnonymousCtx();
     }
 
     @Test

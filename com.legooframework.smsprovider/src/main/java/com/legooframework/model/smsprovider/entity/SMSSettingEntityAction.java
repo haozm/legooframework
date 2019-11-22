@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
+import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -51,9 +52,29 @@ public class SMSSettingEntityAction extends BaseEntityAction<SMSSettingEntity> {
         });
     }
 
+    /**
+     * 允许门店为 null
+     *
+     * @param company OX
+     * @param store   XXSS
+     * @return ISIS
+     */
+    public SMSSettingEntity loadByStore(OrgEntity company, StoEntity store) {
+        List<SMSSettingEntity> settings = loadAllByCompany(company.getId());
+        Optional<SMSSettingEntity> setting = Optional.empty();
+        if (null != store) {
+            setting = settings.stream().filter(x -> x.isStore(store.getCompanyId(), store.getId())).findFirst();
+            if (setting.isPresent()) return setting.get();
+        }
+        setting = settings.stream().filter(x -> x.isCompany(company.getId())).findFirst();
+        Preconditions.checkState(setting.isPresent(), "公司%s,门店%s尚未初始化短信相关配置...", company.getId(),
+                store == null ? null : store.getId());
+        return setting.get();
+    }
+
     public SMSSettingEntity loadByStore(StoEntity store) {
         List<SMSSettingEntity> settings = loadAllByCompany(store.getCompanyId());
-        Optional<SMSSettingEntity> setting = null;
+        Optional<SMSSettingEntity> setting = Optional.empty();
         setting = settings.stream().filter(x -> x.isStore(store.getCompanyId(), store.getId())).findFirst();
         if (setting.isPresent()) return setting.get();
         setting = settings.stream().filter(x -> x.isCompany(store.getCompanyId())).findFirst();

@@ -20,6 +20,17 @@ public class TemplateEntityAction extends BaseEntityAction<TemplateEntity> {
 
     static Comparator<TemplateEntity> COMPARATOR = Comparator.comparingInt(o -> o.isComRange() ? 1 : 0);
 
+    public Optional<TemplateEntity> findByCompanyWithClassifies(OrgEntity company, String classifies) {
+        Preconditions.checkNotNull(classifies, "模板分配不可为空值");
+        Optional<List<TemplateEntity>> all_list = findAll();
+        if (!all_list.isPresent()) return Optional.empty();
+        List<TemplateEntity> list = all_list.get().stream().filter(UseRangeEntity::isEnabled).filter(UseRangeEntity::isComRange)
+                .filter(x -> x.getCompanyId().equals(company.getId()))
+                .filter(x -> x.isClassifies(classifies)).sorted(COMPARATOR).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(list)) return Optional.empty();
+        return Optional.of(list.get(0));
+    }
+
     public Optional<TemplateEntity> findByStoreWithClassifies(StoEntity store, String classifies) {
         Preconditions.checkNotNull(store, "门店信息不可为空值");
         Preconditions.checkNotNull(classifies, "模板分配不可为空值");

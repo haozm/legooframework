@@ -1,6 +1,5 @@
 package com.legooframework.model.reactor.entity;
 
-import com.legooframework.model.batchsupport.entity.LoginContextTest;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.OrgEntityAction;
@@ -14,8 +13,6 @@ import org.springframework.util.ResourceUtils;
 
 import java.util.Optional;
 
-import static org.junit.Assert.*;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
         locations = {ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/junit/spring-acp-cfg.xml",
@@ -28,7 +25,7 @@ public class ReactorSwitchEntityActionTest {
 
     @Before
     public void setUp() throws Exception {
-        LoginContextHolder.setCtx(new LoginContextTest());
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
     }
 
     @Test

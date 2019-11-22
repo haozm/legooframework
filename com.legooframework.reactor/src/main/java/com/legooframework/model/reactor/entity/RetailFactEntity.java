@@ -64,7 +64,7 @@ public class RetailFactEntity extends BaseEntity<Long> {
         }
     }
 
-    Map<String, Object> toReplaceMap() {
+    public Map<String, Object> toReplaceMap() {
         DecimalFormat format_money = new DecimalFormat("#,###.00");
         DecimalFormat format01_money = new DecimalFormat("#,###");
         Map<String, Object> params = Maps.newHashMap();
@@ -94,7 +94,7 @@ public class RetailFactEntity extends BaseEntity<Long> {
         return params;
     }
 
-    Integer getStoreId() {
+    public Integer getStoreId() {
         return storeId;
     }
 
@@ -117,6 +117,7 @@ public class RetailFactEntity extends BaseEntity<Long> {
     LocalDateTime getCreatetime() {
         return createtime;
     }
+
 
     @Override
     public boolean equals(Object o) {

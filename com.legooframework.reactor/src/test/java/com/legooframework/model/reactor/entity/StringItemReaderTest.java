@@ -1,7 +1,5 @@
 package com.legooframework.model.reactor.entity;
 
-import com.google.common.base.Joiner;
-import com.legooframework.model.batchsupport.entity.LoginContextTest;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import org.joda.time.LocalDateTime;
 import org.junit.Before;
@@ -12,7 +10,6 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.JobOperator;
-import org.springframework.batch.item.database.JdbcCursorItemReader;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -22,8 +19,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
 
 import java.util.Set;
-
-import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
@@ -37,7 +32,7 @@ public class StringItemReaderTest implements ApplicationContextAware {
 
     @Before
     public void setUp() throws Exception {
-        LoginContextHolder.setCtx(new LoginContextTest());
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
     }
 
     @Test

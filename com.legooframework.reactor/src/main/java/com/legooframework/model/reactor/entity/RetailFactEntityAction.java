@@ -19,6 +19,17 @@ public class RetailFactEntityAction extends BaseEntityAction<RetailFactEntity> {
         super(null);
     }
 
+    public Optional<List<RetailFactEntity>> query4RetailSmsJob(OrgEntity company, int maxId) {
+        Map<String, Object> params = company.toParamMap();
+        params.put("maxId", maxId);
+        params.put("companyShortName", company.getShortName());
+        params.put("sql", "query4RetailSmsJob");
+        Optional<List<RetailFactEntity>> retailFacts = super.queryForEntities("query4list", params, getRowMapper());
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("query4RetailSmsJob(...,maxId=%d) return %d", maxId, retailFacts.map(List::size).orElse(0)));
+        return retailFacts;
+    }
+
     public Map<String, Object> count4RetailSmsJob(OrgEntity company) {
         Map<String, Object> params = Maps.newHashMap();
         params.put("companyId", company.getId());
@@ -30,7 +41,7 @@ public class RetailFactEntityAction extends BaseEntityAction<RetailFactEntity> {
             Map<String, Object> res_map = Maps.newHashMap();
             res_map.put("total", 0);
             res_map.put("maxId", 0);
-            return params;
+            return res_map;
         }
         return count.get().get(0);
     }

@@ -2,6 +2,7 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.membercare.entity.BusinessType;
 import org.apache.commons.collections4.MapUtils;
@@ -32,6 +33,16 @@ public class SendMessageBuilder implements Cloneable {
         return Optional.ofNullable(MapUtils.isEmpty(replaceMap) ? null : replaceMap);
     }
 
+    public void setReplaceMap(Map<String, Object> replaceMap) {
+        if (this.replaceMap == null) this.replaceMap = Maps.newHashMap();
+        if (MapUtils.isNotEmpty(replaceMap))
+            this.replaceMap.putAll(replaceMap);
+    }
+
+    public boolean hasMemberId() {
+        return this.memberId != 0;
+    }
+
     public SendMessageBuilder createWithJobWithTemplate(BusinessType businessType, int detailId, int memberId,
                                                         AutoRunChannel runChannel, String ctxTemplate) {
         Preconditions.checkArgument(detailId > 0, "非法的任务ID=%s", detailId);
@@ -51,7 +62,8 @@ public class SendMessageBuilder implements Cloneable {
         return new SendMessageBuilder(businessType, detailId, memberId, runChannel, null);
     }
 
-    public static SendMessageBuilder createWithoutJobNoTemplate(BusinessType businessType, int memberId, AutoRunChannel runChannel) {
+    public static SendMessageBuilder createWithoutJobNoTemplate(BusinessType businessType, int memberId,
+                                                                AutoRunChannel runChannel) {
         return new SendMessageBuilder(businessType, 0, memberId, runChannel, null);
     }
 

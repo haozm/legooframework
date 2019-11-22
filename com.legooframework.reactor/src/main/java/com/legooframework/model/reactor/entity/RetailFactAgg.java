@@ -48,7 +48,7 @@ public class RetailFactAgg {
         this.template = template;
         this.store = store;
         this.sendSms = SendSmsEntity.createSmsByStore(realContent, retailFact.getPhone().orElse(null),
-                retailFact.getVipName().orElse(""), store, BusinessType.TYPE_CUSTOM, "", errMsg);
+                retailFact.getVipName().orElse(""), store, BusinessType.CUSTOM_CARE, "", errMsg);
         this.errCode = "0004";
         this.errMsg = errMsg;
     }
@@ -58,7 +58,7 @@ public class RetailFactAgg {
         this.template = template;
         this.store = store;
         this.sendSms = SendSmsEntity.createSmsByStore(realContent, retailFact.getPhone().orElse(null),
-                retailFact.getVipName().orElse(""), store, BusinessType.TYPE_CUSTOM, "", null);
+                retailFact.getVipName().orElse(""), store, BusinessType.CUSTOM_CARE, "", null);
         this.errMsg = null;
         this.errCode = "0000";
     }

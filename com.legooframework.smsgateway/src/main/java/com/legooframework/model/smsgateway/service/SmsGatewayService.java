@@ -3,7 +3,9 @@ package com.legooframework.model.smsgateway.service;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
+import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.TemplateReplaceException;
 import com.legooframework.model.covariant.entity.UserAuthorEntity;
@@ -16,6 +18,7 @@ import com.legooframework.model.smsgateway.entity.SendMsgStateEntity;
 import com.legooframework.model.smsprovider.entity.SMSSettingEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +33,8 @@ public class SmsGatewayService extends BundleService {
 
     private static final Logger logger = LoggerFactory.getLogger(SmsGatewayService.class);
 
-    public boolean batchSaveMessage(StoEntity store, List<SendMessageBuilder> msgBuilder, String msgTemplate,
-                                    UserAuthorEntity user) {
+    public boolean batchSaveMessage(OrgEntity company, StoEntity store, List<SendMessageBuilder> msgBuilder,
+                                    String msgTemplate, UserAuthorEntity user) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(msgBuilder));
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchSaveMessage(store=%d,sendMsgTemplates'size=%d,user=%s) start", store.getId(),
@@ -74,7 +77,7 @@ public class SmsGatewayService extends BundleService {
                 .filter(SendMsgStateEntity::isSMSMsg).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(sms_list)) {
-            SMSSettingEntity smsSetting = smsSettingEntityAction.loadByStore(store);
+            SMSSettingEntity smsSetting = smsSettingEntityAction.loadByStore(company, store);
             sms_list.forEach(sms -> sms.getSms().addPrefix(smsSetting.getSmsPrefix()));
         }
         LoginContextHolder.setIfNotExitsAnonymousCtx();
@@ -109,22 +112,37 @@ public class SmsGatewayService extends BundleService {
         try {
             List<MsgEntity> instances = Lists.newArrayList();
             for (SendMessageBuilder $temp : msgBuilder) {
-                MemberAgg memberAgg;
-                try {
-                    memberAgg = covariantService.loadMemberAgg($temp.getMemberId());
-                } catch (Exception e) {
-                    logger.error(String.format("loadMemberAgg(%d) has error...", $temp.getMemberId()), e);
-                    $temp.setError(String.format("获取ID=%d的用户失败", $temp.getMemberId()));
+                String _template = $temp.getCtxTemplate().orElse(msgTemplate);
+                // NO template
+                if (Strings.isNullOrEmpty(_template)) {
+                    $temp.setError("未发送信息模版");
                     continue;
                 }
-                Preconditions.checkNotNull(memberAgg);
-                $temp.setMemberInfo(memberAgg.getMember().getPhone(), memberAgg.getMember().getName());
-                memberAgg.getWxUser().ifPresent(wx -> $temp.setWeixinInfo(wx.getId(), wx.getDevicesId()));
-                String _template = $temp.getCtxTemplate().orElse(msgTemplate);
+                // 无替换内容的模版
+                if (!StringUtils.containsAny(_template, "{", "}")) {
+                    $temp.setContext(_template);
+                    continue;
+                }
+
+                Map<String, Object> replace_map = Maps.newHashMap();
+                $temp.getReplaceMap().ifPresent(replace_map::putAll);
+                if ($temp.hasMemberId()) {
+                    MemberAgg memberAgg;
+                    try {
+                        memberAgg = covariantService.loadMemberAgg($temp.getMemberId());
+                    } catch (Exception e) {
+                        logger.error(String.format("loadMemberAgg(%d) has error...", $temp.getMemberId()), e);
+                        $temp.setError(String.format("获取ID=%d的用户失败", $temp.getMemberId()));
+                        continue;
+                    }
+                    Preconditions.checkNotNull(memberAgg);
+                    $temp.setMemberInfo(memberAgg.getMember().getPhone(), memberAgg.getMember().getName());
+                    memberAgg.getWxUser().ifPresent(wx -> $temp.setWeixinInfo(wx.getId(), wx.getDevicesId()));
+                    replace_map.putAll(memberAgg.toReplaceMap());
+                }
+
                 try {
-                    Map<String, Object> _maps = memberAgg.toReplaceMap();
-                    $temp.getReplaceMap().ifPresent(_maps::putAll);
-                    $temp.setContext(replaceTemplate(_template, _maps));
+                    $temp.setContext(replaceTemplate(_template, replace_map));
                 } catch (Exception e) {
                     logger.error(String.format("fmtMsgTemplate(%s) has error...", _template), e);
                     $temp.setError(String.format("格式化模板异常%s", _template));
