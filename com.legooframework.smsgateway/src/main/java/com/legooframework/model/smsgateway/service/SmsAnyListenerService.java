@@ -248,7 +248,12 @@ public class SmsAnyListenerService extends BundleService {
     public void autoSendWxMsgJob() {
         if (logger.isDebugEnabled())
             logger.debug("autoSendWxMsgJob() .................. start");
-        wechatMessageEntityAction.sendWxMessage();
+        LoginContextHolder.setAnonymousCtx();
+        try {
+            wechatMessageEntityAction.sendWxMessage();
+        } finally {
+            LoginContextHolder.clear();
+        }
         if (logger.isDebugEnabled())
             logger.debug("autoSendWxMsgJob() .................. end");
     }
