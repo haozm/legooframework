@@ -13,6 +13,7 @@ import com.legooframework.model.smsgateway.entity.MsgEntity;
 import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
 import com.legooframework.model.smsgateway.entity.SendMode;
 import com.legooframework.model.smsgateway.entity.SendMsgStateEntity;
+import com.legooframework.model.smsprovider.entity.SMSSettingEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.text.StringSubstitutor;
@@ -73,7 +74,8 @@ public class SmsGatewayService extends BundleService {
                 .filter(SendMsgStateEntity::isSMSMsg).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(sms_list)) {
-            // 追加前缀与后坠
+            SMSSettingEntity smsSetting = smsSettingEntityAction.loadByStore(store);
+            sms_list.forEach(sms -> sms.getSms().addPrefix(smsSetting.getSmsPrefix()));
         }
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         boolean flag = false;

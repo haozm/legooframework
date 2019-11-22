@@ -51,6 +51,16 @@ public class SMSSettingEntityAction extends BaseEntityAction<SMSSettingEntity> {
         });
     }
 
+    public SMSSettingEntity loadByStore(StoEntity store) {
+        List<SMSSettingEntity> settings = loadAllByCompany(store.getCompanyId());
+        Optional<SMSSettingEntity> setting = null;
+        setting = settings.stream().filter(x -> x.isStore(store.getCompanyId(), store.getId())).findFirst();
+        if (setting.isPresent()) return setting.get();
+        setting = settings.stream().filter(x -> x.isCompany(store.getCompanyId())).findFirst();
+        Preconditions.checkState(setting.isPresent(), "公司%s,门店%s尚未初始化短信相关配置...", store.getCompanyId(), store.getId());
+        return setting.get();
+    }
+
     public SMSSettingEntity loadByStoreId(final Integer companyId, final Integer storeId) {
         Preconditions.checkNotNull(companyId);
         List<SMSSettingEntity> settings = loadAllByCompany(companyId);

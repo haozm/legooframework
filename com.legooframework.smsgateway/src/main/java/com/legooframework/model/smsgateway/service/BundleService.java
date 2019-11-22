@@ -10,6 +10,7 @@ import com.legooframework.model.covariant.entity.OrgEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.StoEntityAction;
 import com.legooframework.model.smsgateway.entity.*;
+import com.legooframework.model.smsprovider.entity.SMSSettingEntityAction;
 import org.springframework.integration.core.MessagingTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -81,6 +82,11 @@ public abstract class BundleService extends BaseService {
     WechatMessageEntityAction wechatMessageEntityAction;
     RechargeDetailEntityAction rechargeDetailEntityAction;
     SendMsg4ReimburseEntityAction reimburseEntityAction;
+    SMSSettingEntityAction smsSettingEntityAction;
+
+    public void setSmsSettingEntityAction(SMSSettingEntityAction smsSettingEntityAction) {
+        this.smsSettingEntityAction = smsSettingEntityAction;
+    }
 
     public void setReimburseEntityAction(SendMsg4ReimburseEntityAction reimburseEntityAction) {
         this.reimburseEntityAction = reimburseEntityAction;
