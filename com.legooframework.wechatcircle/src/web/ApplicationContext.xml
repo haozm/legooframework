@@ -1,15 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xmlns:int="http://www.springframework.org/schema/integration"
-       xmlns:task="http://www.springframework.org/schema/task"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:jee="http://www.springframework.org/schema/jee"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
-                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
                            http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
-
                            http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd">
     <context:property-placeholder location="classpath:jdbc.properties"/>
 
@@ -25,9 +20,8 @@
     <import resource="classpath*:META-INF/crmadapter/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/wechatcircle/spring-model-cfg.xml"/>
 
-
-    <task:executor id="webchatcirecle-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>
-    <int:publish-subscribe-channel id="CHANNEL_WECHATCIRCLE_EVENTBUS" task-executor="webchatcirecle-executor"/>
+    <!--    <task:executor id="webchatcirecle-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>-->
+    <!--    <int:publish-subscribe-channel id="CHANNEL_WECHATCIRCLE_EVENTBUS" task-executor="webchatcirecle-executor"/>-->
 
     <beans profile="devp">
         <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/wechatcircle"/>

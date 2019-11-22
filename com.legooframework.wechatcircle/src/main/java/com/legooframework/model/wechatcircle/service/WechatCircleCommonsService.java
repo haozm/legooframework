@@ -101,7 +101,6 @@ public class WechatCircleCommonsService extends BundleService {
         return Optional.empty();
     }
 
-
     /**
      * 维度评论 神秘常使人
      *

@@ -1,6 +1,5 @@
 package com.legooframework.model.wechatcircle.service;
 
-import com.google.common.collect.Maps;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 

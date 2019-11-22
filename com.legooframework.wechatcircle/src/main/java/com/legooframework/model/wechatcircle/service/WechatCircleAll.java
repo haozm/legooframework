@@ -1,7 +1,6 @@
 package com.legooframework.model.wechatcircle.service;
 
 import com.google.common.base.MoreObjects;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.legooframework.model.wechatcircle.entity.CircleCommentEntity;
 import com.legooframework.model.wechatcircle.entity.WechatCircleEntity;
