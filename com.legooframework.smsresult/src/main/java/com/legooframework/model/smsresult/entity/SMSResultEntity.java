@@ -4,7 +4,7 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
-import com.legooframework.model.smsgateway.entity.SMSEntity;
+import com.legooframework.model.smsgateway.entity.MsgEntity;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import org.joda.time.LocalDateTime;
 
@@ -16,7 +16,7 @@ import java.util.Map;
 public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
 
     private final Integer companyId, storeId;
-    private final SMSEntity sendSms;
+    private final MsgEntity sendSms;
     private final SMSChannel smsChannel;
     private String account;
     private final Long smsExt;
@@ -46,7 +46,7 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
         ps.setObject(11, getCompanyId());
     }
 
-    public SMSResultEntity(Integer companyId, Integer storeId, SMSEntity sendSms, int smsChannel, long smsExt) {
+    public SMSResultEntity(Integer companyId, Integer storeId, MsgEntity sendSms, int smsChannel, long smsExt) {
         super(sendSms.getSmsId(), companyId.longValue(), -1L);
         this.companyId = companyId;
         this.storeId = storeId;
@@ -64,7 +64,7 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
             this.storeId = ResultSetUtil.getObject(res, "storeId", Integer.class);
             this.smsExt = ResultSetUtil.getObject(res, "smsExt", Long.class);
             this.account = ResultSetUtil.getOptString(res, "sms_account", null);
-            this.sendSms = SMSEntity.create4Sending(id, ResultSetUtil.getString(res, "smsContext"),
+            this.sendSms = MsgEntity.create4Sending(id, ResultSetUtil.getString(res, "smsContext"),
                     ResultSetUtil.getString(res, "phoneNo"), res.getInt("wordCount"), res.getInt("smsCount"));
             this.smsChannel = SMSChannel.paras(res.getInt("smsChannle"));
 
@@ -94,7 +94,7 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
         return storeId == null ? -1 : storeId;
     }
 
-    private SMSEntity getSendSms() {
+    private MsgEntity getSendSms() {
         return sendSms;
     }
 

@@ -12,7 +12,7 @@ import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
-import com.legooframework.model.smsgateway.entity.SMSEntity;
+import com.legooframework.model.smsgateway.entity.MsgEntity;
 import com.legooframework.model.smsresult.entity.SMSBlackListEntity;
 import com.legooframework.model.smsresult.entity.SMSBlackListEntityAction;
 import com.legooframework.model.smsresult.entity.SMSResultEntity;
@@ -64,7 +64,7 @@ public class MvcController extends BaseController {
             int sum = Integer.parseInt(payload[6]);
             boolean encoding = StringUtils.equals("1", payload[7]);
             String content = encoding ? WebUtils.decodeUrl(payload[8]) : payload[8];
-            SMSEntity sendSMS = SMSEntity.create4Sending(smsId, content, mobile, count, sum);
+            MsgEntity sendSMS = MsgEntity.create4Sending(smsId, content, mobile, count, sum);
             return new SMSResultEntity(companyId, storeId, sendSMS, channel, RandomUtils.nextLong(1L, 9999999999L));
         } catch (Exception e) {
             logger.error(String.format("decodingByFlat(%s) has exception", Arrays.toString(payload)), e);

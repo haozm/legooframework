@@ -16,14 +16,14 @@ import java.sql.SQLException;
 public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSetter {
 
     private final Integer companyId, storeId;
-    private final SMSEntity sms;
+    private final MsgEntity sms;
     private String sendBatchNo;
     private final SMSChannel smsChannel;
     private final BusinessType businessType;
     private final boolean freeSend;
     private SendStatus sendStatus;
 
-    private SendMsg4InitEntity(Integer companyId, Integer storeId, SMSEntity sms, boolean freeSend) {
+    private SendMsg4InitEntity(Integer companyId, Integer storeId, MsgEntity sms, boolean freeSend) {
         super(sms.getSmsId(), companyId.longValue(), -1L);
         this.sms = sms;
         if (this.sms.isEnbaled()) {
@@ -43,11 +43,11 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
             this.sendBatchNo = sendBatchNo;
     }
 
-    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms, boolean freeSend) {
+    public static SendMsg4InitEntity createInstance(StoEntity store, MsgEntity sms, boolean freeSend) {
         return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, freeSend);
     }
 
-    public static SendMsg4InitEntity createInstance(StoEntity store, SMSEntity sms) {
+    public static SendMsg4InitEntity createInstance(StoEntity store, MsgEntity sms) {
         return new SendMsg4InitEntity(store.getCompanyId(), store.getId(), sms, false);
     }
 
@@ -73,7 +73,7 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
             this.sendStatus = SendStatus.paras(ResultSetUtil.getObject(res, "sendStatus", Integer.class));
             this.smsChannel = SMSChannel.paras(ResultSetUtil.getObject(res, "smsChannel", Integer.class));
             this.freeSend = ResultSetUtil.getBooleanByInt(res, "freeSend");
-            this.sms = SMSEntity.createInstance(res);
+            this.sms = MsgEntity.createInstance(res);
         } catch (Exception e) {
             if (e instanceof RuntimeException) throw (RuntimeException) e;
             throw new RuntimeException("Restore SendMsg4InitEntity has SQLException", e);
@@ -84,7 +84,7 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         return sms.getPhoneNo();
     }
 
-    public SMSEntity getSms() {
+    public MsgEntity getSms() {
         return sms;
     }
 

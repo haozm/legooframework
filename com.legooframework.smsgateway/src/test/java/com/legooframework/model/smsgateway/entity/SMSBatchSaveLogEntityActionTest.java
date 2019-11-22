@@ -31,9 +31,9 @@ public class SMSBatchSaveLogEntityActionTest {
     public void batchInsert() {
         LoginContextHolder.setAnonymousCtx();
         String ssm = "【动感曲线清溪店】尊贵的卿艳辉顾客您好：感谢您长期以来对我们的支持与信任，本月是您的生日，欢迎到店免费领取回复TD退订";
-        List<SMSEntity> smses = Lists.newArrayList();
+        List<MsgEntity> smses = Lists.newArrayList();
         for (int i = 0; i < 3000; i++) {
-            smses.add(SMSEntity.createSMSMsgWithNoJob(UUID.randomUUID().toString(), -1, "18588828127",
+            smses.add(MsgEntity.createSMSMsgWithNoJob(UUID.randomUUID().toString(), -1, "18588828127",
                     null, String.format(ssm, i), null));
         }
         KvDictEntity businessType = kvDictEntityAction.findByValue("SMS_BUS_TYPE", "90TOUCHED").get();

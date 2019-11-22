@@ -9,7 +9,7 @@ import com.legooframework.model.covariant.entity.TemplateReplaceException;
 import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.covariant.service.CovariantService;
 import com.legooframework.model.covariant.service.MemberAgg;
-import com.legooframework.model.smsgateway.entity.SMSEntity;
+import com.legooframework.model.smsgateway.entity.MsgEntity;
 import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
 import com.legooframework.model.smsgateway.entity.SendMode;
 import com.legooframework.model.smsgateway.entity.SendMsg4InitEntity;
@@ -102,10 +102,10 @@ public class SmsGatewayService extends BundleService {
      * @param msgTemplate XXOO
      * @return OXOX
      */
-    private List<SMSEntity> initMessage(List<SendMessageBuilder> msgBuilder, String msgTemplate) {
+    private List<MsgEntity> initMessage(List<SendMessageBuilder> msgBuilder, String msgTemplate) {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         try {
-            List<SMSEntity> instances = Lists.newArrayList();
+            List<MsgEntity> instances = Lists.newArrayList();
             for (SendMessageBuilder $temp : msgBuilder) {
                 MemberAgg memberAgg;
                 try {
@@ -128,7 +128,7 @@ public class SmsGatewayService extends BundleService {
                     $temp.setError(String.format("格式化模板异常%s", _template));
                 }
             }
-            msgBuilder.forEach(msg -> instances.addAll(SMSEntity.createSMSMsg(msg)));
+            msgBuilder.forEach(msg -> instances.addAll(MsgEntity.createSMSMsg(msg)));
             return instances;
         } finally {
             LoginContextHolder.clear();
