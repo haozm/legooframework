@@ -53,7 +53,8 @@ public class DeductionController extends SmsBaseController {
             Map<String, Object> params = Maps.newHashMap();
             params.put("companyId", companyId);
             if (-1 != storeId) params.put("storeId", storeId);
-            if (!Strings.isNullOrEmpty(deductionDate)) params.put("deductionDate", deductionDate);
+            if (!Strings.isNullOrEmpty(deductionDate))
+                params.put("deductionDate", StringUtils.split(deductionDate, ','));
             if (!Strings.isNullOrEmpty(msgctx)) params.put("msgctx", String.format("%%%s%%", msgctx));
             PagingResult page = getQueryEngine(request).queryForPage("DeductionDetailEntity", "deductionTotal", pageNum, pageSize, params);
             return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();

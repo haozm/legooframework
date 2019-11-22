@@ -8,7 +8,7 @@
            WHERE stb.is_billing =1
              AND scs.company_id = :companyId
 <#if storeId??> AND stb.store_id = :storeId</#if>
-<#if deductionDate??> AND DATE_FORMAT(stb.createTime,GET_FORMAT(DATE,'iso')) = :deductionDate</#if>
+<#if deductionDate??> AND DATE_FORMAT(stb.createTime,GET_FORMAT(DATE,'iso')) BETWEEN '${deductionDate[0]}' AND '${deductionDate[1]}'</#if>
 <#if msgctx??> AND stb.send_batchno IN ( SELECT DISTINCT stl.send_batchno
                                                  FROM acp.SMS_TRANSPORT_LOG stl
                                                  WHERE stl.sms_context LIKE :msgctx )</#if>
@@ -29,7 +29,7 @@
            WHERE stb.is_billing =1
              AND stb.company_id = :companyId
       <#if storeId??> AND stb.store_id = :storeId</#if>
-      <#if deductionDate??> AND DATE_FORMAT(stb.createTime,GET_FORMAT(DATE,'iso')) = :deductionDate</#if>
+      <#if deductionDate??> AND DATE_FORMAT(stb.createTime,GET_FORMAT(DATE,'iso')) BETWEEN '${deductionDate[0]}' AND '${deductionDate[1]}'</#if>
       <#if msgctx??> AND stb.send_batchno IN ( SELECT DISTINCT stl.send_batchno
                                                  FROM acp.SMS_TRANSPORT_LOG stl
                                                  WHERE stl.sms_context LIKE :msgctx )</#if>
