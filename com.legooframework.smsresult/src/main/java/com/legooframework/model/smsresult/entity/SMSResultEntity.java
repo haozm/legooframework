@@ -119,7 +119,7 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
         return String.format("%s|%s|%s|%s", getId(), this.finalState.getState(),
                 FinalState.WAITING == this.finalState ? LocalDateTime.now().toString("yyyy-MM-dd HH:mm:ss")
                         : this.finalDate.toString("yyyy-MM-dd HH:mm:ss"),
-                FinalState.WAITING == this.finalState ? "NONE" : this.finalState);
+                FinalState.WAITING == this.finalState ? "NONE" : this.finalState.getDesc());
     }
 
     @Override
