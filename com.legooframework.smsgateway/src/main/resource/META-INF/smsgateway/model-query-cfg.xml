@@ -23,6 +23,9 @@
             <body><![CDATA[
           SELECT com.name AS 'companyName',sto.name 'storename',
                  stb.*,
+                 (SELECT GROUP_CONCAT( DISTINCT stl.businsess_type)
+                    FROM SMS_TRANSPORT_LOG stl
+                   WHERE stl.send_batchno = stb.send_batchno) AS 'businsessType',
                  DATE_FORMAT(stb.createTime,GET_FORMAT(DATETIME,'iso')) AS 'createTimeName'
             FROM SMS_TRANSPORT_BATCH stb
       INNER JOIN acp.acp_organization com ON com.id = stb.company_id AND com.orgType =1
