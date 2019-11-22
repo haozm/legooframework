@@ -103,7 +103,7 @@
                     WHEN 1 THEN '短信发送成功'
                     WHEN 2 THEN '短信发送失败'
                     ELSE '异常数据' END ) AS 'finalStatusName',
-                 stl.remarks AS 'remarks',
+                 stl.send_remarks AS 'remarks',
                  IF(stl.sms_channel = 1,'短信','微信') AS 'msgType',
                  IF(stb.is_billing = 1, '完成计费', '等待计费') AS 'billState',
                  IF(stl.sms_channel = 1,'计费','免费') AS 'isbilling',

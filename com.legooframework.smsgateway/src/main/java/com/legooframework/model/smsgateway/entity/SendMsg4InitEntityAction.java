@@ -58,7 +58,7 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
     }
 
     public void batchUpdateSendState(Collection<SendMsg4SendEntity> entities) {
-        String update_sql = "UPDATE SMS_TRANSPORT_LOG SET send_status= ?, send_res_code= ?, send_local_date= ?, remarks= ? WHERE id = ?";
+        String update_sql = "UPDATE SMS_TRANSPORT_LOG SET send_status= ?, send_res_code= ?, send_local_date= ?, send_remarks= ? WHERE id = ?";
         Objects.requireNonNull(getJdbcTemplate()).batchUpdate(update_sql, entities, 256, (ps, t) -> {
             ps.setObject(1, t.getSendStatus().getStatus());
             ps.setObject(2, t.getSendResCode());
@@ -89,7 +89,7 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
     }
 
     public void batchUpdateMsg4Deductions(Collection<SendMsg4DeductionEntity> deductions) {
-        String update_sql = "UPDATE SMS_TRANSPORT_LOG SET send_status = ?,remarks = ? WHERE id = ?";
+        String update_sql = "UPDATE SMS_TRANSPORT_LOG SET send_status = ?,send_remarks = ? WHERE id = ?";
         Objects.requireNonNull(getJdbcTemplate()).batchUpdate(update_sql, deductions, 1024, (ps, et) -> {
             ps.setObject(1, et.getSendStatus().getStatus());
             ps.setObject(2, et.getRemarks());
@@ -98,7 +98,7 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
     }
 
     public void batchFailMsg4Deductions(Collection<SendMsg4DeductionEntity> deductions, String errMsg) {
-        String update_sql = "UPDATE SMS_TRANSPORT_LOG SET send_status = ?,remarks = ? WHERE id = ?";
+        String update_sql = "UPDATE SMS_TRANSPORT_LOG SET send_status = ?,send_remarks = ? WHERE id = ?";
         Objects.requireNonNull(getJdbcTemplate()).batchUpdate(update_sql, deductions, 1024, (ps, et) -> {
             ps.setObject(1, SendStatus.SMS4SendError);
             ps.setObject(2, errMsg);
@@ -116,7 +116,7 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
 
     private final String BATCHINSERT_SQL = "INSERT INTO SMS_TRANSPORT_LOG (id, company_id, store_id, member_id, send_batchno, " +
             "phone_no, sms_count, word_count, member_name, sms_context, tenant_id, creator, free_send, sms_channel, " +
-            "businsess_type, send_status, job_id, sms_enabled, send_channel, weixin_id, device_id, remarks) \n" +
+            "businsess_type, send_status, job_id, sms_enabled, send_channel, weixin_id, device_id, send_remarks) \n" +
             " VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)";
 
     @Override

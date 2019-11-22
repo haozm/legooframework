@@ -2,9 +2,8 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:util="http://www.springframework.org/schema/util"
-       xmlns:int="http://www.springframework.org/schema/integration"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+
                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
     <bean id="smsGateWayBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/smsgateway/legoo-model-cfg.xml"/>
@@ -46,7 +45,6 @@
         <property name="statementFactory" ref="smsGateWayQueryFactory"/>
         <property name="dataSource" ref="smsGateWayDataSource"/>
     </bean>
-
     <bean id="rechargeRuleEntityAction" class="com.legooframework.model.smsgateway.entity.RechargeRuleEntityAction"
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
@@ -69,7 +67,6 @@
     <bean id="wechatMessageEntityAction"
           class="com.legooframework.model.smsgateway.entity.WechatMessageEntityAction"
           parent="smsClientEntityAction"/>
-
     <bean id="sendMsg4InitEntityAction" class="com.legooframework.model.smsgateway.entity.SendMsg4InitEntityAction"
           parent="smsClientEntityAction"/>
     <bean id="sendMsg4ReimburseEntityAction"
@@ -78,11 +75,9 @@
     <bean id="smsKeywordEntityAction"
           class="com.legooframework.model.smsgateway.entity.SMSKeywordEntityAction"
           parent="smsClientEntityAction"/>
-
     <bean id="msgTransportBatchEntityAction"
           class="com.legooframework.model.smsgateway.entity.MsgTransportBatchEntityAction"
           parent="smsClientEntityAction"/>
-
     <bean id="smsBlackListEntityAction" class="com.legooframework.model.smsgateway.entity.SMSBlackListEntityAction"
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
@@ -93,7 +88,6 @@
         <constructor-arg name="cacheName" value="smsGateWayCache"/>
         <property name="cacheManager" ref="smsClientCacheManager"/>
     </bean>
-
     <bean id="abstractSmsBundleService" class="com.legooframework.model.smsgateway.service.BundleService"
           abstract="true">
         <property name="sendMsg4InitEntityAction" ref="sendMsg4InitEntityAction"/>
@@ -111,36 +105,4 @@
     <bean id="smsAnyListenerService" class="com.legooframework.model.smsgateway.service.SmsAnyListenerService"
           parent="abstractSmsBundleService"/>
     <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
-
-    <!--
-    <task:scheduler id="sms-client-scheduler" pool-size="8"/>
-    <task:executor id="sms-client-executor" pool-size="4-32" queue-capacity="512" rejection-policy="CALLER_RUNS"/>
-    <task:scheduled-tasks scheduler="sms-client-scheduler">
-        <task:scheduled ref="smsSyncDataService" method="syncBlackList" cron="0 0 0/2 * * ?"/>
-        <task:scheduled ref="smsSyncDataService" method="syncFinalStates" cron="0/30 * * * * ?"/>
-    </task:scheduled-tasks>
-    <int:channel id="channel_sms_billing">
-        <int:queue capacity="128"/>
-    </int:channel>
-    <int:channel id="channel_sms_sending">
-        <int:queue/>
-    </int:channel>
-    <int:channel id="channel_sms_sended">
-        <int:queue/>
-    </int:channel>
-
-
-
-    <int:outbound-channel-adapter channel="channel_sms_sending" ref="smsIntegrationService" method="sendingSMSService"
-                                  auto-startup="true">
-        <int:poller max-messages-per-poll="800" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="3000"
-                    task-executor="sms-client-executor"/>
-    </int:outbound-channel-adapter>
-
-    <int:outbound-channel-adapter channel="channel_sms_sended" ref="smsIntegrationService" method="handleSendResult"
-                                  auto-startup="true">
-        <int:poller max-messages-per-poll="800" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="5000"
-                    task-executor="sms-client-executor"/>
-    </int:outbound-channel-adapter>
-    -->
 </beans>

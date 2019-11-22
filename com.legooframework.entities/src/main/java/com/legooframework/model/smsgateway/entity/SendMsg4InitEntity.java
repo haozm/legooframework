@@ -125,7 +125,7 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         ps.setObject(18, sms.getSendChannel().getChannel());
         ps.setObject(19, sms.getWeixinId());
         ps.setObject(20, sms.getDeviceId());
-        ps.setObject(21, sms.getRemark());
+        ps.setObject(21, sms.getSendRemarks());
     }
 
     @Override

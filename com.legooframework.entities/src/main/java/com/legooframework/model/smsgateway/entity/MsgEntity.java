@@ -27,12 +27,12 @@ public class MsgEntity {
     private boolean enbaled;
     private final SendChannel sendChannel;
     private final String weixinId, deviceId;
-    private String remark;
+    private String sendRemarks;
 
     private BusinessType businessType;
 
     private MsgEntity(String originalId, String content, String phoneNo, Integer memberId, String memberName,
-                      Integer jobId, boolean enbaled, String remark, BusinessType businessType) {
+                      Integer jobId, boolean enbaled, String sendRemarks, BusinessType businessType) {
         this.content = content;
         this.smsId = originalId;
         this.wordCount = content.length();
@@ -45,12 +45,12 @@ public class MsgEntity {
         this.sendChannel = SendChannel.SMS;
         this.weixinId = null;
         this.deviceId = null;
-        this.remark = remark;
+        this.sendRemarks = sendRemarks;
         this.businessType = businessType;
     }
 
     private MsgEntity(String originalId, String content, Integer memberId, String memberName, Integer jobId,
-                      String weixinId, String deviceId, boolean enbaled, String remark, BusinessType businessType) {
+                      String weixinId, String deviceId, boolean enbaled, String sendRemarks, BusinessType businessType) {
         this.content = content;
         this.smsId = originalId;
         this.wordCount = content.length();
@@ -63,7 +63,7 @@ public class MsgEntity {
         this.sendChannel = SendChannel.WEIXIN;
         this.weixinId = weixinId;
         this.deviceId = deviceId;
-        this.remark = remark;
+        this.sendRemarks = sendRemarks;
         this.businessType = businessType;
     }
 
@@ -126,8 +126,8 @@ public class MsgEntity {
         }
     }
 
-    String getRemark() {
-        return remark;
+    String getSendRemarks() {
+        return sendRemarks;
     }
 
     // 构造4DB
@@ -145,7 +145,7 @@ public class MsgEntity {
             this.sendChannel = SendChannel.paras(res.getInt("sendChannel"));
             this.weixinId = ResultSetUtil.getOptString(res, "weixinId", null);
             this.deviceId = ResultSetUtil.getOptString(res, "deviceId", null);
-            this.remark = ResultSetUtil.getOptString(res, "remarks", null);
+            this.sendRemarks = ResultSetUtil.getOptString(res, "send_remarks", null);
         } catch (SQLException e) {
             throw new RuntimeException("Restore SMSEntity has SQLException", e);
         }

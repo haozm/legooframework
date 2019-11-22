@@ -347,35 +347,6 @@
             ]]></body>
         </sql>
     </model>
-    <model id="DeductionTotalEntity">
-        <sql id="insert">
-            <body><![CDATA[
-          INSERT INTO SMS_CHARGE_SUMMARY
-                      ( id, company_id, store_id, sms_batchno, business_type, free_send, company_name, sms_quantity, wx_quantity, store_name, send_mode, sms_context, finish_send, tenant_id, createTime )
-               VALUES (:id, :companyId, :storeId, :smsBatchNo, :businessType, :freeSend, :companyName, :smsQuantity, :wxQuantity, :storeName, :sendMode, :smsContext, :finishSend, :tenantId, CURRENT_TIMESTAMP )
-            ]]></body>
-        </sql>
-        <sql id="findById" macros="crud_fixed">
-            <body><![CDATA[
-         SELECT scs.id AS 'id',
-                scs.company_id AS 'companyId',
-                scs.store_id AS 'storeId',
-                scs.sms_batchno AS 'smsBatchNo',
-                scs.wx_quantity AS 'wxQuantity',
-                scs.free_send AS 'freeSend',
-                scs.business_type AS 'businessType',
-                scs.send_mode AS 'sendMode',
-                scs.finish_send AS 'finishSend',
-                scs.sms_quantity AS 'smsQuantity',
-                scs.sms_context AS 'smsContext',
-                scs.store_name AS 'storeName',
-                scs.company_name AS 'companyName',
-                <@crud_fixed_select "scs" />
-           FROM SMS_CHARGE_SUMMARY AS scs
-          WHERE scs.id = :id
-            ]]></body>
-        </sql>
-    </model>
     <model id="SendMsg4FinalEntity">
         <sql id="load4Final">
             <body><![CDATA[
@@ -493,7 +464,7 @@
         </sql>
         <sql id="loadSmsMsg4SendByBatchNo">
             <body><![CDATA[
-      SELECT stl.id,stl.sms_count,stl.send_status,stl.remarks
+      SELECT stl.id,stl.sms_count,stl.send_status,stl.send_remarks AS 'remarks'
         FROM SMS_TRANSPORT_LOG AS stl
        WHERE stl.send_status = 0
          AND stl.send_channel = 1
