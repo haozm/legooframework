@@ -105,9 +105,9 @@ public class SmsResultService extends BundleService {
         try {
             for (SMSSubAccountEntity subAccount : subAccounts.get()) {
                 Optional<String> optional = getSmsService().batchSync(subAccount.getUsername());
-                if (!optional.isPresent()) return;
+                if (!optional.isPresent()) continue;
                 String[] payloads = StringUtils.split(optional.get(), ';');
-                if (ArrayUtils.isEmpty(payloads)) return;
+                if (ArrayUtils.isEmpty(payloads)) continue;
                 List<Map<String, Object>> mapList = Lists.newArrayListWithCapacity(payloads.length);
                 Stream.of(payloads).forEach($it -> mapList.add(decodeState($it)));
                 getBean(SMSResultEntityAction.class).updateState(mapList);
