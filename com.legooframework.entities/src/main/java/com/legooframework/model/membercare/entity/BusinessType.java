@@ -8,7 +8,7 @@ public enum BusinessType {
     TESTSMS(0, 2, "测试短信"),
     RIGHTS_AND_INTERESTS_CARE(1, 1, "会员权益提醒"),
     TOUCHED90(6, 1, "90服务关怀"),
-    REORDERPLAN(7, 2, "翻单计划"),
+    REORDERPLAN(7, 2, "返单计划"),
     TOUCHPLAN(8, 2, "感动计划"),
     BIRTHDAYTOUCH(9, 1, "生日感动"),
     REMINDER_UNKNOWN(10, 2, "忠诚计划"),

@@ -4,36 +4,73 @@ import com.google.common.base.MoreObjects;
 
 public enum BusinessType {
 
-    BIRTHDAYCARE(9, 1, "生日关怀"), REORDERPLAN(7, 2, "返单计划"), HOLIDAYCARE(21, 2, "节日关怀"),
-    NINETYPLAN(6, 1, "90感动计划"), QUICK_APARTMENT(11, 2, "回访计划"), TYPE_CUSTOM(13, 2, "自定义"),
-    NEW_SALE_RECORD(1, 2, "新销售单");
+    TESTSMS(0, 2, "测试短信"),
+    RIGHTS_AND_INTERESTS_CARE(1, 1, "会员权益提醒"),
+    TOUCHED90(6, 1, "90服务关怀"),
+    REORDERPLAN(7, 2, "返单计划"),
+    TOUCHPLAN(8, 2, "感动计划"),
+    BIRTHDAYTOUCH(9, 1, "生日感动"),
+    REMINDER_UNKNOWN(10, 2, "忠诚计划"),
+    QUICK_APARTMENT(11, 2, "回访计划"),
+    CUSTOM_CARE(13, 2, "自定义"),
+    AWAKEN(14, 2, "沉睡唤醒"),
+    BATCH_GENERALCARE(17, 2, "批量普通关怀"),
+    BATCH_BIRTHDAYCARE(18, 1, "批量生日关怀"),
+    BATCH_HOLIDAYCARE(19, 2, "批量节日关怀"),
+    HOLIDAYCARE(21, 2, "节日关怀"),
+    FAMILYHOLIDAYCARE(22, 2, "家庭节日关怀");
 
     private int value, smsChannel;
     private String desc;
 
+
     public static BusinessType paras(int val) {
         BusinessType res;
         switch (val) {
-            case 6:
-                res = NINETYPLAN;
+            case 1:
+                res = RIGHTS_AND_INTERESTS_CARE;
+                break;
+            case 22:
+                res = FAMILYHOLIDAYCARE;
+                break;
+            case 19:
+                res = BATCH_HOLIDAYCARE;
+                break;
+            case 18:
+                res = BATCH_BIRTHDAYCARE;
+                break;
+            case 0:
+                res = TESTSMS;
                 break;
             case 7:
                 res = REORDERPLAN;
                 break;
+            case 6:
+                res = TOUCHED90;
+                break;
+            case 8:
+                res = TOUCHPLAN;
+                break;
             case 9:
-                res = BIRTHDAYCARE;
+                res = BIRTHDAYTOUCH;
+                break;
+            case 10:
+                res = REMINDER_UNKNOWN;
                 break;
             case 11:
                 res = QUICK_APARTMENT;
                 break;
             case 13:
-                res = TYPE_CUSTOM;
+                res = CUSTOM_CARE;
+                break;
+            case 14:
+                res = AWAKEN;
+                break;
+            case 17:
+                res = BATCH_GENERALCARE;
                 break;
             case 21:
                 res = HOLIDAYCARE;
-                break;
-            case 1:
-                res = NEW_SALE_RECORD;
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法的入参....%d", val));
