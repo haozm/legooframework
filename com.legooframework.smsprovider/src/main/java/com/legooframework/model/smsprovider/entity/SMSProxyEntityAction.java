@@ -48,7 +48,7 @@ public class SMSProxyEntityAction extends HttpBaseEntityAction<EmptyEntity> {
             for (String str : args) {
                 // 28372e35-ed81-4867-97fd-c94855b693b8|9，0，1，2|2019-05-22 18:33:00|error:NOTEXITS
                 String[] arg = StringUtils.split(str, '|');
-                res_list.add(new SmsStateDto(arg[1], Integer.parseInt(arg[2]), arg[3], arg[4]));
+                res_list.add(new SmsStateDto(arg[0], Integer.parseInt(arg[1]), arg[2], arg[3]));
             }
             return Optional.ofNullable(CollectionUtils.isEmpty(res_list) ? null : res_list);
         } catch (Exception e) {
