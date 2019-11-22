@@ -28,19 +28,16 @@
     <import resource="classpath*:META-INF/smsprovider/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/smsgateway/spring-model-cfg.xml"/>
 
+    <task:executor id="smsgateway-executor" pool-size="2-8" queue-capacity="1024" keep-alive="2"
+                   rejection-policy="CALLER_RUNS"/>
     <task:scheduler id="smsgateway-scheduler" pool-size="4"/>
     <task:scheduled-tasks scheduler="smsgateway-scheduler">
         <task:scheduled ref="smsAnyListenerService" method="deductionJob" initial-delay="60000" fixed-delay="2000"/>
         <task:scheduled ref="smsAnyListenerService" method="reimburseJob" cron="0 0 0/2 * * ?"/>
     </task:scheduled-tasks>
-    
-    <int:channel id="channel_wx_sending">
-        <int:queue capacity="2048"/>
-    </int:channel>
-    <int:outbound-channel-adapter channel="channel_wx_sending" ref="smsAnyListenerService" method="sendWxEndpoint"
-                                  auto-startup="true">
-        <int:poller max-messages-per-poll="1" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="3000"/>
-    </int:outbound-channel-adapter>
+
+    <int:publish-subscribe-channel id="channel_wx_sending" task-executor="smsgateway-executor"/>
+    <int:outbound-channel-adapter channel="channel_wx_sending" ref="smsAnyListenerService" method="sendWxEndpoint"/>
 
     <int:channel id="channel_sms_billing">
         <int:queue capacity="2048"/>
