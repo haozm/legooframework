@@ -58,11 +58,7 @@
           parent="wechatCircleAbstractAction">
         <property name="cacheManager" ref="wechatCircleCacheManager"/>
     </bean>
-    <!--
-     <task:executor id="webchatcirecle-executor" pool-size="4-32" queue-capacity="64" rejection-policy="CALLER_RUNS"/>
-    <bean id="wechatCircleMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
-    <int:publish-subscribe-channel id="CHANNEL_WECHATCIRCLE_EVENTBUS" task-executor="webchatcirecle-executor"/>
-  -->
     <bean id="wechatCircleCommonsService"
           class="com.legooframework.model.wechatcircle.service.WechatCircleCommonsService"/>
+    <bean id="wechatCircleMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
 </beans>
