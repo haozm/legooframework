@@ -30,7 +30,9 @@
 
     <task:scheduler id="smsgateway-scheduler" pool-size="4"/>
     <task:scheduled-tasks scheduler="smsgateway-scheduler">
-        <task:scheduled ref="smsAnyListenerService" method="deductionJob" initial-delay="5000" fixed-delay="2000"/>
+        <task:scheduled ref="smsAnyListenerService" method="deductionJob" initial-delay="60000" fixed-delay="2000"/>
+        <task:scheduled ref="smsAnyListenerService" method="autoSendWxMsgJob" initial-delay="60000"
+                        fixed-delay="120000"/>
     </task:scheduled-tasks>
 
     <int:channel id="channel_sms_billing">

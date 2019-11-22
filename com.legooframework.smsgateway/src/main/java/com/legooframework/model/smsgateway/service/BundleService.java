@@ -78,6 +78,12 @@ public abstract class BundleService extends BaseService {
     RechargeBalanceEntityAction rechargeBalanceEntityAction;
     DeductionDetailEntityAction deductionDetailEntityAction;
     MsgTransportBatchEntityAction msgTransportBatchEntityAction;
+    WechatMessageEntityAction wechatMessageEntityAction;
+
+
+    public void setWechatMessageEntityAction(WechatMessageEntityAction wechatMessageEntityAction) {
+        this.wechatMessageEntityAction = wechatMessageEntityAction;
+    }
 
     public void setMsgTransportBatchEntityAction(MsgTransportBatchEntityAction msgTransportBatchEntityAction) {
         this.msgTransportBatchEntityAction = msgTransportBatchEntityAction;

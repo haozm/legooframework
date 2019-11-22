@@ -6,11 +6,11 @@ public enum SendStatus {
 
     SMS4Inited(0, "消息入库完成"),
     SMS4Storage(1, "消息等待发送"),
-    SMS4Sending(2, "短信发送中"),
+    SMS4Sending(2, "消息发送中"),
     SendedGateWay(3, "消息提交完成"),
     SMS4SendError(4, "消息发送异常"),
     SMS4InitError(7, "消息生成异常"),
-    SMS4Concaled(9, "短信取消发送");
+    SMS4Concaled(9, "消息取消发送");
 
     private final int status;
     private final String desc;

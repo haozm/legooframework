@@ -8,7 +8,6 @@ import com.legooframework.model.core.jdbc.ResultSetUtil;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
-import org.apache.commons.lang3.StringUtils;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -97,28 +96,8 @@ public class SendMsg4InitEntity extends BaseEntity<String> implements BatchSette
         return smsChannel;
     }
 
-    public int getSmsNum() {
-        return sms.getSmsNum();
-    }
-
-    public String getSendBatchNo() {
-        return sendBatchNo;
-    }
-
     public boolean isEnbaled() {
         return sms.isEnbaled();
-    }
-
-    public boolean hasWeixin() {
-        return StringUtils.isNotEmpty(this.sms.getDeviceId()) && StringUtils.isNotEmpty(this.sms.getWeixinId());
-    }
-
-    public SendStatus getSendStatus() {
-        return sendStatus;
-    }
-
-    void setSendStatus(SendStatus sendStatus) {
-        this.sendStatus = sendStatus;
     }
 
     @Override

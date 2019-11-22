@@ -245,6 +245,14 @@ public class SmsAnyListenerService extends BundleService {
         }
     }
 
+    public void autoSendWxMsgJob() {
+        if (logger.isDebugEnabled())
+            logger.debug("autoSendWxMsgJob() .................. start");
+        wechatMessageEntityAction.sendWxMessage();
+        if (logger.isDebugEnabled())
+            logger.debug("autoSendWxMsgJob() .................. end");
+    }
+
     /**
      * 同步黑名单
      */

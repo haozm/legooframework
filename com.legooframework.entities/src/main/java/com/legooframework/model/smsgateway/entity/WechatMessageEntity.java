@@ -3,8 +3,11 @@ package com.legooframework.model.smsgateway.entity;
 import com.google.common.base.MoreObjects;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
+import com.legooframework.model.core.jdbc.ResultSetUtil;
+import org.joda.time.LocalDateTime;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
@@ -34,6 +37,24 @@ public class WechatMessageEntity extends BaseEntity<String> implements BatchSett
         this.companyId = companyId.intValue();
     }
 
+    WechatMessageEntity(String id, ResultSet res) {
+        super(id);
+        try {
+            this.weixinId = res.getString("weixin_id");
+            this.content = res.getString("sms_context");
+            this.batchNo = res.getString("send_batchno");
+            this.toDeviceId = res.getString("device_id");
+            this.order = 0;
+            this.storeId = res.getInt("store_id");
+            this.companyId = res.getInt("company_id");
+            this.groupId = UUID.randomUUID().toString();
+            this.msgType = 1;
+        } catch (SQLException e) {
+            throw new RuntimeException("Restore WechatMessageEntity has SQLException", e);
+        }
+    }
+
+
     @Override
     public void setValues(PreparedStatement ps) throws SQLException {
         // content,  touser, `type`, isgroup, todeviceid, store_id, company_id, UUID,fromuser, recieveTime ,sendFlag, IDGroup, IDSort
@@ -52,9 +73,9 @@ public class WechatMessageEntity extends BaseEntity<String> implements BatchSett
 
     public static WechatMessageEntity createMessage4Txt(String content, String weixinId, String batchNo,
                                                         String toDeviceId, Integer storeId,
-                                                        String groupId, int order, Long userId, Long companyId) {
+                                                        String groupId, Long userId, Long companyId) {
         return new WechatMessageEntity(content, weixinId, batchNo, toDeviceId, 1, storeId,
-                groupId, order, companyId, userId);
+                groupId, 0, companyId, userId);
     }
 
 

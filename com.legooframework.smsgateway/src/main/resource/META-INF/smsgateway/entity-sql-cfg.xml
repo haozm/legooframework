@@ -376,39 +376,6 @@
             ]]></body>
         </sql>
     </model>
-    <model id="SendMsg4SendEntity">
-        <sql id="load4Sending" macros="crud_fixed">
-            <body><![CDATA[
-          SELECT stl.id AS 'id',
-                  stl.company_id AS 'companyId',
-                  stl.store_id AS 'storeId',
-                  stl.send_channel AS 'sendChannel',
-                  stl.weixin_id AS 'weixinId',
-                  stl.device_id AS 'deviceId',
-                  stl.job_id AS 'jobId',
-                  stl.member_id AS 'memberId',
-                  stl.free_send AS 'freeSend',
-                  stl.sms_enabled AS 'enabled',
-                  stl.sms_channel AS 'smsChannel',
-                  stl.businsess_type AS 'businessType',
-                  stl.send_batchno AS 'sendBatchNo',
-                  stl.send_status AS 'sendStatus',
-                  stl.phone_no AS 'phoneNum',
-                  stl.sms_count AS 'smsCount',
-                  stl.word_count AS 'wordCount',
-                  stl.member_name AS 'memberName',
-                  stl.sms_context AS 'smsContext',
-                  stl.send_res_code AS 'sendResCode',
-                  stl.send_local_date AS 'sendLocalDate',
-                  stl.remarks AS 'remarks',
-                 <@crud_fixed_select "stl" />
-            FROM SMS_TRANSPORT_LOG AS stl
-           WHERE stl.send_status = 1
-             AND stl.send_batchno = :sendBatchNo
-             AND stl.communication_channel = :communicationChannel
-            ]]></body>
-        </sql>
-    </model>
     <model id="SendMsg4FinalEntity">
         <sql id="load4Final">
             <body><![CDATA[
@@ -451,6 +418,26 @@
         </sql>
     </model>
     <model id="WechatMessageEntity">
+        <sql id="loadMsg4Send">
+            <body><![CDATA[
+      SELECT stl.id, stl.company_id, stl.store_id, stl.member_id, stl.weixin_id,
+             stl.device_id,stl.sms_context, stl.businsess_type, stl.send_batchno
+        FROM SMS_TRANSPORT_LOG stl
+   LEFT JOIN SMS_TRANSPORT_BATCH stb ON stl.send_batchno = stb.send_batchno
+       WHERE stl.delete_flag = 0
+         AND stl.send_channel = 2
+         AND stl.sms_enabled = 1
+         AND stl.send_status = 1
+         AND stb.is_billing = 1
+       LIMIT :batchSize
+            ]]></body>
+        </sql>
+        <sql id="updateSendStatus" dynamic="true">
+            <body><![CDATA[
+      UPDATE SMS_TRANSPORT_LOG SET send_status = :sendStatus
+       WHERE id IN (${msgIds?join(",")})
+            ]]></body>
+        </sql>
         <sql id="batchInsert">
             <body><![CDATA[
         INSERT INTO yycomm.Send_MSG_List
