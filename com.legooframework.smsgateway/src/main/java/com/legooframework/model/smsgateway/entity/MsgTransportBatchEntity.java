@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.covariant.entity.StoEntity;
+import com.legooframework.model.covariant.entity.UserAuthorEntity;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -37,8 +38,9 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
         }
     }
 
-    MsgTransportBatchEntity(StoEntity store, String batchNo, SendMode sendMode, Collection<SendMsg4InitEntity> message) {
-        super(0L);
+    MsgTransportBatchEntity(StoEntity store, String batchNo, SendMode sendMode, Collection<SendMsg4InitEntity> message,
+                            UserAuthorEntity user) {
+        super(0L, user.getCompanyId().longValue(), user.getId().longValue());
         this.companyId = store.getCompanyId();
         this.storeId = store.getId();
         this.batchNo = batchNo;

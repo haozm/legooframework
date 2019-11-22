@@ -80,7 +80,7 @@ public class SmsGatewayService extends BundleService {
         try {
             String batchNo = sendMsg4InitEntityAction.batchInsert(store, instances);
             SendMode sendMode = sendMsgTemplates.size() == 1 ? SendMode.ManualSingle : SendMode.ManualBatch;
-            msgTransportBatchEntityAction.insert(store, batchNo, sendMode, instances);
+            msgTransportBatchEntityAction.insert(store, batchNo, sendMode, instances, user);
             commitTx(tx);
             flag = true;
         } catch (Exception e) {

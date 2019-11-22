@@ -26,10 +26,12 @@
                  (SELECT GROUP_CONCAT( DISTINCT stl.businsess_type)
                     FROM SMS_TRANSPORT_LOG stl
                    WHERE stl.send_batchno = stb.send_batchno) AS 'businsessType',
-                 DATE_FORMAT(stb.createTime,GET_FORMAT(DATETIME,'iso')) AS 'createTimeName'
+                 DATE_FORMAT(stb.createTime,GET_FORMAT(DATETIME,'iso')) AS 'createTimeName',
+                 cm.name AS 'operateName'
             FROM SMS_TRANSPORT_BATCH stb
       INNER JOIN acp.acp_organization com ON com.id = stb.company_id AND com.orgType =1
       INNER JOIN acp.acp_store sto ON sto.id = stb.store_id
+       LEFT JOIN acp.crm_member cm ON cm.id = stb.creator
            WHERE stb.is_billing =1
              AND stb.company_id = :companyId
       <#if storeId??> AND stb.store_id = :storeId</#if>

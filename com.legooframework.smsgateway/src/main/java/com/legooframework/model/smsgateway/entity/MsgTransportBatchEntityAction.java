@@ -5,6 +5,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
+import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +38,9 @@ public class MsgTransportBatchEntityAction extends BaseEntityAction<MsgTransport
         return Optional.ofNullable(CollectionUtils.isEmpty(list) ? null : list);
     }
 
-    public void insert(StoEntity store, String batchNo, SendMode sendMode, Collection<SendMsg4InitEntity> messages) {
-        MsgTransportBatchEntity instance = new MsgTransportBatchEntity(store, batchNo, sendMode, messages);
+    public void insert(StoEntity store, String batchNo, SendMode sendMode, Collection<SendMsg4InitEntity> messages,
+                       UserAuthorEntity user) {
+        MsgTransportBatchEntity instance = new MsgTransportBatchEntity(store, batchNo, sendMode, messages, user);
         super.batchInsert("insert", Lists.newArrayList(instance));
         if (logger.isDebugEnabled())
             logger.debug(String.format("Save MsgTransportBatchEntity (%s) finish", instance.toString()));
