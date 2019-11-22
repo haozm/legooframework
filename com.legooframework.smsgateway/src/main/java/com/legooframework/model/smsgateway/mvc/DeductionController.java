@@ -50,9 +50,11 @@ public class DeductionController extends SmsBaseController {
             int storeId = MapUtils.getIntValue(requestBody, "storeId", -1);
             String deductionDate = MapUtils.getString(requestBody, "deductionDate", null);
             String msgctx = MapUtils.getString(requestBody, "msgctx", null);
+            int businessType = MapUtils.getIntValue(requestBody, "businessType", -1);
             Map<String, Object> params = Maps.newHashMap();
             params.put("companyId", companyId);
             if (-1 != storeId) params.put("storeId", storeId);
+            if (-1 != businessType) params.put("businessType", businessType);
             if (!Strings.isNullOrEmpty(deductionDate))
                 params.put("deductionDate", StringUtils.split(deductionDate, ','));
             if (!Strings.isNullOrEmpty(msgctx)) params.put("msgctx", String.format("%%%s%%", msgctx));
