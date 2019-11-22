@@ -60,5 +60,5 @@ public class SMSTransportLogEntityActionTest {
 //    @Autowired
 //    CrmStoreEntityAction storeEntityAction;
     @Autowired
-    private SendMsg4InitEntityAction action;
+    private SendMsgStateEntityAction action;
 }

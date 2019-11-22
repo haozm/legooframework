@@ -31,7 +31,6 @@
             <util:map key-type="java.lang.String" value-type="java.lang.String">
                 <entry key="smsFixedCache" value="initialCapacity=64,maximumSize=1024,expireAfterAccess=5h"/>
                 <entry key="smsGateWayCache" value="initialCapacity=64,maximumSize=1024,expireAfterAccess=5m"/>
-                <entry key="smsTempCache" value="initialCapacity=4,maximumSize=128,expireAfterAccess=2m"/>
             </util:map>
         </property>
     </bean>
@@ -67,7 +66,7 @@
     <bean id="wechatMessageEntityAction"
           class="com.legooframework.model.smsgateway.entity.WechatMessageEntityAction"
           parent="smsClientEntityAction"/>
-    <bean id="sendMsg4InitEntityAction" class="com.legooframework.model.smsgateway.entity.SendMsg4InitEntityAction"
+    <bean id="sendMsgStateEntityAction" class="com.legooframework.model.smsgateway.entity.SendMsgStateEntityAction"
           parent="smsClientEntityAction"/>
     <bean id="sendMsg4ReimburseEntityAction"
           class="com.legooframework.model.smsgateway.entity.SendMsg4ReimburseEntityAction"
@@ -90,7 +89,7 @@
     </bean>
     <bean id="abstractSmsBundleService" class="com.legooframework.model.smsgateway.service.BundleService"
           abstract="true">
-        <property name="sendMsg4InitEntityAction" ref="sendMsg4InitEntityAction"/>
+        <property name="sendMsgStateEntityAction" ref="sendMsgStateEntityAction"/>
         <property name="rechargeBalanceEntityAction" ref="rechargeBalanceEntityAction"/>
         <property name="deductionDetailEntityAction" ref="deductionDetailEntityAction"/>
         <property name="msgTransportBatchEntityAction" ref="msgTransportBatchEntityAction"/>

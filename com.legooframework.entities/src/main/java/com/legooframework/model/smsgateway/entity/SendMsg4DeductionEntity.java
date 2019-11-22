@@ -32,15 +32,15 @@ public class SendMsg4DeductionEntity extends BaseEntity<String> {
     }
 
     void deductionOK() {
-        this.sendStatus = SendStatus.SMS4Storage;
+        this.sendStatus = SendStatus.Msg4Storage;
     }
 
     boolean isDeductionOK() {
-        return SendStatus.SMS4Storage == this.sendStatus;
+        return SendStatus.Msg4Storage == this.sendStatus;
     }
 
     void deductionFail() {
-        this.sendStatus = SendStatus.SMS4SendError;
+        this.sendStatus = SendStatus.Msg4SendError;
         this.remarks = "计费失败...";
     }
 

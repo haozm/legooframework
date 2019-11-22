@@ -45,7 +45,7 @@ public class SMSBatchSaveLogEntityActionTest {
     }
 
     @Autowired
-    SendMsg4InitEntityAction action;
+    SendMsgStateEntityAction action;
     @Autowired
     SMSSendRuleEntityAction smsSendRuleEntityAction;
     @Resource(name = "smsKvDictEntityAction")

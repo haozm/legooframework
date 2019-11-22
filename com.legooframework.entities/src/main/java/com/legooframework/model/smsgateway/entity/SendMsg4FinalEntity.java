@@ -11,11 +11,9 @@ import org.joda.time.LocalDateTime;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Optional;
 
 public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSetter {
     //18588828127|233b12b8-ad15-4637-8a00-8f97a4ab90ee|9,0,1,2|2019-11-12 21:41:49|UNDELIV
-    private SendStatus sendStatus;
     private FinalState finalState;
     private LocalDateTime finalStateDate;
     private String finalStateDesc;
@@ -23,7 +21,6 @@ public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSett
     SendMsg4FinalEntity(String id, ResultSet res) {
         super(id);
         try {
-            this.sendStatus = SendStatus.paras(ResultSetUtil.getObject(res, "sendStatus", Integer.class));
             this.finalState = FinalState.paras(ResultSetUtil.getObject(res, "finalState", Integer.class));
             this.finalStateDate = res.getObject("finalStateDate") == null ? null :
                     LocalDateTime.fromDateFields(res.getTimestamp("finalStateDate"));
@@ -35,16 +32,14 @@ public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSett
 
     @Override
     public void setValues(PreparedStatement ps) throws SQLException {
-        ps.setObject(1, this.sendStatus.getStatus());
-        ps.setObject(2, this.finalState.getState());
-        ps.setObject(3, this.finalStateDate.toDate());
-        ps.setObject(4, this.finalStateDesc);
-        ps.setObject(5, this.getId());
+        ps.setObject(1, this.finalState.getState());
+        ps.setObject(2, this.finalStateDate.toDate());
+        ps.setObject(3, this.finalStateDesc);
+        ps.setObject(4, this.getId());
     }
 
-    private SendMsg4FinalEntity(String id, int sendStatus, int finalState, String finalStateDate, String finalStateDesc) {
+    private SendMsg4FinalEntity(String id, int finalState, String finalStateDate, String finalStateDesc) {
         super(id);
-        this.sendStatus = SendStatus.paras(sendStatus);
         this.finalState = FinalState.paras(finalState);
         this.finalStateDate = DateTimeUtils.parseDef(finalStateDate);
         this.finalStateDesc = finalStateDesc;
@@ -54,10 +49,10 @@ public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSett
         SendMsg4FinalEntity res;
         switch (recCode) {
             case 1:
-                res = new SendMsg4FinalEntity(id, SendStatus.SendedGateWay.getStatus(), FinalState.DELIVRD.getState(), recDate, recDesc);
+                res = new SendMsg4FinalEntity(id, FinalState.DELIVRD.getState(), recDate, recDesc);
                 break;
             case 2:
-                res = new SendMsg4FinalEntity(id, SendStatus.SendedGateWay.getStatus(), FinalState.UNDELIV.getState(), recDate, recDesc);
+                res = new SendMsg4FinalEntity(id, FinalState.UNDELIV.getState(), recDate, recDesc);
                 break;
             default:
                 throw new IllegalArgumentException(String.format("非法参数 recCode=%s", recCode));
@@ -70,8 +65,7 @@ public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSett
         if (this == o) return true;
         if (!(o instanceof SendMsg4FinalEntity)) return false;
         SendMsg4FinalEntity that = (SendMsg4FinalEntity) o;
-        return sendStatus == that.sendStatus &&
-                finalState == that.finalState &&
+        return finalState == that.finalState &&
                 Objects.equal(this.getId(), that.getId()) &&
                 Objects.equal(finalStateDate, that.finalStateDate) &&
                 Objects.equal(finalStateDesc, that.finalStateDesc);
@@ -79,14 +73,13 @@ public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSett
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.getId(), sendStatus, finalState, finalStateDate, finalStateDesc);
+        return Objects.hashCode(this.getId(), finalState, finalStateDate, finalStateDesc);
     }
 
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
                 .add("id", getId())
-                .add("sendStatus", sendStatus)
                 .add("finalState", finalState)
                 .add("finalStateDate", finalStateDate)
                 .add("finalStateDesc", finalStateDesc)

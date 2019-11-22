@@ -38,7 +38,7 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
         }
     }
 
-    MsgTransportBatchEntity(StoEntity store, String batchNo, SendMode sendMode, Collection<SendMsg4InitEntity> message,
+    MsgTransportBatchEntity(StoEntity store, String batchNo, SendMode sendMode, Collection<SendMsgStateEntity> message,
                             UserAuthorEntity user) {
         super(0L, user.getCompanyId().longValue(), user.getId().longValue());
         this.companyId = store.getCompanyId();
@@ -46,10 +46,10 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
         this.batchNo = batchNo;
         this.billing = false;
         this.sendMode = sendMode == null ? SendMode.ManualSingle : sendMode;
-        this.smsWriteCount = (int) message.stream().filter(SendMsg4InitEntity::isSMSMsg).count();
-        this.wxWriteCount = (int) message.stream().filter(SendMsg4InitEntity::isWxMsg).count();
-        this.smsWriteOkCount = (int) message.stream().filter(SendMsg4InitEntity::isSMSMsg).filter(SendMsg4InitEntity::isEnbaled).count();
-        this.wxWriteOkCount = (int) message.stream().filter(SendMsg4InitEntity::isWxMsg).filter(SendMsg4InitEntity::isEnbaled).count();
+        this.smsWriteCount = (int) message.stream().filter(SendMsgStateEntity::isSMSMsg).count();
+        this.wxWriteCount = (int) message.stream().filter(SendMsgStateEntity::isWxMsg).count();
+        this.smsWriteOkCount = (int) message.stream().filter(SendMsgStateEntity::isSMSMsg).filter(SendMsgStateEntity::isEnbaled).count();
+        this.wxWriteOkCount = (int) message.stream().filter(SendMsgStateEntity::isWxMsg).filter(SendMsgStateEntity::isEnbaled).count();
     }
 
     public Integer getCompanyId() {

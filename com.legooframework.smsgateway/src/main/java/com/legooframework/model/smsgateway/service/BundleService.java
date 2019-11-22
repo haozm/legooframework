@@ -74,7 +74,7 @@ public abstract class BundleService extends BaseService {
         return getBean("smsMessagingTemplate", MessagingTemplate.class);
     }
 
-    SendMsg4InitEntityAction sendMsg4InitEntityAction;
+    SendMsgStateEntityAction sendMsgStateEntityAction;
     RechargeBalanceEntityAction rechargeBalanceEntityAction;
     DeductionDetailEntityAction deductionDetailEntityAction;
     MsgTransportBatchEntityAction msgTransportBatchEntityAction;
@@ -93,8 +93,8 @@ public abstract class BundleService extends BaseService {
         this.deductionDetailEntityAction = deductionDetailEntityAction;
     }
 
-    public void setSendMsg4InitEntityAction(SendMsg4InitEntityAction sendMsg4InitEntityAction) {
-        this.sendMsg4InitEntityAction = sendMsg4InitEntityAction;
+    public void setSendMsgStateEntityAction(SendMsgStateEntityAction sendMsgStateEntityAction) {
+        this.sendMsgStateEntityAction = sendMsgStateEntityAction;
     }
 
     public void setRechargeBalanceEntityAction(RechargeBalanceEntityAction rechargeBalanceEntityAction) {

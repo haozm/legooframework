@@ -23,7 +23,7 @@ import java.util.UUID;
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/covariant/spring-model-cfg.xml",
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsgateway/spring-model-cfg.xml"}
 )
-public class SendMsg4InitEntityActionTest {
+public class SendMsgStateEntityActionTest {
 
     @Test
     public void batchInsert() {
@@ -42,7 +42,7 @@ public class SendMsg4InitEntityActionTest {
 
     @Test
     public void loadNeedSyncStateSmsIds() {
-        Optional<List<String>> lisr = sendMsg4InitEntityAction.loadNeedSyncStateSmsIds();
+        Optional<List<String>> lisr = sendMsgStateEntityAction.loadNeedSyncStateSmsIds();
         lisr.ifPresent(asd -> System.out.println(asd));
     }
 
@@ -50,5 +50,5 @@ public class SendMsg4InitEntityActionTest {
     @Autowired
     private StoEntityAction stoEntityAction;
     @Autowired
-    private SendMsg4InitEntityAction sendMsg4InitEntityAction;
+    private SendMsgStateEntityAction sendMsgStateEntityAction;
 }

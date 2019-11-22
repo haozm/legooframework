@@ -12,7 +12,7 @@ import com.legooframework.model.covariant.service.MemberAgg;
 import com.legooframework.model.smsgateway.entity.MsgEntity;
 import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
 import com.legooframework.model.smsgateway.entity.SendMode;
-import com.legooframework.model.smsgateway.entity.SendMsg4InitEntity;
+import com.legooframework.model.smsgateway.entity.SendMsgStateEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.text.StringSubstitutor;
@@ -51,11 +51,11 @@ public class SmsGatewayService extends BundleService {
         } else {
             partition = Lists.partition(msgBuilder, 1000);
         }
-        List<SendMsg4InitEntity> instances = Lists.newArrayList();
+        List<SendMsgStateEntity> instances = Lists.newArrayList();
         List<Throwable> errHolder = Lists.newArrayList();
         CompletableFuture.allOf(partition.stream()
                 .map(list -> CompletableFuture.supplyAsync(() -> initMessage(list, msgTemplate))
-                        .thenAccept(msgs -> msgs.forEach(msg -> instances.add(SendMsg4InitEntity.createInstance(store, msg)))))
+                        .thenAccept(msgs -> msgs.forEach(msg -> instances.add(SendMsgStateEntity.createInstance(store, msg)))))
                 .toArray(CompletableFuture[]::new))
                 .whenComplete((v, th) -> {
                     if (null != th) {
@@ -69,8 +69,8 @@ public class SmsGatewayService extends BundleService {
         if (CollectionUtils.isNotEmpty(errHolder))
             throw new RuntimeException(errHolder.get(0));
 
-        List<SendMsg4InitEntity> sms_list = instances.stream().filter(SendMsg4InitEntity::isEnbaled)
-                .filter(SendMsg4InitEntity::isSMSMsg).collect(Collectors.toList());
+        List<SendMsgStateEntity> sms_list = instances.stream().filter(SendMsgStateEntity::isEnbaled)
+                .filter(SendMsgStateEntity::isSMSMsg).collect(Collectors.toList());
 
         if (CollectionUtils.isNotEmpty(sms_list)) {
             // 追加前缀与后坠
@@ -79,7 +79,7 @@ public class SmsGatewayService extends BundleService {
         boolean flag = false;
         TransactionStatus tx = startTx(null);
         try {
-            String batchNo = sendMsg4InitEntityAction.batchInsert(store, instances);
+            String batchNo = sendMsgStateEntityAction.batch4MsgInit(store, instances);
             SendMode sendMode = msgBuilder.size() == 1 ? SendMode.ManualSingle : SendMode.ManualBatch;
             msgTransportBatchEntityAction.insert(store, batchNo, sendMode, instances, user);
             commitTx(tx);

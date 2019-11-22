@@ -93,7 +93,7 @@ public class SmsAnyListenerService extends BundleService {
         MsgTransportBatchEntity transportBatch = msgTransportBatchEntityAction.loadByBatchNo(batchNo);
         if (transportBatch.isBilling()) return;
         try {
-            int size = sendMsg4InitEntityAction.updateWxMsg4SendByBatchNo(transportBatch);
+            int size = sendMsgStateEntityAction.batchUpdate4WxMsgByBatchNo(transportBatch);
             if (size > 0) {
                 Message<MsgTransportBatchEntity> message = MessageBuilder.withPayload(transportBatch).build();
                 getMessagingTemplate().send("channel_wx_sending", message);
@@ -102,7 +102,7 @@ public class SmsAnyListenerService extends BundleService {
             logger.error(String.format("updateWxMsg4SendByBatchNo(%s) has error...,rollback 事务", batchNo), e);
         }
         StoEntity store = getStore(transportBatch.getStoreId());
-        Optional<List<SendMsg4DeductionEntity>> deduction_sms_list = sendMsg4InitEntityAction
+        Optional<List<SendMsg4DeductionEntity>> deduction_sms_list = sendMsgStateEntityAction
                 .loadSmsMsg4SendByBatchNo(transportBatch);
         if (!deduction_sms_list.isPresent()) {
             msgTransportBatchEntityAction.finishBilling(transportBatch);
@@ -113,7 +113,7 @@ public class SmsAnyListenerService extends BundleService {
                 balanceAgg.deduction(transportBatch, deduction_sms_list.get());
                 if (logger.isDebugEnabled())
                     logger.debug(String.format("deduction() is %s", balanceAgg));
-                sendMsg4InitEntityAction.batchUpdateMsg4Deductions(balanceAgg.getDeductionSmses());
+                sendMsgStateEntityAction.batchUpdate4Deduction(balanceAgg.getDeductionSmses());
                 balanceAgg.getChargeDetails().ifPresent(x -> deductionDetailEntityAction.batchInsert(x));
                 balanceAgg.getDeductionBalances().ifPresent(x -> rechargeBalanceEntityAction.batchUpdateBalance(x));
                 commitTx(ts);
@@ -122,7 +122,7 @@ public class SmsAnyListenerService extends BundleService {
                 rollbackTx(ts);
                 String msg = e.getMessage();
                 if (msg.length() > 512) msg = msg.substring(0, 512);
-                sendMsg4InitEntityAction.batchFailMsg4Deductions(deduction_sms_list.get(), msg);
+                sendMsgStateEntityAction.batchUpdate4ErrorDeduction(deduction_sms_list.get(), msg);
             } finally {
                 msgTransportBatchEntityAction.finishBilling(transportBatch);
             }
@@ -190,9 +190,8 @@ public class SmsAnyListenerService extends BundleService {
         String mixed = MapUtils.getString(payload, "mixed");
         String context = MapUtils.getString(payload, "ctx");
         SendMsg4SendEntity result = getBean(SMSProxyEntityAction.class).sendSingleSms(smsId, mixed, context);
-        getBean(SendMsg4InitEntityAction.class).updateSendState(result);
+        getBean(SendMsgStateEntityAction.class).batchUpdate4SendState(Lists.newArrayList(result));
     }
-
 
     private void handleReplyState(List<SmsStateDto> smsStateDtos) {
         if (CollectionUtils.isEmpty(smsStateDtos)) return;
@@ -204,13 +203,13 @@ public class SmsAnyListenerService extends BundleService {
             List<SendMsg4SendEntity> send_list = error_dto_list.stream()
                     .map(x -> SendMsg4SendEntity.createSMS4SendError(x.getSmsId(), x.getStateDesc()))
                     .collect(Collectors.toList());
-            sendMsg4InitEntityAction.batchUpdateSendState(send_list);
+            sendMsgStateEntityAction.batchUpdate4SendState(send_list);
         }
         if (CollectionUtils.isNotEmpty(final_dto_list)) {
             List<SendMsg4FinalEntity> final_list = final_dto_list.stream()
                     .map(x -> SendMsg4FinalEntity.create(x.getSmsId(), x.getStateCode(), x.getStateDate(),
                             x.getStateDesc())).collect(Collectors.toList());
-            sendMsg4InitEntityAction.updateFinalState(final_list);
+            sendMsgStateEntityAction.batchUpdate4FinalState(final_list);
         }
     }
 
@@ -219,7 +218,7 @@ public class SmsAnyListenerService extends BundleService {
      */
     public void syncStateJob() {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
-        Optional<List<String>> smsIds = getBean(SendMsg4InitEntityAction.class).loadNeedSyncStateSmsIds();
+        Optional<List<String>> smsIds = getBean(SendMsgStateEntityAction.class).loadNeedSyncStateSmsIds();
         if (!smsIds.isPresent()) return;
         try {
             if (smsIds.get().size() <= 128) {
