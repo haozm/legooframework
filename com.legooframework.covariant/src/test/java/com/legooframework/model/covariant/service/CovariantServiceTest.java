@@ -35,7 +35,7 @@ public class CovariantServiceTest {
     @Test
     public void preSendSmsByStore() {
         covariantService.preSendSmsByStore(1120, 389255, Lists.newArrayList(4249, 4250, 4251, 4252),
-                BusinessType.BIRTHDAYCARE, "{会员姓名}你好");
+                BusinessType.BIRTHDAYTOUCH, "{会员姓名}你好");
     }
 
     @Test

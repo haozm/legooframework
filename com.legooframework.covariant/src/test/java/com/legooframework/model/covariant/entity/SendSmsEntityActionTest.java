@@ -44,11 +44,11 @@ public class SendSmsEntityActionTest {
             for (MemberEntity mm : mmes.get()) {
                 if (i % 4 == 0) {
                     SendSmsEntity sms = SendSmsEntity.createSmsByMember("你妈妈喊你回家吃饭啦", mm,
-                            "112233454", BusinessType.BIRTHDAYCARE, "手机欠费");
+                            "112233454", BusinessType.BIRTHDAYTOUCH, "手机欠费");
                     smses.add(sms);
                 } else {
                     SendSmsEntity sms = SendSmsEntity.createSmsByMember("你妈妈喊你回家吃饭啦", mm, "112233454",
-                            BusinessType.BIRTHDAYCARE, null);
+                            BusinessType.BIRTHDAYTOUCH, null);
                     smses.add(sms);
                 }
 

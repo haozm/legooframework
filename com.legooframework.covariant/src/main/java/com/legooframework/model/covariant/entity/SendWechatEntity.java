@@ -59,7 +59,7 @@ public class SendWechatEntity extends BaseEntity<String> implements BatchSetter 
         this.storeId = storeId;
         this.msgTempId = -1L;
         this.companyId = companyId;
-        this.businessType = businessType == null ? BusinessType.TYPE_CUSTOM : businessType;
+        this.businessType = businessType == null ? BusinessType.CUSTOM_CARE : businessType;
         if (ArrayUtils.isNotEmpty(imageInfo)) {
             this.msgNum += imageInfo.length;
             this.imageInfo = imageInfo;
@@ -82,7 +82,7 @@ public class SendWechatEntity extends BaseEntity<String> implements BatchSetter 
         this.storeId = store.getId();
         this.msgTempId = -1L;
         this.companyId = store.getCompanyId();
-        this.businessType = businessType == null ? BusinessType.TYPE_CUSTOM : businessType;
+        this.businessType = businessType == null ? BusinessType.CUSTOM_CARE : businessType;
         if (Strings.isNullOrEmpty(msgTxt) && ArrayUtils.isEmpty(imageInfo))
             throw new IllegalArgumentException("发送消息不可以为空.");
         if (ArrayUtils.isNotEmpty(imageInfo)) {
@@ -132,7 +132,7 @@ public class SendWechatEntity extends BaseEntity<String> implements BatchSetter 
         Map<String, Object> param = Maps.newHashMap();
         param.put("id", getId());
         param.put("msgType", msgType);
-        param.put("businessType", businessType == null ? BusinessType.TYPE_CUSTOM.getValue() : businessType.getValue());
+        param.put("businessType", businessType == null ? BusinessType.CUSTOM_CARE.getValue() : businessType.getValue());
         param.put("msgNum", msgNum);
         if (ArrayUtils.isEmpty(imageInfo)) {
             param.put("imageUrl", null);

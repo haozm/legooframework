@@ -30,7 +30,7 @@ public class SendWechatEntityActionTest {
     public void sendMsg() {
         StoEntity store = stoEntityAction.loadById(1120);
         sendWechatEntityAction.sendMsg("n你妈妈含义回家吃饭", null, Sets.newHashSet("xiaojie_hao"),
-                store, BusinessType.BIRTHDAYCARE);
+                store, BusinessType.BIRTHDAYTOUCH);
     }
 
     @Autowired
