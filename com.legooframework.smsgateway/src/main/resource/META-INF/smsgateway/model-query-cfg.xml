@@ -21,19 +21,22 @@
                 <p name="storeId" type="INT"/>
             </params>
             <body><![CDATA[
-          SELECT com.name AS 'companyName',sto.name 'storename',
-                 stb.*,
-                 (SELECT SUM(stl.sms_count)
-                    FROM SMS_TRANSPORT_LOG stl
-                   WHERE stl.send_batchno = stb.send_batchno AND stl.send_status =3 AND sms_channel=1 ) AS 'smsNums',
-                 (SELECT GROUP_CONCAT( DISTINCT stl.businsess_type)
-                    FROM SMS_TRANSPORT_LOG stl
-                   WHERE stl.send_batchno = stb.send_batchno) AS 'businsessType',
+          SELECT stl.send_batchno AS 'batchno',
+                 com.name AS 'companyName',sto.name 'storename',
+                 MAX(stl.businsess_type) AS 'businsessType',
+                 SUM( CASE WHEN (stl.send_channel= 2 ) THEN 1 ELSE 0 END ) AS 'wxMsgCount',
+                 SUM( CASE WHEN (stl.send_channel= 2 AND stl.send_status =3 ) THEN 1 ELSE 0 END ) AS 'wxMsgOKCount',
+                 SUM( CASE WHEN (stl.send_channel= 2 AND stl.send_status<>3 ) THEN 1 ELSE 0 END ) AS 'wxMsgFailCount',
+                 SUM( CASE WHEN (stl.send_channel= 1 ) THEN stl.sms_count ELSE 0 END ) AS 'smsAllCount',
+                 SUM( CASE WHEN (stl.send_channel= 1 AND stl.send_status=3 AND stl.final_state=1 )  THEN stl.sms_count ELSE 0 END ) AS 'smsOkCount',
+                 SUM( CASE WHEN (stl.send_channel= 1 AND stl.send_status=3 AND stl.final_state=2 )  THEN stl.sms_count ELSE 0 END ) AS 'smsFailCount',
+                 SUM( CASE WHEN (stl.send_channel= 1 AND stl.send_status=3 AND stl.final_state=0 )  THEN stl.sms_count ELSE 0 END ) AS 'smsWaitCount',
                  DATE_FORMAT(stb.createTime,GET_FORMAT(DATETIME,'iso')) AS 'createTimeName',
                  cm.name AS 'operateName'
             FROM SMS_TRANSPORT_BATCH stb
       INNER JOIN acp.acp_organization com ON com.id = stb.company_id AND com.orgType =1
       INNER JOIN acp.acp_store sto ON sto.id = stb.store_id
+     INNER JOIN acp.SMS_TRANSPORT_LOG stl ON stl.send_batchno = stb.send_batchno
        LEFT JOIN acp.crm_member cm ON cm.id = stb.creator
            WHERE stb.is_billing =1
              AND stb.company_id = :companyId
@@ -43,6 +46,7 @@
       <#if msgctx??> AND stb.send_batchno IN ( SELECT DISTINCT stl.send_batchno
                                                  FROM acp.SMS_TRANSPORT_LOG stl
                                                  WHERE stl.sms_context LIKE :msgctx )</#if>
+       GROUP BY stb.send_batchno
        ORDER BY stb.createTime DESC
           LIMIT :offset,:rows
             ]]></body>
