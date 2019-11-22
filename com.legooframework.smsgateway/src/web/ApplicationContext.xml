@@ -68,12 +68,11 @@ INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
         <int:poller max-messages-per-poll="32" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="3000"/>
     </int:outbound-channel-adapter>
 
-    <!--
     <task:scheduler id="smsgateway-scheduler" pool-size="4"/>
     <task:scheduled-tasks scheduler="smsgateway-scheduler">
-        <task:scheduled ref="smsIntegrationService" method="listen4SyncSMS" initial-delay="120000"
+        <task:scheduled ref="smsAnyListenerService" method="syncStateJob" initial-delay="120000"
                         fixed-delay="300000"/>
-    </task:scheduled-tasks> -->
+    </task:scheduled-tasks>
     <!-- =========================== channel ================================= -->
     <!--
     <int:channel id="channel_sms_sending">

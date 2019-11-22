@@ -8,7 +8,6 @@ import com.google.gson.JsonElement;
 import com.legooframework.model.core.base.entity.EmptyEntity;
 import com.legooframework.model.core.base.entity.HttpBaseEntityAction;
 import com.legooframework.model.core.utils.WebUtils;
-import com.legooframework.model.smsgateway.entity.SendMsg4FinalEntity;
 import com.legooframework.model.smsgateway.entity.SendMsg4SendEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +33,7 @@ public class SMSProxyEntityAction extends HttpBaseEntityAction<EmptyEntity> {
         this.syncHttpApi = String.format("http://%s/smsresult/api/smses/state/fetching.json", this.domian);
     }
 
-    public Optional<List<SendMsg4FinalEntity>> syncSmsState(List<String> smsIds) {
+    public Optional<List<SmsStateDto>> syncSmsState(List<String> smsIds) {
         if (CollectionUtils.isEmpty(smsIds)) return Optional.empty();
         Map<String, Object> params = Maps.newHashMap();
         params.put("payload", Joiner.on(',').join(smsIds));
@@ -45,11 +44,11 @@ public class SMSProxyEntityAction extends HttpBaseEntityAction<EmptyEntity> {
             if (!jsonElement.isPresent()) return Optional.empty();
             String rsp_payload = jsonElement.get().getAsString();
             String[] args = StringUtils.splitByWholeSeparator(rsp_payload, "|||");
-            List<SendMsg4FinalEntity> res_list = Lists.newArrayListWithCapacity(args.length);
+            List<SmsStateDto> res_list = Lists.newArrayListWithCapacity(args.length);
             for (String str : args) {
-                // 1858882831238231|28372e35-ed81-4867-97fd-c94855b693b8|9，0，1，2|2019-05-22 18:33:00|error:NOTEXITS
+                // 28372e35-ed81-4867-97fd-c94855b693b8|9，0，1，2|2019-05-22 18:33:00|error:NOTEXITS
                 String[] arg = StringUtils.split(str, '|');
-                SendMsg4FinalEntity.create(arg[1], Integer.parseInt(arg[2]), arg[3], arg[4]).ifPresent(res_list::add);
+                res_list.add(new SmsStateDto(arg[1], Integer.parseInt(arg[2]), arg[3], arg[4]));
             }
             return Optional.ofNullable(CollectionUtils.isEmpty(res_list) ? null : res_list);
         } catch (Exception e) {

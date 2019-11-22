@@ -11,6 +11,7 @@ import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.smsgateway.entity.*;
 import com.legooframework.model.smsgateway.mvc.RechargeReqDto;
 import com.legooframework.model.smsprovider.entity.SMSProxyEntityAction;
+import com.legooframework.model.smsprovider.entity.SmsStateDto;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -188,17 +189,38 @@ public class SmsAnyListenerService extends BundleService {
         getBean(SendMsg4InitEntityAction.class).updateSendState(result);
     }
 
+
+    private void handleReplyState(List<SmsStateDto> smsStateDtos) {
+        if (CollectionUtils.isEmpty(smsStateDtos)) return;
+        List<SmsStateDto> error_dto_list = smsStateDtos.stream().filter(SmsStateDto::hasError)
+                .collect(Collectors.toList());
+        List<SmsStateDto> final_dto_list = smsStateDtos.stream().filter(SmsStateDto::hasFinalState)
+                .collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(error_dto_list)) {
+            List<SendMsg4SendEntity> send_list = error_dto_list.stream()
+                    .map(x -> SendMsg4SendEntity.createSMS4SendError(x.getSmsId(), x.getStateDesc()))
+                    .collect(Collectors.toList());
+            sendMsg4InitEntityAction.batchUpdateSendState(send_list);
+        }
+        if (CollectionUtils.isNotEmpty(final_dto_list)) {
+            List<SendMsg4FinalEntity> final_list = final_dto_list.stream()
+                    .map(x -> SendMsg4FinalEntity.create(x.getSmsId(), x.getStateCode(), x.getStateDate(),
+                            x.getStateDesc())).collect(Collectors.toList());
+            sendMsg4InitEntityAction.updateFinalState(final_list);
+        }
+    }
+
     /**
      * 状态回查监听
      */
-    public void listen4SyncSMS() {
+    public void syncStateJob() {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         Optional<List<String>> smsIds = getBean(SendMsg4InitEntityAction.class).loadNeedSyncStateSmsIds();
         if (!smsIds.isPresent()) return;
         try {
             if (smsIds.get().size() <= 128) {
-                Optional<List<SendMsg4FinalEntity>> res_states = getBean(SMSProxyEntityAction.class).syncSmsState(smsIds.get());
-                res_states.ifPresent($it -> getBean(SendMsg4InitEntityAction.class).updateFinalState($it));
+                Optional<List<SmsStateDto>> res_states = getBean(SMSProxyEntityAction.class).syncSmsState(smsIds.get());
+                res_states.ifPresent(this::handleReplyState);
             } else {
                 List<List<String>> list_smsIds = Lists.partition(smsIds.get(), 128);
                 List<CompletableFuture<Void>> cfs = Lists.newArrayListWithCapacity(list_smsIds.size());
@@ -207,7 +229,7 @@ public class SmsAnyListenerService extends BundleService {
                             .thenAccept(res_states -> {
                                 LoginContextHolder.setIfNotExitsAnonymousCtx();
                                 try {
-                                    res_states.ifPresent($it -> getBean(SendMsg4InitEntityAction.class).updateFinalState($it));
+                                    res_states.ifPresent(this::handleReplyState);
                                 } finally {
                                     LoginContextHolder.clear();
                                 }

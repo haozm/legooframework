@@ -50,12 +50,9 @@ public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSett
         this.finalStateDesc = finalStateDesc;
     }
 
-    public static Optional<SendMsg4FinalEntity> create(String id, int recCode, String recDate, String recDesc) {
-        SendMsg4FinalEntity res = null;
+    public static SendMsg4FinalEntity create(String id, int recCode, String recDate, String recDesc) {
+        SendMsg4FinalEntity res;
         switch (recCode) {
-            case 9:
-                res = new SendMsg4FinalEntity(id, SendStatus.SMS4SendError.getStatus(), FinalState.WAITING.getState(), null, null);
-                break;
             case 1:
                 res = new SendMsg4FinalEntity(id, SendStatus.SendedGateWay.getStatus(), FinalState.DELIVRD.getState(), recDate, recDesc);
                 break;
@@ -63,9 +60,9 @@ public class SendMsg4FinalEntity extends BaseEntity<String> implements BatchSett
                 res = new SendMsg4FinalEntity(id, SendStatus.SendedGateWay.getStatus(), FinalState.UNDELIV.getState(), recDate, recDesc);
                 break;
             default:
-                break;
+                throw new IllegalArgumentException(String.format("非法参数 recCode=%s", recCode));
         }
-        return Optional.ofNullable(res);
+        return res;
     }
 
     @Override

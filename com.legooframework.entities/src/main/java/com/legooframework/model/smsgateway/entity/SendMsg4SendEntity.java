@@ -2,6 +2,7 @@ package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.gson.internal.$Gson$Preconditions;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import org.joda.time.DateTime;
 
@@ -12,6 +13,15 @@ public class SendMsg4SendEntity extends BaseEntity<String> {
     private String sendResCode, remarks;
     private Date sendLocalDate;
     private SendStatus sendStatus;
+
+    public static SendMsg4SendEntity createSMS4SendError(String smsId, String remarks) {
+        SendMsg4SendEntity entity = new SendMsg4SendEntity(smsId);
+        entity.sendStatus = SendStatus.SMS4SendError;
+        entity.sendResCode = "9999";
+        entity.remarks = Strings.isNullOrEmpty(remarks) ? "发送信息失败" : remarks;
+        return entity;
+    }
+
 
     public SendMsg4SendEntity(String id) {
         super(id);

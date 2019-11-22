@@ -1,6 +1,7 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
@@ -8,8 +9,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.ParameterizedPreparedStatementSetter;
 import org.springframework.jdbc.core.RowMapper;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -49,14 +52,19 @@ public class SendMsg4InitEntityAction extends BaseEntityAction<SendMsg4InitEntit
         return batchNo;
     }
 
-    public void updateSendState(SendMsg4SendEntity sendEntity) {
+    public void updateSendState(SendMsg4SendEntity entity) {
+        List<SendMsg4SendEntity> entities = Lists.newArrayList(entity);
+        this.batchUpdateSendState(entities);
+    }
+
+    public void batchUpdateSendState(Collection<SendMsg4SendEntity> entities) {
         String update_sql = "UPDATE SMS_TRANSPORT_LOG SET send_status= ?, send_res_code= ?, send_local_date= ?, remarks= ? WHERE id = ?";
-        Objects.requireNonNull(getJdbcTemplate()).update(update_sql, ps -> {
-            ps.setObject(1, sendEntity.getSendStatus().getStatus());
-            ps.setObject(2, sendEntity.getSendResCode());
-            ps.setObject(3, sendEntity.getSendLocalDate());
-            ps.setObject(4, sendEntity.getRemarks());
-            ps.setObject(5, sendEntity.getId());
+        Objects.requireNonNull(getJdbcTemplate()).batchUpdate(update_sql, entities, 256, (ps, t) -> {
+            ps.setObject(1, t.getSendStatus().getStatus());
+            ps.setObject(2, t.getSendResCode());
+            ps.setObject(3, t.getSendLocalDate());
+            ps.setObject(4, t.getRemarks());
+            ps.setObject(5, t.getId());
         });
     }
 
