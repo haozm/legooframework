@@ -82,25 +82,34 @@
                    WHEN 2 THEN '营销通道'
                    ELSE '异常数据' END ) AS 'smsChannelName',
                  stl.businsess_type AS 'businsessType',
-                 stl.sms_batchno AS 'smsBatchNo',
+                 stl.send_batchno AS 'sendBatchno',
                  stl.send_status AS 'sendStatus',
-                  ( CASE stl.send_status
-                    WHEN 0 THEN '入库提交中'
-                    WHEN 1 THEN '等待发送'
-                    WHEN 2 THEN '短信网关发送中'
-                    WHEN 3 THEN '短信网关提交完成'
-                    WHEN 4 THEN '短信发送异常'
-                    WHEN 5 THEN '微信发送完成'
-                    WHEN 9 THEN '取消发送'
+                 ( CASE stl.send_status
+                    WHEN 0 THEN '消息入库提交中'
+                    WHEN 1 THEN '消息等待发送'
+                    WHEN 2 THEN '消息网关发送中'
+                    WHEN 3 THEN '消息网关完成'
+                    WHEN 4 THEN '消息发送异常'
+                    WHEN 7 THEN '消息创建异常'
+                    WHEN 9 THEN '消息取消发送'
                     ELSE '异常数据' END ) AS 'sendStatusName',
                  stl.phone_no AS 'phoneNo',
                  stl.sms_count AS 'smsCount',
                  stl.word_count AS 'wordCount',
                  stl.sms_context AS 'smsContext',
+                 ( CASE stl.final_state
+                    WHEN 0 THEN '短信等待中'
+                    WHEN 1 THEN '短信发送成功'
+                    WHEN 2 THEN '短信发送失败'
+                    ELSE '异常数据' END ) AS 'finalStatusName',
                  stl.remarks AS 'remarks',
+                 IF(stl.sms_channel = 1,'短信','微信') AS 'msgType',
+                 IF(stb.is_billing = 1, '完成计费', '等待计费') AS 'billState',
+                 IF(stl.sms_channel = 1,'计费','免费') AS 'isbilling',
                  DATE_FORMAT(stl.createTime,'%Y-%m-%d %H:%i:%s') AS 'createTime',
                  DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s') AS 'sendTime'
             FROM SMS_TRANSPORT_LOG stl
+      INNER JOIN SMS_TRANSPORT_BATCH stb ON stb.send_batchno = stl.send_batchno
            WHERE stl.delete_flag = 0
              AND stl.sms_batchno = :smsBatchNo
         <#if phoneNo??>
