@@ -39,5 +39,7 @@
     <bean id="smsProxyEntityAction" class="com.legooframework.model.smsprovider.entity.SMSProxyEntityAction">
         <constructor-arg name="domian" value="testold.csosm.com"/>
     </bean>
-    <bean id="smsService" class="com.legooframework.model.smsprovider.service.SmsService"/>
+    <bean id="smsService" class="com.legooframework.model.smsprovider.service.SmsService">
+        <property name="providerEntityAction" ref="smsProviderEntityAction"/>
+    </bean>
 </beans>

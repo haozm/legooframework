@@ -23,6 +23,9 @@ public class SMSProviderEntityActionTest {
     public void loadAllSubAccounts() {
         LoginContextHolder.setAnonymousCtx();
         List<SMSSubAccountEntity> res = smsSubAccountEntityAction.loadAllSubAccounts();
+        System.out.println(res);
+        System.out.println(smsSubAccountEntityAction.loadSubAccountByAccount("yiyuanxx"));
+        System.out.println(smsSubAccountEntityAction.loadSubAccountByAccount("yiyuanxxyx"));
     }
 
     @Test

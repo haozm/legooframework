@@ -23,8 +23,14 @@ public class SmsService extends BundleService {
 
     private static final Logger logger = LoggerFactory.getLogger(SmsService.class);
 
+    private SMSProviderEntityAction providerEntityAction;
+
+    public void setProviderEntityAction(SMSProviderEntityAction providerEntityAction) {
+        this.providerEntityAction = providerEntityAction;
+    }
+
     public Optional<List<SMSSubAccountEntity>> findEnabledSubAccounts() {
-        return getBean(SMSProviderEntityAction.class).findEnabledSubAccounts();
+        return providerEntityAction.findEnabledSubAccounts();
     }
 
     /**
@@ -40,7 +46,7 @@ public class SmsService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("send(SMSChannel=%d, mobile=%s, smsExt=%d) start...",
                     channel.getChannel(), mobile, smsExt));
-        SMSSubAccountEntity account = getSMSProvider().loadSubAccountByChannel(channel);
+        SMSSubAccountEntity account = providerEntityAction.loadSubAccountByChannel(channel);
         Map<String, Object> pathVariables = Maps.newHashMap();
         pathVariables.put("mobile", mobile);
         pathVariables.put("ext", smsExt);
@@ -91,7 +97,7 @@ public class SmsService extends BundleService {
         if (logger.isDebugEnabled())
             logger.debug(String.format("sync(account=%s, mobile=%s, start=%d, end=%d) start...",
                     account, mobile, start, end));
-        SMSSubAccountEntity subAccount = getSMSProvider().loadSubAccountByAccount(account);
+        SMSSubAccountEntity subAccount = providerEntityAction.loadSubAccountByAccount(account);
         Map<String, Object> pathVariables = Maps.newHashMap();
         pathVariables.put("start", start);
         pathVariables.put("end", end);
@@ -120,7 +126,7 @@ public class SmsService extends BundleService {
     public Optional<String> batchSync(String account) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchSync(account=%s) start...", account));
-        SMSSubAccountEntity subAccount = getSMSProvider().loadSubAccountByAccount(account);
+        SMSSubAccountEntity subAccount = providerEntityAction.loadSubAccountByAccount(account);
         Stopwatch stopwatch = Stopwatch.createStarted();
         Mono<String> mono = WebClient.create().method(HttpMethod.GET)
                 .uri(subAccount.getHttpBatchStatusUrl())

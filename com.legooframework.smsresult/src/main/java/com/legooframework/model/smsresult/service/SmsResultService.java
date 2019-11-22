@@ -29,11 +29,10 @@ import java.util.stream.Stream;
 public class SmsResultService extends BundleService {
 
     private static final Logger logger = LoggerFactory.getLogger(SmsResultService.class);
+
     private final Semaphore semaphore = new Semaphore(24);
 
     public void sending(@Payload Map<String, Object> payload) {
-//        {id=3a1743ea-fa32-484a-b24f-a574cda69819, companyId=100098,
-//        smsExt=6376813803, smsChannle=2, phoneNo=13826050862, smsContext=【梦特娇尚新】妈妈喊你回家吃饭 退订回T}
         final Semaphore _lock = semaphore;
         LoginContextHolder.setAnonymousCtx();
         try {

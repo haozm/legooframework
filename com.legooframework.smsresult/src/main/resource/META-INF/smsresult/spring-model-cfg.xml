@@ -35,38 +35,40 @@
     <bean id="smsReplayEntityAction" class="com.legooframework.model.smsresult.entity.SMSReplyEntityAction"
           parent="smsAbsResultEntityAction"/>
 
-<!--    <bean id="sms2HourSyncStreamItemReader"-->
-<!--          class="com.legooframework.model.core.jdbc.sqlengine.ColumnMapStreamItemReader" scope="prototype">-->
-<!--        <property name="sql">-->
-<!--            <value><![CDATA[-->
-<!--       SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate', sms_account AS 'account'-->
-<!--         FROM SMS_SENDING_LOG-->
-<!--        WHERE send_state = 1-->
-<!--          AND TIMESTAMPDIFF(HOUR,send_date,NOW()) <= 2-->
-<!--          AND TIMESTAMPDIFF(MINUTE,send_date,NOW()) >= 5-->
-<!--     ORDER BY createTime-->
-<!--            ]]></value>-->
-<!--        </property>-->
-<!--        <property name="fetchSize" value="512"/>-->
-<!--        <property name="dataSource" ref="smsResultDataSource"/>-->
-<!--        <property name="verifyCursorPosition" value="false"/>-->
-<!--    </bean>-->
-<!--    <bean id="smsDaySyncStreamItemReader"-->
-<!--          class="com.legooframework.model.core.jdbc.sqlengine.ColumnMapStreamItemReader" scope="prototype">-->
-<!--        <property name="sql">-->
-<!--            <value><![CDATA[-->
-<!--       SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate', sms_account AS 'account'-->
-<!--         FROM SMS_SENDING_LOG-->
-<!--        WHERE send_state = 1-->
-<!--          AND (TIMESTAMPDIFF(HOUR,send_date,NOW()) BETWEEN 3 AND 24)-->
-<!--     ORDER BY createTime-->
-<!--            ]]></value>-->
-<!--        </property>-->
-<!--        <property name="fetchSize" value="512"/>-->
-<!--        <property name="dataSource" ref="smsResultDataSource"/>-->
-<!--        <property name="verifyCursorPosition" value="false"/>-->
-<!--    </bean>-->
+    <!--    <bean id="sms2HourSyncStreamItemReader"-->
+    <!--          class="com.legooframework.model.core.jdbc.sqlengine.ColumnMapStreamItemReader" scope="prototype">-->
+    <!--        <property name="sql">-->
+    <!--            <value><![CDATA[-->
+    <!--       SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate', sms_account AS 'account'-->
+    <!--         FROM SMS_SENDING_LOG-->
+    <!--        WHERE send_state = 1-->
+    <!--          AND TIMESTAMPDIFF(HOUR,send_date,NOW()) <= 2-->
+    <!--          AND TIMESTAMPDIFF(MINUTE,send_date,NOW()) >= 5-->
+    <!--     ORDER BY createTime-->
+    <!--            ]]></value>-->
+    <!--        </property>-->
+    <!--        <property name="fetchSize" value="512"/>-->
+    <!--        <property name="dataSource" ref="smsResultDataSource"/>-->
+    <!--        <property name="verifyCursorPosition" value="false"/>-->
+    <!--    </bean>-->
+    <!--    <bean id="smsDaySyncStreamItemReader"-->
+    <!--          class="com.legooframework.model.core.jdbc.sqlengine.ColumnMapStreamItemReader" scope="prototype">-->
+    <!--        <property name="sql">-->
+    <!--            <value><![CDATA[-->
+    <!--       SELECT id AS 'id',sms_ext AS 'smsExt',sms_channel AS 'smsChannle',phone_no AS 'phoneNo', send_date AS 'sendDate', sms_account AS 'account'-->
+    <!--         FROM SMS_SENDING_LOG-->
+    <!--        WHERE send_state = 1-->
+    <!--          AND (TIMESTAMPDIFF(HOUR,send_date,NOW()) BETWEEN 3 AND 24)-->
+    <!--     ORDER BY createTime-->
+    <!--            ]]></value>-->
+    <!--        </property>-->
+    <!--        <property name="fetchSize" value="512"/>-->
+    <!--        <property name="dataSource" ref="smsResultDataSource"/>-->
+    <!--        <property name="verifyCursorPosition" value="false"/>-->
+    <!--    </bean>-->
 
-    <bean id="smsResultService" class="com.legooframework.model.smsresult.service.SmsResultService"/>
+    <bean id="smsResultService" class="com.legooframework.model.smsresult.service.SmsResultService">
+        <property name="smsService" ref="smsService"/>
+    </bean>
     <bean id="smsResultMsgTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
 </beans>
