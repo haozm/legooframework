@@ -79,7 +79,7 @@ public class SMSEntity {
         return new SMSEntity(smsId, content, phoneNo, memberId, memberName, 0, true, null, businessType);
     }
 
-    public static List<SMSEntity> createSMSMsg(SendMessageTemplate msgTmp) {
+    public static List<SMSEntity> createSMSMsg(SendMessageBuilder msgTmp) {
         List<SMSEntity> list = Lists.newArrayListWithCapacity(2);
         if (msgTmp.getAutoRunChannel() == AutoRunChannel.SMS_ONLY) {
             list.add(createSms(msgTmp));
@@ -98,7 +98,7 @@ public class SMSEntity {
         return list;
     }
 
-    private static Optional<SMSEntity> createWx(SendMessageTemplate msgTmp) {
+    private static Optional<SMSEntity> createWx(SendMessageBuilder msgTmp) {
         if (msgTmp.isWxExits()) {
             SMSEntity res = new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMemberId(),
                     msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.getWeixinId(), msgTmp.getDeviceId(), msgTmp.isOK(),
@@ -108,7 +108,7 @@ public class SMSEntity {
         return Optional.empty();
     }
 
-    private static SMSEntity createSms(SendMessageTemplate msgTmp) {
+    private static SMSEntity createSms(SendMessageBuilder msgTmp) {
         if (msgTmp.isOK()) {
             if (msgTmp.hasLegalPhone()) {
                 return new SMSEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),

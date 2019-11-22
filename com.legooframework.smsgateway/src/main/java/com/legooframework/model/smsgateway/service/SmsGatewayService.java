@@ -9,14 +9,15 @@ import com.legooframework.model.covariant.entity.TemplateReplaceException;
 import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.covariant.service.CovariantService;
 import com.legooframework.model.covariant.service.MemberAgg;
-import com.legooframework.model.smsgateway.entity.*;
+import com.legooframework.model.smsgateway.entity.SMSEntity;
+import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
+import com.legooframework.model.smsgateway.entity.SendMode;
+import com.legooframework.model.smsgateway.entity.SendMsg4InitEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.integration.support.MessageBuilder;
-import org.springframework.messaging.Message;
 import org.springframework.transaction.TransactionStatus;
 
 import java.util.List;
@@ -28,27 +29,27 @@ public class SmsGatewayService extends BundleService {
 
     private static final Logger logger = LoggerFactory.getLogger(SmsGatewayService.class);
 
-    public boolean batchSaveMessage(StoEntity store, List<SendMessageTemplate> sendMsgTemplates, String msgTemplate,
+    public boolean batchSaveMessage(StoEntity store, List<SendMessageBuilder> msgBuilder, String msgTemplate,
                                     UserAuthorEntity user) {
-        Preconditions.checkArgument(CollectionUtils.isNotEmpty(sendMsgTemplates));
+        Preconditions.checkArgument(CollectionUtils.isNotEmpty(msgBuilder));
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchSaveMessage(store=%d,sendMsgTemplates'size=%d,user=%s) start", store.getId(),
-                    sendMsgTemplates.size(), user));
+                    msgBuilder.size(), user));
 
-        final int size = sendMsgTemplates.size();
-        List<List<SendMessageTemplate>> partition = null;
+        final int size = msgBuilder.size();
+        List<List<SendMessageBuilder>> partition = null;
         if (size <= 30) {
-            partition = Lists.partition(sendMsgTemplates, 30);
+            partition = Lists.partition(msgBuilder, 30);
         } else if (size <= 100) {
-            partition = Lists.partition(sendMsgTemplates, 30);
+            partition = Lists.partition(msgBuilder, 30);
         } else if (size <= 1000) {
-            partition = Lists.partition(sendMsgTemplates, 300);
+            partition = Lists.partition(msgBuilder, 300);
         } else if (size <= 3000) {
-            partition = Lists.partition(sendMsgTemplates, 500);
+            partition = Lists.partition(msgBuilder, 500);
         } else if (size <= 5000) {
-            partition = Lists.partition(sendMsgTemplates, 800);
+            partition = Lists.partition(msgBuilder, 800);
         } else {
-            partition = Lists.partition(sendMsgTemplates, 1000);
+            partition = Lists.partition(msgBuilder, 1000);
         }
         List<SendMsg4InitEntity> instances = Lists.newArrayList();
         List<Throwable> errHolder = Lists.newArrayList();
@@ -62,7 +63,7 @@ public class SmsGatewayService extends BundleService {
                         errHolder.add(th);
                     } else {
                         if (logger.isDebugEnabled())
-                            logger.debug(String.format("initMessage() size %d finished", sendMsgTemplates.size()));
+                            logger.debug(String.format("initMessage() size %d finished", msgBuilder.size()));
                     }
                 }).join();
         if (CollectionUtils.isNotEmpty(errHolder))
@@ -79,14 +80,14 @@ public class SmsGatewayService extends BundleService {
         TransactionStatus tx = startTx(null);
         try {
             String batchNo = sendMsg4InitEntityAction.batchInsert(store, instances);
-            SendMode sendMode = sendMsgTemplates.size() == 1 ? SendMode.ManualSingle : SendMode.ManualBatch;
+            SendMode sendMode = msgBuilder.size() == 1 ? SendMode.ManualSingle : SendMode.ManualBatch;
             msgTransportBatchEntityAction.insert(store, batchNo, sendMode, instances, user);
             commitTx(tx);
             flag = true;
         } catch (Exception e) {
             if (logger.isDebugEnabled())
                 logger.debug(String.format("batchSaveMessage(store=%d,sendMsgTemplates'size=%d) has error",
-                        store.getId(), sendMsgTemplates.size()), e);
+                        store.getId(), msgBuilder.size()), e);
             rollbackTx(tx);
         } finally {
             LoginContextHolder.clear();
@@ -97,15 +98,15 @@ public class SmsGatewayService extends BundleService {
     /**
      * 处理消息米板 转化为 发送消息
      *
-     * @param sendMsgTemplates IOXX
-     * @param msgTemplate      XXOO
+     * @param msgBuilder  IOXX
+     * @param msgTemplate XXOO
      * @return OXOX
      */
-    private List<SMSEntity> initMessage(List<SendMessageTemplate> sendMsgTemplates, String msgTemplate) {
+    private List<SMSEntity> initMessage(List<SendMessageBuilder> msgBuilder, String msgTemplate) {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         try {
             List<SMSEntity> instances = Lists.newArrayList();
-            for (SendMessageTemplate $temp : sendMsgTemplates) {
+            for (SendMessageBuilder $temp : msgBuilder) {
                 MemberAgg memberAgg;
                 try {
                     memberAgg = covariantService.loadMemberAgg($temp.getMemberId());
@@ -119,13 +120,15 @@ public class SmsGatewayService extends BundleService {
                 memberAgg.getWxUser().ifPresent(wx -> $temp.setWeixinInfo(wx.getId(), wx.getDevicesId()));
                 String _template = $temp.getCtxTemplate().orElse(msgTemplate);
                 try {
-                    $temp.setContext(replaceTemplate(_template, memberAgg.toReplaceMap()));
+                    Map<String, Object> _maps = memberAgg.toReplaceMap();
+                    $temp.getReplaceMap().ifPresent(_maps::putAll);
+                    $temp.setContext(replaceTemplate(_template, _maps));
                 } catch (Exception e) {
                     logger.error(String.format("fmtMsgTemplate(%s) has error...", _template), e);
                     $temp.setError(String.format("格式化模板异常%s", _template));
                 }
             }
-            sendMsgTemplates.forEach(msg -> instances.addAll(SMSEntity.createSMSMsg(msg)));
+            msgBuilder.forEach(msg -> instances.addAll(SMSEntity.createSMSMsg(msg)));
             return instances;
         } finally {
             LoginContextHolder.clear();

@@ -23,7 +23,8 @@
             <body><![CDATA[
           SELECT stl.send_batchno AS 'batchno',
                  com.name AS 'companyName',sto.name 'storename',
-                 MAX(stl.businsess_type) AS 'businsessType',
+                 MAX(stl.businsess_type) AS 'businsessType', stb.send_mode AS 'sendMode',
+                 COUNT(stl.member_id) AS 'memberNum',
                  SUM( CASE WHEN (stl.send_channel= 2 ) THEN 1 ELSE 0 END ) AS 'wxMsgCount',
                  SUM( CASE WHEN (stl.send_channel= 2 AND stl.send_status =3 ) THEN 1 ELSE 0 END ) AS 'wxMsgOKCount',
                  SUM( CASE WHEN (stl.send_channel= 2 AND stl.send_status<>3 ) THEN 1 ELSE 0 END ) AS 'wxMsgFailCount',
@@ -32,7 +33,7 @@
                  SUM( CASE WHEN (stl.send_channel= 1 AND stl.send_status=3 AND stl.final_state=2 )  THEN stl.sms_count ELSE 0 END ) AS 'smsFailCount',
                  SUM( CASE WHEN (stl.send_channel= 1 AND stl.send_status=3 AND stl.final_state=0 )  THEN stl.sms_count ELSE 0 END ) AS 'smsWaitCount',
                  DATE_FORMAT(stb.createTime,GET_FORMAT(DATETIME,'iso')) AS 'createTimeName',
-                 cm.name AS 'operateName'
+                 IFNULL(cm.name,'') AS 'operateName'
             FROM SMS_TRANSPORT_BATCH stb
       INNER JOIN acp.acp_organization com ON com.id = stb.company_id AND com.orgType =1
       INNER JOIN acp.acp_store sto ON sto.id = stb.store_id

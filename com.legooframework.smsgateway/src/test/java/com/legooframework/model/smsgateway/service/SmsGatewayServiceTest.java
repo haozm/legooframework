@@ -10,7 +10,7 @@ import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.covariant.entity.UserAuthorEntityAction;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.AutoRunChannel;
-import com.legooframework.model.smsgateway.entity.SendMessageTemplate;
+import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,7 +77,7 @@ public class SmsGatewayServiceTest {
         logger.debug(String.format("jdbcQuerySupport() mmdis is %d", cids.size()));
         StoEntity store = stoEntityAction.loadById(15);
         UserAuthorEntity user = userAuthorEntityAction.loadUserById(15, 1);
-        List<SendMessageTemplate> msgList = cids.stream().map(x -> SendMessageTemplate.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
+        List<SendMessageBuilder> msgList = cids.stream().map(x -> SendMessageBuilder.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
                 x, AutoRunChannel.SMS_ONLY)).collect(Collectors.toList());
         smsGatewayService.batchSaveMessage(store, msgList,
                 "【新的梦特娇】亲爱的{会员姓名}，感谢您的信任，很荣幸为您挑选到合适您的产品，请按我们沟通的洗涤方法洗涤，祝您生活愉快！", user);

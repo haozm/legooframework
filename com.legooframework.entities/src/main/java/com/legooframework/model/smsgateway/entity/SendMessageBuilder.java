@@ -4,12 +4,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.legooframework.model.core.utils.WebUtils;
 import com.legooframework.model.membercare.entity.BusinessType;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 
+import java.util.Map;
 import java.util.Optional;
 
-public class SendMessageTemplate implements Cloneable {
+public class SendMessageBuilder implements Cloneable {
 
     private final Integer memberId, detailId;
     private final BusinessType businessType;
@@ -19,32 +21,38 @@ public class SendMessageTemplate implements Cloneable {
     private AutoRunChannel autoRunChannel;
     private boolean error = false;
     private String remark;
+    // 添加其他的 replace 值
+    private Map<String, Object> replaceMap;
 
     public String getRemark() {
         return remark;
     }
 
-    public SendMessageTemplate createWithJobWithTemplate(BusinessType businessType, int detailId, int memberId,
-                                                         AutoRunChannel runChannel, String ctxTemplate) {
+    public Optional<Map<String, Object>> getReplaceMap() {
+        return Optional.ofNullable(MapUtils.isEmpty(replaceMap) ? null : replaceMap);
+    }
+
+    public SendMessageBuilder createWithJobWithTemplate(BusinessType businessType, int detailId, int memberId,
+                                                        AutoRunChannel runChannel, String ctxTemplate) {
         Preconditions.checkArgument(detailId > 0, "非法的任务ID=%s", detailId);
         Preconditions.checkArgument(!Strings.isNullOrEmpty(ctxTemplate), "消息模板不可以为空值...");
-        return new SendMessageTemplate(businessType, detailId, memberId, runChannel, ctxTemplate);
+        return new SendMessageBuilder(businessType, detailId, memberId, runChannel, ctxTemplate);
     }
 
-    public SendMessageTemplate createWithoutJobWithTemplate(BusinessType businessType, int memberId,
-                                                            AutoRunChannel runChannel, String ctxTemplate) {
+    public SendMessageBuilder createWithoutJobWithTemplate(BusinessType businessType, int memberId,
+                                                           AutoRunChannel runChannel, String ctxTemplate) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(ctxTemplate), "消息模板不可以为空值...");
-        return new SendMessageTemplate(businessType, 0, memberId, runChannel, ctxTemplate);
+        return new SendMessageBuilder(businessType, 0, memberId, runChannel, ctxTemplate);
     }
 
-    public SendMessageTemplate createWithJobNoTemplate(BusinessType businessType, int detailId, int memberId,
-                                                       AutoRunChannel runChannel) {
+    public SendMessageBuilder createWithJobNoTemplate(BusinessType businessType, int detailId, int memberId,
+                                                      AutoRunChannel runChannel) {
         Preconditions.checkArgument(detailId > 0, "非法的任务ID=%s", detailId);
-        return new SendMessageTemplate(businessType, detailId, memberId, runChannel, null);
+        return new SendMessageBuilder(businessType, detailId, memberId, runChannel, null);
     }
 
-    public static SendMessageTemplate createWithoutJobNoTemplate(BusinessType businessType, int memberId, AutoRunChannel runChannel) {
-        return new SendMessageTemplate(businessType, 0, memberId, runChannel, null);
+    public static SendMessageBuilder createWithoutJobNoTemplate(BusinessType businessType, int memberId, AutoRunChannel runChannel) {
+        return new SendMessageBuilder(businessType, 0, memberId, runChannel, null);
     }
 
     public BusinessType getBusinessType() {
@@ -60,8 +68,8 @@ public class SendMessageTemplate implements Cloneable {
         return StringUtils.isNotEmpty(this.mobile) && this.mobile.length() == 11 && NumberUtils.isDigits(this.mobile);
     }
 
-    private SendMessageTemplate(BusinessType businessType, int detailId, int memberId, AutoRunChannel autoRunChannel,
-                                String ctxTemplate) {
+    private SendMessageBuilder(BusinessType businessType, int detailId, int memberId, AutoRunChannel autoRunChannel,
+                               String ctxTemplate) {
         Preconditions.checkArgument(memberId > 0, "非法的会员ID %d", memberId);
         Preconditions.checkNotNull(autoRunChannel, "错误的入参 autoRunChannel");
         Preconditions.checkNotNull(businessType, "错误的入参 businessType");
@@ -146,9 +154,9 @@ public class SendMessageTemplate implements Cloneable {
         return context;
     }
 
-    public SendMessageTemplate changeMobile(String mobile) {
+    public SendMessageBuilder changeMobile(String mobile) {
         try {
-            SendMessageTemplate clone = (SendMessageTemplate) this.clone();
+            SendMessageBuilder clone = (SendMessageBuilder) this.clone();
             clone.mobile = mobile;
             return clone;
         } catch (CloneNotSupportedException e) {
