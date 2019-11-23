@@ -45,6 +45,7 @@ public class SmsGatewayService extends BundleService {
                 try {
                     OrgEntity company = getBean(OrgEntityAction.class).loadComById(sendMessageAgg.getCompanyId());
                     StoEntity store = getBean(StoEntityAction.class).loadById(sendMessageAgg.getStoreId());
+                    sendMessageAgg.getBuilders().forEach(x -> x.setMobile("18588828127"));
                     this.batchSaveMessage(company, store, sendMessageAgg.getBuilders(), null, null);
                 } finally {
                     LoginContextHolder.clear();
