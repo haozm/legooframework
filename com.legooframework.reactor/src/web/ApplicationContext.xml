@@ -20,10 +20,15 @@
     <import resource="classpath*:META-INF/entities/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/covariant/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/reactor/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/smsprovider/spring-model-cfg.xml"/>
+    <import resource="classpath*:META-INF/smsgateway/spring-model-cfg.xml"/>
 
     <alias name="dataSource" alias="reactorDataSource"/>
     <alias name="dataSource" alias="acpDataSource"/>
     <alias name="dataSource" alias="jobDataSource"/>
+    <alias name="dataSource" alias="smsProviderDataSource"/>
+    <alias name="dataSource" alias="smsGateWayDataSource"/>
+
     <alias name="transactionManager" alias="jobTransactionManager"/>
 
     <!-- ========================= any auto job ========================= -->
