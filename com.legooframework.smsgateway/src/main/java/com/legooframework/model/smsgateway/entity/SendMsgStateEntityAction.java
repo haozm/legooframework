@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,8 @@ public class SendMsgStateEntityAction extends BaseEntityAction<SendMsgStateEntit
      */
     public String batch4MsgInit(StoEntity store, Collection<SendMsgStateEntity> instances) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(instances));
-        String batchNo = String.format("%d-%d-%s", store.getCompanyId(), store.getId(), LocalDateTime.now().toString("yyyyMMddHHmmss"));
+        // 多线程下的 批次号的唯一性要保证
+        String batchNo = String.format("%d-%d-%s", store.getCompanyId(), store.getId(), RandomStringUtils.random(14));
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchInsert(store=%d,batchNo=%s,Collection<SendMsg4SendEntity> = %d) start", store.getId(),
                     batchNo, instances.size()));

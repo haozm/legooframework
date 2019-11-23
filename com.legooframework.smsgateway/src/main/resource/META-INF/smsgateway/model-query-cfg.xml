@@ -133,7 +133,7 @@
         <#if memberName??>
              AND stl.member_name LIKE :memberName
         </#if>
-        ORDER BY stl.createTime
+        ORDER BY stl.createTime DESC
            LIMIT :offset,:rows
             ]]></body>
         </sql>
