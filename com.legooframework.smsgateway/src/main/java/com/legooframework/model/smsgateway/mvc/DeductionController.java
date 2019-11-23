@@ -20,7 +20,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/deduction")
 public class DeductionController extends SmsBaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(DeductionController.class);
@@ -33,7 +32,7 @@ public class DeductionController extends SmsBaseController {
      * @param request
      * @return
      */
-    @PostMapping(value = "/{range}/total/list.json")
+    @PostMapping(value = "/deduction/{range}/total/list.json")
     public JsonMessage deductionTotalList(@PathVariable(value = "range") String range,
                                           @RequestBody(required = false) Map<String, Object> requestBody,
                                           HttpServletRequest request) {
@@ -68,34 +67,32 @@ public class DeductionController extends SmsBaseController {
     /**
      * 返回指定批次号的发送明细
      *
-     * @param channel
      * @param requestBody
      * @param request
      * @return
      */
-    @PostMapping(value = "/detail/list.json")
-    public JsonMessage deductionDetailList(@PathVariable(value = "channel") String channel,
-                                           @RequestBody(required = false) Map<String, Object> requestBody,
-                                           HttpServletRequest request) {
+    @PostMapping(value = "/send/history/detail.json")
+    public JsonMessage sendHistoryDetails(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("deductionDetailList(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
+            logger.debug(String.format("sendHistoryDetails(url=%s,requestBody= %s)", request.getRequestURL(), requestBody));
         LoginContextHolder.setAnonymousCtx();
         try {
+            UserAuthorEntity user = loadLoginUser(requestBody, request);
             int pageNum = MapUtils.getIntValue(requestBody, "pageNum", 1);
             int pageSize = MapUtils.getIntValue(requestBody, "pageSize", 10);
-            String smsBatchNo = MapUtils.getString(requestBody, "smsBatchNo");
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(smsBatchNo), "发送批次号 smsBatchNo 不可以为空值...");
-            String phoneNo = MapUtils.getString(requestBody, "phoneNo");
+            String batchNo = MapUtils.getString(requestBody, "batchNo", null);
+            String phoneNo = MapUtils.getString(requestBody, "phoneNo", null);
             String memberName = MapUtils.getString(requestBody, "memberName", null);
-            int sendStatus = MapUtils.getIntValue(requestBody, "sendStatus", -1);
-            Preconditions.checkState(sendStatus == -1 || sendStatus == 0 || sendStatus == 1 || sendStatus == 2,
-                    "非法的状态值 %s,合法取值[0,1,2]", sendStatus);
-            Map<String, Object> params = Maps.newHashMap();
-            params.put("smsBatchNo", smsBatchNo);
+//            int sendStatus = MapUtils.getIntValue(requestBody, "sendStatus", -1);
+//            Preconditions.checkState(sendStatus == -1 || sendStatus == 0 || sendStatus == 1 || sendStatus == 2,
+//                    "非法的状态值 %s,合法取值[0,1,2]", sendStatus);
+            Map<String, Object> params = user.toViewMap();
             if (!Strings.isNullOrEmpty(phoneNo)) params.put("phoneNo", phoneNo);
+            if (!Strings.isNullOrEmpty(batchNo)) params.put("batchNo", batchNo);
             if (!Strings.isNullOrEmpty(memberName)) params.put("memberName", String.format("%%%s%%", memberName));
-            if (-1 != sendStatus) params.put("sendStatus", sendStatus);
-            PagingResult page = getQueryEngine(request).queryForPage("DeductionDetailEntity", "deductionDetail", pageNum, pageSize, params);
+            //    if (-1 != sendStatus) params.put("sendStatus", sendStatus);
+            PagingResult page = getQueryEngine(request).queryForPage("DeductionDetailEntity", "sendHistoryDetail",
+                    pageNum, pageSize, params);
             return JsonMessageBuilder.OK().withPayload(page.toData()).toMessage();
         } finally {
             LoginContextHolder.clear();

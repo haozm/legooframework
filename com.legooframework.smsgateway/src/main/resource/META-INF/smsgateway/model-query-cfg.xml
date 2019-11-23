@@ -52,12 +52,19 @@
           LIMIT :offset,:rows
             ]]></body>
         </sql>
-        <sql id="deductionDetail_count" dynamic="true">
+        <sql id="sendHistoryDetail_count" dynamic="true">
             <body><![CDATA[
           SELECT COUNT(stl.id)
             FROM SMS_TRANSPORT_LOG stl
+      INNER JOIN SMS_TRANSPORT_BATCH stb ON stb.send_batchno = stl.send_batchno
            WHERE stl.delete_flag = 0
-             AND stl.sms_batchno = :smsBatchNo
+             AND stl.company_id = :USER_COMPANY_ID
+        <#if (USER_ROLE=="StoreManager" || USER_ROLE=="ShoppingGuide")>
+             AND stl.store_id = :USER_STORE_ID
+        </#if>
+        <#if batchNo??>
+             AND std.send_batchno = :batchNo
+        </#if>
         <#if phoneNo??>
              AND stl.phone_no = :phoneNo
         </#if>
@@ -66,10 +73,7 @@
         </#if>
             ]]></body>
         </sql>
-        <sql id="deductionDetail" dynamic="true">
-            <params>
-                <p name="smsBatchNo" type="STRING" required="true"/>
-            </params>
+        <sql id="sendHistoryDetail" dynamic="true">
             <body><![CDATA[
           SELECT stl.id AS 'id',
                  stl.company_id AS 'companyId',
@@ -112,7 +116,13 @@
             FROM SMS_TRANSPORT_LOG stl
       INNER JOIN SMS_TRANSPORT_BATCH stb ON stb.send_batchno = stl.send_batchno
            WHERE stl.delete_flag = 0
-             AND stl.sms_batchno = :smsBatchNo
+             AND stl.company_id = :USER_COMPANY_ID
+        <#if (USER_ROLE=="StoreManager" || USER_ROLE=="ShoppingGuide")>
+             AND stl.store_id = :USER_STORE_ID
+        </#if>
+        <#if batchNo??>
+             AND std.send_batchno = :batchNo
+        </#if>
         <#if phoneNo??>
              AND stl.phone_no = :phoneNo
         </#if>
