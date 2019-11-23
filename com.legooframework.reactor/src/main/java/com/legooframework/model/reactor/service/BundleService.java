@@ -21,4 +21,6 @@ public abstract class BundleService extends BaseService {
     public void setTemplateAction(TemplateEntityAction templateAction) {
         this.templateAction = templateAction;
     }
+
+
 }

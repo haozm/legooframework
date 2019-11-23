@@ -364,7 +364,8 @@
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
             <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-batchsupport-*.jar"/>
+                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,
+                     legoo-batchsupport-*.jar,legoo-smsprovider-*.jar,legoo-smsgateway-*.jar"/>
         </path>
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.reactor"/>
@@ -379,9 +380,11 @@
             <param name="wepapp.root" value="${webapp.root}"/>
             <param name="vfs.root" value="file:${resources.dir}"/>
             <param name="jar.includes"
-                   value="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-reactor-*.jar"/>
+                   value="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,
+                   legoo-smsprovider-*.jar,legoo-smsgateway-*.jar,legoo-reactor-*.jar"/>
             <param name="resources.includes"
-                   value="**/core/**,**/batchsupport/**,**/entities/**,**/covariant/**,**/reactor/**"/>
+                   value="**/core/**,**/batchsupport/**,**/entities/**,**/covariant/**,
+                   **/reactor/**,**/smsprovider/**,**/smsgateway/**"/>
         </antcall>
     </target>
     <target name="install-statistical-jar">

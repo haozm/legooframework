@@ -27,14 +27,16 @@
     <alias name="transactionManager" alias="jobTransactionManager"/>
 
     <!-- ========================= any auto job ========================= -->
-    <task:executor id="reactor-executor" pool-size="2-8" keep-alive="2" queue-capacity="2048" rejection-policy="ABORT"/>
-    <int:publish-subscribe-channel id="reactor-subscribe-channel" task-executor="reactor-executor"
-                                   ignore-failures="true"/>
-    <int:outbound-channel-adapter channel="reactor-subscribe-channel" ref="myActive" method="handle"/>
     <task:scheduler id="reactor-scheduler-pool" pool-size="4"/>
+    <task:executor id="reactor-executor" pool-size="2-8" keep-alive="2" queue-capacity="2048" rejection-policy="ABORT"/>
+
     <task:scheduled-tasks scheduler="reactor-scheduler-pool">
         <task:scheduled ref="reactorService" method="runRetailSmsJob" fixed-delay="60000" initial-delay="120000"/>
     </task:scheduled-tasks>
+
+    <int:publish-subscribe-channel id="reactor-subscribe-channel" task-executor="reactor-executor"
+                                   ignore-failures="true"/>
+    <int:outbound-channel-adapter channel="reactor-subscribe-channel" ref="myActive" method="handle"/>
 
     <beans profile="devp">
         <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/acp"/>
