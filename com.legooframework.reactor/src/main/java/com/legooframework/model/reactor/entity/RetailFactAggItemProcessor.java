@@ -61,8 +61,7 @@ public class RetailFactAggItemProcessor implements ItemProcessor<RetailFactEntit
         }
         RetailFactAgg agg = new RetailFactAgg(item, tempate.get(), store, replce);
         try {
-            Message<RetailFactAgg> msg_request = MessageBuilder.withPayload(agg)
-                    .build();
+            Message<RetailFactAgg> msg_request = MessageBuilder.withPayload(agg).build();
             if (messagingTemplate != null) {
                 messagingTemplate.send(Constant.SUBSCRIBE_CHANNEL, msg_request);
             }

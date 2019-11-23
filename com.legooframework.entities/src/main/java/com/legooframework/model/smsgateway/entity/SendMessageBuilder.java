@@ -82,7 +82,7 @@ public class SendMessageBuilder implements Cloneable {
 
     private SendMessageBuilder(BusinessType businessType, int detailId, int memberId, AutoRunChannel autoRunChannel,
                                String ctxTemplate) {
-        Preconditions.checkArgument(memberId > 0, "非法的会员ID %d", memberId);
+        Preconditions.checkArgument(memberId >= 0, "非法的会员ID %d", memberId);
         Preconditions.checkNotNull(autoRunChannel, "错误的入参 autoRunChannel");
         Preconditions.checkNotNull(businessType, "错误的入参 businessType");
         this.memberId = memberId;
