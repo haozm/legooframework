@@ -20,8 +20,8 @@ public abstract class BundleService extends BaseService {
     TemplateEntityAction templateAction;
     MessagingTemplate messagingTemplate;
 
-    public MessagingTemplate getMessagingTemplate() {
-        return messagingTemplate;
+    public void setMessagingTemplate(MessagingTemplate messagingTemplate) {
+        this.messagingTemplate = messagingTemplate;
     }
 
     public void setTemplateAction(TemplateEntityAction templateAction) {
