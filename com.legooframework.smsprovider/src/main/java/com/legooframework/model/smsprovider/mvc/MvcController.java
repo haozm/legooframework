@@ -74,11 +74,12 @@ public class MvcController extends BaseController {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         UserAuthorEntity user = loadLoginUser(requestBody, request);
         try {
+            Integer storeId = MapUtils.getInteger(requestBody, "storeId", -1);
             String prefix = MapUtils.getString(requestBody, "smsPrefix");
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix), "入参 smsPrefix 不可以未空...");
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix), "入参 smsPrefix 不可以为空...");
             Preconditions.checkState(prefix.length() <= 13, "短信前缀最大长度需>=13");
             Preconditions.checkState(user.hasStore(), "需指定修改的门店....");
-            StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(0));
+            StoEntity store = getBean(StoEntityAction.class, request).loadById(user.getStoreId().orElse(storeId));
             getBean(SMSSettingEntityAction.class, request).changeSmsPrefix(store, prefix);
             return JsonMessageBuilder.OK().toMessage();
         } finally {
@@ -92,16 +93,20 @@ public class MvcController extends BaseController {
      * @return EEE
      */
     @PostMapping(value = "/smssetting/load/sms/prefix.json")
-    public JsonMessage loadSmsPreix(@RequestBody(required = false) Map<String, Object> requestBody,
-                                    HttpServletRequest request) throws Exception {
+    public JsonMessage loadSmsPreix(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) throws Exception {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         UserAuthorEntity user = loadLoginUser(requestBody, request);
         try {
+            Integer storeId = MapUtils.getInteger(requestBody, "storeId", -1);
             if (user.hasStore()) {
                 SMSSettingEntity smsSetting = getBean(SMSSettingEntityAction.class, request)
                         .loadByStoreId(user.getCompanyId(), user.getStoreId().orElse(0));
                 return JsonMessageBuilder.OK().withPayload(smsSetting == null ? null : smsSetting.toViewMap()).toMessage();
-            } else if (user.hasStores() && user.getSubStoreIds().isPresent()) {
+            } else if (-1 != storeId) {
+                SMSSettingEntity smsSetting = getBean(SMSSettingEntityAction.class, request)
+                        .loadByStoreId(user.getCompanyId(), storeId);
+                return JsonMessageBuilder.OK().withPayload(smsSetting == null ? null : smsSetting.toViewMap()).toMessage();
+            } else if (user.getSubStoreIds().isPresent()) {
                 List<SMSSettingEntity> smsSettings = getBean(SMSSettingEntityAction.class, request)
                         .loadByStoreIds(user.getCompanyId(), user.getSubStoreIds().get().toArray(new Integer[0]));
                 if (CollectionUtils.isNotEmpty(smsSettings)) {

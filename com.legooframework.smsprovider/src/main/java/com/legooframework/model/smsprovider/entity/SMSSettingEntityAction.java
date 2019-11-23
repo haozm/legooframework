@@ -82,7 +82,7 @@ public class SMSSettingEntityAction extends BaseEntityAction<SMSSettingEntity> {
         return setting.get();
     }
 
-    public SMSSettingEntity loadByStoreId(final Integer companyId, final Integer storeId) {
+    public SMSSettingEntity loadByStoreId(Integer companyId, Integer storeId) {
         Preconditions.checkNotNull(companyId);
         List<SMSSettingEntity> settings = loadAllByCompany(companyId);
         Optional<SMSSettingEntity> setting = null;
