@@ -37,7 +37,8 @@ public class SendMsgStateEntityAction extends BaseEntityAction<SendMsgStateEntit
     public String batch4MsgInit(StoEntity store, Collection<SendMsgStateEntity> instances) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(instances));
 
-        String batchNo = String.format("%d-%d-%s", store.getCompanyId(), store.getId(), RandomStringUtils.random(14));
+        String batchNo = String.format("%d-%d-%s", store.getCompanyId(), store.getId(),
+                RandomStringUtils.random(14, true, true));
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchInsert(store=%d,batchNo=%s,Collection<SendMsg4SendEntity> = %d) start", store.getId(),
                     batchNo, instances.size()));
