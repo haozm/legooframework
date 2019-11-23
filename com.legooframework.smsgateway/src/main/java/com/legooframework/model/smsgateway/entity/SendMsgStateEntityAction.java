@@ -1,7 +1,6 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntityAction;
 import com.legooframework.model.covariant.entity.StoEntity;
@@ -15,7 +14,6 @@ import org.springframework.jdbc.core.RowMapper;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class SendMsgStateEntityAction extends BaseEntityAction<SendMsgStateEntity> {
 
@@ -38,10 +36,8 @@ public class SendMsgStateEntityAction extends BaseEntityAction<SendMsgStateEntit
      */
     public String batch4MsgInit(StoEntity store, Collection<SendMsgStateEntity> instances) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(instances));
-        // 多线程下的 批次号的唯一性要保证
-        long _s = ThreadLocalRandom.current().nextLong(10000000L, 99999999999999L);
-        String seed = Strings.padStart(String.valueOf(_s), 14, '0');
-        String batchNo = String.format("%d-%d-%s", store.getCompanyId(), store.getId(), seed);
+
+        String batchNo = String.format("%d-%d-%s", store.getCompanyId(), store.getId(), RandomStringUtils.random(14));
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchInsert(store=%d,batchNo=%s,Collection<SendMsg4SendEntity> = %d) start", store.getId(),
                     batchNo, instances.size()));
