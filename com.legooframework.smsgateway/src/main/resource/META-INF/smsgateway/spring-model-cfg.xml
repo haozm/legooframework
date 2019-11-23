@@ -13,7 +13,6 @@
         <property name="patterns">
             <util:list value-type="java.lang.String">
                 <value>.*[\\,/]smsgateway[\\,/].*-sql-cfg.xml$</value>
-                <value>.*[\\,/]dict[\\,/]entity-sql-cfg.xml$</value>
                 <value>.*[\\,/]core[\\,/]macro-sql-cfg.xml$</value>
             </util:list>
         </property>
@@ -81,12 +80,12 @@
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
     </bean>
-    <bean id="smsKvDictEntityAction" class="com.legooframework.model.dict.entity.KvDictEntityAction"
-          parent="smsClientEntityAction">
-        <constructor-arg name="tableName" value="SMS_DICT_INFO"/>
-        <constructor-arg name="cacheName" value="smsGateWayCache"/>
-        <property name="cacheManager" ref="smsClientCacheManager"/>
-    </bean>
+<!--    <bean id="smsKvDictEntityAction" class="com.legooframework.model.dict.entity.KvDictEntityAction"-->
+<!--          parent="smsClientEntityAction">-->
+<!--        <constructor-arg name="tableName" value="SMS_DICT_INFO"/>-->
+<!--        <constructor-arg name="cacheName" value="smsGateWayCache"/>-->
+<!--        <property name="cacheManager" ref="smsClientCacheManager"/>-->
+<!--    </bean>-->
     <bean id="abstractSmsBundleService" class="com.legooframework.model.smsgateway.service.BundleService"
           abstract="true">
         <property name="sendMsgStateEntityAction" ref="sendMsgStateEntityAction"/>

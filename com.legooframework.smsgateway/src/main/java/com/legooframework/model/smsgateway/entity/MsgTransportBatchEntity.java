@@ -40,7 +40,7 @@ public class MsgTransportBatchEntity extends BaseEntity<Long> implements BatchSe
 
     MsgTransportBatchEntity(StoEntity store, String batchNo, SendMode sendMode, Collection<SendMsgStateEntity> message,
                             UserAuthorEntity user) {
-        super(0L, user.getCompanyId().longValue(), user.getId().longValue());
+        super(0L, store.getCompanyId().longValue(), user == null ? 0L : user.getId().longValue());
         this.companyId = store.getCompanyId();
         this.storeId = store.getId();
         this.batchNo = batchNo;

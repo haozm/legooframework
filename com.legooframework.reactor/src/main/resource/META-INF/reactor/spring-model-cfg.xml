@@ -44,18 +44,22 @@
         <property name="dataSource" ref="reactorDataSource"/>
         <property name="params" value="#{jobParameters['job.params']}"/>
     </bean>
+    <bean id="reactorMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
+
     <bean id="retailFactAggItemProcessor" class="com.legooframework.model.reactor.entity.RetailFactAggItemProcessor">
         <constructor-arg name="storeAction" ref="covariantStoEntityAction"/>
         <constructor-arg name="templateAction" ref="covariantTemplateAction"/>
         <constructor-arg name="smsBalanceAction" ref="covariantBalanceAction"/>
         <constructor-arg name="employeeAction" ref="covariantEmpAction"/>
         <constructor-arg name="sendSmsEntityAction" ref="covariantSmsAction"/>
+        <constructor-arg name="messagingTemplate" ref="reactorMessagingTemplate"/>
     </bean>
     <bean id="retailFactAggItemWriter" class="com.legooframework.model.reactor.entity.RetailFactAggItemWriter">
         <constructor-arg name="reactorLogAction" ref="reactorLogEntityAction"/>
         <constructor-arg name="sendSmsAction" ref="covariantSmsAction"/>
     </bean>
     <bean id="reactorService" class="com.legooframework.model.reactor.service.ReactorService"/>
+
     <batch:job id="retailSmsJob" job-repository="jobRepository">
         <batch:step id="step01">
             <batch:tasklet start-limit="1">

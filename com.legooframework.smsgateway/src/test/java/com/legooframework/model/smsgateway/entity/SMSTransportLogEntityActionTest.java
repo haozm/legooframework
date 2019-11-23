@@ -1,15 +1,12 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.dict.entity.KvDictEntityAction;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
-
-import javax.annotation.Resource;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
@@ -51,11 +48,9 @@ public class SMSTransportLogEntityActionTest {
         // action.loadSms4WriteOff();
     }
 
-    @Resource(name = "smsKvDictEntityAction")
-    KvDictEntityAction dictEntityAction;
     @Autowired
     SMSSendRuleEntityAction smsSendRuleEntityAction;
-//    @Autowired
+    //    @Autowired
 //    CrmOrganizationEntityAction organizationEntityAction;
 //    @Autowired
 //    CrmStoreEntityAction storeEntityAction;

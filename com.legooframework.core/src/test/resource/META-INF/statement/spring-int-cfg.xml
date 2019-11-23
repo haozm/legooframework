@@ -13,9 +13,9 @@
                            http://www.springframework.org/schema/integration/jdbc https://www.springframework.org/schema/integration/jdbc/spring-integration-jdbc.xsd
                            http://www.springframework.org/schema/jee http://www.springframework.org/schema/jee/spring-jee.xsd">
     <bean id="myActive" class="com.legooframework.model.core.config.MyActive"/>
-    <task:executor id="my-executor" pool-size="2-8" keep-alive="2" queue-capacity="1024" rejection-policy="CALLER_RUNS"/>
+    <task:executor id="my-executor" pool-size="2-8" keep-alive="2" queue-capacity="2048" rejection-policy="ABORT"/>
     <int:publish-subscribe-channel id="channel_wx_send" task-executor="my-executor"/>
-    <int:service-activator input-channel="channel_wx_send" ref="myActive" method="handle" />
-    <int:outbound-channel-adapter channel="channel_wx_send" ref="myActive" method="handle" />
+    <int:service-activator input-channel="channel_wx_send" ref="myActive" method="handle"/>
+    <int:outbound-channel-adapter channel="channel_wx_send" ref="myActive" method="handle"/>
     <bean id="messagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
 </beans>

@@ -44,7 +44,7 @@ public class SmsSendingServiceTest {
         UserAuthorEntity user = app.getBean(UserAuthorEntityAction.class).loadUserById(15, 1);
         List<SendMessageBuilder> msgList = cids.stream().map(x -> SendMessageBuilder.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
                 x, AutoRunChannel.SMS_ONLY)).collect(Collectors.toList());
-        app.getBean(SmsGatewayService.class).batchSaveMessage(store, msgList,
-                "【新的梦特娇】亲爱的{会员姓名}，内衣是贴身衣物，需要定期消毒喔，我们有专业的内衣消毒柜，您可以把内衣一起拿过来，为您一起消毒喔！", user);
+//        app.getBean(SmsGatewayService.class).batchSaveMessage(store, msgList,
+//                "【新的梦特娇】亲爱的{会员姓名}，内衣是贴身衣物，需要定期消毒喔，我们有专业的内衣消毒柜，您可以把内衣一起拿过来，为您一起消毒喔！", user);
     }
 }

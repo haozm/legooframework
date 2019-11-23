@@ -1,7 +1,6 @@
 package com.legooframework.model.smsgateway.entity;
 
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.dict.entity.KvDictEntityAction;
 import com.legooframework.model.membercare.entity.BusinessType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -9,8 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
-
-import javax.annotation.Resource;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
@@ -39,9 +36,8 @@ public class DeductionDetailEntityActionTest {
 
     @Autowired
     DeductionDetailEntityAction billingDetailEntityAction;
-    @Resource(name = "smsKvDictEntityAction")
-    KvDictEntityAction kvDictEntityAction;
-//    @Autowired
+
+    //    @Autowired
 //    CrmOrganizationEntityAction organizationEntityAction;
 //    @Autowired
 //    CrmStoreEntityAction storeEntityAction;

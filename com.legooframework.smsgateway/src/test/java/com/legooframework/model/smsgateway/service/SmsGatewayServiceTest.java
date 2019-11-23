@@ -79,8 +79,8 @@ public class SmsGatewayServiceTest {
         UserAuthorEntity user = userAuthorEntityAction.loadUserById(15, 1);
         List<SendMessageBuilder> msgList = cids.stream().map(x -> SendMessageBuilder.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
                 x, AutoRunChannel.SMS_ONLY)).collect(Collectors.toList());
-        smsGatewayService.batchSaveMessage(store, msgList,
-                "【新的梦特娇】亲爱的{会员姓名}，感谢您的信任，很荣幸为您挑选到合适您的产品，请按我们沟通的洗涤方法洗涤，祝您生活愉快！", user);
+//        smsGatewayService.batchSaveMessage(store, msgList,
+//                "【新的梦特娇】亲爱的{会员姓名}，感谢您的信任，很荣幸为您挑选到合适您的产品，请按我们沟通的洗涤方法洗涤，祝您生活愉快！", user);
     }
 
 

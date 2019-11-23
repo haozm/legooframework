@@ -5,6 +5,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.item.ItemProcessor;
+import org.springframework.integration.core.MessagingTemplate;
+import org.springframework.integration.support.MessageBuilder;
+import org.springframework.messaging.Message;
 
 import java.util.Map;
 import java.util.Optional;
@@ -15,12 +18,14 @@ public class RetailFactAggItemProcessor implements ItemProcessor<RetailFactEntit
 
     public RetailFactAggItemProcessor(StoEntityAction storeAction, TemplateEntityAction templateAction,
                                       SmsBalanceEntityAction smsBalanceAction, EmpEntityAction employeeAction,
-                                      SendSmsEntityAction sendSmsEntityAction) {
+                                      SendSmsEntityAction sendSmsEntityAction,
+                                      MessagingTemplate messagingTemplate) {
         this.storeAction = storeAction;
         this.templateAction = templateAction;
         this.smsBalanceAction = smsBalanceAction;
         this.employeeAction = employeeAction;
         this.sendSmsEntityAction = sendSmsEntityAction;
+        this.messagingTemplate = messagingTemplate;
     }
 
     @Override
@@ -47,14 +52,24 @@ public class RetailFactAggItemProcessor implements ItemProcessor<RetailFactEntit
         }
         if (!StringUtils.startsWith(replce, "【"))
             replce = String.format("%s%s", smsPrefix, replce);
-        
+
         try {
             smsBalanceAction.billing(store, smsCount(replce));
         } catch (SmsBillingException e) {
             logger.error("余额不足,计费失败", e);
             return new RetailFactAgg(item, store, tempate.get(), replce, String.format("余额不足,计费失败,storeId=%s", store.getId()));
         }
-        return new RetailFactAgg(item, tempate.get(), store, replce);
+        RetailFactAgg agg = new RetailFactAgg(item, tempate.get(), store, replce);
+        try {
+            Message<RetailFactAgg> msg_request = MessageBuilder.withPayload(agg)
+                    .build();
+            if (messagingTemplate != null) {
+                messagingTemplate.send(Constant.SUBSCRIBE_CHANNEL, msg_request);
+            }
+        } catch (Exception e) {
+            logger.error("发布Message<RetailFactAgg> has error....", e);
+        }
+        return agg;
     }
 
     // 计算短息数量
@@ -78,5 +93,6 @@ public class RetailFactAggItemProcessor implements ItemProcessor<RetailFactEntit
     private SmsBalanceEntityAction smsBalanceAction;
     private EmpEntityAction employeeAction;
     private SendSmsEntityAction sendSmsEntityAction;
+    private MessagingTemplate messagingTemplate;
 
 }

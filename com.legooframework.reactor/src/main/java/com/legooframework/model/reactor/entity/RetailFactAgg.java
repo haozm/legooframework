@@ -63,12 +63,28 @@ public class RetailFactAgg {
         this.errCode = "0000";
     }
 
+    public String getContent() {
+        return sendSms.getContent();
+    }
+
+    public boolean hasError() {
+        return !StringUtils.equals("0000", this.errCode);
+    }
+
     boolean hasSms() {
         return StringUtils.equals("0000", this.errCode) || StringUtils.equals("0004", this.errCode);
     }
 
+    public Integer getCompanyId() {
+        return retailFact.getCompanyId();
+    }
+
     SendSmsEntity getSendSms() {
         return sendSms;
+    }
+
+    public StoEntity getStore() {
+        return store;
     }
 
     ReactorLogEntity createReactorLog() {
@@ -77,6 +93,10 @@ public class RetailFactAgg {
         String afterCtx = sendSms == null ? null : sendSms.getContent();
         return new ReactorLogEntity(retailFact.getCompanyId(), retailFact.getStoreId(), 0, String.valueOf(retailFact.getId()),
                 "acp.crm_retail_table", this.errCode, this.errMsg, beforeCtx, afterCtx, templateId);
+    }
+
+    public RetailFactEntity getRetailFact() {
+        return retailFact;
     }
 
     @Override

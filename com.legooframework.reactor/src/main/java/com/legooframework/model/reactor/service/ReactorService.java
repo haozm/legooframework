@@ -8,6 +8,7 @@ import com.google.common.collect.Multimap;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.covariant.entity.*;
 import com.legooframework.model.membercare.entity.BusinessType;
+import com.legooframework.model.reactor.entity.RetailFactAgg;
 import com.legooframework.model.reactor.entity.RetailFactEntity;
 import com.legooframework.model.reactor.entity.RetailFactEntityAction;
 import com.legooframework.model.smsgateway.entity.AutoRunChannel;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.messaging.handler.annotation.Payload;
 
 import java.util.List;
 import java.util.Map;
@@ -57,37 +59,36 @@ public class ReactorService extends BundleService {
         LoginContextHolder.clear();
     }
 
-    public void runRetailNewSmsJob() {
-        LoginContextHolder.setAnonymousCtx();
-        Optional<List<Integer>> companyIds = getBean(TemplateEntityAction.class)
-                .loadEnabledCompany(TemplateEntity.CLASSIFIES_RIGHTS_AND_INTERESTS);
-        if (!companyIds.isPresent()) return;
-        for (Integer companyId : companyIds.get()) {
-            OrgEntity company = getBean(OrgEntityAction.class).loadComById(companyId);
-            Map<String, Object> countMap = getBean(RetailFactEntityAction.class).count4RetailSmsJob(company);
-            if (MapUtils.getInteger(countMap, "total", 0) == 0) continue;
-            Optional<List<RetailFactEntity>> retailFacts = getBean(RetailFactEntityAction.class)
-                    .query4RetailSmsJob(company, MapUtils.getInteger(countMap, "maxId", 0));
-            if (!retailFacts.isPresent()) continue;
-            Optional<TemplateEntity> tempate =
-                    templateAction.findByCompanyWithClassifies(company, TemplateEntity.CLASSIFIES_RIGHTS_AND_INTERESTS);
-            Multimap<Integer, RetailFactEntity> multimap = ArrayListMultimap.create();
-            retailFacts.get().forEach(x -> multimap.put(x.getStoreId(), x));
-            for (Integer storeId : multimap.keySet()) {
-                StoEntity store = getBean(StoEntityAction.class).loadById(storeId);
-                List<SendMessageBuilder> builders = Lists.newArrayListWithCapacity(multimap.get(storeId).size());
-                multimap.get(storeId).forEach(rec -> {
-                    SendMessageBuilder builder = SendMessageBuilder.createWithoutJobNoTemplate(BusinessType.RIGHTS_AND_INTERESTS_CARE, 0,
-                            AutoRunChannel.SMS_ONLY);
-                    builder.setReplaceMap(rec.toReplaceMap());
-                });
-
-
-//                public boolean batchSaveMessage(OrgEntity company, StoEntity store, List< SendMessageBuilder > msgBuilder,
-//                        String msgTemplate, UserAuthorEntity user)
+    /**
+     * listener
+     *
+     * @param payload
+     */
+    public void reactorMessageHandler(@Payload Object payload) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("Handle Event Message %s", payload.toString()));
+        if (payload instanceof RetailFactAgg) {
+            RetailFactAgg agg = (RetailFactAgg) payload;
+            if (agg.hasError()) {
+                logger.warn(String.format("[%s] has error, so drop it...", payload.toString()));
+                return;
+            }
+            LoginContextHolder.setAnonymousCtx();
+            try {
+                OrgEntity company = getBean(OrgEntityAction.class).loadComById(agg.getCompanyId());
+                StoEntity store = agg.getStore();
+                SendMessageBuilder builder = SendMessageBuilder.createWithoutJobNoTemplate(BusinessType.RIGHTS_AND_INTERESTS_CARE, 0,
+                        AutoRunChannel.SMS_ONLY);
+                batchSaveMessage(company, store, Lists.newArrayList(builder), builder.getContext(), null);
+            } finally {
+                LoginContextHolder.clear();
             }
         }
-        LoginContextHolder.clear();
     }
 
+
+    boolean batchSaveMessage(OrgEntity company, StoEntity store, List<SendMessageBuilder> msgBuilder,
+                             String msgTemplate, UserAuthorEntity user) {
+        return true;
+    }
 }

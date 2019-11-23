@@ -1,14 +1,8 @@
 package com.legooframework.model.smsgateway.mvc;
 
-import com.google.common.collect.Lists;
 import com.legooframework.model.core.base.runtime.LoginContext;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.crmadapter.entity.CrmOrganizationEntity;
-import com.legooframework.model.crmadapter.entity.CrmStoreEntity;
-import com.legooframework.model.dict.entity.KvDictEntity;
-import com.legooframework.model.dict.entity.KvDictEntityAction;
-import com.legooframework.model.membercare.entity.BusinessType;
-import com.legooframework.model.smsgateway.entity.*;
+import com.legooframework.model.smsgateway.entity.RechargeType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.context.ApplicationContext;
@@ -21,8 +15,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.UUID;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(

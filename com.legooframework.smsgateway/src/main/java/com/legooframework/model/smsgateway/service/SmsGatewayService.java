@@ -38,7 +38,7 @@ public class SmsGatewayService extends BundleService {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(msgBuilder));
         if (logger.isDebugEnabled())
             logger.debug(String.format("batchSaveMessage(store=%d,sendMsgTemplates'size=%d,user=%s) start", store.getId(),
-                    msgBuilder.size(), user));
+                    msgBuilder.size(), user == null ? null : user.getId()));
 
         final int size = msgBuilder.size();
         List<List<SendMessageBuilder>> partition = null;
