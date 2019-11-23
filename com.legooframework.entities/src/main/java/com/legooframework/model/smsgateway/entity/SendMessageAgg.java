@@ -21,6 +21,18 @@ public class SendMessageAgg {
             this.builders.add(messageBuilder);
     }
 
+    public Integer getCompanyId() {
+        return companyId;
+    }
+
+    public Integer getStoreId() {
+        return storeId;
+    }
+
+    public List<SendMessageBuilder> getBuilders() {
+        return builders;
+    }
+
     @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)

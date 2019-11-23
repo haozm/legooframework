@@ -1,20 +1,15 @@
 package com.legooframework.model.smsgateway.service;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
-import com.legooframework.model.covariant.entity.OrgEntity;
-import com.legooframework.model.covariant.entity.StoEntity;
-import com.legooframework.model.covariant.entity.TemplateReplaceException;
-import com.legooframework.model.covariant.entity.UserAuthorEntity;
+import com.legooframework.model.covariant.entity.*;
 import com.legooframework.model.covariant.service.CovariantService;
 import com.legooframework.model.covariant.service.MemberAgg;
-import com.legooframework.model.smsgateway.entity.MsgEntity;
-import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
-import com.legooframework.model.smsgateway.entity.SendMode;
-import com.legooframework.model.smsgateway.entity.SendMsgStateEntity;
+import com.legooframework.model.smsgateway.entity.*;
 import com.legooframework.model.smsprovider.entity.SMSSettingEntity;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
@@ -22,6 +17,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.transaction.TransactionStatus;
 
 import java.util.List;
@@ -32,6 +29,31 @@ import java.util.stream.Collectors;
 public class SmsGatewayService extends BundleService {
 
     private static final Logger logger = LoggerFactory.getLogger(SmsGatewayService.class);
+
+    /**
+     * 时间监听 外部变量
+     *
+     * @param message msg
+     */
+    public void smsgatewayMessageHandler(Message<?> message) {
+        MessageHeaderAccessor headerAccessor = MessageHeaderAccessor.getMutableAccessor(message);
+        Object eventName = headerAccessor.getHeader("EventName");
+        if (Objects.equal("sendMessage", eventName)) {
+            final SendMessageAgg sendMessageAgg = (SendMessageAgg) message.getPayload();
+            CompletableFuture.runAsync(() -> {
+                LoginContextHolder.setAnonymousCtx();
+                try {
+                    OrgEntity company = getBean(OrgEntityAction.class).loadComById(sendMessageAgg.getCompanyId());
+                    StoEntity store = getBean(StoEntityAction.class).loadById(sendMessageAgg.getStoreId());
+                    this.batchSaveMessage(company, store, sendMessageAgg.getBuilders(), null, null);
+                } finally {
+                    LoginContextHolder.clear();
+                }
+            });
+        }
+        if (logger.isDebugEnabled())
+            logger.debug(message.toString());
+    }
 
     public boolean batchSaveMessage(OrgEntity company, StoEntity store, List<SendMessageBuilder> msgBuilder,
                                     String msgTemplate, UserAuthorEntity user) {

@@ -1,5 +1,6 @@
 package com.legooframework.model.smsgateway.service;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.JsonElement;
@@ -22,6 +23,7 @@ import org.springframework.integration.support.MessageBuilder;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -392,10 +394,5 @@ public class SmsAnyListenerService extends BundleService {
 //        }
 //    }
 
-
-    public void smsgatewayMessageHandler(Message<?> message) {
-        if (logger.isDebugEnabled())
-            logger.debug(message.toString());
-    }
 
 }

@@ -80,7 +80,7 @@ public class ReactorService extends BundleService {
                     sendMessageAgg.addBuilder(SendMessageBuilder
                             .createWithoutJobNoTemplate(BusinessType.RIGHTS_AND_INTERESTS_CARE, 0, AutoRunChannel.SMS_ONLY));
                     Message<SendMessageAgg> msg_request = MessageBuilder.withPayload(sendMessageAgg)
-                            .setHeader("modelName", "com.legooframework.reactor").build();
+                            .setHeader("EventName", "sendMessage").build();
                     messagingTemplate.send("smsgateway-subscribe-channel", msg_request);
                     if (logger.isDebugEnabled())
                         logger.debug(String.format("Send Message [%s] to smsgateway-subscribe-channel is ok ...", sendMessageAgg));

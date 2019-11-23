@@ -81,12 +81,12 @@
           parent="smsClientEntityAction">
         <property name="cacheManager" ref="smsClientCacheManager"/>
     </bean>
-<!--    <bean id="smsKvDictEntityAction" class="com.legooframework.model.dict.entity.KvDictEntityAction"-->
-<!--          parent="smsClientEntityAction">-->
-<!--        <constructor-arg name="tableName" value="SMS_DICT_INFO"/>-->
-<!--        <constructor-arg name="cacheName" value="smsGateWayCache"/>-->
-<!--        <property name="cacheManager" ref="smsClientCacheManager"/>-->
-<!--    </bean>-->
+    <!--    <bean id="smsKvDictEntityAction" class="com.legooframework.model.dict.entity.KvDictEntityAction"-->
+    <!--          parent="smsClientEntityAction">-->
+    <!--        <constructor-arg name="tableName" value="SMS_DICT_INFO"/>-->
+    <!--        <constructor-arg name="cacheName" value="smsGateWayCache"/>-->
+    <!--        <property name="cacheManager" ref="smsClientCacheManager"/>-->
+    <!--    </bean>-->
     <bean id="abstractSmsBundleService" class="com.legooframework.model.smsgateway.service.BundleService"
           abstract="true">
         <property name="sendMsgStateEntityAction" ref="sendMsgStateEntityAction"/>
@@ -110,5 +110,5 @@
 
     <int:publish-subscribe-channel id="smsgateway-subscribe-channel" ignore-failures="true"/>
     <int:outbound-channel-adapter channel="smsgateway-subscribe-channel"
-                                  ref="smsAnyListenerService" method="smsgatewayMessageHandler"/>
+                                  ref="smsGatewayService" method="smsgatewayMessageHandler"/>
 </beans>
