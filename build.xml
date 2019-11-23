@@ -447,7 +447,7 @@
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
             <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-smsprovider-*.jar,legoo-covariant-*.jar,legoo-dict-*.jar"/>
+                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-smsprovider-*.jar,legoo-covariant-*.jar"/>
         </path>
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.smsgateway"/>
@@ -462,9 +462,9 @@
             <param name="wepapp.root" value="${webapp.root}"/>
             <param name="vfs.root" value="file:${resources.dir}"/>
             <param name="jar.includes"
-                   value="legoo-core-*.jar,legoo-entities-*.jar,legoo-dict-*.jar,legoo-covariant-*.jar,legoo-smsgateway-*.jar,legoo-smsprovider-*.jar"/>
+                   value="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-smsgateway-*.jar,legoo-smsprovider-*.jar"/>
             <param name="resources.includes"
-                   value="**/core/**,**/entities/**,**/covariant/**,**/dict/**,**/smsgateway/**,**/smsprovider/**"/>
+                   value="**/core/**,**/entities/**,**/covariant/**,**/smsgateway/**,**/smsprovider/**"/>
         </antcall>
     </target>
     <target name="install-smsresult-jar">
