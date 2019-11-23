@@ -4,12 +4,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.JdbcQuerySupport;
-import com.legooframework.model.covariant.entity.StoEntity;
-import com.legooframework.model.covariant.entity.StoEntityAction;
-import com.legooframework.model.covariant.entity.UserAuthorEntity;
-import com.legooframework.model.covariant.entity.UserAuthorEntityAction;
+import com.legooframework.model.covariant.entity.*;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.AutoRunChannel;
+import com.legooframework.model.smsgateway.entity.SendMessageAgg;
 import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
@@ -40,6 +38,20 @@ import java.util.stream.Collectors;
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/smsgateway/spring-model-cfg.xml"}
 )
 public class SmsGatewayServiceTest {
+
+    @Test
+    public void smsgatewayMessageHandler() {
+        LoginContextHolder.setIfNotExitsAnonymousCtx();
+        SendMessageAgg sendMessageAgg = new SendMessageAgg(1, 1120);
+        SendMessageBuilder builder = SendMessageBuilder.createWithoutJobWithTemplate(
+                BusinessType.RIGHTS_AND_INTERESTS_CARE, 0, AutoRunChannel.SMS_ONLY,
+                "尊敬的赵晋一：您于2019-11-23 11:56 在测试门店二1消费了1,332.00，现剩余积分：619131.0。如有疑问请致电：13256485726。");
+        builder.setMobile("18588828127");
+        sendMessageAgg.addBuilder(builder);
+        OrgEntity company = orgEntityAction.loadComById(sendMessageAgg.getCompanyId());
+        StoEntity store = stoEntityAction.loadById(sendMessageAgg.getStoreId());
+        smsGatewayService.batchSaveMessage(company, store, sendMessageAgg.getBuilders(), null, null);
+    }
 
     @Test
     public void sendingSMSService() {
@@ -88,6 +100,8 @@ public class SmsGatewayServiceTest {
     private JdbcQuerySupport jdbcQuerySupport;
     @Autowired
     private StoEntityAction stoEntityAction;
+    @Autowired
+    private OrgEntityAction orgEntityAction;
     @Autowired
     private SmsGatewayService smsGatewayService;
     @Autowired

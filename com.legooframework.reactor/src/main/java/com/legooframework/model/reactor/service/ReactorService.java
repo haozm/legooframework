@@ -79,6 +79,7 @@ public class ReactorService extends BundleService {
                     SendMessageAgg sendMessageAgg = new SendMessageAgg(agg.getCompanyId(), agg.getStore().getId());
                     SendMessageBuilder builder = SendMessageBuilder.createWithoutJobWithTemplate(
                             BusinessType.RIGHTS_AND_INTERESTS_CARE, 0, AutoRunChannel.SMS_ONLY, agg.getContent());
+                    agg.getMobile().ifPresent(builder::setMobile);
                     sendMessageAgg.addBuilder(builder);
 
                     Message<SendMessageAgg> msg_request = MessageBuilder.withPayload(sendMessageAgg)

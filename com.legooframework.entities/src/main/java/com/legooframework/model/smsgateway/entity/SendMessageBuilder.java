@@ -1,5 +1,6 @@
 package com.legooframework.model.smsgateway.entity;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
@@ -78,6 +79,10 @@ public class SendMessageBuilder implements Cloneable {
 
     boolean hasLegalPhone() {
         return StringUtils.isNotEmpty(this.mobile) && this.mobile.length() == 11 && NumberUtils.isDigits(this.mobile);
+    }
+
+    public void setMobile(String mobile) {
+        this.mobile = mobile;
     }
 
     private SendMessageBuilder(BusinessType businessType, int detailId, int memberId, AutoRunChannel autoRunChannel,
@@ -178,11 +183,21 @@ public class SendMessageBuilder implements Cloneable {
 
     @Override
     public String toString() {
-        // detailId|memberId|sendChanel|weixinId@deviceId|mobile|{encoding}memberName|{encoding}context|resulat
-        return String.format("%s,%s,%s,%s,%s,%s,%s,%s", detailId, memberId, autoRunChannel.getChannel(),
-                this.wxExits ? String.format("%s@%s", weixinId, deviceId) : "NULL",
-                Strings.isNullOrEmpty(mobile) ? "0000" : mobile,
-                Strings.isNullOrEmpty(memberName) ? "NULL" : WebUtils.encodeUrl(memberName),
-                Strings.isNullOrEmpty(context) ? "NULL" : WebUtils.encodeUrl(context));
+        return MoreObjects.toStringHelper(this)
+                .add("memberId", memberId)
+                .add("detailId", detailId)
+                .add("businessType", businessType)
+                .add("ctxTemplate", ctxTemplate)
+                .add("memberName", memberName)
+                .add("mobile", mobile)
+                .add("weixinId", weixinId)
+                .add("deviceId", deviceId)
+                .add("context", context)
+                .add("wxExits", wxExits)
+                .add("autoRunChannel", autoRunChannel)
+                .add("error", error)
+                .add("remark", remark)
+                .add("replaceMap", replaceMap)
+                .toString();
     }
 }

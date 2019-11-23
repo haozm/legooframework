@@ -15,6 +15,10 @@ public class SendSmsEntity extends BaseEntity<Integer> implements BatchSetter {
     private BusinessType businessType;
     private Integer companyId, storeId, organizationId, employeeId;
 
+    public String getMobile() {
+        return mobile;
+    }
+
     public SendSmsEntity(String content, String extFlag, String mobile, String receiverName, String batchNo, BusinessType businessType,
                          Integer companyId, Integer storeId, Integer organizationId, Integer employeeId, String receiveStatus) {
         super(0);

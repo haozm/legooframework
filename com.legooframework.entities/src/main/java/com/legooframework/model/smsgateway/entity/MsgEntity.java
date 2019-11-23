@@ -36,7 +36,7 @@ public class MsgEntity {
         this.content = content;
         this.smsId = originalId;
         this.wordCount = content.length();
-        this.smsNum = this.wordCount <= 70 ? 1 : (this.wordCount % 67 + 1);
+        this.smsNum = this.wordCount <= 70 ? 1 : (this.wordCount / 67 + 1);
         this.memberId = memberId;
         this.memberName = memberName;
         this.phoneNo = phoneNo;
@@ -54,7 +54,7 @@ public class MsgEntity {
         this.content = content;
         this.smsId = originalId;
         this.wordCount = content.length();
-        this.smsNum = this.wordCount <= 70 ? 1 : (this.wordCount % 67 + 1);
+        this.smsNum = this.wordCount <= 70 ? 1 : (this.wordCount / 67 + 1);
         this.memberId = memberId;
         this.memberName = memberName;
         this.phoneNo = null;
@@ -215,7 +215,7 @@ public class MsgEntity {
         if (StringUtils.startsWith(this.content, _prefix)) return;
         this.content = String.format("【%s】%s", prefix, content);
         this.wordCount = content.length();
-        this.smsNum = this.wordCount <= 70 ? 1 : (this.wordCount % 67 + 1);
+        this.smsNum = this.wordCount <= 70 ? 1 : (this.wordCount / 67 + 1);
     }
 
     public void addPrefixAndSuffix(String prefix, String suffix) {
@@ -229,7 +229,7 @@ public class MsgEntity {
             this.content = String.format("【%s】%s%s", prefix, content, suffix);
         }
         this.wordCount = content.length();
-        this.smsNum = this.wordCount <= 70 ? 1 : (this.wordCount % 67 + 1);
+        this.smsNum = this.wordCount <= 70 ? 1 : (this.wordCount / 67 + 1);
     }
 
     String getEncodeCtx() {

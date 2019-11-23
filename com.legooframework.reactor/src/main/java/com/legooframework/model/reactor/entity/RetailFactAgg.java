@@ -7,6 +7,8 @@ import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.TemplateEntity;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Optional;
+
 public class RetailFactAgg {
 
     private final RetailFactEntity retailFact;
@@ -15,6 +17,10 @@ public class RetailFactAgg {
     private final SendSmsEntity sendSms;
     private final String errMsg;
     private final String errCode;
+
+    public Optional<String> getMobile() {
+        return null == sendSms ? Optional.empty() : Optional.ofNullable(sendSms.getMobile());
+    }
 
     RetailFactAgg(RetailFactEntity retailFact) {
         this.retailFact = retailFact;
