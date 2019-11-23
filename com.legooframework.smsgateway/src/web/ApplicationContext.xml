@@ -79,54 +79,6 @@ INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
         <task:scheduled ref="smsAnyListenerService" method="syncStateJob" initial-delay="120000"
                         fixed-delay="300000"/>
     </task:scheduled-tasks>
-    <!-- =========================== channel ================================= -->
-    <!--
-    <int:channel id="channel_sms_sending">
-        <int:queue/>
-    </int:channel>
-    <int:publish-subscribe-channel id="channel_sending_splitter"/>
-    <int-jdbc:inbound-channel-adapter channel="channel_sending_splitter" data-source="smsGateWayDataSource"
-                                      update="UPDATE SMS_TRANSPORT_LOG SET send_status = 2 WHERE id IN (:id)"
-                                      auto-startup="true">
-        <int-jdbc:query><![CDATA[
-    SELECT rec.id AS 'id',
-           CONCAT_WS('|',rec.id,rec.company_id,rec.store_id,rec.sms_channel,'2',rec.phone_no,rec.word_count,rec.sms_count) AS 'mixed',
-           rec.sms_context AS 'ctx'
-      FROM SMS_TRANSPORT_LOG AS rec
-INNER JOIN SMS_TRANSPORT_BATCH bat ON bat.send_batchno = rec.send_batchno
-     WHERE bat.is_billing = 0
-       AND rec.send_status = 0
-  ORDER BY rec.createTime
-     LIMIT 2048
-        ]]></int-jdbc:query>
-        <int:poller fixed-delay="1000" time-unit="MILLISECONDS"/>
-    </int-jdbc:inbound-channel-adapter>
-    <int:splitter input-channel="channel_sending_splitter" output-channel="channel_sms_sending"/>
-    <int:outbound-channel-adapter channel="channel_sms_sending" ref="smsIntegrationService" method="listen4SendSMS"
-                                  auto-startup="true">
-        <int:poller max-messages-per-poll="32" receive-timeout="1000" time-unit="MILLISECONDS" fixed-delay="3000"/>
-    </int:outbound-channel-adapter> -->
-    <!--
-    <bean id="authenticationEntryPoint"
-          class="com.legooframework.model.crmadapter.service.JsonAuthenticationEntryPoint"/>
-    <bean id="checkTokenExitsFilter" class="com.legooframework.model.crmadapter.service.CheckTokenExitsFilter">
-        <constructor-arg name="authenticationEntryPoint" ref="authenticationEntryPoint"/>
-        <property name="jwTokenAction" ref="jwTokenAction"/>
-    </bean>
-    <bean id="ssoSecurityContextRepository"
-          class="com.legooframework.model.crmadapter.service.SecurityContextRepositoryImpl"/>
-    <bean id="securityContextPersistenceFilter"
-          class="org.springframework.security.web.context.SecurityContextPersistenceFilter">
-        <constructor-arg name="repo" ref="ssoSecurityContextRepository"/>
-    </bean>
-    <bean id="filterChainProxy" class="org.springframework.security.web.FilterChainProxy">
-        <constructor-arg>
-            <util:list>
-                <sec:filter-chain pattern="/**" filters="checkTokenExitsFilter,securityContextPersistenceFilter"/>
-            </util:list>
-        </constructor-arg>
-    </bean>
-    -->
     <beans profile="devp">
         <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/acp"/>
     </beans>

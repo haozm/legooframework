@@ -433,7 +433,7 @@
          AND rec.send_res_code = '0000'
          AND rec.final_state = 0
          AND TIMESTAMPDIFF(HOUR,rec.send_local_date,NOW()) <= 4
-         AND TIMESTAMPDIFF(MINUTE,rec.send_local_date,NOW()) >= 10
+         AND TIMESTAMPDIFF(MINUTE,rec.send_local_date,NOW()) >= 5
             ]]></body>
         </sql>
         <sql id="loadSmsMsg4SendByBatchNo">
