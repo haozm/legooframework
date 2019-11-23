@@ -56,7 +56,7 @@ public class SmsGatewayService extends BundleService {
             logger.debug(message.toString());
     }
 
-    public boolean batchSaveMessage(OrgEntity company, StoEntity store, List<SendMessageBuilder> msgBuilder,
+    public boolean batchSaveMessage(OrgEntity company, StoEntity store, List<SendMessage> msgBuilder,
                                     String msgTemplate, UserAuthorEntity user) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(msgBuilder));
         if (logger.isDebugEnabled())
@@ -64,7 +64,7 @@ public class SmsGatewayService extends BundleService {
                     msgBuilder.size(), user == null ? null : user.getId()));
 
         final int size = msgBuilder.size();
-        List<List<SendMessageBuilder>> partition = null;
+        List<List<SendMessage>> partition = null;
         if (size <= 30) {
             partition = Lists.partition(msgBuilder, 30);
         } else if (size <= 100) {
@@ -130,11 +130,11 @@ public class SmsGatewayService extends BundleService {
      * @param msgTemplate XXOO
      * @return OXOX
      */
-    private List<MsgEntity> initMessage(List<SendMessageBuilder> msgBuilder, String msgTemplate) {
+    private List<MsgEntity> initMessage(List<SendMessage> msgBuilder, String msgTemplate) {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         try {
             List<MsgEntity> instances = Lists.newArrayList();
-            for (SendMessageBuilder $temp : msgBuilder) {
+            for (SendMessage $temp : msgBuilder) {
                 String _template = $temp.getCtxTemplate().orElse(msgTemplate);
                 // NO template
                 if (Strings.isNullOrEmpty(_template)) {

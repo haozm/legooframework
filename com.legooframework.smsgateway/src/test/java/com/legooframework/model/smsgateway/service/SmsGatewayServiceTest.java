@@ -8,7 +8,7 @@ import com.legooframework.model.covariant.entity.*;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.AutoRunChannel;
 import com.legooframework.model.smsgateway.entity.SendMessageAgg;
-import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
+import com.legooframework.model.smsgateway.entity.SendMessage;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +43,7 @@ public class SmsGatewayServiceTest {
     public void smsgatewayMessageHandler() {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         SendMessageAgg sendMessageAgg = new SendMessageAgg(1, 1120);
-        SendMessageBuilder builder = SendMessageBuilder.createWithoutJobWithTemplate(
+        SendMessage builder = SendMessage.createWithoutJobWithTemplate(
                 BusinessType.RIGHTS_AND_INTERESTS_CARE, 0, AutoRunChannel.SMS_ONLY,
                 "尊敬的赵晋一：您于2019-11-23 11:56 在测试门店二1消费了1,332.00，现剩余积分：619131.0。如有疑问请致电：13256485726。");
         builder.setMobile("18588828127");
@@ -89,7 +89,7 @@ public class SmsGatewayServiceTest {
         logger.debug(String.format("jdbcQuerySupport() mmdis is %d", cids.size()));
         StoEntity store = stoEntityAction.loadById(15);
         UserAuthorEntity user = userAuthorEntityAction.loadUserById(15, 1);
-        List<SendMessageBuilder> msgList = cids.stream().map(x -> SendMessageBuilder.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
+        List<SendMessage> msgList = cids.stream().map(x -> SendMessage.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
                 x, AutoRunChannel.SMS_ONLY)).collect(Collectors.toList());
 //        smsGatewayService.batchSaveMessage(store, msgList,
 //                "【新的梦特娇】亲爱的{会员姓名}，感谢您的信任，很荣幸为您挑选到合适您的产品，请按我们沟通的洗涤方法洗涤，祝您生活愉快！", user);

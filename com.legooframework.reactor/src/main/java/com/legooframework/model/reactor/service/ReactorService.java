@@ -11,7 +11,7 @@ import com.legooframework.model.reactor.entity.RetailFactAgg;
 import com.legooframework.model.reactor.entity.RetailFactEntityAction;
 import com.legooframework.model.smsgateway.entity.AutoRunChannel;
 import com.legooframework.model.smsgateway.entity.SendMessageAgg;
-import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
+import com.legooframework.model.smsgateway.entity.SendMessage;
 import org.apache.commons.collections4.MapUtils;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
@@ -77,7 +77,7 @@ public class ReactorService extends BundleService {
                 }
                 if (super.containsBean("smsgateway-subscribe-channel")) {
                     SendMessageAgg sendMessageAgg = new SendMessageAgg(agg.getCompanyId(), agg.getStore().getId());
-                    SendMessageBuilder builder = SendMessageBuilder.createWithoutJobWithTemplate(
+                    SendMessage builder = SendMessage.createWithoutJobWithTemplate(
                             BusinessType.RIGHTS_AND_INTERESTS_CARE, 0, AutoRunChannel.SMS_ONLY, agg.getContent());
                     agg.getMobile().ifPresent(builder::setMobile);
                     agg.getMemberName().ifPresent(builder::setMemberName);

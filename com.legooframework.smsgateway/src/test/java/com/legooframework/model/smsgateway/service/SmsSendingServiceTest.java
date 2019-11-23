@@ -8,7 +8,7 @@ import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.covariant.entity.UserAuthorEntityAction;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.AutoRunChannel;
-import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
+import com.legooframework.model.smsgateway.entity.SendMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -42,7 +42,7 @@ public class SmsSendingServiceTest {
         logger.debug(String.format("jdbcQuerySupport() mmdis is %d", cids.size()));
         StoEntity store = app.getBean(StoEntityAction.class).loadById(1120);
         UserAuthorEntity user = app.getBean(UserAuthorEntityAction.class).loadUserById(15, 1);
-        List<SendMessageBuilder> msgList = cids.stream().map(x -> SendMessageBuilder.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
+        List<SendMessage> msgList = cids.stream().map(x -> SendMessage.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
                 x, AutoRunChannel.SMS_ONLY)).collect(Collectors.toList());
 //        app.getBean(SmsGatewayService.class).batchSaveMessage(store, msgList,
 //                "【新的梦特娇】亲爱的{会员姓名}，内衣是贴身衣物，需要定期消毒喔，我们有专业的内衣消毒柜，您可以把内衣一起拿过来，为您一起消毒喔！", user);

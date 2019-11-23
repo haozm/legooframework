@@ -11,7 +11,7 @@ import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.MsgEntity;
-import com.legooframework.model.smsgateway.entity.SendMessageBuilder;
+import com.legooframework.model.smsgateway.entity.SendMessage;
 import com.legooframework.model.smsgateway.entity.SendMode;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.EnumUtils;
@@ -194,7 +194,7 @@ public class MsgSendingController extends SmsBaseController {
      * @return EEE
      * @throws Exception 异常
      */
-    private String sendMessage(List<SendMessageBuilder> send_smses, BusinessType businessType, String template,
+    private String sendMessage(List<SendMessage> send_smses, BusinessType businessType, String template,
                                StoEntity store, SendMode sendMode, UserAuthorEntity user, HttpServletRequest request)
             throws Exception {
         List<MsgEntity> smses = Lists.newArrayListWithCapacity(send_smses.size());

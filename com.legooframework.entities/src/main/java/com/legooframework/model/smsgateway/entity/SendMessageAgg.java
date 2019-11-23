@@ -8,7 +8,7 @@ import java.util.List;
 public class SendMessageAgg {
 
     private final Integer companyId, storeId;
-    private final List<SendMessageBuilder> builders;
+    private final List<SendMessage> builders;
 
     public SendMessageAgg(Integer companyId, Integer storeId) {
         this.companyId = companyId;
@@ -16,7 +16,7 @@ public class SendMessageAgg {
         this.builders = Lists.newArrayList();
     }
 
-    public void addBuilder(SendMessageBuilder messageBuilder) {
+    public void addBuilder(SendMessage messageBuilder) {
         if (null != messageBuilder)
             this.builders.add(messageBuilder);
     }
@@ -29,7 +29,7 @@ public class SendMessageAgg {
         return storeId;
     }
 
-    public List<SendMessageBuilder> getBuilders() {
+    public List<SendMessage> getBuilders() {
         return builders;
     }
 
