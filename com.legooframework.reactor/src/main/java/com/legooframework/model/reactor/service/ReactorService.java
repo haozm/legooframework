@@ -5,10 +5,8 @@ import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.covariant.entity.OrgEntity;
 import com.legooframework.model.covariant.entity.OrgEntityAction;
-import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.TemplateEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
-import com.legooframework.model.reactor.entity.Constant;
 import com.legooframework.model.reactor.entity.RetailFactAgg;
 import com.legooframework.model.reactor.entity.RetailFactEntityAction;
 import com.legooframework.model.smsgateway.entity.AutoRunChannel;
@@ -70,14 +68,13 @@ public class ReactorService extends BundleService {
     public void reactorMessageHandler(@Payload Object payload) {
         if (logger.isDebugEnabled())
             logger.debug(String.format("Handle Event Message %s", payload.toString()));
-        if (payload instanceof RetailFactAgg) {
-            RetailFactAgg agg = (RetailFactAgg) payload;
-            if (agg.hasError()) {
-                logger.warn(String.format("[%s] has error,drop it...", payload.toString()));
-                return;
-            }
-            LoginContextHolder.setAnonymousCtx();
-            try {
+        try {
+            if (payload instanceof RetailFactAgg) {
+                RetailFactAgg agg = (RetailFactAgg) payload;
+                if (agg.hasError()) {
+                    logger.warn(String.format("[%s] has error,drop it...", payload.toString()));
+                    return;
+                }
                 if (super.containsBean("smsgateway-subscribe-channel")) {
                     SendMessageAgg sendMessageAgg = new SendMessageAgg(agg.getCompanyId(), agg.getStore().getId());
                     sendMessageAgg.addBuilder(SendMessageBuilder
@@ -88,9 +85,9 @@ public class ReactorService extends BundleService {
                     if (logger.isDebugEnabled())
                         logger.debug(String.format("Send Message [%s] to smsgateway-subscribe-channel is ok ...", sendMessageAgg));
                 }
-            } finally {
-                LoginContextHolder.clear();
             }
+        } catch (Exception e) {
+            logger.error("reactorMessageHandler(...)", e);
         }
     }
 
