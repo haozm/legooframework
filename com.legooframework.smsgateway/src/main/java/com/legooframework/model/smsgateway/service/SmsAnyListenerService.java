@@ -392,4 +392,10 @@ public class SmsAnyListenerService extends BundleService {
 //        }
 //    }
 
+
+    public void smsgatewayMessageHandler(Message<?> message) {
+        if (logger.isDebugEnabled())
+            logger.debug(message.toString());
+    }
+
 }

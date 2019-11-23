@@ -58,7 +58,12 @@
         <constructor-arg name="reactorLogAction" ref="reactorLogEntityAction"/>
         <constructor-arg name="sendSmsAction" ref="covariantSmsAction"/>
     </bean>
-    <bean id="reactorService" class="com.legooframework.model.reactor.service.ReactorService"/>
+    <bean id="reactorBundleService" class="com.legooframework.model.reactor.service.BundleService" abstract="true">
+        <property name="templateAction" ref="covariantTemplateAction"/>
+        <property name="messagingTemplate" ref="reactorMessagingTemplate"/>
+    </bean>
+    <bean id="reactorService" class="com.legooframework.model.reactor.service.ReactorService"
+          parent="reactorBundleService"/>
 
     <batch:job id="retailSmsJob" job-repository="jobRepository">
         <batch:step id="step01">

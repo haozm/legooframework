@@ -34,6 +34,10 @@ public abstract class BaseService implements ApplicationContextAware {
         this.appCtx = appCtx;
     }
 
+    protected final boolean containsBean(String beanName) {
+        return this.appCtx.containsBean(beanName);
+    }
+
     protected <T> Optional<Collection<T>> getBeanList(Class<T> clazz) {
         Optional<Map<String, T>> clazzMap = getBeanMap(clazz);
         return clazzMap.map(Map::values);

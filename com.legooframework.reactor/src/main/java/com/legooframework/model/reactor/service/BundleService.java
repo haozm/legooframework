@@ -4,6 +4,7 @@ import com.legooframework.model.core.base.service.BaseService;
 import com.legooframework.model.core.osgi.Bundle;
 import com.legooframework.model.covariant.entity.TemplateEntityAction;
 import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.integration.core.MessagingTemplate;
 
 public abstract class BundleService extends BaseService {
 
@@ -17,10 +18,14 @@ public abstract class BundleService extends BaseService {
     }
 
     TemplateEntityAction templateAction;
+    MessagingTemplate messagingTemplate;
+
+    public MessagingTemplate getMessagingTemplate() {
+        return messagingTemplate;
+    }
 
     public void setTemplateAction(TemplateEntityAction templateAction) {
         this.templateAction = templateAction;
     }
-
 
 }

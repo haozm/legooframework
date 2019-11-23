@@ -2,8 +2,9 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:int="http://www.springframework.org/schema/integration"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-
+                           http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
                            http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
     <bean id="smsGateWayBundle" class="com.legooframework.model.core.osgi.LegooBundleFactoryBean">
         <property name="resource" value="classpath:META-INF/smsgateway/legoo-model-cfg.xml"/>
@@ -106,4 +107,8 @@
     <bean id="smsAnyListenerService" class="com.legooframework.model.smsgateway.service.SmsAnyListenerService"
           parent="abstractSmsBundleService"/>
     <bean id="smsMessagingTemplate" class="org.springframework.integration.core.MessagingTemplate"/>
+
+    <int:publish-subscribe-channel id="smsgateway-subscribe-channel" ignore-failures="true"/>
+    <int:outbound-channel-adapter channel="smsgateway-subscribe-channel"
+                                  ref="smsAnyListenerService" method="smsgatewayMessageHandler"/>
 </beans>
