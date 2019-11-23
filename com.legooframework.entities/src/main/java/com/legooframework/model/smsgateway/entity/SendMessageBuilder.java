@@ -85,6 +85,10 @@ public class SendMessageBuilder implements Cloneable {
         this.mobile = mobile;
     }
 
+    public void setMemberName(String memberName) {
+        this.memberName = memberName;
+    }
+
     private SendMessageBuilder(BusinessType businessType, int detailId, int memberId, AutoRunChannel autoRunChannel,
                                String ctxTemplate) {
         Preconditions.checkArgument(memberId >= 0, "非法的会员ID %d", memberId);

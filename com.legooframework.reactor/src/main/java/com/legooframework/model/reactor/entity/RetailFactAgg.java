@@ -22,6 +22,10 @@ public class RetailFactAgg {
         return null == sendSms ? Optional.empty() : Optional.ofNullable(sendSms.getMobile());
     }
 
+    public Optional<String> getMemberName() {
+        return null == sendSms ? Optional.empty() : Optional.ofNullable(sendSms.getReceiverName());
+    }
+
     RetailFactAgg(RetailFactEntity retailFact) {
         this.retailFact = retailFact;
         this.template = null;
