@@ -50,8 +50,8 @@ public class SendMessageBuilder implements Cloneable {
         return new SendMessageBuilder(businessType, detailId, memberId, runChannel, ctxTemplate);
     }
 
-    public SendMessageBuilder createWithoutJobWithTemplate(BusinessType businessType, int memberId,
-                                                           AutoRunChannel runChannel, String ctxTemplate) {
+    public static SendMessageBuilder createWithoutJobWithTemplate(BusinessType businessType, int memberId,
+                                                                  AutoRunChannel runChannel, String ctxTemplate) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(ctxTemplate), "消息模板不可以为空值...");
         return new SendMessageBuilder(businessType, 0, memberId, runChannel, ctxTemplate);
     }

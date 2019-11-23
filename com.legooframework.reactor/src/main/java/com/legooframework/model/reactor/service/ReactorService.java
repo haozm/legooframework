@@ -77,8 +77,10 @@ public class ReactorService extends BundleService {
                 }
                 if (super.containsBean("smsgateway-subscribe-channel")) {
                     SendMessageAgg sendMessageAgg = new SendMessageAgg(agg.getCompanyId(), agg.getStore().getId());
-                    sendMessageAgg.addBuilder(SendMessageBuilder
-                            .createWithoutJobNoTemplate(BusinessType.RIGHTS_AND_INTERESTS_CARE, 0, AutoRunChannel.SMS_ONLY));
+                    SendMessageBuilder builder = SendMessageBuilder.createWithoutJobWithTemplate(
+                            BusinessType.RIGHTS_AND_INTERESTS_CARE, 0, AutoRunChannel.SMS_ONLY, agg.getContent());
+                    sendMessageAgg.addBuilder(builder);
+
                     Message<SendMessageAgg> msg_request = MessageBuilder.withPayload(sendMessageAgg)
                             .setHeader("EventName", "sendMessage").build();
                     messagingTemplate.send("smsgateway-subscribe-channel", msg_request);
