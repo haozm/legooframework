@@ -67,9 +67,9 @@ public class DeductionController extends SmsBaseController {
     /**
      * 返回指定批次号的发送明细
      *
-     * @param requestBody
-     * @param request
-     * @return
+     * @param requestBody AS
+     * @param request     AS
+     * @return JsonMessage
      */
     @PostMapping(value = "/send/history/detail.json")
     public JsonMessage sendHistoryDetails(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {

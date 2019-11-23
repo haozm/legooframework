@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
-@RestController(value = "smsgatewayRechargeRuleController")
+@RestController(value = "rechargeRuleController")
 @RequestMapping(value = "/recharge/rule")
 public class RechargeRuleController extends SmsBaseController {
 

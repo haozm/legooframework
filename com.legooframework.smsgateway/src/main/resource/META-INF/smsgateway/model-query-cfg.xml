@@ -76,8 +76,8 @@
         <sql id="sendHistoryDetail" dynamic="true">
             <body><![CDATA[
           SELECT stl.id AS 'id',
-                 stl.company_id AS 'companyId',
-                 stl.store_id AS 'storeId',
+                 stl.company_id AS 'companyId',org.name AS 'companyName',
+                 stl.store_id AS 'storeId', sto.name AS 'storeName',
                  stl.member_id AS 'memberId',
                  stl.member_name AS 'memberName',
                  stl.free_send AS 'freeSend',
@@ -108,6 +108,7 @@
                     WHEN 2 THEN '短信发送失败'
                     ELSE '异常数据' END ) AS 'finalStatusName',
                  stl.send_remarks AS 'remarks',
+                 IFNULL(emp.name,'-') AS 'employeeName',
                  IF(stl.sms_channel = 1,'短信','微信') AS 'msgType',
                  IF(stb.is_billing = 1, '完成计费', '等待计费') AS 'billState',
                  IF(stl.sms_channel = 1,'计费','免费') AS 'isbilling',
@@ -115,6 +116,9 @@
                  DATE_FORMAT(NOW(),'%Y-%m-%d %H:%i:%s') AS 'sendTime'
             FROM SMS_TRANSPORT_LOG stl
       INNER JOIN SMS_TRANSPORT_BATCH stb ON stb.send_batchno = stl.send_batchno
+      INNER JOIN acp.acp_organization org ON org.id = stl.company_id
+      INNER JOIN acp.acp_store sto ON sto.id = stl.store_id
+       LEFT JOIN acp.acp_employee emp ON emp.id = stl.creator
            WHERE stl.delete_flag = 0
              AND stl.company_id = :USER_COMPANY_ID
         <#if (USER_ROLE=="StoreManager" || USER_ROLE=="ShoppingGuide")>

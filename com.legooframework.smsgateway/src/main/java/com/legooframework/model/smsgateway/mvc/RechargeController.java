@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-@RestController
+@RestController(value = "rechargeController")
 @RequestMapping(value = "/recharge")
 public class RechargeController extends SmsBaseController {
 
