@@ -136,7 +136,7 @@
             <reference refid="reactor_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="install-reactor-war">
+    <target name="install-reactor-war" depends="install-smsgateway-jar">
         <antcall target="webapp-new">
             <param name="app.name" value="reactor"/>
             <param name="spring.profiles.active" value="${spring.profiles.active}"/>
