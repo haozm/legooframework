@@ -97,7 +97,7 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
 
     public SendSmsEntity createSendSms(String batchNo) {
         return new SendSmsEntity(this.context, "BirthdayCare", this.sendInfo01, this.sendInfo02, batchNo,
-                BusinessType.BIRTHDAYCARE, companyId, storeId, 0, employeeId, null);
+                BusinessType.BIRTHDAYTOUCH, companyId, storeId, 0, employeeId, null);
     }
 
     public SendWechatEntity createSendWxMsg(String batchNo) {
@@ -159,39 +159,39 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
     public static CareRecordEntity wxNinetyCare4Member(CareNinetyTaskAgg task, UserAuthorEntity user, String[] imgUrls) {
         if (!task.getWxUser().isPresent()) {
             return new CareRecordEntity(task.getTask().getPlanId(), task.getTask().getId(), task.getTask().getCompanyId(), task.getTask().getStoreId(),
-                    user == null ? 0 : user.getId(), BusinessType.NINETYPLAN, SendChannel.WECHAT,
+                    user == null ? 0 : user.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.WECHAT,
                     task.getMemberId().orElse(null), null, null, task.getTargetContent(), imgUrls, true, "无微信信息..");
         }
         return new CareRecordEntity(task.getTask().getPlanId(), task.getTask().getId(), task.getTask().getCompanyId(), task.getTask().getStoreId(),
-                user == null ? 0 : user.getId(), BusinessType.NINETYPLAN, SendChannel.WECHAT,
+                user == null ? 0 : user.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.WECHAT,
                 task.getMemberId().orElse(null), task.getWxUser().isPresent() ? task.getWxUser().get().getUserName() : null,
                 task.getWxUser().isPresent() ? task.getWxUser().get().getDevicesId() : null, task.getTargetContent(), imgUrls, false, null);
     }
 
     public static CareRecordEntity sendSmsNinetyCare4Member(CareNinetyTaskAgg task, UserAuthorEntity user) {
         return new CareRecordEntity(task.getTask().getPlanId(), task.getTask().getId(), task.getTask().getCompanyId(), task.getTask().getStoreId(),
-                user == null ? 0 : user.getId(), BusinessType.NINETYPLAN, SendChannel.SMS,
+                user == null ? 0 : user.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.SMS,
                 task.getMemberId().orElse(null), task.getPhone().orElse(null), task.getMemberName().orElse(null),
                 task.getTargetContent(), null, false, null);
     }
 
     public static CareRecordEntity errorNinetyCare4Member(CareNinetyTaskAgg task, UserAuthorEntity user) {
         return new CareRecordEntity(task.getTask().getPlanId(), task.getTask().getId(), task.getTask().getCompanyId(), task.getTask().getStoreId(),
-                user == null ? 0 : user.getId(), BusinessType.NINETYPLAN, SendChannel.CANCEL,
+                user == null ? 0 : user.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.CANCEL,
                 task.getMemberId().orElse(null), task.getPhone().orElse(null), task.getMemberName().orElse(null),
                 "跟进异常", null, true, task.getErrorMsg());
     }
 
     public static CareRecordEntity cancelNinetyCare4Member(CareNinetyTaskAgg task, UserAuthorEntity user) {
         return new CareRecordEntity(task.getTask().getPlanId(), task.getTask().getId(), task.getTask().getCompanyId(), task.getTask().getStoreId(),
-                user == null ? 0 : user.getId(), BusinessType.NINETYPLAN, SendChannel.CANCEL,
+                user == null ? 0 : user.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.CANCEL,
                 task.getMemberId().orElse(null), task.getPhone().orElse(null), task.getMemberName().orElse(null),
                 "取消跟进", null, false, null);
     }
 
     public static CareRecordEntity manualNinetyCare4Member(CareNinetyTaskAgg task, UserAuthorEntity user) {
         return new CareRecordEntity(task.getTask().getPlanId(), task.getTask().getId(), task.getTask().getCompanyId(), task.getTask().getStoreId(),
-                user == null ? 0 : user.getId(), BusinessType.NINETYPLAN, SendChannel.OFFLINE,
+                user == null ? 0 : user.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.OFFLINE,
                 task.getMemberId().orElse(null), task.getPhone().orElse(null), task.getMemberName().orElse(null),
                 "人工线下完成", null, false, null);
     }
@@ -199,14 +199,14 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
 
     static CareRecordEntity cancelBirthdayCare4Member(CareBirthdayEntity care, EmpEntity employee, MemberEntity member) {
         return new CareRecordEntity(care.getCareId(), care.getCompanyId(), care.getStoreId(),
-                employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYCARE, SendChannel.CANCEL,
+                employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.CANCEL,
                 member.getId(), member.getPhone(), member.getName(), "取消跟进", null, false, null);
 
     }
 
     static CareRecordEntity manualBirthdayCare4Member(CareBirthdayEntity care, EmpEntity employee, MemberEntity member) {
         return new CareRecordEntity(care.getCareId(), care.getCompanyId(), care.getStoreId(),
-                employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYCARE, SendChannel.OFFLINE,
+                employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.OFFLINE,
                 member.getId(), member.getPhone(), member.getName(), "人工线下完成", null, false, null);
 
     }
@@ -220,15 +220,15 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
         MemberEntity member = memberAgg.getMember();
         if (!member.hasPhone()) {
             return new CareRecordEntity(care.getCareId(), care.getCompanyId(), care.getStoreId(),
-                    employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYCARE, SendChannel.SMS,
+                    employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.SMS,
                     member.getId(), member.getOptPhone().orElse(null), member.getName(), context, null, true, "电话号码错误...");
         } else if (Strings.isNullOrEmpty(context)) {
             return new CareRecordEntity(care.getCareId(), care.getCompanyId(), care.getStoreId(),
-                    employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYCARE, SendChannel.SMS,
+                    employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.SMS,
                     member.getId(), member.getOptPhone().orElse(null), member.getName(), context, null, true, "无模板信息");
         } else {
             return new CareRecordEntity(care.getCareId(), care.getCompanyId(), care.getStoreId(),
-                    employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYCARE, SendChannel.SMS,
+                    employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.SMS,
                     member.getId(), member.getPhone(), member.getName(), context, null, false, null);
         }
     }
@@ -257,17 +257,17 @@ public class CareRecordEntity extends BaseEntity<Long> implements BatchSetter {
                                                   String context, String[] imgUrls) {
         if (!agg.getWxUser().isPresent()) {
             return new CareRecordEntity(care.getCareId(), care.getCompanyId(), care.getStoreId(),
-                    employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYCARE, SendChannel.WECHAT,
+                    employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.WECHAT,
                     agg.getMember().getId(), null, null, context, imgUrls, true, "无微信信息..");
         }
         if (Strings.isNullOrEmpty(context)) {
             return new CareRecordEntity(care.getCareId(), care.getCompanyId(), care.getStoreId(),
-                    employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYCARE, SendChannel.WECHAT,
+                    employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.WECHAT,
                     agg.getMember().getId(), agg.getWxUser().isPresent() ? agg.getWxUser().get().getUserName() : null,
                     agg.getWxUser().isPresent() ? agg.getWxUser().get().getDevicesId() : null, context, imgUrls, true, "无模板信息");
         }
         return new CareRecordEntity(care.getCareId(), care.getCompanyId(), care.getStoreId(),
-                employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYCARE, SendChannel.WECHAT,
+                employee == null ? 0 : employee.getId(), BusinessType.BIRTHDAYTOUCH, SendChannel.WECHAT,
                 agg.getMember().getId(), agg.getWxUser().isPresent() ? agg.getWxUser().get().getUserName() : null,
                 agg.getWxUser().isPresent() ? agg.getWxUser().get().getDevicesId() : null, context, imgUrls, false, null);
     }

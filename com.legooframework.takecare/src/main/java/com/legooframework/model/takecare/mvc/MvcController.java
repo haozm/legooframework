@@ -134,7 +134,7 @@ public class MvcController extends BaseController {
             Preconditions.checkArgument(memberId != 0, "待查看的人员ID不可以为空...");
             Map<String, Object> params = Maps.newHashMap();
             params.put("memberId", memberId);
-            params.put("businessType", BusinessType.BIRTHDAYCARE.getValue());
+            params.put("businessType", BusinessType.BIRTHDAYTOUCH.getValue());
             params.put("sql", "birthdayCareDetailByMember");
             Optional<List<Map<String, Object>>> list = getJdbcQuery(request).queryForList("HisCareRecordEntity", "quert4Details", params);
             return JsonMessageBuilder.OK().withPayload(list).toMessage();

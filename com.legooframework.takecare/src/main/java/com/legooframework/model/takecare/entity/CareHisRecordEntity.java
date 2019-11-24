@@ -44,45 +44,45 @@ public class CareHisRecordEntity extends BaseEntity<Integer> implements BatchSet
     }
 
     public static CareHisRecordEntity errorCareNinety4Member(CareNinetyTaskAgg agg, UserAuthorEntity user) {
-        return new CareHisRecordEntity(agg.getTask().getPlanId(), agg.getErrorMsg(), null, BusinessType.NINETYPLAN, null,
+        return new CareHisRecordEntity(agg.getTask().getPlanId(), agg.getErrorMsg(), null, BusinessType.TOUCHED90, null,
                 LocalDateTime.now(),
                 SendChannel.CANCEL, agg.getMemberId().orElse(null), agg.getTask().getStoreId(), user == null ? null : user.getId());
     }
 
     public static CareHisRecordEntity offlineCareNinety4Member(CareNinetyTaskAgg agg, UserAuthorEntity user) {
-        return new CareHisRecordEntity(agg.getTask().getPlanId(), "线下跟进", null, BusinessType.NINETYPLAN, null,
+        return new CareHisRecordEntity(agg.getTask().getPlanId(), "线下跟进", null, BusinessType.TOUCHED90, null,
                 LocalDateTime.now(),
                 SendChannel.OFFLINE, agg.getMemberId().orElse(null), agg.getTask().getStoreId(), user == null ? null : user.getId());
     }
 
     public static CareHisRecordEntity cancelCareNinety4Member(CareNinetyTaskAgg agg, UserAuthorEntity user) {
-        return new CareHisRecordEntity(agg.getTask().getPlanId(), "取消跟进", null, BusinessType.NINETYPLAN, null,
+        return new CareHisRecordEntity(agg.getTask().getPlanId(), "取消跟进", null, BusinessType.TOUCHED90, null,
                 LocalDateTime.now(),
                 SendChannel.CANCEL, agg.getMemberId().orElse(null), agg.getTask().getStoreId(), user == null ? null : user.getId());
     }
 
 
     public static CareHisRecordEntity wxBirthdayCare4Member(CareNinetyTaskAgg agg, UserAuthorEntity user) {
-        return new CareHisRecordEntity(agg.getTask().getPlanId(), agg.getTargetContent(), null, BusinessType.NINETYPLAN, null,
+        return new CareHisRecordEntity(agg.getTask().getPlanId(), agg.getTargetContent(), null, BusinessType.TOUCHED90, null,
                 LocalDateTime.now(),
                 SendChannel.WECHAT, agg.getMemberId().orElse(null), agg.getTask().getStoreId(), user == null ? null : user.getId());
     }
 
     public static CareHisRecordEntity smsCareNinety4Member(CareNinetyTaskAgg agg, UserAuthorEntity user) {
-        return new CareHisRecordEntity(agg.getTask().getPlanId(), agg.getTargetContent(), null, BusinessType.NINETYPLAN, null,
+        return new CareHisRecordEntity(agg.getTask().getPlanId(), agg.getTargetContent(), null, BusinessType.TOUCHED90, null,
                 LocalDateTime.now(),
                 SendChannel.SMS, agg.getMemberId().orElse(null), agg.getTask().getStoreId(), user == null ? null : user.getId());
     }
 
 
     static CareHisRecordEntity cancelBirthdayCare4Member(CareBirthdayEntity care, EmpEntity employee, MemberEntity member) {
-        return new CareHisRecordEntity(care.getCareId(), "取消跟进", null, BusinessType.BIRTHDAYCARE, null, LocalDateTime.now(),
+        return new CareHisRecordEntity(care.getCareId(), "取消跟进", null, BusinessType.BIRTHDAYTOUCH, null, LocalDateTime.now(),
                 SendChannel.CANCEL, member.getId(), member.getStoreId(), employee == null ? null : employee.getId());
     }
 
 
     static CareHisRecordEntity offlineBirthdayCare4Member(CareBirthdayEntity care, EmpEntity employee, MemberEntity member) {
-        return new CareHisRecordEntity(care.getCareId(), "线下跟进", null, BusinessType.BIRTHDAYCARE, null, LocalDateTime.now(),
+        return new CareHisRecordEntity(care.getCareId(), "线下跟进", null, BusinessType.BIRTHDAYTOUCH, null, LocalDateTime.now(),
                 SendChannel.OFFLINE, member.getId(), member.getStoreId(), employee == null ? null : employee.getId());
     }
 
@@ -91,7 +91,7 @@ public class CareHisRecordEntity extends BaseEntity<Integer> implements BatchSet
         MemberEntity member = memberAgg.getMember();
         LocalDateTime now = LocalDateTime.now();
         if (Strings.isNullOrEmpty(context)) context = "无模板信息...";
-        return new CareHisRecordEntity(care.getCareId(), context, null, BusinessType.BIRTHDAYCARE, null, now,
+        return new CareHisRecordEntity(care.getCareId(), context, null, BusinessType.BIRTHDAYTOUCH, null, now,
                 SendChannel.SMS, member.getId(), member.getStoreId(), employee == null ? null : employee.getId());
     }
 
@@ -99,7 +99,7 @@ public class CareHisRecordEntity extends BaseEntity<Integer> implements BatchSet
         MemberEntity member = agg.getMember();
         LocalDateTime now = LocalDateTime.now();
         if (Strings.isNullOrEmpty(context)) context = "无模板信息...";
-        return new CareHisRecordEntity(care.getCareId(), context, null, BusinessType.BIRTHDAYCARE, null, now,
+        return new CareHisRecordEntity(care.getCareId(), context, null, BusinessType.BIRTHDAYTOUCH, null, now,
                 SendChannel.WECHAT, member.getId(), member.getStoreId(), employee == null ? null : employee.getId());
     }
 
