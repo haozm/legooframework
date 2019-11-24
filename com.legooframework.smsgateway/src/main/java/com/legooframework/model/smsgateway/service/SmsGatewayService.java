@@ -45,8 +45,8 @@ public class SmsGatewayService extends BundleService {
                 try {
                     OrgEntity company = getBean(OrgEntityAction.class).loadComById(sendMessageAgg.getCompanyId());
                     StoEntity store = getBean(StoEntityAction.class).loadById(sendMessageAgg.getStoreId());
-                    sendMessageAgg.getBuilders().forEach(x -> x.setMobile("18588828127"));
-                    this.batchSaveMessage(company, store, sendMessageAgg.getBuilders(), null, null);
+                    sendMessageAgg.getMessagesBuilder().forEach(x -> x.changeMobile("18588828127"));
+                    this.batchSaveMessage(company, store, sendMessageAgg.getMessagesBuilder(), null, null);
                 } finally {
                     LoginContextHolder.clear();
                 }
@@ -56,7 +56,7 @@ public class SmsGatewayService extends BundleService {
             logger.debug(message.toString());
     }
 
-    public boolean batchSaveMessage(OrgEntity company, StoEntity store, List<SendMessage> msgBuilder,
+    public boolean batchSaveMessage(OrgEntity company, StoEntity store, List<SendMessageBuilder> msgBuilder,
                                     String msgTemplate, UserAuthorEntity user) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(msgBuilder));
         if (logger.isDebugEnabled())
@@ -64,7 +64,7 @@ public class SmsGatewayService extends BundleService {
                     msgBuilder.size(), user == null ? null : user.getId()));
 
         final int size = msgBuilder.size();
-        List<List<SendMessage>> partition = null;
+        List<List<SendMessageBuilder>> partition = null;
         if (size <= 30) {
             partition = Lists.partition(msgBuilder, 30);
         } else if (size <= 100) {
@@ -130,20 +130,20 @@ public class SmsGatewayService extends BundleService {
      * @param msgTemplate XXOO
      * @return OXOX
      */
-    private List<MsgEntity> initMessage(List<SendMessage> msgBuilder, String msgTemplate) {
+    private List<MsgEntity> initMessage(List<SendMessageBuilder> msgBuilder, String msgTemplate) {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         try {
             List<MsgEntity> instances = Lists.newArrayList();
-            for (SendMessage $temp : msgBuilder) {
+            for (SendMessageBuilder $temp : msgBuilder) {
                 String _template = $temp.getCtxTemplate().orElse(msgTemplate);
                 // NO template
                 if (Strings.isNullOrEmpty(_template)) {
-                    $temp.setError("未发送信息模版");
+                    $temp.withError("未发送信息模版");
                     continue;
                 }
                 // 无替换内容的模版
                 if (!StringUtils.containsAny(_template, "{", "}")) {
-                    $temp.setContext(_template);
+                    $temp.withContext(_template);
                     continue;
                 }
 
@@ -155,23 +155,23 @@ public class SmsGatewayService extends BundleService {
                         memberAgg = covariantService.loadMemberAgg($temp.getMemberId());
                     } catch (Exception e) {
                         logger.error(String.format("loadMemberAgg(%d) has error...", $temp.getMemberId()), e);
-                        $temp.setError(String.format("获取ID=%d的用户失败", $temp.getMemberId()));
+                        $temp.withError(String.format("获取ID=%d的用户失败", $temp.getMemberId()));
                         continue;
                     }
                     Preconditions.checkNotNull(memberAgg);
-                    $temp.setMemberInfo(memberAgg.getMember().getPhone(), memberAgg.getMember().getName());
-                    memberAgg.getWxUser().ifPresent(wx -> $temp.setWeixinInfo(wx.getId(), wx.getDevicesId()));
+                    $temp.withMember(memberAgg.getMember().getPhone(), memberAgg.getMember().getName());
+                    memberAgg.getWxUser().ifPresent(wx -> $temp.withWechat(wx.getId(), wx.getDevicesId()));
                     replace_map.putAll(memberAgg.toReplaceMap());
                 }
 
                 try {
-                    $temp.setContext(replaceTemplate(_template, replace_map));
+                    $temp.withContext(replaceTemplate(_template, replace_map));
                 } catch (Exception e) {
                     logger.error(String.format("fmtMsgTemplate(%s) has error...", _template), e);
-                    $temp.setError(String.format("格式化模板异常%s", _template));
+                    $temp.withError(String.format("格式化模板异常%s", _template));
                 }
             }
-            msgBuilder.forEach(msg -> instances.addAll(MsgEntity.createSMSMsg(msg)));
+            msgBuilder.forEach(builder -> instances.addAll(MsgEntity.createSMSMsg(builder)));
             return instances;
         } finally {
             LoginContextHolder.clear();

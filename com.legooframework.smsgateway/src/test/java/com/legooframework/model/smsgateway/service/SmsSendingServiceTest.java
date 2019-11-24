@@ -4,11 +4,6 @@ import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.JdbcQuerySupport;
 import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.StoEntityAction;
-import com.legooframework.model.covariant.entity.UserAuthorEntity;
-import com.legooframework.model.covariant.entity.UserAuthorEntityAction;
-import com.legooframework.model.membercare.entity.BusinessType;
-import com.legooframework.model.smsgateway.entity.AutoRunChannel;
-import com.legooframework.model.smsgateway.entity.SendMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -16,7 +11,6 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.util.ResourceUtils;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class SmsSendingServiceTest {
     //    HttpRequestExecutingMessageHandler
@@ -41,9 +35,9 @@ public class SmsSendingServiceTest {
                 .queryForList(sql, Integer.class);
         logger.debug(String.format("jdbcQuerySupport() mmdis is %d", cids.size()));
         StoEntity store = app.getBean(StoEntityAction.class).loadById(1120);
-        UserAuthorEntity user = app.getBean(UserAuthorEntityAction.class).loadUserById(15, 1);
-        List<SendMessage> msgList = cids.stream().map(x -> SendMessage.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
-                x, AutoRunChannel.SMS_ONLY)).collect(Collectors.toList());
+//        UserAuthorEntity user = app.getBean(UserAuthorEntityAction.class).loadUserById(15, 1);
+//        List<SendMessage> msgList = cids.stream().map(x -> SendMessage.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
+//                x, AutoRunChannel.SMS_ONLY)).collect(Collectors.toList());
 //        app.getBean(SmsGatewayService.class).batchSaveMessage(store, msgList,
 //                "【新的梦特娇】亲爱的{会员姓名}，内衣是贴身衣物，需要定期消毒喔，我们有专业的内衣消毒柜，您可以把内衣一起拿过来，为您一起消毒喔！", user);
     }
