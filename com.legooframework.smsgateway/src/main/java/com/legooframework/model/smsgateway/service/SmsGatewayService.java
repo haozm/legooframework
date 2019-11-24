@@ -135,6 +135,7 @@ public class SmsGatewayService extends BundleService {
         try {
             List<MsgEntity> instances = Lists.newArrayList();
             for (SendMessageBuilder $temp : msgBuilder) {
+                if ($temp.isError()) continue;
                 String _template = $temp.getCtxTemplate().orElse(msgTemplate);
                 // NO template
                 if (Strings.isNullOrEmpty(_template)) {

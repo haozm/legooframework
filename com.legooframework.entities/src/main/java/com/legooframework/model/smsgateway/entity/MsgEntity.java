@@ -189,21 +189,6 @@ public class MsgEntity {
         return new MsgEntity(smsId, content, phoneNo, wordCount, smsNum);
     }
 
-    // 构造4DB
-    MsgEntity(String smsId, int smsNum) {
-        this.content = null;
-        this.phoneNo = null;
-        this.smsId = smsId;
-        this.wordCount = 0;
-        this.smsNum = smsNum;
-        this.memberId = null;
-        this.memberName = null;
-        this.enbaled = true;
-        this.sendChannel = SendChannel.SMS;
-        this.deviceId = null;
-        this.weixinId = null;
-    }
-
     public void addPrefix(String prefix) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(prefix), "短信前缀不可以为空值...");
         String _prefix = String.format("【%s】", prefix);

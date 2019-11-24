@@ -85,6 +85,10 @@ public class RetailFactAgg {
         return StringUtils.equals("0000", this.errCode) || StringUtils.equals("0004", this.errCode);
     }
 
+    public String getErrMsg() {
+        return errMsg;
+    }
+
     public Integer getCompanyId() {
         return retailFact.getCompanyId();
     }

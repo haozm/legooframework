@@ -79,6 +79,7 @@ public class ReactorService extends BundleService {
                     builder.withSendMode(SendMode.AutoJob).withAutoRunChannel(AutoRunChannel.SMS_ONLY)
                             .withJobId(agg.getRetailFact().getId())
                             .withContext(agg.getContent()).withMember(0, agg.getMobile().orElse(null), agg.getMemberName().orElse(null));
+                    if (agg.hasError()) builder.withError(agg.getErrMsg());
                     sendMessageAgg.addMessageBuilder(builder);
                     Message<SendMessageAgg> msg_request = MessageBuilder.withPayload(sendMessageAgg)
                             .setHeader("EventName", "sendMessage").build();
