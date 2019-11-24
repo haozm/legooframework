@@ -1,15 +1,15 @@
-﻿<project name="com.anlink" basedir="." default="init">
+﻿<project name="com.anlink-1" basedir="." default="init">
     <tstamp>
         <format property="build.current.time" pattern="yyyyMMdd_HHmmss"/>
     </tstamp>
-    <property name="jdk.home" value="C:/JavaSpace/etc/jdk1.8.0_181"/>
+    <property name="jdk.home" value="/Library/Java/JavaVirtualMachines/jdk1.8.0_201.jdk/Contents/Home"/>
     <property name="spring.profiles.active" value="devp"/>
     <property name="project.name" value="webwork"/>
     <property name="project.version" value="1.0.0"/>
     <property name="src.java" value="src/main/java"/>
     <property name="src.resource" value="src/main/resource"/>
 
-    <property name="apps.root" value="C:/JavaSpace/service/apps"/>
+    <property name="apps.root" value="/Users/haoxiaojie/Documents/ideaspace/apache-tomcat-9.0.13/shared"/>
     <property name="third.libs" value="${apps.root}/extlib"/>
     <property name="lib.dir" value="${apps.root}/lib"/>
     <property name="resources.dir" value="${apps.root}/resources"/>
@@ -35,222 +35,7 @@
         <fileset dir="${third.libs}" includes="*.jar"/>
     </path>
 
-    <path id="ent_classpath">
-        <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-        <fileset dir="${third.libs}" includes="*.jar"/>
-        <fileset dir="${lib.dir}" includes="legoo-core-*.jar"/>
-    </path>
-
-    <path id="commons_classpath">
-        <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-        <fileset dir="${third.libs}" includes="*.jar"/>
-        <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar"/>
-    </path>
-    <path id="crm_classpath">
-        <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-        <fileset dir="${third.libs}" includes="*.jar"/>
-        <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar"/>
-    </path>
-
-    <target name="jar-regiscenter">
-        <path id="regiscenter_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.regiscenter"/>
-            <param name="short.name" value="regiscenter"/>
-            <reference refid="regiscenter_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-monitor-jar">
-        <path id="monitor_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.monitor"/>
-            <param name="short.name" value="monitor"/>
-            <reference refid="monitor_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-monitor-war">
-        <antcall target="webapp-new">
-            <param name="app.name" value="monitor"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-            <param name="jar.includes" value="legoo-core-*.jar,legoo-monitor-*.jar"/>
-            <param name="resources.includes" value="**/core/**,**/monitor/**"/>
-        </antcall>
-    </target>
-    <target name="install-httpproxy-jar">
-        <path id="httpproxy_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.httpproxy"/>
-            <param name="short.name" value="httpproxy"/>
-            <reference refid="httpproxy_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-httpproxy-war">
-        <antcall target="webapp-new">
-            <param name="app.name" value="httpproxy"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-            <param name="jar.includes" value="legoo-core-*.jar,legoo-httpproxy-*.jar"/>
-            <param name="resources.includes" value="**/core/**,**/httpproxy/**"/>
-        </antcall>
-    </target>
-    <target name="install-salesrecords-jar">
-        <path id="salesrecords_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.salesrecords"/>
-            <param name="short.name" value="salesrecords"/>
-            <reference refid="salesrecords_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-salesrecords-war">
-        <antcall target="webapp-new">
-            <param name="app.name" value="salesrecords"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-            <param name="jar.includes"
-                   value="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-salesrecords-*.jar"/>
-            <param name="resources.includes"
-                   value="**/core/**,**/batchsupport/**,**/entities/**,**/covariant/**,**/salesrecords/**"/>
-        </antcall>
-    </target>
-    <target name="install-web-regiscenter">
-        <antcall target="webapp-new">
-            <param name="app.name" value="regiscenter"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <copy todir="${webapp.root}/regiscenter/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar,legoo-jwtoken-*.jar,legoo-regiscenter-*.jar"/>
-        </copy>
-        <copy todir="${webapp.root}/regiscenter/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}"
-                     includes="**/core/**,**/entities/**,**/crmadapter/**,**/jwtoken/**,**/regiscenter/**"/>
-        </copy>
-    </target>
-
-    <target name="jar-membercare">
-        <path id="care_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-batchsupport-*.jar,
-                     legoo-jwtoken-*.jar,legoo-crmadapter-*.jar,legoo-salesrecords-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.membercare"/>
-            <param name="short.name" value="membercare"/>
-            <reference refid="care_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-web-membercare">
-        <antcall target="webapp-new">
-            <param name="app.name" value="membercare"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <delete dir="${webapp.root}/membercare/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/membercare/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar,legoo-batchsupport-*.jar,
-                     legoo-salesrecords-*.jar,legoo-jwtoken-*.jar,legoo-membercare-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/membercare/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/membercare/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}" includes="**/core/**,**/entities/**,**/crmadapter/**,**/batchsupport/**,
-            **/membercare/**,**/salesrecords/**,**/jwtoken/**"/>
-        </copy>
-    </target>
-    <target name="jar-templatemgs">
-        <path id="templatemgs_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-jwtoken-*.jar,legoo-crmadapter-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.templatemgs"/>
-            <param name="short.name" value="templatemgs"/>
-            <reference refid="templatemgs_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-web-templatemgs">
-        <antcall target="webapp-new">
-            <param name="app.name" value="templatemgs"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <delete dir="${webapp.root}/templatemgs/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/templatemgs/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-jwtoken-*.jar,legoo-crmadapter-*.jar,legoo-templatemgs-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/templatemgs/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/templatemgs/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}"
-                     includes="**/core/**,**/entities/**,**/crmadapter/**,**/jwtoken/**,**/templatemgs/**"/>
-        </copy>
-    </target>
-    <target name="jar-picturemgn">
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.picturemgn"/>
-            <param name="short.name" value="picturemgn"/>
-            <reference refid="commons_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="jar-insurance">
-        <path id="insurance_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-dict-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.insurance"/>
-            <param name="short.name" value="insurance"/>
-            <reference refid="insurance_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-web-insurance">
-        <antcall target="webapp-new">
-            <param name="app.name" value="insurance"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <delete dir="${webapp.root}/insurance/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/insurance/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-dict-*.jar,legoo-insurance-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/insurance/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/insurance/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}" includes="**/core/**,**/entities/**,**/dict/**,**/insurance/**"/>
-        </copy>
-    </target>
-    <target name="jar-core">
+    <target name="install-core-jar">
         <path id="core_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
@@ -261,7 +46,8 @@
             <reference refid="core_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="jar-batch">
+
+    <target name="install-batchsupport-jar" depends="install-core-jar">
         <path id="batch_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
@@ -273,26 +59,21 @@
             <reference refid="batch_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="install-entity-jar">
+
+    <target name="install-entity-jar" depends="install-core-jar">
+        <path id="entity_classpath">
+            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
+            <fileset dir="${third.libs}" includes="*.jar"/>
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar"/>
+        </path>
         <antcall target="commons-task">
             <param name="model.name" value="com.legooframework.entities"/>
             <param name="short.name" value="entities"/>
-            <reference refid="ent_classpath" torefid="bundle_classpath"/>
+            <reference refid="entity_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="install-smsprovider-jar">
-        <path id="smsprovider_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.smsprovider"/>
-            <param name="short.name" value="smsprovider"/>
-            <reference refid="smsprovider_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-covariant-jar">
+
+    <target name="install-covariant-jar" depends="install-entity-jar">
         <path id="covariant_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
@@ -304,7 +85,21 @@
             <reference refid="covariant_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="install-takecare-jar">
+
+    <target name="install-smsprovider-jar" depends="install-covariant-jar">
+        <path id="smsprovider_classpath">
+            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
+            <fileset dir="${third.libs}" includes="*.jar"/>
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar"/>
+        </path>
+        <antcall target="commons-task">
+            <param name="model.name" value="com.legooframework.smsprovider"/>
+            <param name="short.name" value="smsprovider"/>
+            <reference refid="smsprovider_classpath" torefid="bundle_classpath"/>
+        </antcall>
+    </target>
+
+    <target name="install-takecare-jar" depends="install-covariant-jar">
         <path id="takecare_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
@@ -327,39 +122,8 @@
             <param name="resources.includes" value="**/core/**,**/entities/**,**/covariant/**,**/takecare/**"/>
         </antcall>
     </target>
-    <target name="install-autotask-jar">
-        <path id="autotask_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-covariant-*.jar,legoo-batchsupport-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.autotask"/>
-            <param name="short.name" value="autotask"/>
-            <reference refid="autotask_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-autotask-war">
-        <antcall target="webapp-new">
-            <param name="app.name" value="autotask"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-            <param name="jar.includes"
-                   value="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar,legoo-autotask-*.jar"/>
-            <param name="resources.includes" value="**/core/**,**/batchsupport/**,**/covariant/**,**/autotask/**"/>
-        </antcall>
-        <delete dir="${webapp.root}/autotask/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/autotask/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar,legoo-autotask-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/autotask/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/autotask/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}" includes="**/core/**,**/batchsupport/**,**/covariant/**,**/autotask/**"/>
-        </copy>
-    </target>
-    <target name="install-reactor-jar">
+
+    <target name="install-reactor-jar" depends="install-covariant-jar,install-batchsupport-jar">
         <path id="reactor_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
@@ -386,90 +150,8 @@
                    **/reactor/**,**/smsprovider/**,**/smsgateway/**"/>
         </antcall>
     </target>
-    <target name="install-statistical-jar">
-        <path id="statistical_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.statistical"/>
-            <param name="short.name" value="statistical"/>
-            <reference refid="statistical_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-statistical-war">
-        <antcall target="webapp-new">
-            <param name="app.name" value="statistical"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-            <param name="jar.includes"
-                   value="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-statistical-*.jar"/>
-            <param name="resources.includes" value="**/core/**,**/entities/**,**/covariant/**,**/statistical/**"/>
-        </antcall>
-    </target>
-    <target name="jar-wechatcmd">
-        <path id="wechatcmd_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.wechatcmd"/>
-            <param name="short.name" value="wechatcmd"/>
-            <reference refid="wechatcmd_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-wechatcircle-jar">
-        <path id="wechatcircle_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.wechatcircle"/>
-            <param name="short.name" value="wechatcircle"/>
-            <reference refid="wechatcircle_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-wechatcircle-war">
-        <antcall target="webapp-new">
-            <param name="app.name" value="wechatcircle"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-            <param name="jar.includes"
-                   value="legoo-core-*.jar,legoo-wechatcircle-*.jar,legoo-entities-*.jar"/>
-            <param name="resources.includes" value="**/core/**,**/wechatcircle/**,**/entities/**"/>
-        </antcall>
-    </target>
-    <target name="install-smsgateway-jar">
-        <path id="smsgateway_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-smsprovider-*.jar,legoo-covariant-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.smsgateway"/>
-            <param name="short.name" value="smsgateway"/>
-            <reference refid="smsgateway_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-smsgateway-war">
-        <antcall target="webapp-new">
-            <param name="app.name" value="smsgateway"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-            <param name="jar.includes"
-                   value="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-smsgateway-*.jar,legoo-smsprovider-*.jar"/>
-            <param name="resources.includes"
-                   value="**/core/**,**/entities/**,**/covariant/**,**/smsgateway/**,**/smsprovider/**"/>
-        </antcall>
-    </target>
-    <target name="install-smsresult-jar">
+
+    <target name="install-smsresult-jar" depends="install-smsprovider-jar">
         <path id="smsresult_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
@@ -494,210 +176,127 @@
                    value="**/core/**,**/entities/**,**/covariant/**,**/smsprovider/**,**/smsresult/**"/>
         </antcall>
     </target>
-    <target name="install-dict-jar">
-        <path id="dict_classpath">
+
+    <target name="install-smsgateway-jar" depends="install-smsprovider-jar">
+        <path id="smsgateway_classpath">
+            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
+            <fileset dir="${third.libs}" includes="*.jar"/>
+            <fileset dir="${lib.dir}"
+                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-smsprovider-*.jar,legoo-covariant-*.jar"/>
+        </path>
+        <antcall target="commons-task">
+            <param name="model.name" value="com.legooframework.smsgateway"/>
+            <param name="short.name" value="smsgateway"/>
+            <reference refid="smsgateway_classpath" torefid="bundle_classpath"/>
+        </antcall>
+    </target>
+    <target name="install-smsgateway-war">
+        <antcall target="webapp-new">
+            <param name="app.name" value="smsgateway"/>
+            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
+            <param name="wepapp.root" value="${webapp.root}"/>
+            <param name="vfs.root" value="file:${resources.dir}"/>
+            <param name="jar.includes"
+                   value="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-smsgateway-*.jar,legoo-smsprovider-*.jar"/>
+            <param name="resources.includes"
+                   value="**/core/**,**/entities/**,**/covariant/**,**/smsgateway/**,**/smsprovider/**"/>
+        </antcall>
+    </target>
+
+    <target name="install-wechatcircle-jar" depends="install-entity-jar">
+        <path id="wechatcircle_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
             <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar"/>
         </path>
         <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.dict"/>
-            <param name="short.name" value="dict"/>
-            <reference refid="dict_classpath" torefid="bundle_classpath"/>
+            <param name="model.name" value="com.legooframework.wechatcircle"/>
+            <param name="short.name" value="wechatcircle"/>
+            <reference refid="wechatcircle_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="jar-devices">
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.devices"/>
-            <param name="short.name" value="devices"/>
-            <reference refid="commons_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-
-    <target name="jar-commons">
-        <path id="commons_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.commons"/>
-            <param name="short.name" value="commons"/>
-            <reference refid="commons_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="jar-crmadapter">
-        <path id="crmadapter_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-jwtoken-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.crmadapter"/>
-            <param name="short.name" value="crmadapter"/>
-            <reference refid="crmadapter_classpath" torefid="bundle_classpath"/>
+    <target name="install-wechatcircle-war">
+        <antcall target="webapp-new">
+            <param name="app.name" value="wechatcircle"/>
+            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
+            <param name="wepapp.root" value="${webapp.root}"/>
+            <param name="vfs.root" value="file:${resources.dir}"/>
+            <param name="jar.includes"
+                   value="legoo-core-*.jar,legoo-wechatcircle-*.jar,legoo-entities-*.jar"/>
+            <param name="resources.includes" value="**/core/**,**/wechatcircle/**,**/entities/**"/>
         </antcall>
     </target>
 
-    <target name="jar-meta">
-        <path id="meta_classpath">
+    <target name="install-statistical-jar" depends="install-covariant-jar">
+        <path id="statistical_classpath">
+            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
+            <fileset dir="${third.libs}" includes="*.jar"/>
+            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar"/>
+        </path>
+        <antcall target="commons-task">
+            <param name="model.name" value="com.legooframework.statistical"/>
+            <param name="short.name" value="statistical"/>
+            <reference refid="statistical_classpath" torefid="bundle_classpath"/>
+        </antcall>
+    </target>
+    <target name="install-statistical-war">
+        <antcall target="webapp-new">
+            <param name="app.name" value="statistical"/>
+            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
+            <param name="wepapp.root" value="${webapp.root}"/>
+            <param name="vfs.root" value="file:${resources.dir}"/>
+            <param name="jar.includes"
+                   value="legoo-core-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-statistical-*.jar"/>
+            <param name="resources.includes" value="**/core/**,**/entities/**,**/covariant/**,**/statistical/**"/>
+        </antcall>
+    </target>
+
+    <target name="install-httpproxy-jar" depends="install-core-jar">
+        <path id="httpproxy_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
             <fileset dir="${lib.dir}" includes="legoo-core-*.jar"/>
         </path>
         <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.meta"/>
-            <param name="short.name" value="meta"/>
-            <reference refid="meta_classpath" torefid="bundle_classpath"/>
+            <param name="model.name" value="com.legooframework.httpproxy"/>
+            <param name="short.name" value="httpproxy"/>
+            <reference refid="httpproxy_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-
-    <target name="install-web-meta">
+    <target name="install-httpproxy-war">
         <antcall target="webapp-new">
-            <param name="app.name" value="meta"/>
+            <param name="app.name" value="httpproxy"/>
             <param name="spring.profiles.active" value="${spring.profiles.active}"/>
             <param name="wepapp.root" value="${webapp.root}"/>
             <param name="vfs.root" value="file:${resources.dir}"/>
+            <param name="jar.includes" value="legoo-core-*.jar,legoo-httpproxy-*.jar"/>
+            <param name="resources.includes" value="**/core/**,**/httpproxy/**"/>
         </antcall>
-        <delete dir="${webapp.root}/meta/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/meta/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/meta/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/meta/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}" includes="**/core/**,**/meta/**"/>
-        </copy>
     </target>
 
-    <target name="jar-scheduler">
-        <path id="scheduler_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.scheduler"/>
-            <param name="short.name" value="scheduler"/>
-            <reference refid="scheduler_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-web-scheduler">
-        <antcall target="webapp-new">
-            <param name="app.name" value="scheduler"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <delete dir="${webapp.root}/scheduler/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/scheduler/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-scheduler-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/scheduler/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/scheduler/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}" includes="**/core/**,**/entities/**,**/scheduler/**"/>
-        </copy>
-    </target>
-
-    <target name="jar-crmjob">
-        <path id="crmjob_classpath">
+    <target name="install-salesrecords-jar" depends="install-batchsupport-jar,install-covariant-jar">
+        <path id="salesrecords_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
             <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar,legoo-scheduler-*.jar,legoo-wechatcmd-*.jar"/>
+                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-batchsupport-*.jar,legoo-covariant-*.jar"/>
         </path>
         <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.crmjob"/>
-            <param name="short.name" value="crmjob"/>
-            <reference refid="crmjob_classpath" torefid="bundle_classpath"/>
+            <param name="model.name" value="com.legooframework.salesrecords"/>
+            <param name="short.name" value="salesrecords"/>
+            <reference refid="salesrecords_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-
-    <target name="install-web-crmjob">
+    <target name="install-salesrecords-war">
         <antcall target="webapp-new">
-            <param name="app.name" value="crmjob"/>
+            <param name="app.name" value="salesrecords"/>
             <param name="spring.profiles.active" value="${spring.profiles.active}"/>
             <param name="wepapp.root" value="${webapp.root}"/>
             <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <delete dir="${webapp.root}/crmjob/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/crmjob/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}"
-                     includes="legoo-core-*.jar,legoo-entities-*.jar,legoo-crmadapter-*.jar,legoo-scheduler-*.jar,legoo-wechatcmd-*.jar,legoo-crmjob-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/crmjob/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/crmjob/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}"
-                     includes="**/core/**,**/entities/**,**/crmadapter/**,**/scheduler/**,**/wechatcmd/**,**/crmjob/**"/>
-        </copy>
-    </target>
-
-    <target name="jar-jwtservice">
-        <path id="jwtservice_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.jwtservice"/>
-            <param name="short.name" value="jwtservice"/>
-            <reference refid="jwtservice_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-web-jwtservice">
-        <antcall target="webapp-new">
-            <param name="app.name" value="jwtservice"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <delete dir="${webapp.root}/jwtservice/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/jwtservice/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}" includes="legoo-core-*.jar,legoo-jwtservice-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/jwtservice/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/jwtservice/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
-            <fileset dir="${config.dir}" includes="**/core/**,**/jwtservice/**"/>
-        </copy>
-    </target>
-    <target name="jar-httpsession">
-        <path id="httpsession_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-        </path>
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.httpsession"/>
-            <param name="short.name" value="httpsession"/>
-            <reference refid="httpsession_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-web-httpsession">
-        <antcall target="webapp-new">
-            <param name="app.name" value="httpsession"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <delete dir="${webapp.root}/httpsession/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/httpsession/WEB-INF/lib" overwrite="true" encoding="UTF-8">
-            <fileset dir="${lib.dir}" includes="legoo-httpsession-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/httpsession/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/httpsession/WEB-INF/classes" encoding="UTF-8" overwrite="true" flatten="false">
-            <fileset dir="${config.dir}" includes="**/httpsession/**"/>
-        </copy>
-    </target>
-    <target name="jar-jwtoken">
-        <antcall target="commons-task">
-            <param name="model.name" value="com.legooframework.jwtoken"/>
-            <param name="short.name" value="jwtoken"/>
-            <reference refid="base_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-web-picturemgn">
-        <antcall target="webapp-new">
-            <param name="app.name" value="picturemgn"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
+            <param name="jar.includes"
+                   value="legoo-core-*.jar,legoo-batchsupport-*.jar,legoo-entities-*.jar,legoo-covariant-*.jar,legoo-salesrecords-*.jar"/>
+            <param name="resources.includes"
+                   value="**/core/**,**/batchsupport/**,**/entities/**,**/covariant/**,**/salesrecords/**"/>
         </antcall>
     </target>
 
@@ -732,161 +331,6 @@
         <copy todir="${resources.dir}/META-INF/" overwrite="true" encoding="UTF-8">
             <fileset dir="${model.name}/${src.resource}/META-INF/"
                      excludes="**/spring-model-cfg.xml,**/legoo-model-cfg.xml,**/tenants-route-cfg.xml"/>
-        </copy>
-        <echo message="[-------------- [Bundle:${model.name} build success (~_~) ] --------------]"/>
-    </target>
-    <target name="jar-rfm">
-        <path id="rmf_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-crmbase-1.0.0.jar"/>
-        </path>
-        <antcall target="crmbase-task">
-            <param name="model.name" value="com.legooframework.rfm"/>
-            <param name="short.name" value="rfm"/>
-            <reference refid="rmf_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="jar-families">
-        <path id="families_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-crmbase-1.0.0.jar,legoo-core-1.0.0.jar"/>
-        </path>
-        <antcall target="crmbase-task">
-            <param name="model.name" value="com.legooframework.families"/>
-            <param name="short.name" value="families"/>
-            <reference refid="families_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="jar-upload">
-        <path id="upload_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-        </path>
-        <antcall target="crmbase-task">
-            <param name="model.name" value="com.legooframework.upload"/>
-            <param name="short.name" value="upload"/>
-            <reference refid="upload_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-web-upload">
-        <antcall target="webapp-new">
-            <param name="app.name" value="upload"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <delete dir="${webapp.root}/upload/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/upload/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}" includes="legoo-upload-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/upload/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/upload/WEB-INF/classes" encoding="UTF-8" overwrite="true" flatten="false">
-            <fileset dir="${config.dir}" includes="**/upload/**"/>
-        </copy>
-    </target>
-    <target name="jar-wechat">
-        <path id="wechat_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-crmbase-*.jar,legoo-crmadapter-*.jar"/>
-        </path>
-        <antcall target="crmbase-task">
-            <param name="model.name" value="com.legooframework.wechat"/>
-            <param name="short.name" value="wechat"/>
-            <reference refid="wechat_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="jar-labels">
-        <path id="labels_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-crmbase-*.jar,legoo-wechat-*.jar"/>
-        </path>
-        <antcall target="crmbase-task">
-            <param name="model.name" value="com.legooframework.labels"/>
-            <param name="short.name" value="labels"/>
-            <reference refid="labels_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="jar-material">
-        <path id="material_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}" includes="legoo-crmbase-*.jar,legoo-wechat-*.jar"/>
-        </path>
-        <antcall target="crmbase-task">
-            <param name="model.name" value="com.legooframework.material"/>
-            <param name="short.name" value="material"/>
-            <reference refid="material_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="jar-crmbase">
-        <path id="crmbase_classpath">
-            <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
-            <fileset dir="${third.libs}" includes="*.jar"/>
-            <fileset dir="${lib.dir}"
-                     includes="legoo-jwtoken-1.0.0.jar,legoo-crmadapter-1.0.0.jar,legoo-entities-1.0.0.jar"/>
-        </path>
-        <antcall target="crmbase-task">
-            <param name="model.name" value="com.legooframework.crmbase"/>
-            <param name="short.name" value="crmbase"/>
-            <reference refid="crmbase_classpath" torefid="bundle_classpath"/>
-        </antcall>
-    </target>
-    <target name="install-web-crmbase">
-        <antcall target="webapp-new">
-            <param name="app.name" value="crmbase"/>
-            <param name="spring.profiles.active" value="${spring.profiles.active}"/>
-            <param name="wepapp.root" value="${webapp.root}"/>
-            <param name="vfs.root" value="file:${resources.dir}"/>
-        </antcall>
-        <delete dir="${webapp.root}/crmbase/WEB-INF/lib" includes="*.jar"/>
-        <copy todir="${webapp.root}/crmbase/WEB-INF/lib" encoding="UTF-8">
-            <fileset dir="${lib.dir}"
-                     includes="legoo-crmbase-*.jar,legoo-jwtoken-*.jar,legoo-rfm-*.jar,legoo-wechat-*.jar,legoo-crmadapter-*.jar,
-					 legoo-core-*.jar,legoo-entities-*.jar,legoo-jwtoken-*.jar,legoo-labels-*.jar,legoo-material-*.jar,legoo-families-*.jar"/>
-        </copy>
-        <delete dir="${webapp.root}/crmbase/WEB-INF/classes" includes="**/*.xml"/>
-        <copy todir="${webapp.root}/crmbase/WEB-INF/classes" overwrite="true" filtering="true" encoding="UTF-8"
-              flatten="false">
-            <fileset dir="${config.dir}"
-                     includes="**/crmbase/**,**/rfm/**,**/jwtoken/**,**/wechat/**,**/labels/**,**/material/**,**/crmadapter/**,**/core/**,**/entities/**,**/jwtoken/**,**/families/**"/>
-        </copy>
-    </target>
-    <target name="crmbase-task">
-        <delete dir="${out.dir}/${short.name}"/>
-        <mkdir dir="${out.dir}/${short.name}/classes"/>
-        <echo message="[-----------------  Start Complie ${model.name}   -----------------]"/>
-        <javac encoding="utf-8"
-               source="8"
-               target="8"
-               debug="true"
-               debuglevel="lines,vars,source"
-               failonerror="true"
-               srcdir="${model.name}/${src.java}"
-               destdir="${out.dir}/${short.name}/classes"
-               includes="com/**/*.java"
-               includeantruntime="no"
-               fork="true"
-               executable="${jdk.home}/bin/javac">
-            <classpath refid="bundle_classpath"/>
-            <compilerarg value="-Xlint:unchecked"/>
-            <compilerarg value="-parameters"/>
-        </javac>
-        <echo message="[-----------------  End Complie ${model.name}   -----------------]"/>
-        <jar destfile="${lib.dir}/legoo-${short.name}-${project.version}.jar"
-             basedir="${out.dir}/${short.name}/classes"/>
-        <delete dir="${config.dir}/META-INF/${short.name}"/>
-        <copy todir="${config.dir}/META-INF/" encoding="UTF-8">
-            <fileset dir="${model.name}/${src.resource}/META-INF/"
-                     includes="**/spring-*-cfg.xml,**/init-company-sql.sql"/>
-        </copy>
-        <delete dir="${resources.dir}/META-INF/${short.name}/"/>
-        <copy todir="${resources.dir}/META-INF/" overwrite="true" encoding="UTF-8">
-            <fileset dir="${model.name}/${src.resource}/META-INF/"
-                     excludes="**/spring-*-cfg.xml,**/init-company-sql.sql"/>
         </copy>
         <echo message="[-------------- [Bundle:${model.name} build success (~_~) ] --------------]"/>
     </target>
@@ -945,18 +389,6 @@
         <echo message="[-----------------  End scp webapp ${app.name}  svr01 -----------------]"/>
     </target>
 
-    <target name="install-web-manager">
-        <property name="tomcat.root" value="C:/workspace/service/apache-tomcat-9.0.13"/>
-        <property name="manager.root" value="com.legooframework.webwork/webroot/site/manager"/>
-        <mkdir dir="${tomcat.root}/webapps/manager"/>
-        <copy todir="${tomcat.root}/webapps/manager" encoding="UTF-8" overwrite="true">
-            <fileset dir="${manager.root}"/>
-        </copy>
-        <copy encoding="UTF-8" overwrite="true" todir="${tomcat.root}/conf">
-            <fileset dir="${manager.root}" includes="tomcat-users.xml"/>
-        </copy>
-        <echo message="[-----------------  End develop ${manager.root} devp -----------------]"/>
-    </target>
 
     <target name="hxj">
         <property name="model.name" value="crmold"/>
