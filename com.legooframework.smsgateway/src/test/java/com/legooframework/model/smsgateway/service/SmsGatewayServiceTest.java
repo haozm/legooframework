@@ -4,11 +4,11 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.runtime.LoginContextHolder;
 import com.legooframework.model.core.jdbc.JdbcQuerySupport;
-import com.legooframework.model.covariant.entity.*;
-import com.legooframework.model.membercare.entity.BusinessType;
-import com.legooframework.model.smsgateway.entity.AutoRunChannel;
+import com.legooframework.model.covariant.entity.OrgEntityAction;
+import com.legooframework.model.covariant.entity.StoEntity;
+import com.legooframework.model.covariant.entity.StoEntityAction;
+import com.legooframework.model.covariant.entity.UserAuthorEntityAction;
 import com.legooframework.model.smsgateway.entity.SendMessageAgg;
-import com.legooframework.model.smsgateway.entity.SendMessage;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,7 +27,6 @@ import javax.annotation.Resource;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
@@ -43,14 +42,14 @@ public class SmsGatewayServiceTest {
     public void smsgatewayMessageHandler() {
         LoginContextHolder.setIfNotExitsAnonymousCtx();
         SendMessageAgg sendMessageAgg = new SendMessageAgg(1, 1120);
-        SendMessage builder = SendMessage.createWithoutJobWithTemplate(
-                BusinessType.RIGHTS_AND_INTERESTS_CARE, 0, AutoRunChannel.SMS_ONLY,
-                "尊敬的赵晋一：您于2019-11-23 11:56 在测试门店二1消费了1,332.00，现剩余积分：619131.0。如有疑问请致电：13256485726。");
-        builder.setMobile("18588828127");
-        sendMessageAgg.addBuilder(builder);
-        OrgEntity company = orgEntityAction.loadComById(sendMessageAgg.getCompanyId());
-        StoEntity store = stoEntityAction.loadById(sendMessageAgg.getStoreId());
-        smsGatewayService.batchSaveMessage(company, store, sendMessageAgg.getBuilders(), null, null);
+//        SendMessage builder = SendMessage.createWithoutJobWithTemplate(
+//                BusinessType.RIGHTS_AND_INTERESTS_CARE, 0, AutoRunChannel.SMS_ONLY,
+//                "尊敬的赵晋一：您于2019-11-23 11:56 在测试门店二1消费了1,332.00，现剩余积分：619131.0。如有疑问请致电：13256485726。");
+//        builder.setMobile("18588828127");
+//        sendMessageAgg.addBuilder(builder);
+//        OrgEntity company = orgEntityAction.loadComById(sendMessageAgg.getCompanyId());
+//        StoEntity store = stoEntityAction.loadById(sendMessageAgg.getStoreId());
+//        smsGatewayService.batchSaveMessage(company, store, sendMessageAgg.getBuilders(), null, null);
     }
 
     @Test
@@ -88,9 +87,9 @@ public class SmsGatewayServiceTest {
         List<Integer> cids = jdbcQuerySupport.getJdbcTemplate().queryForList(sql, Integer.class);
         logger.debug(String.format("jdbcQuerySupport() mmdis is %d", cids.size()));
         StoEntity store = stoEntityAction.loadById(15);
-        UserAuthorEntity user = userAuthorEntityAction.loadUserById(15, 1);
-        List<SendMessage> msgList = cids.stream().map(x -> SendMessage.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
-                x, AutoRunChannel.SMS_ONLY)).collect(Collectors.toList());
+//        UserAuthorEntity user = userAuthorEntityAction.loadUserById(15, 1);
+//        List<SendMessage> msgList = cids.stream().map(x -> SendMessage.createWithoutJobNoTemplate(BusinessType.BIRTHDAYTOUCH,
+//                x, AutoRunChannel.SMS_ONLY)).collect(Collectors.toList());
 //        smsGatewayService.batchSaveMessage(store, msgList,
 //                "【新的梦特娇】亲爱的{会员姓名}，感谢您的信任，很荣幸为您挑选到合适您的产品，请按我们沟通的洗涤方法洗涤，祝您生活愉快！", user);
     }

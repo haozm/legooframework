@@ -1,10 +1,8 @@
 package com.legooframework.model.smsresult.entity;
 
-import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.BaseEntity;
 import com.legooframework.model.core.jdbc.BatchSetter;
 import com.legooframework.model.core.jdbc.ResultSetUtil;
-import com.legooframework.model.smsgateway.entity.MsgEntity;
 import com.legooframework.model.smsprovider.entity.SMSChannel;
 import org.joda.time.LocalDateTime;
 
@@ -16,7 +14,7 @@ import java.util.Map;
 public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
 
     private final Integer companyId, storeId;
-    private final MsgEntity sendSms;
+    private final SMSDto smsDto;
     private final SMSChannel smsChannel;
     private String account;
     private final Long smsExt;
@@ -38,20 +36,20 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
         ps.setObject(3, getStoreId());
         ps.setObject(4, getSmsChannel().getChannel());
         ps.setObject(5, sendState.getState());
-        ps.setObject(6, getMobile());
-        ps.setObject(7, getSendSms().getSmsNum());
-        ps.setObject(8, getSendSms().getWordCount());
-        ps.setObject(9, getSendSms().getContent());
+        ps.setObject(6, smsDto.getPhoneNo());
+        ps.setObject(7, smsDto.getSmsNum());
+        ps.setObject(8, smsDto.getWordCount());
+        ps.setObject(9, smsDto.getContent());
         ps.setObject(10, getSmsExt());
         ps.setObject(11, getCompanyId());
     }
 
-    public SMSResultEntity(Integer companyId, Integer storeId, MsgEntity sendSms, int smsChannel, long smsExt) {
-        super(sendSms.getSmsId(), companyId.longValue(), -1L);
+    public SMSResultEntity(Integer companyId, Integer storeId, SMSDto smsDto, int smsChannel, long smsExt) {
+        super(smsDto.getSmsId(), companyId.longValue(), -1L);
         this.companyId = companyId;
         this.storeId = storeId;
         this.smsExt = smsExt;
-        this.sendSms = sendSms;
+        this.smsDto = smsDto;
         this.finalState = FinalState.WAITING;
         this.smsChannel = SMSChannel.paras(smsChannel);
         this.sendState = SendState.WAITING;
@@ -64,7 +62,7 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
             this.storeId = ResultSetUtil.getObject(res, "storeId", Integer.class);
             this.smsExt = ResultSetUtil.getObject(res, "smsExt", Long.class);
             this.account = ResultSetUtil.getOptString(res, "sms_account", null);
-            this.sendSms = MsgEntity.create4Sending(id, ResultSetUtil.getString(res, "smsContext"),
+            this.smsDto = new SMSDto(id, ResultSetUtil.getString(res, "smsContext"),
                     ResultSetUtil.getString(res, "phoneNo"), res.getInt("wordCount"), res.getInt("smsCount"));
             this.smsChannel = SMSChannel.paras(res.getInt("smsChannle"));
 
@@ -94,17 +92,10 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
         return storeId == null ? -1 : storeId;
     }
 
-    private MsgEntity getSendSms() {
-        return sendSms;
-    }
-
     private SMSChannel getSmsChannel() {
         return smsChannel;
     }
 
-    private String getMobile() {
-        return sendSms.getPhoneNo();
-    }
 
     public boolean hasResult() {
         return FinalState.DELIVRD == this.finalState || FinalState.UNDELIV == this.finalState;
@@ -130,25 +121,25 @@ public class SMSResultEntity extends BaseEntity<String> implements BatchSetter {
         params.put("smsExt", smsExt);
         params.put("smsChannel", smsChannel.getChannel());
         params.put("sendState", sendState.getState());
-        params.put("phoneNo", sendSms.getPhoneNo());
-        params.put("smsCount", sendSms.getSmsNum());
-        params.put("wordCount", sendSms.getWordCount());
-        params.put("smsContext", sendSms.getContent());
+        params.put("phoneNo", smsDto.getPhoneNo());
+        params.put("smsCount", smsDto.getSmsNum());
+        params.put("wordCount", smsDto.getWordCount());
+        params.put("smsContext", smsDto.getContent());
         params.put("finalState", finalState.getState());
         return params;
     }
 
-    public Map<String, Object> toView4SyncState(LocalDateTime start, LocalDateTime end) {
-        Map<String, Object> params = Maps.newHashMap();
-        params.put("id", getId());
-        params.put("smsExt", getSmsExt());
-        params.put("smsChannle", getSmsChannel().getChannel());
-        params.put("phoneNo", getMobile());
-        params.put("sendDate", start == null ? sendDate : start.toDate());
-        params.put("endDate", end == null ? LocalDateTime.now().toDate() : end);
-        params.put("account", this.account);
-        return params;
-    }
+//    public Map<String, Object> toView4SyncState(LocalDateTime start, LocalDateTime end) {
+//        Map<String, Object> params = Maps.newHashMap();
+//        params.put("id", getId());
+//        params.put("smsExt", getSmsExt());
+//        params.put("smsChannle", getSmsChannel().getChannel());
+//        params.put("phoneNo", getMobile());
+//        params.put("sendDate", start == null ? sendDate : start.toDate());
+//        params.put("endDate", end == null ? LocalDateTime.now().toDate() : end);
+//        params.put("account", this.account);
+//        return params;
+//    }
 
 
 }

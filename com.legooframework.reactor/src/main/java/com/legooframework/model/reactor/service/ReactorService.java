@@ -9,9 +9,7 @@ import com.legooframework.model.covariant.entity.TemplateEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.reactor.entity.RetailFactAgg;
 import com.legooframework.model.reactor.entity.RetailFactEntityAction;
-import com.legooframework.model.smsgateway.entity.AutoRunChannel;
-import com.legooframework.model.smsgateway.entity.SendMessageAgg;
-import com.legooframework.model.smsgateway.entity.SendMessage;
+import com.legooframework.model.smsgateway.entity.*;
 import org.apache.commons.collections4.MapUtils;
 import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
@@ -77,12 +75,12 @@ public class ReactorService extends BundleService {
                 }
                 if (super.containsBean("smsgateway-subscribe-channel")) {
                     SendMessageAgg sendMessageAgg = new SendMessageAgg(agg.getCompanyId(), agg.getStore().getId());
-                    SendMessage builder = SendMessage.createWithoutJobWithTemplate(
-                            BusinessType.RIGHTS_AND_INTERESTS_CARE, 0, AutoRunChannel.SMS_ONLY, agg.getContent());
-                    agg.getMobile().ifPresent(builder::setMobile);
-                    agg.getMemberName().ifPresent(builder::setMemberName);
-                    sendMessageAgg.addBuilder(builder);
-
+                    SendMessageBuilder builder = SendMessageBuilder.createMessageBuilder(BusinessType.RIGHTS_AND_INTERESTS_CARE);
+                    builder.withSendMode(SendMode.AutoJob).withAutoRunChannel(AutoRunChannel.SMS_ONLY)
+                            .withJobId(agg.getRetailFact().getId())
+                            .withContext(agg.getContent()).withMember(0, agg.getMobile().orElse(null), agg.getMemberName().orElse(null));
+                    if (agg.hasError()) builder.withError(agg.getErrMsg());
+                    sendMessageAgg.addMessageBuilder(builder);
                     Message<SendMessageAgg> msg_request = MessageBuilder.withPayload(sendMessageAgg)
                             .setHeader("EventName", "sendMessage").build();
                     messagingTemplate.send("smsgateway-subscribe-channel", msg_request);

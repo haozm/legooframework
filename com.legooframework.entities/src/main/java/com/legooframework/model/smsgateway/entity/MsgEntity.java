@@ -67,62 +67,57 @@ public class MsgEntity {
         this.businessType = businessType;
     }
 
-//    public static SMSEntity createSMSMsgWithJob(String smsId, Integer memberId, String phoneNo,
-//                                                String memberName, String content, Integer jobId) {
-//        Preconditions.checkArgument(!Strings.isNullOrEmpty(StringUtils.trimToNull(content)), "短信内容为空,创建短信失败....");
-//        return new SMSEntity(smsId, content, phoneNo, memberId, memberName, jobId, true);
-//    }
-
     public static MsgEntity createSMSMsgWithNoJob(String smsId, Integer memberId, String phoneNo, String memberName,
                                                   String content, BusinessType businessType) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(StringUtils.trimToNull(content)), "短信内容为空,创建短信失败....");
         return new MsgEntity(smsId, content, phoneNo, memberId, memberName, 0, true, null, businessType);
     }
 
-    public static List<MsgEntity> createSMSMsg(SendMessage msgTmp) {
+    public static List<MsgEntity> createSMSMsg(SendMessageBuilder builder) {
         List<MsgEntity> list = Lists.newArrayListWithCapacity(2);
-        if (msgTmp.getAutoRunChannel() == AutoRunChannel.SMS_ONLY) {
-            list.add(createSms(msgTmp));
-        } else if (msgTmp.getAutoRunChannel() == AutoRunChannel.WX_ONLY) {
-            createWx(msgTmp).ifPresent(list::add);
-        } else if (msgTmp.getAutoRunChannel() == AutoRunChannel.WX_THEN_SMS) {
-            if (msgTmp.isWxExits()) {
-                createWx(msgTmp).ifPresent(list::add);
+        if (builder.getAutoRunChannel() == AutoRunChannel.SMS_ONLY) {
+            list.add(createSms(builder));
+        } else if (builder.getAutoRunChannel() == AutoRunChannel.WX_ONLY) {
+            createWx(builder).ifPresent(list::add);
+        } else if (builder.getAutoRunChannel() == AutoRunChannel.WX_THEN_SMS) {
+            if (builder.hasWechat()) {
+                createWx(builder).ifPresent(list::add);
             } else {
-                createSms(msgTmp);
+                createSms(builder);
             }
         } else {
-            list.add(createSms(msgTmp));
-            createWx(msgTmp).ifPresent(list::add);
+            list.add(createSms(builder));
+            createWx(builder).ifPresent(list::add);
         }
         return list;
     }
 
-    private static Optional<MsgEntity> createWx(SendMessage msgTmp) {
-        if (msgTmp.isWxExits()) {
-            MsgEntity res = new MsgEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMemberId(),
-                    msgTmp.getMemberName(), msgTmp.getDetailId(), msgTmp.getWeixinId(), msgTmp.getDeviceId(), msgTmp.isOK(),
-                    msgTmp.getRemark(), msgTmp.getBusinessType());
+    private static Optional<MsgEntity> createWx(SendMessageBuilder builder) {
+        if (builder.hasWechat()) {
+            MsgEntity res = new MsgEntity(UUID.randomUUID().toString(), builder.getContext(), builder.getMemberId(),
+                    builder.getMemberName(), builder.getIntDetailId(), builder.getWeixinId(), builder.getDeviceId(),
+                    !builder.isError(),
+                    builder.getMessage(), builder.getBusinessType());
             return Optional.of(res);
         }
         return Optional.empty();
     }
 
-    private static MsgEntity createSms(SendMessage msgTmp) {
-        if (msgTmp.isOK()) {
-            if (msgTmp.hasLegalPhone()) {
-                return new MsgEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
-                        msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(),
-                        msgTmp.isOK(), msgTmp.getRemark(), msgTmp.getBusinessType());
+    private static MsgEntity createSms(SendMessageBuilder builder) {
+        if (!builder.isError()) {
+            if (builder.hasLegalPhone()) {
+                return new MsgEntity(UUID.randomUUID().toString(), builder.getContext(), builder.getMobile(),
+                        builder.getOptMemberId().orElse(0), builder.getMemberName(), builder.getIntDetailId(),
+                        true, builder.getMessage(), builder.getBusinessType());
             } else {
-                return new MsgEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
-                        msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), false,
-                        "非法的移动电话号码...", msgTmp.getBusinessType());
+                return new MsgEntity(UUID.randomUUID().toString(), builder.getContext(), builder.getMobile(),
+                        builder.getMemberId(), builder.getMemberName(), builder.getIntDetailId(), false,
+                        "非法的移动电话号码...", builder.getBusinessType());
             }
         } else {
-            return new MsgEntity(UUID.randomUUID().toString(), msgTmp.getContext(), msgTmp.getMobile(),
-                    msgTmp.getMemberId(), msgTmp.getMemberName(), msgTmp.getDetailId(), false,
-                    msgTmp.getRemark(), msgTmp.getBusinessType());
+            return new MsgEntity(UUID.randomUUID().toString(), builder.getContext(), builder.getMobile(),
+                    builder.getOptMemberId().orElse(0), builder.getMemberName(), builder.getIntDetailId(), false,
+                    builder.getMessage(), builder.getBusinessType());
         }
     }
 
@@ -192,21 +187,6 @@ public class MsgEntity {
 
     public static MsgEntity create4Sending(String smsId, String content, String phoneNo, int wordCount, int smsNum) {
         return new MsgEntity(smsId, content, phoneNo, wordCount, smsNum);
-    }
-
-    // 构造4DB
-    MsgEntity(String smsId, int smsNum) {
-        this.content = null;
-        this.phoneNo = null;
-        this.smsId = smsId;
-        this.wordCount = 0;
-        this.smsNum = smsNum;
-        this.memberId = null;
-        this.memberName = null;
-        this.enbaled = true;
-        this.sendChannel = SendChannel.SMS;
-        this.deviceId = null;
-        this.weixinId = null;
     }
 
     public void addPrefix(String prefix) {

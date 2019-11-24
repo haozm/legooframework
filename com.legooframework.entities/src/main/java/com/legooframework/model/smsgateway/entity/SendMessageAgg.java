@@ -8,17 +8,17 @@ import java.util.List;
 public class SendMessageAgg {
 
     private final Integer companyId, storeId;
-    private final List<SendMessage> builders;
+    private final List<SendMessageBuilder> messages;
 
     public SendMessageAgg(Integer companyId, Integer storeId) {
         this.companyId = companyId;
         this.storeId = storeId;
-        this.builders = Lists.newArrayList();
+        this.messages = Lists.newArrayList();
     }
 
-    public void addBuilder(SendMessage messageBuilder) {
-        if (null != messageBuilder)
-            this.builders.add(messageBuilder);
+    public void addMessageBuilder(SendMessageBuilder messages) {
+        if (null != messages)
+            this.messages.add(messages);
     }
 
     public Integer getCompanyId() {
@@ -29,8 +29,8 @@ public class SendMessageAgg {
         return storeId;
     }
 
-    public List<SendMessage> getBuilders() {
-        return builders;
+    public List<SendMessageBuilder> getMessagesBuilder() {
+        return messages;
     }
 
     @Override
@@ -38,7 +38,7 @@ public class SendMessageAgg {
         return MoreObjects.toStringHelper(this)
                 .add("companyId", companyId)
                 .add("storeId", storeId)
-                .add("builders' size ", builders.size())
+                .add("messages' size ", messages.size())
                 .toString();
     }
 }

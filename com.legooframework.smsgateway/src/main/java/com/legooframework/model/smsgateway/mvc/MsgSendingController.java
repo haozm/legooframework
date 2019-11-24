@@ -11,7 +11,6 @@ import com.legooframework.model.covariant.entity.StoEntity;
 import com.legooframework.model.covariant.entity.UserAuthorEntity;
 import com.legooframework.model.membercare.entity.BusinessType;
 import com.legooframework.model.smsgateway.entity.MsgEntity;
-import com.legooframework.model.smsgateway.entity.SendMessage;
 import com.legooframework.model.smsgateway.entity.SendMode;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.EnumUtils;
@@ -194,11 +193,11 @@ public class MsgSendingController extends SmsBaseController {
      * @return EEE
      * @throws Exception 异常
      */
-    private String sendMessage(List<SendMessage> send_smses, BusinessType businessType, String template,
+    private String sendMessage(List<?> send_smses, BusinessType businessType, String template,
                                StoEntity store, SendMode sendMode, UserAuthorEntity user, HttpServletRequest request)
             throws Exception {
         List<MsgEntity> smses = Lists.newArrayListWithCapacity(send_smses.size());
-        send_smses.forEach(x -> smses.addAll(MsgEntity.createSMSMsg(x)));
+      //  send_smses.forEach(x -> smses.addAll(MsgEntity.createSMSMsg(x)));
         if (logger.isDebugEnabled()) {
 //            long sms_size = smses.stream().filter(SMSEntity::isSMSMsg).count();
 //            logger.debug(String.format("本次处理消息共计 %s 条，其中短信 %s 条， 微信 %s 条", smses.size(), sms_size, smses.size() - sms_size));
