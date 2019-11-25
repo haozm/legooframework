@@ -92,7 +92,8 @@ public class MvcController extends BaseController {
     @ResponseBody
     public JsonMessage executeBirthdayCare(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("executeBirthdayCare(requestBody=%s,url=%s) start", requestBody, request.getRequestURL().toString()));
+            logger.debug(String.format("executeBirthdayCare(requestBody=%s,url=%s) start", requestBody,
+                    request.getRequestURL().toString()));
         LoginContextHolder.setAnonymousCtx();
         TransactionStatus ts = null;
         try {
@@ -126,7 +127,8 @@ public class MvcController extends BaseController {
     @ResponseBody
     public JsonMessage birthdayCareDetailByMember(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("birthdayCareDetailByMember(requestBody=%s,url=%s) start", requestBody, request.getRequestURL().toString()));
+            logger.debug(String.format("birthdayCareDetailByMember(requestBody=%s,url=%s) start", requestBody,
+                    request.getRequestURL().toString()));
         LoginContextHolder.setAnonymousCtx();
         try {
             loadLoginUser(requestBody, request);
@@ -136,7 +138,8 @@ public class MvcController extends BaseController {
             params.put("memberId", memberId);
             params.put("businessType", BusinessType.BIRTHDAYTOUCH.getValue());
             params.put("sql", "birthdayCareDetailByMember");
-            Optional<List<Map<String, Object>>> list = getJdbcQuery(request).queryForList("HisCareRecordEntity", "quert4Details", params);
+            Optional<List<Map<String, Object>>> list = getJdbcQuery(request)
+                    .queryForList("HisCareRecordEntity", "quert4Details", params);
             return JsonMessageBuilder.OK().withPayload(list).toMessage();
         } finally {
             LoginContextHolder.clear();
@@ -148,7 +151,8 @@ public class MvcController extends BaseController {
     @SuppressWarnings("unchecked")
     public JsonMessage previewNinetySmsConent(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("previewNinetySmsConent(requestBody=%s,url=%s) start", requestBody, request.getRequestURL().toString()));
+            logger.debug(String.format("previewNinetySmsConent(requestBody=%s,url=%s) start", requestBody,
+                    request.getRequestURL().toString()));
         LoginContextHolder.setAnonymousCtx();
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
@@ -218,7 +222,8 @@ public class MvcController extends BaseController {
     @ResponseBody
     public JsonMessage saveNinetyCareRule(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("saveNinetyCareRule(requestBody=%s,url=%s) start", requestBody, request.getRequestURL().toString()));
+            logger.debug(String.format("saveNinetyCareRule(requestBody=%s,url=%s) start", requestBody,
+                    request.getRequestURL().toString()));
         LoginContextHolder.setAnonymousCtx();
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
@@ -279,7 +284,8 @@ public class MvcController extends BaseController {
     @ResponseBody
     public JsonMessage ninetySinleCareLog(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("ninetySinleCareLog(requestBody=%s,url=%s) start", requestBody, request.getRequestURL().toString()));
+            logger.debug(String.format("ninetySinleCareLog(requestBody=%s,url=%s) start", requestBody,
+                    request.getRequestURL().toString()));
         LoginContextHolder.setAnonymousCtx();
         try {
             loadLoginUser(requestBody, request);
@@ -287,7 +293,8 @@ public class MvcController extends BaseController {
             Preconditions.checkArgument(null != planId, "非法的 planId 取值...");
             Map<String, Object> params = Maps.newHashMap();
             params.put("planId", planId);
-            Optional<List<Map<String, Object>>> list = getJdbcQuery(request).queryForList("CareNinetyEntity", "quertDetailByNinety", params);
+            Optional<List<Map<String, Object>>> list = getJdbcQuery(request)
+                    .queryForList("CareNinetyEntity", "quertDetailByNinety", params);
             return JsonMessageBuilder.OK().withPayload(list).toMessage();
         } finally {
             LoginContextHolder.clear();
@@ -299,7 +306,8 @@ public class MvcController extends BaseController {
     @SuppressWarnings("unchecked")
     public JsonMessage executeNinetyCare(@RequestBody Map<String, Object> requestBody, HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("executeNinetyCare(requestBody=%s,url=%s) start", requestBody, request.getRequestURL().toString()));
+            logger.debug(String.format("executeNinetyCare(requestBody=%s,url=%s) start", requestBody,
+                    request.getRequestURL().toString()));
         LoginContextHolder.setAnonymousCtx();
         String cache_key = null;
         try {

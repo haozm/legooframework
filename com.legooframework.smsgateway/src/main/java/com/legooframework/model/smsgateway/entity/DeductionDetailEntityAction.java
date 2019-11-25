@@ -38,7 +38,7 @@ public class DeductionDetailEntityAction extends BaseEntityAction<DeductionDetai
      * 加载一批指定 发送批次号码对应的扣款明细
      *
      * @param smsBatchNos 发送批次号
-     * @return
+     * @return OXOX
      */
     public Multimap<String, DeductionDetailEntity> loadBySmsBatchNos(Collection<String> smsBatchNos) {
         Preconditions.checkArgument(CollectionUtils.isNotEmpty(smsBatchNos));
@@ -58,7 +58,7 @@ public class DeductionDetailEntityAction extends BaseEntityAction<DeductionDetai
      * 加载一批指定 发送批次号码对应的扣款明细
      *
      * @param smsBatchNo 发送批次号
-     * @return
+     * @return OIOXX
      */
     public List<DeductionDetailEntity> loadBySmsBatchNo(String smsBatchNo) {
         Map<String, Object> params = Maps.newHashMap();
@@ -84,7 +84,7 @@ public class DeductionDetailEntityAction extends BaseEntityAction<DeductionDetai
         return new RowMapperImpl();
     }
 
-    class RowMapperImpl implements RowMapper<DeductionDetailEntity> {
+    private static class RowMapperImpl implements RowMapper<DeductionDetailEntity> {
         @Override
         public DeductionDetailEntity mapRow(ResultSet res, int i) throws SQLException {
             return new DeductionDetailEntity(res.getString("id"), res);
