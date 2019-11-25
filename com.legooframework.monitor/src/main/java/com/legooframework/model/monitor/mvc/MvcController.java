@@ -7,7 +7,7 @@ import com.legooframework.model.core.web.JsonMessageBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
@@ -17,7 +17,7 @@ public class MvcController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(MvcController.class);
 
-    @GetMapping(value = "/welcome.json")
+    @RequestMapping(value = "/welcome.json")
     @ResponseBody
     public JsonMessage welcome(HttpServletRequest request) {
         if (logger.isDebugEnabled())
