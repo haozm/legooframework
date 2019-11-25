@@ -98,10 +98,16 @@ public class MvcController extends BaseController {
         TransactionStatus ts = null;
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
-            String mIds = MapUtils.getString(requestBody, "memberIds", null);
-            Preconditions.checkArgument(!Strings.isNullOrEmpty(mIds), "待发送的人员ID不可以为空...");
-            List<Integer> memberIds = Stream.of(StringUtils.split(mIds, ',')).mapToInt(Integer::parseInt)
-                    .boxed().collect(Collectors.toList());
+            String queryType = MapUtils.getString(requestBody, "queryType", null);
+            List<Integer> memberIds = null;
+            if (StringUtils.equalsAnyIgnoreCase("byParams")) {
+                // TODO 通过条件获取用户信息
+            } else {
+                String mIds = MapUtils.getString(requestBody, "memberIds", null);
+                Preconditions.checkArgument(!Strings.isNullOrEmpty(mIds), "待发送的人员ID不可以为空...");
+                memberIds = Stream.of(StringUtils.split(mIds, ',')).mapToInt(Integer::parseInt)
+                        .boxed().collect(Collectors.toList());
+            }
             String followUpContent = MapUtils.getString(requestBody, "followUpContent", null);
             String followUpWays = MapUtils.getString(requestBody, "followUpWays", null);
             String imgUrls = MapUtils.getString(requestBody, "imgUrls", null);
