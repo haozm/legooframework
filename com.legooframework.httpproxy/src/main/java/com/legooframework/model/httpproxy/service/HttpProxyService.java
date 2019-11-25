@@ -13,6 +13,8 @@ public class HttpProxyService extends BundleService {
     private static final Logger logger = LoggerFactory.getLogger(HttpProxyService.class);
 
     /**
+     * 监听 HTTP 请求 并且把他们分类处理  路由规则   鉴权的问题 尚未触及
+     *
      * @param message OXXO
      * @return OOXX
      */
@@ -21,13 +23,13 @@ public class HttpProxyService extends BundleService {
         Optional<Integer> userId = requestDto.getUserId();
         if (logger.isDebugEnabled())
             logger.debug(String.format("requestDto=%s,userId=%d", requestDto.toString(), userId.orElse(0)));
+        if (!requestDto.hasQueryMod()) return "";
         HttpGateWayParams gateWayParams = getHttpGateWayFactory().getTarget(requestDto);
-        if (requestDto.hasQueryMod()) {
-            if (requestDto.isPost()) {
-                return getHttpProxyAction().postJsonTarget(gateWayParams, requestDto.getBody().orElse(null));
-            } else if (requestDto.isGet()) {
-                return getHttpProxyAction().getJsonTarget(gateWayParams, requestDto.getBody().orElse(null));
-            }
+        if (requestDto.isPost()) {
+            return getHttpProxyAction().postJsonTarget(gateWayParams, requestDto.getBody().orElse(null));
+        }
+        if (requestDto.isGet()) {
+            return getHttpProxyAction().getJsonTarget(gateWayParams, requestDto.getBody().orElse(null));
         }
         return "";
     }
