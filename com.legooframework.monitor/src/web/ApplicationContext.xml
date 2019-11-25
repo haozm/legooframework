@@ -14,7 +14,7 @@
     <import resource="classpath*:META-INF/core/spring-model-cfg.xml"/>
     <import resource="classpath*:META-INF/monitor/spring-model-cfg.xml"/>
 
-    <alias name="dataSource" alias="acpDataSource"/>
+    <alias name="dataSource" alias="monitorGateWayDataSource"/>
 
     <beans profile="devp">
         <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/acp"/>
