@@ -16,14 +16,18 @@ public class HttpProxyService extends BundleService {
      * @param message OXXO
      * @return OOXX
      */
-    public Object postProxy(Message<?> message) {
+    public Object httpProxy(Message<?> message) {
         HttpRequestDto requestDto = new HttpRequestDto(message);
         Optional<Integer> userId = requestDto.getUserId();
         if (logger.isDebugEnabled())
             logger.debug(String.format("requestDto=%s,userId=%d", requestDto.toString(), userId.orElse(0)));
         HttpGateWayParams gateWayParams = getHttpGateWayFactory().getTarget(requestDto);
-        if (requestDto.isPost()) {
-            return getHttpProxyAction().postJsonTarget(gateWayParams, requestDto.getBody().orElse(null));
+        if (requestDto.hasQueryMod()) {
+            if (requestDto.isPost()) {
+                return getHttpProxyAction().postJsonTarget(gateWayParams, requestDto.getBody().orElse(null));
+            } else if (requestDto.isGet()) {
+                return getHttpProxyAction().getJsonTarget(gateWayParams, requestDto.getBody().orElse(null));
+            }
         }
         return "";
     }

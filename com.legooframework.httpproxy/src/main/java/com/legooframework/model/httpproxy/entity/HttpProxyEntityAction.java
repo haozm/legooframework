@@ -42,4 +42,27 @@ public class HttpProxyEntityAction extends HttpBaseEntityAction<EmptyEntity> {
         }
     }
 
+    public String getJsonTarget(HttpGateWayParams gateWayParams, Object params) {
+        Mono<String> mono;
+        if (null != params) {
+            mono = WebClient.create().method(HttpMethod.GET)
+                    .uri(gateWayParams.getTarget())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(params)
+                    .retrieve().bodyToMono(String.class);
+        } else {
+            mono = WebClient.create().method(HttpMethod.GET)
+                    .uri(gateWayParams.getTarget())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .retrieve().bodyToMono(String.class);
+        }
+        //IllegalStateException
+        try {
+            return mono.block(Duration.ofSeconds(gateWayParams.getTimeout()));
+        } catch (IllegalStateException e) {
+            logger.error(String.format("Get %s is Timeout %d By Fusing", gateWayParams.getTarget(), gateWayParams.getTimeout()));
+            throw new FusingTimeOutException(gateWayParams);
+        }
+    }
+
 }

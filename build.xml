@@ -323,7 +323,6 @@
         </antcall>
     </target>
 
-
     <target name="commons-task">
         <delete dir="${out.dir}/${short.name}"/>
         <mkdir dir="${out.dir}/${short.name}/classes"/>

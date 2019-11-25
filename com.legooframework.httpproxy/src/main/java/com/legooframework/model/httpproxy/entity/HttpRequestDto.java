@@ -53,12 +53,25 @@ public class HttpRequestDto {
         return StringUtils.equals(requestMethod, "POST");
     }
 
+    public boolean isGet() {
+        return StringUtils.equals(requestMethod, "GET");
+    }
+
     UriComponents getUriComponents() {
         return uriComponents;
     }
 
     public Optional<Object> getBody() {
         return Optional.ofNullable(body);
+    }
+
+    private boolean hasQueryParam(String param) {
+        String value = this.uriComponents.getQueryParams().getFirst(param);
+        return !Strings.isNullOrEmpty(Strings.emptyToNull(value));
+    }
+
+    public boolean hasQueryMod() {
+        return hasQueryParam("mod");
     }
 
     @Override

@@ -21,7 +21,7 @@
     <int-http:inbound-gateway id="httpChannelAdapter" request-channel="request-channel" path="/**"
                               supported-methods="POST"/>
     <int:publish-subscribe-channel id="request-channel"/>
-    <int:service-activator input-channel="request-channel" ref="httpProxyService" method="postProxy"/>
+    <int:service-activator input-channel="request-channel" ref="httpProxyService" method="httpProxy"/>
 
     <beans profile="devp">
         <jee:jndi-lookup id="dataSource" jndi-name="java:comp/env/jdbc/acp"/>
