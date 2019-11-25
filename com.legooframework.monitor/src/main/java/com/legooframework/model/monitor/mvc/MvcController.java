@@ -35,7 +35,7 @@ public class MvcController extends BaseController {
         return JsonMessageBuilder.OK().withPayload(bundle.toDesc()).toMessage();
     }
 
-    @RequestMapping(value = "/{modelId}/{sqlId}/list.json")
+    @RequestMapping(value = "/query/{modelId}/{sqlId}/list.json")
     @ResponseBody
     public JsonMessage query4List(@PathVariable(value = "modelId") String modelId,
                                   @PathVariable(value = "sqlId") String sqlId,
@@ -44,7 +44,24 @@ public class MvcController extends BaseController {
         if (logger.isDebugEnabled())
             logger.debug(String.format("query4List(url=%s,requestBody=%s)", request.getRequestURI(), requestBody));
         Map<String, Object> params = Maps.newHashMap();
-        params.put("sql", String.format("%s.%s", modelId, sqlId));
+        params.put("stmtId", String.format("%s.%s", modelId, sqlId));
+        params.put("paged", false);
+        if (MapUtils.isNotEmpty(requestBody)) params.putAll(requestBody);
+        Optional<List<Map<String, Object>>> results = querySupport.queryForList(modelId, sqlId, params);
+        return JsonMessageBuilder.OK().withPayload(results).toMessage();
+    }
+
+    @RequestMapping(value = "/query/{modelId}/{sqlId}/page.json")
+    @ResponseBody
+    public JsonMessage query4Paged(@PathVariable(value = "modelId") String modelId,
+                                   @PathVariable(value = "sqlId") String sqlId,
+                                   @RequestBody(required = false) Map<String, Object> requestBody,
+                                   HttpServletRequest request) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("query4List(url=%s,requestBody=%s)", request.getRequestURI(), requestBody));
+        Map<String, Object> params = Maps.newHashMap();
+        params.put("stmtId", String.format("%s.%s", modelId, sqlId));
+        params.put("paged", true);
         if (MapUtils.isNotEmpty(requestBody)) params.putAll(requestBody);
         Optional<List<Map<String, Object>>> results = querySupport.queryForList(modelId, sqlId, params);
         return JsonMessageBuilder.OK().withPayload(results).toMessage();

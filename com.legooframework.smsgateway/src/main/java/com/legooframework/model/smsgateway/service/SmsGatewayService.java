@@ -136,40 +136,42 @@ public class SmsGatewayService extends BundleService {
             List<MsgEntity> instances = Lists.newArrayList();
             for (SendMessageBuilder $temp : msgBuilder) {
                 if ($temp.isError()) continue;
-                String _template = $temp.getCtxTemplate().orElse(msgTemplate);
-                // NO template
-                if (Strings.isNullOrEmpty(_template)) {
-                    $temp.withError("未发送信息模版");
-                    continue;
-                }
-                // 无替换内容的模版
-                if (!StringUtils.containsAny(_template, "{", "}")) {
-                    $temp.withContext(_template);
-                    continue;
-                }
-
-                Map<String, Object> replace_map = Maps.newHashMap();
-                $temp.getReplaceMap().ifPresent(replace_map::putAll);
-                if ($temp.hasMemberId()) {
-                    MemberAgg memberAgg;
-                    try {
-                        memberAgg = covariantService.loadMemberAgg($temp.getMemberId());
-                    } catch (Exception e) {
-                        logger.error(String.format("loadMemberAgg(%d) has error...", $temp.getMemberId()), e);
-                        $temp.withError(String.format("获取ID=%d的用户失败", $temp.getMemberId()));
+                String _cotext = $temp.getContext();
+                // 无短信内容情况 需要从模板格式化输出
+                if (Strings.isNullOrEmpty(_cotext)) {
+                    String _template = $temp.getCtxTemplate().orElse(msgTemplate);
+                    // NO template
+                    if (Strings.isNullOrEmpty(_template)) {
+                        $temp.withError("无发送消息模版");
                         continue;
                     }
-                    Preconditions.checkNotNull(memberAgg);
-                    $temp.withMember(memberAgg.getMember().getPhone(), memberAgg.getMember().getName());
-                    memberAgg.getWxUser().ifPresent(wx -> $temp.withWechat(wx.getId(), wx.getDevicesId()));
-                    replace_map.putAll(memberAgg.toReplaceMap());
-                }
-
-                try {
-                    $temp.withContext(replaceTemplate(_template, replace_map));
-                } catch (Exception e) {
-                    logger.error(String.format("fmtMsgTemplate(%s) has error...", _template), e);
-                    $temp.withError(String.format("格式化模板异常%s", _template));
+                    // 无替换内容的模版
+                    if (!StringUtils.containsAny(_template, "{", "}")) {
+                        $temp.withContext(_template);
+                        continue;
+                    }
+                    Map<String, Object> replace_map = Maps.newHashMap();
+                    $temp.getReplaceMap().ifPresent(replace_map::putAll);
+                    if ($temp.hasMemberId()) {
+                        MemberAgg memberAgg;
+                        try {
+                            memberAgg = covariantService.loadMemberAgg($temp.getMemberId());
+                        } catch (Exception e) {
+                            logger.error(String.format("loadMemberAgg(%d) has error...", $temp.getMemberId()), e);
+                            $temp.withError(String.format("获取ID=%d的用户失败", $temp.getMemberId()));
+                            continue;
+                        }
+                        Preconditions.checkNotNull(memberAgg);
+                        $temp.withMember(memberAgg.getMember().getPhone(), memberAgg.getMember().getName());
+                        memberAgg.getWxUser().ifPresent(wx -> $temp.withWechat(wx.getId(), wx.getDevicesId()));
+                        replace_map.putAll(memberAgg.toReplaceMap());
+                    }
+                    try {
+                        $temp.withContext(replaceTemplate(_template, replace_map));
+                    } catch (Exception e) {
+                        logger.error(String.format("fmtMsgTemplate(%s) has error...", _template), e);
+                        $temp.withError(String.format("格式化模板异常%s", _template));
+                    }
                 }
             }
             msgBuilder.forEach(builder -> instances.addAll(MsgEntity.createSMSMsg(builder)));
