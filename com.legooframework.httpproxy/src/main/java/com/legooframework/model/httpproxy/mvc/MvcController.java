@@ -17,11 +17,11 @@ public class MvcController extends BaseController {
 
     private static final Logger logger = LoggerFactory.getLogger(MvcController.class);
 
-    @GetMapping(value = "/welcome.json")
+    @GetMapping(value = "/health.json")
     @ResponseBody
-    public JsonMessage welcome(HttpServletRequest request) {
+    public JsonMessage health(HttpServletRequest request) {
         if (logger.isDebugEnabled())
-            logger.debug(String.format("welcome(url=%s)", request.getRequestURI()));
+            logger.debug(String.format("health(url=%s)", request.getRequestURI()));
         Bundle bundle = getBean("httpPorxyBundle", Bundle.class, request);
         return JsonMessageBuilder.OK().withPayload(bundle.toDesc()).toMessage();
     }
