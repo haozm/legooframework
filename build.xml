@@ -123,7 +123,7 @@
         </antcall>
     </target>
 
-    <target name="install-reactor-jar" depends="install-covariant-jar,install-batchsupport-jar">
+    <target name="install-reactor-jar" depends="install-covariant-jar,install-batchsupport-jar,install-smsgateway-jar">
         <path id="reactor_classpath">
             <pathelement location="${jdk.home}/jre/lib/rt.jar"/>
             <fileset dir="${third.libs}" includes="*.jar"/>
@@ -136,7 +136,7 @@
             <reference refid="reactor_classpath" torefid="bundle_classpath"/>
         </antcall>
     </target>
-    <target name="install-reactor-war" depends="install-smsgateway-jar">
+    <target name="install-reactor-war">
         <antcall target="webapp-new">
             <param name="app.name" value="reactor"/>
             <param name="spring.profiles.active" value="${spring.profiles.active}"/>
@@ -379,9 +379,9 @@
         <copy todir="${webapp.root}/${app.name}/WEB-INF/classes" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${config.dir}" includes="${resources.includes}"/>
         </copy>
-<!--        <copy todir="${wepapp.root}/${app.name}/WEB-INF/lib">-->
-<!--            <fileset dir="${third.libs}" includes="*.jar"/>-->
-<!--        </copy>-->
+        <!--        <copy todir="${wepapp.root}/${app.name}/WEB-INF/lib">-->
+        <!--            <fileset dir="${third.libs}" includes="*.jar"/>-->
+        <!--        </copy>-->
         <delete dir="${webapp.root}/${app.name}/resources" includes="**/*.*"/>
         <copy todir="${webapp.root}/${app.name}/resources" overwrite="true" encoding="UTF-8" flatten="false">
             <fileset dir="${resources.dir}" includes="${resources.includes}"/>
