@@ -100,8 +100,11 @@ public class MvcController extends BaseController {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
             String queryType = MapUtils.getString(requestBody, "queryType", null);
             List<Integer> memberIds = null;
-            if (StringUtils.equalsAnyIgnoreCase("byParams")) {
+            if (StringUtils.equalsAnyIgnoreCase("byParams", queryType)) {
                 // TODO 通过条件获取用户信息
+                Map<String, Object> params = user.toViewMap();
+                if (MapUtils.isNotEmpty(requestBody)) params.putAll(requestBody);
+
             } else {
                 String mIds = MapUtils.getString(requestBody, "memberIds", null);
                 Preconditions.checkArgument(!Strings.isNullOrEmpty(mIds), "待发送的人员ID不可以为空...");

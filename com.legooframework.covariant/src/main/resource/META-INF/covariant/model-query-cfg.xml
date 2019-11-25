@@ -38,4 +38,11 @@
             ]]></body>
         </sql>
     </model>
+    <model id="MemberEitity">
+        <sql id="query4mIds" dynamic="true">
+            <body><![CDATA[
+        SELECT
+            ]]></body>
+        </sql>
+    </model>
 </sqls>
