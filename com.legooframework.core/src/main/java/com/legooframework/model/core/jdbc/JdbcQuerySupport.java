@@ -127,6 +127,12 @@ public class JdbcQuerySupport extends NamedParameterJdbcDaoSupport {
         return this.queryForList(model, stmtId, params);
     }
 
+    public <T> Optional<List<T>> queryForList(String model, String stmtId, Map<String, Object> params, Class<T> clazz) {
+        String execSql = statementFactory.getExecSql(model, stmtId, params);
+        List<T> reslist = getQueryTemplate().queryForList(execSql, params, clazz);
+        return Optional.ofNullable(CollectionUtils.isEmpty(reslist) ? null : reslist);
+    }
+
     public <T> Optional<T> queryForObject(String model, String stmtId, Map<String, Object> params, Class<T> clazz) {
         checkParams(model, stmtId, params);
         String execSql = statementFactory.getExecSql(model, stmtId, params);

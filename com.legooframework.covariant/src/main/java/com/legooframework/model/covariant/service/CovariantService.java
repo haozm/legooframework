@@ -1,13 +1,21 @@
 package com.legooframework.model.covariant.service;
 
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.legooframework.model.core.base.entity.EntityNotExitsException;
+import com.legooframework.model.core.jdbc.JdbcQuerySupport;
 import com.legooframework.model.covariant.entity.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringSubstitutor;
+import org.joda.time.LocalDate;
+import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -182,6 +190,43 @@ public class CovariantService extends BundleService {
         getBean(SendWechatEntityAction.class).sendMsg(msgTxt, imageInfo, wechatIds, store, businessType);
     }
 
+    public Optional<List<Integer>> loadMemberIds(Map<String, Object> queryParams, UserAuthorEntity user) {
+        if (logger.isDebugEnabled())
+            logger.debug(String.format("builderByOther(queryParams:%s)", queryParams));
+        int queryType = MapUtils.getIntValue(queryParams, "queryType", 1);
+        Preconditions.checkArgument(ArrayUtils.contains(new int[]{1, 2, 3, 4}, queryType), "非法的入参 queryType = %d", queryType);
+        LocalDate start = LocalDate.now();
+        LocalDate end = LocalDate.now();
+        switch (queryType) {
+            case 1:
+                start = LocalDate.now();
+                end = LocalDate.now();
+                break;
+            case 2:
+                start = start.dayOfWeek().withMinimumValue();
+                end = end.dayOfWeek().withMaximumValue();
+                break;
+            case 3:
+                start = start.dayOfMonth().withMinimumValue();
+                end = end.dayOfMonth().withMaximumValue();
+                break;
+            case 4:
+                start = start.plusMonths(1).dayOfMonth().withMinimumValue();
+                end = end.plusMonths(1).dayOfWeek().withMaximumValue();
+                break;
+            default:
+                ;
+        }
+        Map<String, Object> params = user.toViewMap();
+        params.putAll(queryParams);
+        params.put("birthday", String.format("%s,%s", start.toString("yyyy-MM-dd"), end.toString("yyyy-MM-dd")));
+        JdbcQuerySupport querySupport = getBean("covariantJdbcQuerySupport", JdbcQuerySupport.class);
+        MemberQueryHelper.QuerySql querySql = MemberQueryHelper
+                .builderByOther(user.getCompanyId(), user.getStoreId().orElse(0), params, querySupport);
+        List<Integer> memberIds = querySupport.getJdbcTemplate().queryForList(querySql.toString(), Integer.class);
+        return Optional.ofNullable(CollectionUtils.isEmpty(memberIds) ? null : memberIds);
+    }
+
     private MemberEntityAction memberAction;
     private StoEntityAction storeAction;
     private EmpEntityAction employeeAction;
@@ -207,4 +252,5 @@ public class CovariantService extends BundleService {
     public void setMemberAction(MemberEntityAction memberAction) {
         this.memberAction = memberAction;
     }
+
 }

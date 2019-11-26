@@ -12,6 +12,7 @@ import com.legooframework.model.core.web.BaseController;
 import com.legooframework.model.core.web.JsonMessage;
 import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.covariant.entity.*;
+import com.legooframework.model.covariant.service.CovariantService;
 import com.legooframework.model.takecare.entity.CareNinetyRuleEntity;
 import com.legooframework.model.takecare.entity.CareNinetyRuleEntityAction;
 import com.legooframework.model.takecare.entity.Constant;
@@ -98,13 +99,14 @@ public class MvcController extends BaseController {
         TransactionStatus ts = null;
         try {
             UserAuthorEntity user = loadLoginUser(requestBody, request);
-            String queryType = MapUtils.getString(requestBody, "queryType", null);
+            String type = MapUtils.getString(requestBody, "type", null);
             List<Integer> memberIds = null;
-            if (StringUtils.equalsAnyIgnoreCase("byParams", queryType)) {
-                // TODO 通过条件获取用户信息
+            if (StringUtils.equalsAnyIgnoreCase("byparams", type)) {
                 Map<String, Object> params = user.toViewMap();
                 if (MapUtils.isNotEmpty(requestBody)) params.putAll(requestBody);
-
+                Optional<List<Integer>> membeIds_opt = getBean(CovariantService.class, request).loadMemberIds(params, user);
+                Preconditions.checkState(membeIds_opt.isPresent(), "无匹配的会员");
+                memberIds = membeIds_opt.get();
             } else {
                 String mIds = MapUtils.getString(requestBody, "memberIds", null);
                 Preconditions.checkArgument(!Strings.isNullOrEmpty(mIds), "待发送的人员ID不可以为空...");
