@@ -33,7 +33,7 @@ public class MemberQueryHelper {
                 .withKeyValueSeparator(':').split(other)) : Maps.newHashMap();
         boolean igore_customDate = false;
         StringBuilder querySQLClause = new StringBuilder("SELECT a.id FROM crm_member a \n INNER JOIN crm_store_member sm ON a.id = sm.member_id  \n INNER JOIN YG_Statistics.stat_member_rfm rfm ON a.id = rfm.member_id \n");
-        StringBuilder whereClause = new StringBuilder("WHERE 1=1 \n");
+        StringBuilder whereClause = new StringBuilder(String.format("WHERE a.company_id = %d AND  sm.id = %d \n", companyId, storeId));
 
 
         if (StringUtils.isNotEmpty(MapUtils.getString(queryParams, "birthday"))) {
