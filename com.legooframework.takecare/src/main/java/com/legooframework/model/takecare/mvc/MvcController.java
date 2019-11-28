@@ -106,8 +106,8 @@ public class MvcController extends BaseController {
                 if (MapUtils.isNotEmpty(requestBody)) params.putAll(requestBody);
                 Optional<List<Integer>> membeIds_opt = getBean(CovariantService.class, request).loadMemberIds(params, user);
                 Preconditions.checkState(membeIds_opt.isPresent(), "无匹配的会员");
-                return JsonMessageBuilder.OK().withPayload(membeIds_opt.get()).toMessage();
-                // memberIds = membeIds_opt.get();
+                //return JsonMessageBuilder.OK().withPayload(membeIds_opt.get()).toMessage();
+                memberIds = membeIds_opt.get();
             } else {
                 String mIds = MapUtils.getString(requestBody, "memberIds", null);
                 Preconditions.checkArgument(!Strings.isNullOrEmpty(mIds), "待发送的人员ID不可以为空...");
