@@ -34,4 +34,8 @@
     </bean>
 
     <bean id="httpProxyService" class="com.legooframework.model.httpproxy.service.HttpProxyService"/>
+    <bean id="rateLimiterChannelInterceptor"
+          class="com.legooframework.model.httpproxy.service.RateLimiterChannelInterceptor">
+        <constructor-arg name="permitsPerSecond" value="256"/>
+    </bean>
 </beans>

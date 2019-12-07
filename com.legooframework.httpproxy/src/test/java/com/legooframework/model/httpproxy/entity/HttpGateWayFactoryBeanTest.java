@@ -3,6 +3,8 @@ package com.legooframework.model.httpproxy.entity;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.integration.channel.PublishSubscribeChannel;
+import org.springframework.integration.http.inbound.HttpRequestHandlingEndpointSupport;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.util.ResourceUtils;
@@ -16,7 +18,8 @@ import static org.junit.Assert.*;
                 ResourceUtils.CLASSPATH_URL_PREFIX + "META-INF/httpproxy/spring-model-cfg.xml"}
 )
 public class HttpGateWayFactoryBeanTest {
-
+//    HttpRequestHandlingEndpointSupport
+//    PublishSubscribeChannel
     @Test
     public void createInstance() {
         System.out.println(httpGateWayFactory == null);

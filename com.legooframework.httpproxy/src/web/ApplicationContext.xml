@@ -17,10 +17,13 @@
         <property name="dataSource" ref="dataSource"/>
     </bean>
     <alias name="dataSource" alias="httpProxyDataSource"/>
-
     <int-http:inbound-gateway id="httpChannelAdapter" request-channel="request-channel" path="/**"
-                              supported-methods="POST"/>
-    <int:publish-subscribe-channel id="request-channel"/>
+                              supported-methods="POST" convert-exceptions="true"/>
+    <int:publish-subscribe-channel id="request-channel">
+        <int:interceptors>
+            <ref bean="rateLimiterChannelInterceptor"/>
+        </int:interceptors>
+    </int:publish-subscribe-channel>
     <int:service-activator input-channel="request-channel" ref="httpProxyService" method="httpProxy"/>
 
     <beans profile="devp">

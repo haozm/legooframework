@@ -1,5 +1,6 @@
 package com.legooframework.model.httpproxy.service;
 
+import com.legooframework.model.core.web.JsonMessageBuilder;
 import com.legooframework.model.httpproxy.entity.HttpGateWayParams;
 import com.legooframework.model.httpproxy.entity.HttpRequestDto;
 import org.slf4j.Logger;
@@ -19,6 +20,9 @@ public class HttpProxyService extends BundleService {
      * @return OOXX
      */
     public Object httpProxy(Message<?> message) {
+        if (message.getPayload() instanceof Exception) {
+            return JsonMessageBuilder.ERROR((Exception) message.getPayload()).toMessage();
+        }
         HttpRequestDto requestDto = new HttpRequestDto(message);
         Optional<Integer> userId = requestDto.getUserId();
         if (logger.isDebugEnabled())
